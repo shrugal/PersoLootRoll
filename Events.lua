@@ -207,7 +207,7 @@ Addon:RegisterEvent("CHAT_MSG_WHISPER", function (event, msg, unit)
         roll = Roll.Find(nil, nil, link)
     else
         -- Go through all currently running rolls
-        rolls = Roll:ForUnit(unit)
+        rolls = Roll.ForUnit(unit)
 
         -- Ask for the item link if there is more than one roll right now
         if #rolls > 1 then
