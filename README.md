@@ -2,9 +2,9 @@
 A World of Warcraft addon to share and roll on items when using personal loot.
 
 ### Features
-- Use Blizzards build in group loot roll windows to roll on tradable personal loot.
-- Roll on other player's loot by whispering/rolling in chat or (if the other person has the addon) in the background.
-- Offer loot you don't need to others, and handle accepting bids, picking a winner and trading automatically.
+- Uses Blizzards build in group loot roll windows to roll on tradable personal loot.
+- Rolls on other player's loot by whispering/rolling in chat or (if the other person has the addon) in the background.
+- Offers loot you don't need to others, and handles accepting bids, picking a winner and trading automatically.
 - Figures out what you and others can use, so you only have to decide when it actually makes sense.
 - Most things (like whispers, announces etc.) can be turned on/off based on the type of group (raid/party, guildgroup, LFR) or target (friend, guildmember).
 
@@ -32,7 +32,7 @@ automatically put won items into the trade window, so you only have to click acc
 ### Inspecting
 Whenever you join a group the addon will start inspecting the other group members, to figure out which
 items you loot would be interesting for them, and which items they looted should be tradable. The inspection
-process is done in a way that it won't interfere with your gameplay (e.g. it pauses during boss fights),
+process is done in a way that it shouldn't interfere with your gameplay (e.g. it pauses during boss fights),
 and there is a 30 ilvls (60 ilvls for trinkets) threshold in place so the addon doesn't ignore stuff that is
 lower than what you have but e.g. has better stats or a gem slot.
 
@@ -50,10 +50,12 @@ Use /plr or /PersoLootRoll to open the options window, manually start rolling fo
 ## Roadmap
 These are the things I have planed currently, but feel free to add a ticket here on GitHub to suggest a feature that you would like to see!
 
+- More translations: Sadly I only speak German and English, so if you speak another language (or find errors in my
+  translations :P) then please create a pull request here on GitHub and I will gladly add your translation!
 - Only suggest items for specific specs
 - Transmog mode: Check appearance instead of stats, ilvl, ...
 - Block (and maybe answer) all trades, whispers etc. for a few seconds after looting an item
 - Customize messages the addon sends to other players
 - Masterloot mode: Someone in your raid gets a list of all tradable loot and can assign it by hand to whoever rolled
-on it. I don't quite know about this one, because it would probably include much more stuff (like loot councils), and
-it might be better to somehow integrate with existing loot-distribution addons like RCLootCouncil.
+  on it. I don't quite know about this one, because it would probably include much more stuff (like loot councils), and
+  it might be better to somehow integrate with existing loot-distribution addons like RCLootCouncil.
