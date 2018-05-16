@@ -34,108 +34,108 @@ Self.PATTERNS_LEFT = {Self.PATTERN_PARTY_LEFT, Self.PATTERN_INSTANCE_LEFT, Self.
 
 -- Get the complete message prefix for an event
 function Self.GetPrefix(event)
-	if not Util.StrStartsWith(event, PLR_PREFIX) then
-		event = PLR_PREFIX .. event
-	end
+    if not Util.StrStartsWith(event, PLR_PREFIX) then
+        event = PLR_PREFIX .. event
+    end
 
-	return event
+    return event
 end
 
 -- Figure out the channel and target for a message
 function Self.GetDestination(target)
-	local target = target or Self.TYPE_GROUP	
+    local target = target or Self.TYPE_GROUP
 
-	if target == Self.TYPE_GROUP then
-		if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
-			return Self.TYPE_INSTANCE
-		elseif IsInRaid() then
-			return Self.TYPE_RAID
-		else
-			return Self.TYPE_PARTY
-		end
-	elseif Util.TblFind(Self.TYPES, target) then
-		return target
-	else
-		return Self.TYPE_WHISPER, Util.GetName(target)
-	end
+    if target == Self.TYPE_GROUP then
+        if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
+            return Self.TYPE_INSTANCE
+        elseif IsInRaid() then
+            return Self.TYPE_RAID
+        else
+            return Self.TYPE_PARTY
+        end
+    elseif Util.TblFind(Self.TYPES, target) then
+        return target
+    else
+        return Self.TYPE_WHISPER, Util.GetName(target)
+    end
 end
 
 -- Check if chat on given channel and to giver target is enabled
 function Self.ShouldChat(target)
-	local channel, unit = Self.GetDestination(target)
-	local config = Addon.db.profile
+    local channel, unit = Self.GetDestination(target)
+    local config = Addon.db.profile
 
-	-- Check whisper target
-	if channel == Self.TYPE_WHISPER then
-		local target = config.whisper.target
-		local guild = GetGuildInfo(unit)
-		local isGuild, isFriend = guild ~= nil and guild == GetGuildInfo("player"), Util.IsFriend(unit)
+    -- Check whisper target
+    if channel == Self.TYPE_WHISPER then
+        local target = config.whisper.target
+        local guild = GetGuildInfo(unit)
+        local isGuild, isFriend = guild ~= nil and guild == GetGuildInfo("player"), Util.IsFriend(unit)
 
-		if isGuild or isFriend then
-			if isFriend and not target.friend or isGuild and not target.guild then
-				return false
-			end
-		elseif not target.other then
-			return false
-		end
-	end
+        if isGuild or isFriend then
+            if isFriend and not target.friend or isGuild and not target.guild then
+                return false
+            end
+        elseif not target.other then
+            return false
+        end
+    end
 
-	-- Check party type
-	local group = channel == Self.TYPE_WHISPER and config.whisper.group or config.announce
+    -- Check party type
+    local group = channel == Self.TYPE_WHISPER and config.whisper.group or config.announce
 
-	if IsInRaid(LE_PARTY_CATEGORY_INSTANCE) then
-		return group.lfr
-	elseif IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
-		return group.lfd
-	elseif Util.IsGuildGroup() then
-		return group.guild
-	elseif IsInRaid() then
-		return group.raid
-	elseif IsInGroup() then
-		return group.party
-	end
+    if IsInRaid(LE_PARTY_CATEGORY_INSTANCE) then
+        return group.lfr
+    elseif IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
+        return group.lfd
+    elseif Util.IsGuildGroup() then
+        return group.guild
+    elseif IsInRaid() then
+        return group.raid
+    elseif IsInGroup() then
+        return group.party
+    end
 
-	return true
+    return true
 end
 
 -- Send a chat line
 function Self.Chat(msg, target)
-	local channel, player = Self.GetDestination(target)
+    local channel, player = Self.GetDestination(target)
 
-	-- TODO: DEBUG
-	-- Addon:Print("@" .. (player or channel) .. ": " .. msg)
-	-- do return end
-	-- TODO: DEBUG
+    -- TODO: DEBUG
+    -- Addon:Print("@" .. (player or channel) .. ": " .. msg)
+    -- do return end
+    -- TODO: DEBUG
 
-	SendChatMessage(msg, channel, nil, player)
+    SendChatMessage(msg, channel, nil, player)
 end
 
 function Self.ChatLine(line, target, ...)
-	local _, player = Self.GetDestination(target)
-	local L = Locale.GetCommLocale(player)
+    local _, player = Self.GetDestination(target)
+    local L = Locale.GetCommLocale(player)
 
-	Self.Chat(L(line, ...), target)
+    Self.Chat(L(line, ...), target)
 end
 
 -- Send an addon message
 function Self.Send(event, txt, target, prio, callbackFn, callbackArg)
-	event = Self.GetPrefix(event)
+    event = Self.GetPrefix(event)
 
-	-- Figure out the correct channel and target
-	local channel, player = Self.GetDestination(target)
+    -- Figure out the correct channel and target
+    local channel, player = Self.GetDestination(target)
 
-	-- Send the message
-	Addon:SendCommMessage(event, txt, channel, player, prio, callbackFn, callbackArg)
+    -- Send the message
+    Addon:SendCommMessage(event, txt, channel, player, prio, callbackFn, callbackArg)
 end
 
 -- Send structured addon data
 function Self.SendData(event, data, target, prio, callbackFn, callbackArg)
-	Self.Send(event, Addon:Serialize(data), target, prio, callbackFn, callbackArg)
+    Self.Send(event, Addon:Serialize(data), target, prio, callbackFn, callbackArg)
 end
 
 -- Listen for an addon message
 function Self.Listen(event, method)
-	Addon:RegisterComm(Self.GetPrefix(event), method)
+    Addon:RegisterComm(Self.GetPrefix(event), method)
 end
 
 -------------------------------------------------------
@@ -144,7 +144,7 @@ end
 
 -- Send a bid to another player
 function Self.ChatBid(player, itemLink)
-	Self.ChatLine("BID", player, itemLink or Locale.GetCommLine('ITEM', player))
+    Self.ChatLine("BID", player, itemLink or Locale.GetCommLine('ITEM', player))
 end
 
 -------------------------------------------------------
@@ -152,13 +152,13 @@ end
 -------------------------------------------------------
 
 function Self.GetPlayerLink(player)
-	local color = Util.GetUnitColor(player)
-	return ("|c%s|Hplayer:%s|h[%s]|h|r"):format(color.colorStr, player, player)
+    local color = Util.GetUnitColor(player)
+    return ("|c%s|Hplayer:%s|h[%s]|h|r"):format(color.colorStr, player, player)
 end
 
 function Self.GetTradeLink(player)
-	local L = LibStub("AceLocale-3.0"):GetLocale(PLR_NAME)
-	return ("|cff4D85E6|Hplrtrade:%s|h[%s]|h|r"):format(player, L["TRADE"])
+    local L = LibStub("AceLocale-3.0"):GetLocale(PLR_NAME)
+    return ("|cff4D85E6|Hplrtrade:%s|h[%s]|h|r"):format(player, L["TRADE"])
 end
 
 -- Export

@@ -39,17 +39,17 @@ end
 
 -- Update the cache entry for the given player
 function Self.Update(unit)
-	unit = Util.GetName(unit)
+    unit = Util.GetName(unit)
 
-	local info = Self.cache[unit] or {}
+    local info = Self.cache[unit] or {}
     local inspectsLeft = Self.queue[unit] or Self.MAX_PER_CHAR
 
     -- Remember when we did this
     info.time = GetTime()
 
-	-- Determine the level for all basic inventory locations
+    -- Determine the level for all basic inventory locations
     Util(Item.SLOTS).Omit(Self.IGNORE).Map(Util.Tbl).Iter(function (slots, location)
-		local levels = Util(slots).Map(function (slot)
+        local levels = Util(slots).Map(function (slot)
             local item = Item.FromSlot(slot, unit)
             if item and select(2, item:GetFullInfo()) then
                 return item.quality ~= LE_ITEM_QUALITY_LEGENDARY and item.level or 0
@@ -95,7 +95,7 @@ end
 
 -- Clear everything and stop tracking for one or all players
 function Self.Clear(unit)
-	if unit then
+    if unit then
         Self.cache[unit] = nil
         Self.queue[unit] = nil
     else
@@ -103,7 +103,7 @@ function Self.Clear(unit)
         Self.lastQueued = 0
         wipe(Self.cache)
         wipe(Self.queue)
-	end
+    end
 end
 
 -- Queue a unit or the entire group for inspection
