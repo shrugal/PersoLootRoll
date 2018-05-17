@@ -66,7 +66,7 @@ end
 -- Get a unit's full name (always incl. realm name)
 function Self.GetFullName(unit)
     local name, realm = UnitFullName(Self.GetUnit(unit))
-    realm = realm and realm ~= "" or GetRealmName()
+    realm = realm ~= "" and realm or GetRealmName()
 
     return name and name .. "-" .. realm
         or unit and unit:match("^(.*-.*)$")
