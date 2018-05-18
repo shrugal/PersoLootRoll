@@ -134,16 +134,14 @@ function Self.GetHiddenTooltip()
 end
 
 -- Fill a tooltip and scan it line by line
-function Self.ScanTooltip(link, fn, inBag)
+function Self.ScanTooltip(fn, linkOrbag, slot)
     local tooltip = Self.GetHiddenTooltip()
     tooltip:ClearLines()
 
-    if inBag then
-        local bag, slot = Addon.Item.FromLink(link):GetBagPosition()
-        if not bag or not slot then return end
-        tooltip:SetBagItem(bag, slot)
+    if not slot then
+        tooltip:SetHyperlink(linkOrbag)
     else
-        tooltip:SetHyperlink(link)
+        tooltip:SetBagItem(linkOrbag, slot)
     end
 
     local lines = tooltip:NumLines()
@@ -166,10 +164,27 @@ function Self.SearchGroup(fn)
     end
 end
 
--- Search through the bags with a function
-function Self.SearchBags(fn)
-    for bag = 0, NUM_BAG_SLOTS do
-        for slot = 1, GetContainerNumSlots(bag) do
+-- Get the correct bag position, if it exists (e.g. 1, 31 -> 2, 1)
+function Self.GetBagPosition(bag, slot)
+    local numSlots = GetContainerNumSlots(bag)
+    if bag < 0 or bag > NUM_BAG_SLOTS or not numSlots or numSlots == 0 then
+        return nil, nil
+    elseif slot > numSlots then
+        return Self.GetBagPosition(bag + 1, slot - numSlots)
+    else
+        return bag, slot
+    end
+end
+
+-- Search through the bags with a function. Providing startBag will only search that bag,
+-- providing startSlot as well will search through all bags/slots after from that combination.
+function Self.SearchBags(fn, startBag, startSlot)
+    local endBag = not startSlot and startBag or NUM_BAG_SLOTS
+    startBag = startBag or 0
+    startSlot = startSlot or 1
+
+    for bag = startBag, endBag do
+        for slot = bag == startBag and startSlot or 1, GetContainerNumSlots(bag) do
             local id = GetContainerItemID(bag, slot)
             if id then
                 local r = {fn(Addon.Item.FromBagSlot(bag, slot), id, bag, slot)}
@@ -179,6 +194,15 @@ function Self.SearchBags(fn)
             end
         end
     end
+end
+
+-------------------------------------------------------
+--                      General                      --
+-------------------------------------------------------
+
+-- Check if two values are equal
+function Self.Equals(a, b)
+    return a == b
 end
 
 -------------------------------------------------------
@@ -318,6 +342,11 @@ function Self.TblContains(t, u, deep)
             return t[i] ~= v
         end
     end)
+end
+
+-- Check if two tables are equal
+function Self.TblEquals(a, b, deep)
+    return type(b) == "table" and Self.TblContains(a, b, deep) and Self.TblContains(b, a, deep)
 end
 
 -- Find a value in a table

@@ -10,7 +10,11 @@ local Inspect = Addon.Inspect
 local PATTERN_BONUS_LOOT = LOOT_ITEM_BONUS_ROLL:gsub("%%s", ".+")
 local PATTERN_ROLL_RESULT = RANDOM_ROLL_RESULT:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%s", "(.+)"):gsub("%%d", "(%%d+)")
 
--- Remember the last roll that was posted to group chat
+-- Remember the last locked item slot
+local lastLocked = {}
+-- Remember the bag of the last looted item
+local lastLootedBag
+-- Remember the last item link posted in group chat so we can track random rolls
 local lastPostedRoll
 
 -------------------------------------------------------
@@ -65,6 +69,40 @@ Addon:RegisterEvent("TRADE_PLAYER_ITEM_CHANGED", Addon.Trade.OnPlayerItem)
 Addon:RegisterEvent("TRADE_TARGET_ITEM_CHANGED", Addon.Trade.OnTargetItem)
 Addon:RegisterEvent("TRADE_CLOSED", Addon.Trade.OnClose)
 Addon:RegisterEvent("TRADE_REQUEST_CANCEL", Addon.Trade.OnCancel)
+
+-------------------------------------------------------
+--                      Items                        --
+-------------------------------------------------------
+
+Addon:RegisterEvent("ITEM_PUSH", function (event, bagId)
+    lastLootedBag = tonumber(bagId) % 20
+end)
+
+Addon:RegisterEvent("ITEM_LOCKED", function (event, bagOrEquip, slot)
+    tinsert(lastLocked, slot and {bagOrEquip, slot} or bagOrEquip)
+end)
+
+Addon:RegisterEvent("ITEM_UNLOCKED", function (event, bagOrEquip, slot)
+    local pos = slot and {bagOrEquip, slot} or bagOrEquip
+    
+    if #lastLocked == 1 and not Util(pos).Equals(lastLocked[1])() then
+        -- The item has been moved
+        Item.OnMove(lastLocked, pos)
+    elseif #lastLocked == 2 then
+        -- The item has switched places with another
+        Item.OnSwitch(lastLocked[1], lastLocked[2])
+    end
+
+    wipe(lastLocked)
+end)
+
+Addon:RegisterEvent("BAG_UPDATE_DELAYED", function (event)
+    for i, entry in pairs(Item.queue) do
+        Addon:CancelTimer(entry.timer)
+        entry.fn(unpack(entry.args))
+    end
+    wipe(Item.queue)
+end)
 
 -------------------------------------------------------
 --                   Chat message                    --
@@ -140,6 +178,8 @@ Addon:RegisterEvent("CHAT_MSG_LOOT", function (event, msg, _, _, _, unit)
         if not item:ShouldBeConsidered() then return end
 
         if item.isOwner then
+            item:SetPosition(lastLootedBag, 0)
+
             item:OnFullyLoaded(function ()
                 if item:ShouldBeRolledFor() then
                     Roll.Add(item, unit):Start()
@@ -147,11 +187,8 @@ Addon:RegisterEvent("CHAT_MSG_LOOT", function (event, msg, _, _, _, unit)
                     Roll.Add(item, unit):Cancel()
                 end
             end)
-        else
-            if not msg:match(PATTERN_BONUS_LOOT) and not Roll.Find(nil, unit, item) then
-                -- Wait for the owner to (maybe) send a message and for the item info to load
-                Roll.Add(item, unit):Schedule()
-            end
+        elseif not msg:match(PATTERN_BONUS_LOOT) and not Roll.Find(nil, unit, item) then
+            Roll.Add(item, unit):Schedule()
         end
     end
 end)

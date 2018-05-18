@@ -56,20 +56,12 @@ function Self.Start()
     if not Self.target then return end
 
     -- Find items the target has won and add them to the trade window
-    local links = Util(Addon.rolls).Where({status = Roll.STATUS_DONE, isOwner = true, winner = Self.target, traded = false}).Pluck("item.link")()
-    if next(links) then
-        Util.SearchBags(function (item, _, bag, slot)
-            local i = Util.TblFind(links, item.link)
-            if i then
-                PickupContainerItem(bag, slot)
-                DropItemOnUnit(Self.target)
-
-                tremove(links, i)
-                if #links == 0 then
-                    return true
-                end
-            end
-        end)
+    local items = Util(Addon.rolls).Where({status = Roll.STATUS_DONE, isOwner = true, winner = Self.target, traded = false})()
+    if next(items) then
+        for i,item in pairs(items) do
+            PickupContainerItem(item:GetPosition())
+            DropItemOnUnit(Self.target)
+        end
     end
 end
 

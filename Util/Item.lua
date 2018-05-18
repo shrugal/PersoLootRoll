@@ -208,6 +208,9 @@ Self.SLOTS = {
     [Self.TYPE_WRIST] = INVSLOT_WRIST
 }
 
+-- New items waiting for the BAG_UPDATE_DELAYED event
+Self.queue = {}
+
 -------------------------------------------------------
 --                      Links                        --
 -------------------------------------------------------
@@ -241,18 +244,17 @@ end
 -------------------------------------------------------
 
 -- Create an item instance from a link
-function Self.FromLink(item, owner, isEquipped)
+function Self.FromLink(item, owner, bagOrEquip, slot)
     if type(item) == "string" then
         owner = Util.GetName(owner or "player")
         item = {
             link = item,
             owner = owner,
             isOwner = UnitIsUnit(owner, "player"),
-            isEquipped = isEquipped,
-            isSoulbound = isEquipped or nil,
             infoLevel = Self.INFO_NONE
         }
         setmetatable(item, {__index = Self})
+        item:SetPosition(bagOrEquip, slot)
     end
 
     return item
@@ -262,7 +264,7 @@ end
 function Self.FromSlot(slot, unit)
     local link = GetInventoryItemLink(unit or "player", slot)
     if link then
-        return Self.FromLink(link, unit, true)
+        return Self.FromLink(link, unit, slot)
     end
 end
 
@@ -270,7 +272,7 @@ end
 function Self.FromBagSlot(bag, slot)
     local link = GetContainerItemLink(bag, slot)
     if link then
-        return Self.FromLink(link)
+        return Self.FromLink(link, nil, bag, slot)
     end
 end
 
@@ -371,12 +373,12 @@ function Self:GetBasicInfo()
 end
 
 -- Get extra info by scanning the tooltip
-function Self:GetFullInfo()
+function Self:GetFullInfo(bag)
     self:GetBasicInfo()
 
     -- TODO: Optimize (e.g. restrict line numbers)!
     if self.infoLevel == Self.INFO_BASIC then
-        Util.ScanTooltip(self.link, function (i, line)
+        Util.ScanTooltip(function (i, line)
             self.infoLevel = Self.INFO_FULL
 
             -- Ilvl (incl. upgrades)
@@ -408,30 +410,16 @@ function Self:GetFullInfo()
                     end
                 end
             end
-        end)
+        end, self.link)
 
-        if self.isOwner then
-            -- Scan again using the bag-slot tooltip for items in your bag
-            Util.ScanTooltip(self.link, function (i, line)
-                -- Soulbound
-                if not self.isSoulbound then
-                    self.isSoulbound = line:match(Self.PATTERN_SOULBOUND) ~= nil
-                    if self.isSoulbound then return end
-                end
-                -- Bind timeout
-                if not self.bindTimeout then
-                    self.bindTimeout = line:match(Self.PATTERN_TRADE_TIME_REMAINING) ~= nil
-                    if self.bindTimeout then return end
-                end
-            end, true)
-
-            self.isTradable = not self.isSoulbound or self.bindTimeout
-        elseif self.bindType == LE_ITEM_BIND_ON_ACQUIRE then
-            -- Check what the owner is wearing on that slot, and add the threshold to compensate for uncertainty
-            local level = self:GetLevelForLocation(self.owner)
-            self.isTradable = level == 0 or level + self:GetThresholdForLocation() >= self.level
+        -- Get item position in bags or equipment
+        local bagOrEquip, slot = self:GetPosition()
+        if bagOrEquip and slot ~= 0 then
+            self:SetPosition(bagOrEquip, slot)
         end
 
+        -- Check if the item is tradable
+        self.isTradable, self.isSoulbound, self.bindTimeout = self:IsTradable()
     end
 
     return self, self.infoLevel >= Self.INFO_FULL
@@ -714,41 +702,163 @@ function Self:OnLoaded(fn, ...)
     try(10)
 end
 
--- Check if item data is fully loaded (so we can find it in the bag)
-function Self:IsFullyLoaded()
-    return self:IsLoaded() and (not self.isOwner or self.isEquipped or self:GetBagPosition())
+-- Check if item data is fully loaded (loaded + position available)
+function Self:IsFullyLoaded(tradable)
+    if not self:IsLoaded() then return false end
+    local bagOrEquip, slot = self:GetPosition()
+    return bagOrEquip and slot ~= 0 and not tradable or self:IsTradable(bagOrEquip, slot)
 end
 
 -- Run a function when item data is fully loaded
 function Self:OnFullyLoaded(fn, ...)
-    local args = {...}
-    local try
-    try = function (n)
-        if not self:IsFullyLoaded() and n > 0 then
-            Addon:ScheduleTimer(try, 0.1, n-1)
+    if not self.isOwner then
+        self:OnLoaded(fn, ...)
+    else
+        if self:IsFullyLoaded(true) then
+            fn(...)
         else
-            fn(unpack(args))
+            local args = {...}
+            local entry =  {fn = fn, args = args}
+            entry.timer = Addon:ScheduleTimer(function ()
+                local i = Util.TblFind(Self.queue, entry)
+                if i and self:IsFullyLoaded() then
+                    tremove(Self.queue, i)
+                    fn(unpack(args))
+                end
+            end, 0.5)
+            tinsert(Self.queue, entry)
         end
     end
-
-    try(10)
 end
 
 -------------------------------------------------------
 --                       Helper                      --
 -------------------------------------------------------
 
--- Get the position of an item in the player's bag
-function Self:GetBagPosition()
-    local t = type(self)
+-- Check if the item (given by self or bag+slot) is tradable
+function Self.IsTradable(selfOrBag, slot)
+    local bag, isSoulbound, bindTimeout
 
-    return Util.SearchBags(function (item, id, bag, slot)
-        if t == "number" and id == self                 -- self is an ID
-        or t == "string" and item.link == self          -- self is an item link
-        or t == "table" and item.link == self.link then -- self is an item instance
-            return bag, slot
+    -- selforBag is an item instance
+    if type(selfOrBag) == "table" then
+        local self = selfOrBag
+
+        if self.isTradable ~= nil then
+            return self.isTradable, self.isSoulbound, self.bindTimeout
+        elseif self.isEquipped then
+            return false, true, nil
+        elseif not self.isOwner then
+            local level = self:GetLevelForLocation(self.owner)
+            local isTradable = level == 0 or level + self:GetThresholdForLocation() >= self.level
+
+            return isTradable, self.isSoulbound, self.isSoulbound and isTradable
+        else
+            bag, slot = self.bagOrEquip, self.slot
+            isSoulbound, bindTimeout = self.isSoulbound, self.bindTimeout
+        end
+    else
+        bag = selfOrBag
+    end
+
+    -- Can't scan the tooltip if bag or slot is missing
+    if not bag or not slot or slot == 0 then
+        return nil, isSoulbound, bindTimeout
+    end
+
+    Util.ScanTooltip(function (i, line)
+        -- Soulbound
+        if not isSoulbound then
+            isSoulbound = line:match(Self.PATTERN_SOULBOUND) ~= nil
+            if isSoulbound then return end
+        end
+        -- Bind timeout
+        if not bindTimeout then
+            bindTimeout = line:match(Self.PATTERN_TRADE_TIME_REMAINING) ~= nil
+            if bindTimeout then return end
+        end
+    end, bag, slot)
+
+    return not isSoulbound or bindTimeout, isSoulbound, bindTimeout
+end
+
+-- Get the item's position
+function Self:GetPosition(refresh)
+    if not self.isOwner then
+        return
+    elseif not refresh and self.bagOrEquip and self.slot ~= 0 then
+        return self.bagOrEquip, self.slot
+    end
+
+    -- Check bags
+    local bag, slot, isTradable
+    Util.SearchBags(function (item, _, b, s)
+        if item.link == self.link then
+            isTradable = Self.IsTradable(b, s)
+            if isTradable or not (bag and slot) then
+                bag, slot = b, s
+                if isTradable then return true end
+            end
+        end
+    end, self.slot == 0 and self.bagOrEquip or nil)
+
+    if bag and slot then
+        return bag, slot
+    elseif self.bagOrEquip and self.slot == 0 then
+        return self.bagOrEquip, self.slot
+    end
+
+    -- Check equipment
+    if not select(2, self:GetBasicInfo()) then return end
+
+    for _, equipSlot in pairs(Util.Tbl(Self.SLOTS[self.equipLoc])) do
+        if self.link == GetInventoryItemLink(equipSlot) then
+            return equipSlot
+        end
+    end
+end
+
+-- Set the item's position
+function Self:SetPosition(bagOrEquip, slot)
+    if type(bagOrEquip) == "table" then
+        bagOrEquip, slot = unpack(bagOrEquip)
+    end
+
+    self.bagOrEquip = bagOrEquip
+    self.slot = slot
+    self.position = slot and {bagOrEquip, slot} or bagOrEquip
+
+    self.isEquipped = bagOrEquip and slot == nil
+    self.isSoulbound = self.isSoulbound or self.isEquipped
+end
+
+-------------------------------------------------------
+--                      Events                       --
+-------------------------------------------------------
+
+-- An item as been moved
+function Self.OnMove(from, to)
+    Util(Addon.rolls).Where({isOwner = true, traded = false}).Find(function (roll)
+        if Util(from).Equals(roll.item.position)() then
+            roll.item:SetPosition(to)
+            return true
         end
     end)
+end
+
+-- Two items have switched places
+function Self.OnSwitch(pos1, pos2)
+    local item1, item2
+    local items = Util(Addon.rolls).Where({IsOwner = true, traded = false}).Filter(function (roll)
+        if not item1 and Util(pos1).Equals(roll.item.position)() then
+            item1 = roll.item
+        elseif not item2 and Util(pos2).Equals(roll.item.position)() then
+            item2 = roll.item
+        end
+        return item1 and item2
+    end)
+
+    if item1 then item1:SetPosition(pos2) end
+    if item2 then item2:SetPosition(pos1) end
 end
 
 -- Export

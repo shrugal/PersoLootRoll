@@ -109,21 +109,23 @@ function Self.Update(data, owner)
             return
         end
 
-        roll = Self.Add(data.item, owner, data.id, data.timeout)
+        roll = Self.Add(data.item, owner, data.id)
     elseif not roll.ownerId then
-        -- Update some data
         roll.ownerId = data.id
-        
-        if data.timeout > roll.timeout then
-            self:ExtendTimeout(data.timeout)
-        end
     end
 
     -- We don't need updates on canceled rolles
     if roll.status == Self.STATUS_CANCELED then
         return
+    end
+
+    -- Update the timeout
+    if data.timeout > roll.timeout then
+        self:ExtendTimeout(data.timeout)
+    end
+    
     -- Cancel the roll if the owner has canceled it
-    elseif data.status == Self.STATUS_CANCELED and roll.status ~= Self.STATUS_CANCELED then
+    if data.status == Self.STATUS_CANCELED and roll.status ~= Self.STATUS_CANCELED then
         roll:Cancel()
     else
         -- This stuff needs item data to be loaded
