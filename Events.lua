@@ -75,7 +75,7 @@ Addon:RegisterEvent("TRADE_REQUEST_CANCEL", Addon.Trade.OnCancel)
 -------------------------------------------------------
 
 Addon:RegisterEvent("ITEM_PUSH", function (event, bagId)
-    lastLootedBag = tonumber(bagId) % 20
+    lastLootedBag = bagId == 0 and 0 or (bagId - CharacterBag0Slot:GetID() + 1)
 end)
 
 Addon:RegisterEvent("ITEM_LOCKED", function (event, bagOrEquip, slot)
@@ -83,9 +83,9 @@ Addon:RegisterEvent("ITEM_LOCKED", function (event, bagOrEquip, slot)
 end)
 
 Addon:RegisterEvent("ITEM_UNLOCKED", function (event, bagOrEquip, slot)
-    local pos = slot and {bagOrEquip, slot} or bagOrEquip
+    local pos = {bagOrEquip, slot}
     
-    if #lastLocked == 1 and not Util(pos).Equals(lastLocked[1])() then
+    if #lastLocked == 1 and not Util.TblEquals(pos, lastLocked[1]) then
         -- The item has been moved
         Item.OnMove(lastLocked, pos)
     elseif #lastLocked == 2 then

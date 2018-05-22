@@ -580,11 +580,8 @@ function Self.TblFlatten(t)
 end
 
 -- Join a table of strings
-function Self.TblStrJoin(t, del)
-    del = del or ""
-    return Self.TblFoldL(t, function (u, v, i)
-        return u .. (u == "" and "" or del) .. v
-    end, "")
+function Self.TblConcat(t, del)
+    return table.concat(t, del)
 end
 
 -- Use Blizzard's inspect tool
@@ -597,16 +594,20 @@ end
 --                       String                      --
 -------------------------------------------------------
 
+function Self.IsStr(str)
+    return type(str) == "string"
+end
+
 function Self.StrStartsWith(str, str2)
-    return str:sub(1, str2:len()) == str2
+    return Self.IsStr(str) and str:sub(1, str2:len()) == str2
 end
 
 function Self.StrEndsWith(str, str2)
-    return str:sub(-str2:len()) == str2
+    return Self.IsStr(str) and str:sub(-str2:len()) == str2
 end
 
 function Self.StrEmpty(str)
-    return type(str) ~= "string" or string == ""
+    return not Self.IsStr(str) or string == ""
 end
 
 function Self.StrWrap(str, before, after)

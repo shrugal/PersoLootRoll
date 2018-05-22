@@ -283,7 +283,7 @@ function Self.EnableUnitMenus()
     local onEnter = function (self)
         if self.value and Util.StrStartsWith(self.value, NAME) then
             local roll = Roll.Get(UnitPopupButtons[self.value].roll)
-            if roll then
+            if roll and roll:CanBeAwarded() then
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 GameTooltip:SetHyperlink(roll.item.link)
                 GameTooltip:Show()

@@ -1,7 +1,7 @@
 --[[
 TODO:
 - Only specific specs
-- Transmog mode (check appearance)
+- Transmog mode: Check appearance, don't cancel rolls for items that some ppl could wear but have a higher ilvl, prompt to answer only when someone asks for the item
 - Block all trades and whispers
 - Custom messages
 ]]
@@ -14,6 +14,9 @@ local Item = Addon.Item
 -------------------------------------------------------
 --                     Constants                     --
 -------------------------------------------------------
+
+-- Enable or disable debug stuff
+Addon.DEBUG = true
 
 -- Echo levels
 Addon.ECHO_NONE = 0

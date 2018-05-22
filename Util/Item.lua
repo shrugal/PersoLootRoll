@@ -359,7 +359,7 @@ function Self:GetBasicInfo()
             self.isRelic = self.subType == "Artifact Relic"
             self.isEquippable = IsEquippableItem(self.link) or self.isRelic
             self.isSoulbound = self.bindType == LE_ITEM_BIND_ON_ACQUIRE or self.isEquipped and self.bindType == LE_ITEM_BIND_ON_EQUIP
-            self.isTradable = not self.isSoulbound
+            self.isTradable = not self.isSoulbound or nil
             self.infoLevel = Self.INFO_BASIC
 
             -- Trinket info
@@ -657,14 +657,14 @@ end
 --                     Decisions                     --
 -------------------------------------------------------
 
--- Check if the addon should offer to bid on an item
-function Self:ShouldBeBidOn()
-    return self:HasSufficientQuality() and self:IsUseful("player") and self:HasSufficientLevel()
-end
-
 -- Do basic and quick check if an item is worthy of further consideration
 function Self:ShouldBeConsidered()
     return self:HasSufficientQuality() -- TODO
+end
+
+-- Check if the addon should offer to bid on an item
+function Self:ShouldBeBidOn()
+    return self:HasSufficientQuality() and self:IsUseful("player") and self:HasSufficientLevel()
 end
 
 -- Check if the addon should start a roll for an item
@@ -689,16 +689,14 @@ end
 
 -- Run a function when item data is loaded
 function Self:OnLoaded(fn, ...)
-    local args = {...}
-    local try
+    local args, try = {...}
     try = function (n)
-        if not self:IsLoaded() and n > 0 then
-            Addon:ScheduleTimer(try, 0.1, n-1)
-        else
+        if self:IsLoaded() then
             fn(unpack(args))
+        elseif n > 0 then
+            Addon:ScheduleTimer(try, 0.1, n-1)
         end
     end
-
     try(10)
 end
 
@@ -706,7 +704,7 @@ end
 function Self:IsFullyLoaded(tradable)
     if not self:IsLoaded() then return false end
     local bagOrEquip, slot = self:GetPosition()
-    return bagOrEquip and slot ~= 0 and not tradable or self:IsTradable(bagOrEquip, slot)
+    return bagOrEquip and slot ~= 0 and (not tradable or self:IsTradable(bagOrEquip, slot))
 end
 
 -- Run a function when item data is fully loaded
@@ -714,20 +712,22 @@ function Self:OnFullyLoaded(fn, ...)
     if not self.isOwner then
         self:OnLoaded(fn, ...)
     else
-        if self:IsFullyLoaded(true) then
-            fn(...)
-        else
-            local args = {...}
-            local entry =  {fn = fn, args = args}
-            entry.timer = Addon:ScheduleTimer(function ()
-                local i = Util.TblFind(Self.queue, entry)
-                if i and self:IsFullyLoaded() then
+        local entry, try = {fn = fn, args = {...}}
+        try = function (n)
+            local i = Util.TblFind(Self.queue, entry)
+            if i then
+                if self:IsFullyLoaded(n >= 5) then
                     tremove(Self.queue, i)
-                    fn(unpack(args))
+                    fn(unpack(entry.args))
+                elseif n > 0 then
+                    entry.timer = Addon:ScheduleTimer(try, 0.1, n-1)
+                else
+                    tremove(Self.queue, i)
                 end
-            end, 0.5)
-            tinsert(Self.queue, entry)
+            end
         end
+        tinsert(Self.queue, entry)
+        try(10)
     end
 end
 
@@ -825,7 +825,7 @@ function Self:SetPosition(bagOrEquip, slot)
 
     self.bagOrEquip = bagOrEquip
     self.slot = slot
-    self.position = slot and {bagOrEquip, slot} or bagOrEquip
+    self.position = {bagOrEquip, slot}
 
     self.isEquipped = bagOrEquip and slot == nil
     self.isSoulbound = self.isSoulbound or self.isEquipped
@@ -838,7 +838,7 @@ end
 -- An item as been moved
 function Self.OnMove(from, to)
     Util(Addon.rolls).Where({isOwner = true, traded = false}).Find(function (roll)
-        if Util(from).Equals(roll.item.position)() then
+        if Util.TblEquals(from, roll.item.position) then
             roll.item:SetPosition(to)
             return true
         end
@@ -849,9 +849,9 @@ end
 function Self.OnSwitch(pos1, pos2)
     local item1, item2
     local items = Util(Addon.rolls).Where({IsOwner = true, traded = false}).Filter(function (roll)
-        if not item1 and Util(pos1).Equals(roll.item.position)() then
+        if not item1 and Util.TblEquals(pos1, roll.item.position) then
             item1 = roll.item
-        elseif not item2 and Util(pos2).Equals(roll.item.position)() then
+        elseif not item2 and Util.TblEquals(pos2, roll.item.position) then
             item2 = roll.item
         end
         return item1 and item2

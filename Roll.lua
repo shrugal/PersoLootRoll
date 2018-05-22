@@ -641,6 +641,10 @@ end
 
 -- Some common error checks for a loot roll
 function Self:Validate(status, unit)
+    if Addon.DEBUG then
+        return true
+    end
+
     if status and self.status ~= status then
         return false, L["ERROR_ROLL_STATUS_NOT_" .. status]
     elseif not UnitExists(self.owner) then
