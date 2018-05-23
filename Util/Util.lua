@@ -316,6 +316,16 @@ function Self.TblCopy(t)
     end)
 end
 
+-- Iterate a table in chunks of n
+function Self.TblChunk(t, n, f)
+    local u = {}
+    Self.TblIter(t, function (v, i, u)
+        tinsert(u, v)
+        if #u == (n or 1) then f(u) wipe(u) end
+    end, u)
+    if #u > 0 then f(u) end
+end
+
 -- Count, sum up, multiply
 function Self.TblCount(t) return Self.TblFoldL(t, Self.FnInc, 0) end
 function Self.TblSum(t) return Self.TblFoldL(t, Self.FnAdd, 0) end

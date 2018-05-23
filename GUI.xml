@@ -6,4 +6,49 @@
             <OnClick function="PLR_LootWonAlertFrame_OnClick"/>
         </Scripts>
     </Button>
+
+    <!--
+    <Frame name="PLR_RollsFrame" inherits="UIPanelDialogTemplate" mixin="PLR_RollsFrameMixin" enableMouse="true" movable="true" resizable="true">
+        <Size>
+            <AbsDimension x="400" y="300"/>
+        </Size>
+        <ResizeBounds>
+            <minResize x="200" y="150"/>
+        </ResizeBounds>
+        <Anchors>
+            <Anchor point="CENTER"/>
+        </Anchors>
+        <Frames>
+            <Button parentKey="Resize">
+                <Size><AbsDimension x="16" y="16"/></Size>
+                <Anchors>
+                    <Anchor point="BOTTOMRIGHT" x="-3" y="6"/>
+                </Anchors>
+                <HitRectInsets><AbsInset left="0" right="-4" top="0" bottom="-3"/></HitRectInsets>
+                <NormalTexture file="Interface\ChatFrame\UI-ChatIM-SizeGrabber-Up"/>
+                <PushedTexture file="Interface\ChatFrame\UI-ChatIM-SizeGrabber-Down"/>
+                <HighlightTexture file="Interface\ChatFrame\UI-ChatIM-SizeGrabber-Highlight"/>
+                <Scripts>
+                    <OnMouseDown>
+                        self:GetParent():SetMaxResize(GetScreenWidth(), GetScreenHeight())
+                        self:GetParent():StartSizing()
+                    </OnMouseDown>
+                    <OnMouseUp>self:GetParent():StopMovingOrSizing()</OnMouseUp>
+                </Scripts>
+            </Button>
+            <ScrollFrame parentKey="Scroll" inherits="UIPanelScrollFrameTemplate">
+                <Anchors>
+                    <Anchor point="TOPLEFT" x="8" y="-27"/>
+                    <Anchor point="RIGHT" x="-28" y="0"/>
+                    <Anchor point="BOTTOM" relativeKey="Resize" relativePoint="TOP"/>
+                </Anchors>
+            </ScrollFrame>
+        </Frames>
+        <Scripts>
+            <OnLoad>self:RegisterForDrag("LeftButton")</OnLoad>
+            <OnDragStart>self:StartMoving()</OnDragStart>
+            <OnDragStop>self:StopMovingOrSizing()</OnDragStop>
+        </Scripts>
+    </Frame>
+    -->
 </Ui>
