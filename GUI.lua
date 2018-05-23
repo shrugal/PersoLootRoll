@@ -195,14 +195,14 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
                 end
 
                 if cell.rowspan then
-                    rowspans[col] = {cell = cell, span = cell.rowspan - 1, colspan = colspan, height = 0}
+                    rowspans[col] = {cell = cell, span = cell.rowspan - 1, height = 0}
                 else
                     totalV = max(totalV, ceil(f:GetHeight() or 0))
                 end
             -- Or decrement rowspan counter and update total height
             else
-                rowspan.span = lastRow and 0 or rowspan.span - 1
-                if rowspan.span == 0 then
+                rowspan.span = rowspan.span - 1
+                if lastRow or rowspan.span == 0 then
                     totalV = max(totalV, ceil(cell.frame:GetHeight() or 0) - rowspan.height)
                 end
             end
@@ -223,7 +223,7 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
                     end
 
                     -- No rowspan or the rowspan ends here
-                    if not rowspan or rowspan.span == 0 then
+                    if not rowspan or lastRow or rowspan.span == 0 then
                         f = cell.frame
                         alignFn, align = GetAlign("V", cell, cols[col], obj, floor(f:GetHeight() or 0), cellV)
                         if alignFn == "fill" then
