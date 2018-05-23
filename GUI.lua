@@ -101,7 +101,7 @@ local GetAlign = function (dir, child, col, obj, cell, total)
     if type(fn) == "string" then
         fn = fn:lower()
         fn = dir == "V" and (fn:sub(1, 3) == "top" and "start" or fn:sub(1, 6) == "bottom" and "end" or fn:sub(1, 6) == "center" and "middle")
-          or dir == "H" and (fn:sub(-5) == "right" and "start" or fn:sub(-4) == "left" and "end" or fn:sub(-6) == "center" and "middle")
+          or dir == "H" and (fn:sub(-4) == "left" and "start" or fn:sub(-5) == "right" and "end" or fn:sub(-6) == "center" and "middle")
           or fn
         val = (fn == "start" or fn == "fill") and 0 or fn == "end" and total - cell or (total - cell) / 2
     elseif type(fn) == "function" then
@@ -110,7 +110,7 @@ local GetAlign = function (dir, child, col, obj, cell, total)
         val = fn
     end
 
-    return fn, max(0, min(val, total))
+    return fn, max(0, min(floor(val), total))
 end
 
 -- Get the width for a column, based on abs. width, rel. width or weight.
@@ -130,7 +130,7 @@ Columns:
  - align, alignH, alignV: Overwrites the container setting for alignment.
 Cell:
  - colspan: Makes a cell span multiple columns.
- - rowspan: TODO
+ - rowspan: Makes a cell span multiple rows.
  - align, alignH, alignV: Overwrites the container and column setting for alignment.
 ]]
 AceGUI:RegisterLayout("PLR_Table", function (content, children)
@@ -139,12 +139,13 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
     local spaceH = obj.spaceH or obj.space or 0
     local spaceV = obj.spaceV or obj.space or 0
     local totalH = content.width or content:GetWidth() or 0 - spaceH * (#cols - 1)
+    local rowspans = {}
 
     -- Determine fixed size cols, collect weights and calculate scale
     local extantH, weight = totalH, 0
     for i, col in ipairs(cols) do
         if type(col) == "number" then
-            col = {[col > 1 and col < 10 and "weight" or "width"] = col}
+            col = {[col >= 1 and col < 10 and "weight" or "width"] = col}
             cols[i] = col
         end
 
@@ -157,53 +158,90 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
     local scale = weight > 0 and extantH / weight or 0
 
     -- Arrange children
-    local n, offsetH, offsetV, totalV, cellH, childH, f, col, colspan, alignFn, align = 1, 0, 0, 0
+    local n, offsetH, offsetV, totalV = 1, 0, 0, 0
+    local slotFound, col, rowStart, rowEnd, lastRow, cell, cellH, cellV, cellOffsetV, childH, f, alignFn, align, colspan, rowspan
     for i, child in ipairs(children) do
-        col = (n - 1) % #cols + 1
-        cellH = GetWidth(col, scale, totalH)
+        repeat
+            col = (n - 1) % #cols + 1
+            cellH = GetWidth(cols[col], scale, totalH)
 
-        -- First column of a row -> Update/reset variables
-        if col == 1 then
-            offsetH, offsetV, totalV = 0, offsetV + totalV + spaceV, 0
-        end
+            -- First column of a row -> Update/reset variables
+            if col == 1 then
+                rowStart = i
+                offsetH, offsetV, totalV = 0, offsetV + totalV + spaceV, 0
+            end
 
-        -- Handle colspan
-        colspan = child.colspan and max(0, min(child.colspan - 1, #cols - col)) or 0
-        for j=col+1, col+colspan do
-            cellH = cellH + spaceH + GetWidth(j, scale, totalH)
-        end
-        n = n + colspan
+            rowspan = rowspans[col]
+            cell = rowspan and rowspan.cell or child
 
-        -- Set width and left anchor
-        f = child.frame
-        f:ClearAllPoints()
-        f:SetWidth(0)
-        childH = f:GetWidth() or 0
-        alignFn, align = GetAlign("H", child, cols[col], obj, childH, totalH)
-        if alignFn == "fill" or childH > cellH then
-            childH = cellH
-            f:SetWidth(cellH)
-        end
-        f:SetPoint("LEFT", content, offsetH + align, 0)
+            -- Handle colspan
+            colspan = max(0, min((cell.colspan or 1) - 1, #cols - col))
+            for j=col+1, col+colspan do
+                cellH = cellH + spaceH + GetWidth(cols[j], scale, totalH)
+            end
+            n = n + colspan + 1
 
-        -- Update variables
-        offsetH = offsetH + cellH + spaceH
-        totalV = max(totalV, f:GetHeight() or 0)
-        n = n + 1
-
-        -- Last column of a row -> Set top anchors
-        if col+colspan == #cols or i == #children then
-            repeat
-                f = children[i].frame
-                alignFn, align = GetAlign("H", children[i], cols[col], obj, f:GetHeight(), totalV)
-                if alignFn == "fill" then
-                    f:SetHeight(totalV)
+            -- Set width and left anchor
+            slotFound = not rowspan
+            lastRow = slotFound and i == #children
+            if slotFound then
+                f = cell.frame
+                f:ClearAllPoints()
+                childH = floor(f:GetWidth() or 0)
+                alignFn, align = GetAlign("H", cell, cols[col], obj, childH, cellH)
+                f:SetPoint("LEFT", content, offsetH + align, 0)
+                if alignFn == "fill" or childH > cellH then
+                    f:SetPoint("RIGHT", content, "LEFT", offsetH + align + cellH, 0)
                 end
-                f:SetPoint("TOP", content, 0, -(offsetV + align))
-                i = i - 1
-                col, colspan = col - colspan and colspan + 1 or children[i] and children[i].colspan or 1
-            until col <= 0
-        end
+
+                if cell.rowspan then
+                    rowspans[col] = {cell = cell, span = cell.rowspan - 1, colspan = colspan, height = 0}
+                else
+                    totalV = max(totalV, ceil(f:GetHeight() or 0))
+                end
+            -- Or decrement rowspan counter and update total height
+            else
+                rowspan.span = lastRow and 0 or rowspan.span - 1
+                if rowspan.span == 0 then
+                    totalV = max(totalV, ceil(cell.frame:GetHeight() or 0) - rowspan.height)
+                end
+            end
+
+            offsetH = offsetH + cellH + spaceH
+
+            -- Last column of a row -> Set top anchors
+            if col+colspan == #cols or lastRow then
+                i, col, rowEnd = rowStart, 1, col
+                while col <= rowEnd do
+                    rowspan = rowspans[col]
+
+                    if rowspan then
+                        cell, cellV, cellOffsetV = rowspan.cell, totalV + rowspan.height, offsetV - rowspan.height
+                        rowspan.height = cellV
+                    else
+                        cell, cellV, cellOffsetV = children[i], totalV, offsetV
+                    end
+
+                    -- No rowspan or the rowspan ends here
+                    if not rowspan or rowspan.span == 0 then
+                        f = cell.frame
+                        alignFn, align = GetAlign("V", cell, cols[col], obj, floor(f:GetHeight() or 0), cellV)
+                        if alignFn == "fill" then
+                            f:SetHeight(cellV)
+                        end
+                        f:SetPoint("TOP", content, 0, -(cellOffsetV + align))
+                        rowspans[col] = nil
+                    end
+
+                    -- No rowspan or the rowspan starts here
+                    if not rowspan or rowspan.cell == children[i] then
+                        i = i + 1
+                    end
+
+                    col = col + max(0, min((cell.colspan or 1) - 1, #cols - col)) + 1
+                end
+            end
+        until slotFound
     end
 end)
 
