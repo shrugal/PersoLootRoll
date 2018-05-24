@@ -27,11 +27,23 @@ LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "Der Besitzer dieses Items benutzt nic
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "Das PersoLootRoll Addon unterstützt kein Entzaubern."
 
 L["TRADE"] = "Handeln"
+L["TRADED"] = "Gehandelt"
 L["ITEM"] = "Item"
+L["ID"] = "ID"
+L["OWNER"] = "Besitzer"
+L["STATUS"] = "Status"
+L["WINNER"] = "Gewinner"
+L["YOUR_BID"] = "Dein Gebot"
+L["PLAYER"] = "Spieler"
+L["BID"] = "Gebot"
+L["ACTIONS"] = "Aktionen"
+L["AWARD"] = "Zuweisen"
+L["AWARD_LOOT"] = "Beute zuweisen"
 
 L["HELP"] = "Verrolle und biete auf items (/PersoLootRoll oder /plr).\n"
  .. "Benutzung: \n"
  .. "/plr: Optionen öffnen\n"
+ .. "/plr rolls: Roll-Übersicht öffnen\n"
  .. "/plr roll [Item]* (<Zeit> <Spieler>): Verrolle ein item\n"
  .. "/plr bid <Spieler> ([Item]): Biete auf ein Item eines anderen Spielers\n"
  .. "/plr config: Einstellungen über die Commando-Zeile ändern\n"
@@ -50,6 +62,10 @@ L["ROLL_ANSWER_0"] = "Passen"
 L["ROLL_ANSWER_1"] = "Bedarf"
 L["ROLL_ANSWER_2"] = "Gier"
 L["ROLL_ANSWER_3"] = "Entzaubern"
+L["ROLL_STATUS_-1"] = "Abgebrochen"
+L["ROLL_STATUS_0"] = "Wartend"
+L["ROLL_STATUS_1"] = "Läuft"
+L["ROLL_STATUS_2"] = "Fertig"
 
 L["BID_START"] = "Biete auf %s von %s."
 L["BID_PASS"] = "Passe auf %s von %s."
@@ -58,8 +74,6 @@ L["BID_NO_CHAT"] = "Flüstern ist deaktiviert, du musst %s selbst nach %s fragen
 
 L["TRADE_START"] = "Starte Handel mit %s."
 L["TRADE_CANCEL"] = "Breche Handel mit %s ab."
-
-L["AWARD_LOOT"] = "Beute vergeben"
 
 L["ERROR_PLAYER_NOT_FOUND"] = "Kann Spieler %s nicht finden."
 L["ERROR_ITEM_NOT_TRADABLE"] = "Du kannst dieses Item nicht handeln."

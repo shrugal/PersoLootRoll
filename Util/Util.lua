@@ -205,6 +205,11 @@ function Self.Equals(a, b)
     return a == b
 end
 
+-- Compare two values, returns -1 for a < b, 0 for a == b and 1 for a > b
+function Self.Compare(a, b)
+    return a < b and -1 or a == b and 0 or 1
+end
+
 -------------------------------------------------------
 --                       Table                       --
 -------------------------------------------------------
@@ -215,10 +220,11 @@ function Self.Tbl(v)
 end
 
 -- Get a value from a table
-function Self.TblGet(t, path)
-    return Self.TblFoldL(Self.TblPath(path), function (u, k)
+function Self.TblGet(t, path, default)
+    local val = Self.TblFoldL(Self.TblPath(path), function (u, k)
         if u == nil or k == nil then return u else return u[k] end
     end, t)
+    if val == nil then return default else return val end
 end
 
 -- Get a random entry from the table
@@ -317,13 +323,8 @@ function Self.TblCopy(t)
 end
 
 -- Iterate a table in chunks of n
-function Self.TblChunk(t, n, f)
-    local u = {}
-    Self.TblIter(t, function (v, i, u)
-        tinsert(u, v)
-        if #u == (n or 1) then f(u) wipe(u) end
-    end, u)
-    if #u > 0 then f(u) end
+function Self.TblChunk(t, fn, n)
+    Self.TblIter(Self.TblTuple(t, n), fn)
 end
 
 -- Count, sum up, multiply
@@ -469,7 +470,7 @@ end
 
 -- Extract a list of property values
 function Self.TblPluck(t, k)
-    return Self.TblMap(t, Self.FnGet(k))
+    return Self.TblMap(t, Self.FnPluck(k))
 end
 
 -- GROUP
@@ -486,7 +487,7 @@ end
 
 -- Group table entries by key
 function Self.TblGroupBy(t, k)
-    return Self.TblGroup(t, Self.FnGet(k))
+    return Self.TblGroup(t, Self.FnPluck(k))
 end
 
 -- Group the keys with the same values
@@ -559,6 +560,22 @@ function Self.TblSort(t, fn)
     return t
 end
 
+-- Sort a table of tables by given table keys and default values
+function Self.TblSortBy(t, ...)
+    local keys, key, default, cmp = Self.TblTuple({...})
+    return Self.TblSort(t, function (a, b)
+        for i,tuple in pairs(keys) do
+            key, default = unpack(keys)
+            cmp = Self.Compare(Self.TblGet(a, key, default), Self.TblGet(b, key, default))
+            if cmp == 1 then
+                return false
+            elseif cmp == -1 or i == #keys then
+                return true
+            end
+        end
+    end)
+end
+
 -- Merge two or more tables
 function Self.TblMerge(t, ...)
     t = t or {}
@@ -575,6 +592,20 @@ function Self.TblMerge(t, ...)
 end
 
 -- OTHER
+
+-- Convert the table into tuples of n
+function Self.TblTuple(t, n)
+    local r = {}
+    Self.TblFoldL(t, function (u, v, i)
+        if not u or #u == (n or 2) then
+            u = {}
+            tinsert(r, u)
+        end
+        tinsert(u, v)
+        return u
+    end)
+    return r
+end
 
 -- This just looks nicer when chaining
 function Self.TblUnpack(t, fn)
@@ -674,14 +705,14 @@ function Self.FnMul(a, b) return a*b end
 function Self.FnDiv(a, b) return a/b end
 
 -- Get a function that always returns the same values
-function Self.FnConst(...)
+function Self.FnVal(...)
     local args = {...}
     return function () return unpack(args) end
 end
 
 -- Get function that always gets a specific key from a given table
-function Self.FnGet(k) return Self.FnPrep(Self.TblGet, nil, k) end
-function Self.FnGetFrom(t) return Self.FnPrep(Self.TblGet, t) end
+function Self.FnPluck(k, d) return function (t) return Self.TblGet(t, k, d) end end
+function Self.FnPluckFrom(t, d) return function (k) return Self.TblGet(t, k, d) end end
 
 -- Get a function that always compares to a given value
 function Self.FnEq(v)
@@ -709,6 +740,49 @@ end
 -------------------------------------------------------
 --                       Other                       --
 -------------------------------------------------------
+
+-- xpcall safecall implementation
+
+local xpcall = xpcall
+
+local function errorhandler(err)
+	return geterrorhandler()(err)
+end
+
+local function CreateDispatcher(argCount)
+	local code = [[
+		local xpcall, eh = ...
+		local method, ARGS
+		local function call() return method(ARGS) end
+	
+		local function dispatch(func, ...)
+			method = func
+			if not method then return end
+			ARGS = ...
+			return xpcall(call, eh)
+		end
+	
+		return dispatch
+	]]
+	
+	local ARGS = {}
+	for i = 1, argCount do ARGS[i] = "arg"..i end
+	code = code:gsub("ARGS", table.concat(ARGS, ", "))
+	return assert(loadstring(code, "safecall Dispatcher["..argCount.."]"))(xpcall, errorhandler)
+end
+
+local Dispatchers = setmetatable({}, {__index=function(self, argCount)
+	local dispatcher = CreateDispatcher(argCount)
+	rawset(self, argCount, dispatcher)
+	return dispatcher
+end})
+Dispatchers[0] = function(func)
+	return xpcall(func, errorhandler)
+end
+ 
+function Self.Safecall(func, ...)
+	return Dispatchers[select("#", ...)](func, ...)
+end
 
 -- Almost a real switch statement for lua
 function Self.Switch(case)

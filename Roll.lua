@@ -96,6 +96,8 @@ function Self.Add(item, owner, ownerId, timeout)
         roll.bids = {}
     end
 
+    Addon.GUI.Rolls.Update()
+
     return roll
 end
 
@@ -138,8 +140,12 @@ function Self.Update(data, owner)
             if data.status >= Self.STATUS_DONE and roll.status < Self.STATUS_DONE then
                 roll:End(data.winner)
             end
+
+            Addon.GUI.Rolls.Update()
         end)
     end
+
+    Addon.GUI.Rolls.Update()
 
     return roll
 end
@@ -157,6 +163,8 @@ function Self.Clear(self)
 
         Addon.rolls[roll.id] = nil
     end
+
+    Addon.GUI.Rolls.Update()
 end
 
 -- Check for and convert from/to PLR roll id
@@ -220,6 +228,8 @@ function Self:Start(started)
 
             -- Let the others know
             self:SendStatus()
+
+            Addon.GUI.Rolls.Update()
         end
     end)
 
@@ -243,6 +253,8 @@ function Self:Schedule()
             else
                 self:Cancel()
             end
+
+            Addon.GUI.Rolls.Update()
         end
     end, Self.DELAY)
 
@@ -298,6 +310,8 @@ function Self:Bid(answer, sender, isWhisper)
             -- Send our bid to the owner
             self:SendBid()
         end
+
+        Addon.GUI.Rolls.Update()
     end
 
     return self
@@ -364,7 +378,7 @@ function Self:End(winner, whisper)
                 end
 
                 -- Determine a winner
-                local bids = Util(Self.ANSWERS).Except(Self.ANSWER_PASS).Map(Util.FnGetFrom(self.bids)).First()()
+                local bids = Util(Self.ANSWERS).Except(Self.ANSWER_PASS).Map(Util.FnPluckFrom(self.bids)).First()()
                 if bids then
                     local names = Util.TblKeys(bids)
                     winner = names[math.random(#names)]
@@ -434,6 +448,8 @@ function Self:Award(winner, whisper)
                 end
             end
         end
+
+        Addon.GUI.Rolls.Update()
     end
 
     return self
@@ -458,6 +474,8 @@ function Self:Cancel()
 
     -- Let everyone know
     self:SendStatus()
+        
+    Addon.GUI.Rolls.Update()
     
     return self
 end
@@ -469,6 +487,8 @@ function Self:OnTraded(target)
     end
 
     self.traded = target
+        
+    Addon.GUI.Rolls.Update()
 end
 
 -------------------------------------------------------
@@ -637,6 +657,13 @@ end
 -- Get the rolls id with PLR prefix
 function Self:GetPlrId()
     return Self.ToPlrId(self.id)
+end
+
+-- Get a player: answer map of all bids
+function Self:GetBids()
+    return Util(self.bids).Map(function (t, answer)
+        return Util.TblMap(t, Util.FnVal(answer))
+    end).Flatten()()
 end
 
 -- Some common error checks for a loot roll

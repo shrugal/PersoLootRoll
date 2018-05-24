@@ -27,11 +27,23 @@ LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "The owner of this item doesn't use th
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "The PersoLootRoll addon doesn't support disenchanting."
 
 L["TRADE"] = "Trade"
+L["TRADED"] = "Traded"
 L["ITEM"] = "item"
+L["ID"] = "ID"
+L["OWNER"] = "Owner"
+L["STATUS"] = "Status"
+L["WINNER"] = "Winner"
+L["YOUR_BID"] = "Your bid"
+L["PLAYER"] = "Player"
+L["BID"] = "Bid"
+L["ACTIONS"] = "Actions"
+L["AWARD"] = "Award"
+L["AWARD_LOOT"] = "Award loot"
 
 L["HELP"] = "Start rolls and bid for items (/PersoLootRoll or /plr).\n"
  .. "Usage: \n"
  .. "/plr: Open options window\n"
+ .. "/plr rolls: Open rolls window\n"
  .. "/plr roll [item]* (<timeout> <owner>): Start a roll for one or more item(s)\n"
  .. "/plr bid <owner> ([item]): Bid for an item from another player\n"
  .. "/plr config: Change settings through the command line\n"
@@ -50,6 +62,10 @@ L["ROLL_ANSWER_0"] = "Pass"
 L["ROLL_ANSWER_1"] = "Need"
 L["ROLL_ANSWER_2"] = "Greed"
 L["ROLL_ANSWER_3"] = "Disenchant"
+L["ROLL_STATUS_-1"] = "Canceled"
+L["ROLL_STATUS_0"] = "Pending"
+L["ROLL_STATUS_1"] = "Running"
+L["ROLL_STATUS_2"] = "Done"
 
 L["BID_START"] = "Bidding with %q for %s from %s."
 L["BID_PASS"] = "Passing on %s from %s."
@@ -58,8 +74,6 @@ L["BID_NO_CHAT"] = "Whispering is disabled, you need to ask %s for %s yourself -
 
 L["TRADE_START"] = "Starting trade with %s."
 L["TRADE_CANCEL"] = "Canceling trade with %s."
-
-L["AWARD_LOOT"] = "Award loot"
 
 L["ERROR_PLAYER_NOT_FOUND"] = "Cannot find player %s."
 L["ERROR_ITEM_NOT_TRADABLE"] = "You cannot trade that item."

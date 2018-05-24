@@ -210,6 +210,7 @@ function Addon:HandleChatCommand (msg)
     Util.Switch(cmd) {
         ["help"] = function () self:Help() end,
         ["config"] = function () LibStub("AceConfigCmd-3.0").HandleCommand(Addon, "plr config", PLR_NAME, msg:sub(7)) end,
+        ["rolls"] = self.GUI.Rolls.Show,
         ["roll"] = function  ()
             local items, i, item = {}, 1
     

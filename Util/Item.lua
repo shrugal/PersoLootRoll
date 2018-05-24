@@ -532,7 +532,7 @@ function Self:GetRelics(relicTypes)
     _, success = self:GetBasicInfo()
     if not success then return {} end
 
-    local relics = Util.TblFirst(Self.CLASS_RELICS, Util.FnGet(self.id))[self.id]
+    local relics = Util.TblFirst(Self.CLASS_RELICS, Util.FnPluck(self.id))[self.id]
     relicTypes = relicTypes and Util.Tbl(relicTypes)
 
     return relics and Util(relics).Filter(not relicTypes and Util.FnTrue or Util.FnPrep(Util.TblFind, relicTypes), true).Map(function (relicType, slot)
@@ -547,7 +547,7 @@ function Self:GetUniqueRelicSlots()
     _, success = self:GetBasicInfo()
     if not success then return {} end
 
-    local weapons = Self.CLASS_RELICS[Util.TblSearch(Self.CLASS_RELICS, Util.FnGet(self.id))]
+    local weapons = Self.CLASS_RELICS[Util.TblSearch(Self.CLASS_RELICS, Util.FnPluck(self.id))]
 
     return Util.TblDiff(weapons[self.id], unpack(Util(weapons).Omit(self.id).Values()()), true)
 end
