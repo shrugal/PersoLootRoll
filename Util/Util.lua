@@ -210,6 +210,15 @@ function Self.Compare(a, b)
     return a < b and -1 or a == b and 0 or 1
 end
 
+-- Create an iterator
+function Self.Iter(from, to, step)
+    local i = from and from - 1 or 0
+    return function (steps)
+        i = i + (step or 1) * (steps or 1)
+        return (not to or i <= to) and i or nil
+    end
+end
+
 -------------------------------------------------------
 --                       Table                       --
 -------------------------------------------------------

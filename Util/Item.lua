@@ -638,7 +638,7 @@ function Self:GetEligible(allOrUnit)
     if not self.eligible then
         self.eligible = {}
         Util.SearchGroup(function (i, unit)
-            if unit and unit ~= UnitName("player") and self:IsUseful(unit) then
+            if unit and self:IsUseful(unit) then
                 self.eligible[unit] = self:HasSufficientLevel(unit)
             end
         end)
@@ -649,7 +649,7 @@ function Self:GetEligible(allOrUnit)
     elseif allOrUnit then
         return self.eligible
     else
-        return Util.TblOnly(self.eligible, true, true)
+        return Util(self.eligible).Only(true, true).Omit(UnitName("player"))()
     end
 end
 
@@ -829,6 +829,11 @@ function Self:SetPosition(bagOrEquip, slot)
 
     self.isEquipped = bagOrEquip and slot == nil
     self.isSoulbound = self.isSoulbound or self.isEquipped
+end
+
+-- Get the equipment location or relic type
+function Self:GetLocation()
+    return self:GetBasicInfo().isRelic and self:GetFullInfo().relicType or self.equipLoc
 end
 
 -------------------------------------------------------
