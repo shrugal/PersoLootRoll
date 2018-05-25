@@ -443,7 +443,7 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
 
                             -- Account for and update cumulative rowspan height
                             if rowspan then
-                                cellV, cellOffsetV = cellV + rowspanHeight, cellOffsetV - rowspanHeight
+                                cellV, cellOffsetV = cellV + rowspan.height, cellOffsetV - rowspan.height
                                 rowspan.height = cellV
                             end
 
