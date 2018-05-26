@@ -7,7 +7,7 @@ local L = {}
 setmetatable(L, Locale.MT)
 Locale[lang] = L
 
-L["ROLL_START"] = PLR_CHAT .. " Starting roll for %s -> Whipser me!"
+L["ROLL_START"] = PLR_CHAT .. " Giving away %s -> /w me or /roll!"
 L["ROLL_WINNER"] = PLR_CHAT .. " <%s> has won %s -> Trade me!"
 L["ROLL_WINNER_WHISPER"] = "You have won %s! Please trade me."
 L["ROLL_ANSWER_BID"] = "Ok, I registered your bid for %s."
@@ -79,13 +79,17 @@ L["TRADE_CANCEL"] = "Canceling trade with %s."
 
 L["FILTER"] = "Filter"
 L["FILTER_ALL"] = "For all players"
-L["FILTER_ALL_DESC"] = "Include rolls for all players, not just those from you or with items that might interest you."
+L["FILTER_ALL_DESC"] = "Include rolls for all players, not just yours or those with items that might interest you."
 L["FILTER_CANCELED"] = "Canceled"
 L["FILTER_CANCELED_DESC"] = "Include canceled rolls."
 L["FILTER_DONE"] = "Done"
 L["FILTER_DONE_DESC"] = "Include rolls that have ended."
-L["FILTER_WON"] = "Won/Traded"
-L["FILTER_WON_DESC"] = "Include rolls that have been won or whose items have been traded."
+L["FILTER_WON"] = "Won"
+L["FILTER_WON_DESC"] = "Include rolls that have been won by someone."
+L["FILTER_TRADED"] = "Traded"
+L["FILTER_TRADED_DESC"] = "Include rolls whose items have been traded."
+
+L["DIALOG_ROLL_CANCEL"] = "Do you want to cancel this roll?"
 
 L["ERROR_PLAYER_NOT_FOUND"] = "Cannot find player %s."
 L["ERROR_ITEM_NOT_TRADABLE"] = "You cannot trade that item."

@@ -616,7 +616,7 @@ end
 
 -- Check against equipped ilvl
 function Self:HasSufficientLevel(unit)
-    return self.level + self:GetThresholdForLocation() >= self:GetLevelForLocation(unit or "player")
+    return self:GetBasicInfo().level + self:GetThresholdForLocation() >= self:GetLevelForLocation(unit or "player")
 end
 
 -- Check if item is useful for the player
@@ -642,6 +642,10 @@ function Self:GetEligible(allOrUnit)
                 self.eligible[unit] = self:HasSufficientLevel(unit)
             end
         end)
+
+        if Addon.DEBUG then
+            self.eligible[UnitName("player")] = self:HasSufficientLevel()
+        end
     end
 
     if type(allOrUnit) == "string" then

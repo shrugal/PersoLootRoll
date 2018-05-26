@@ -250,6 +250,8 @@ function Self:Schedule()
             if self.isOwner or (self.item:ShouldBeBidOn() and (self.ownerId or self.item:GetFullInfo().isTradable)) then
                 self.timer = nil
                 self:Start()
+            elseif not self.item.isEquippable then
+                self:Clear()
             else
                 self:Cancel()
             end
@@ -615,14 +617,8 @@ end
 
 -- Check if the given unit is eligible
 function Self:UnitIsEligible(unit, checkIlvl)
-    if not self.isOwner then
-        return false
-    elseif UnitIsUnit(unit, "player") then
-        return true
-    else
-        local val = self.item:GetEligible(unit)
-        if checkIlvl then return val else return val ~= nil end
-    end
+    local val = self.item:GetEligible(unit)
+    if checkIlvl then return val else return val ~= nil end
 end
 
 -- Check if a unit has bid, optionally with the given answer

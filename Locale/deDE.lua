@@ -7,7 +7,7 @@ local L = {}
 setmetatable(L, Locale.MT)
 Locale[lang] = L
 
-L["ROLL_START"] = PLR_CHAT .. " Verrolle %s -> Mich anflüstern!"
+L["ROLL_START"] = PLR_CHAT .. " Vergebe %s -> /w me oder /roll!"
 L["ROLL_WINNER"] = PLR_CHAT .. " <%s> hat %s gewonnen -> Mich anhandeln!"
 L["ROLL_WINNER_WHISPER"] = "Du hast %s gewonnen! Bitte handel mich an."
 L["ROLL_ANSWER_BID"] = "Ok, ich hab dein Gebot für %s registriert."
@@ -79,13 +79,17 @@ L["TRADE_CANCEL"] = "Breche Handel mit %s ab."
 
 L["FILTER"] = "Filter"
 L["FILTER_ALL"] = "Für alle Spieler"
-L["FILTER_ALL_DESC"] = "Zeige Verlosungen für alle Spieler, nicht nur deine oder solche mit Items die dich interessieren könnten."
+L["FILTER_ALL_DESC"] = "Zeige Verlosungen für alle Spieler, nicht nur deine oder solche deren Items die dich interessieren könnten."
 L["FILTER_CANCELED"] = "Abgebrochen"
 L["FILTER_CANCELED_DESC"] = "Zeige abgebrochene Verlosungen."
 L["FILTER_DONE"] = "Fertig"
 L["FILTER_DONE_DESC"] = "Zeiten fertige Verlosungen an."
-L["FILTER_WON"] = "Gewonnen/Gehandelt"
-L["FILTER_WON_DESC"] = "Zeige gewonnene Verlosungen an, und solche deren Items schon gehandelt wurden."
+L["FILTER_WON"] = "Gewonnen"
+L["FILTER_WON_DESC"] = "Zeige Verlosungen an, die von jemandem gewonnen wurden."
+L["FILTER_TRADED"] = "Gehandelt"
+L["FILTER_TRADED_DESC"] = "Zeite Verlosungen an, deren Items bereits gehandelt wurden."
+
+L["DIALOG_ROLL_CANCEL"] = "Möchtest du diese Verlosung abbrechen?"
 
 L["ERROR_PLAYER_NOT_FOUND"] = "Kann Spieler %s nicht finden."
 L["ERROR_ITEM_NOT_TRADABLE"] = "Du kannst dieses Item nicht handeln."

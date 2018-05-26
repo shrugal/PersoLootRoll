@@ -74,9 +74,21 @@ function Self.GetFullName(unit)
         or nil
 end
 
+-- Get a unit's short name with a (*) at the end if the unit is from another realm
+function Self.GetShortenedName(unit)
+    local name, realm = UnitFullName(Self.GetUnit(unit))
+    return name .. (realm and realm ~= "" and " (*)" or "")
+end
+
 -- Get a unit's class color
 function Self.GetUnitColor(unit)
     return RAID_CLASS_COLORS[select(2, UnitClass(unit))] or {r = 1, g = 1, b = 1, colorStr = "ffffffff"}
+end
+
+-- Get a unit's name in class color
+function Self.GetColoredName(name, unit)
+    local color = Self.GetUnitColor(unit or name)
+    return ("|c%s%s|r"):format(color.colorStr, name)
 end
 
 -- Check if the player is following someone
@@ -212,7 +224,7 @@ end
 
 -- Create an iterator
 function Self.Iter(from, to, step)
-    local i = from and from - 1 or 0
+    local i = from or 0
     return function (steps)
         i = i + (step or 1) * (steps or 1)
         return (not to or i <= to) and i or nil
@@ -574,7 +586,7 @@ function Self.TblSortBy(t, ...)
     local keys, key, default, cmp = Self.TblTuple({...})
     return Self.TblSort(t, function (a, b)
         for i,tuple in pairs(keys) do
-            key, default = unpack(keys)
+            key, default = unpack(tuple)
             cmp = Self.Compare(Self.TblGet(a, key, default), Self.TblGet(b, key, default))
             if cmp == 1 then
                 return false
