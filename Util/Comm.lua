@@ -158,7 +158,7 @@ end
 
 function Self.GetTradeLink(player)
     local L = LibStub("AceLocale-3.0"):GetLocale(PLR_NAME)
-    return ("|cff4D85E6|Hplrtrade:%s|h[%s]|h|r"):format(player, L["TRADE"])
+    return ("|cff4D85E6|Hplrtrade:%s|h[%s]|h|r"):format(player, TRADE)
 end
 
 -- Export

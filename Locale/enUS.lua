@@ -26,7 +26,6 @@ if not L then return end
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "The owner of this item doesn't use the PersoLootRoll addon."
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "The PersoLootRoll addon doesn't support disenchanting."
 
-L["TRADE"] = "Trade"
 L["TRADED"] = "Traded"
 L["ITEM"] = "item"
 L["ID"] = "ID"
@@ -60,10 +59,10 @@ L["ROLL_WINNER_OWN"] = "You have won your own %s."
 L["ROLL_WINNER_SELF"] = "You have won %s from %s -> %s."
 L["ROLL_WINNER_OTHER"] = "%s has won %s from you -> %s."
 L["ROLL_CANCEL"] = "Canceling roll for %s from %s."
-L["ROLL_ANSWER_0"] = "Pass"
-L["ROLL_ANSWER_1"] = "Need"
-L["ROLL_ANSWER_2"] = "Greed"
-L["ROLL_ANSWER_3"] = "Disenchant"
+L["ROLL_ANSWER_0"] = PASS
+L["ROLL_ANSWER_1"] = NEED
+L["ROLL_ANSWER_2"] = GREED
+L["ROLL_ANSWER_3"] = ROLL_DISENCHANT
 L["ROLL_STATUS_-1"] = "Canceled"
 L["ROLL_STATUS_0"] = "Pending"
 L["ROLL_STATUS_1"] = "Running"

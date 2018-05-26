@@ -287,20 +287,28 @@ function Rolls.Update()
                 -- Need
                 f = Self.CreateRowAction("UI-GroupLoot-Dice", actions, function ()
                     roll:Bid(Roll.ANSWER_NEED)
-                end)
+                end, NEED)
                 Self(f):SetImageSize(14, 14):SetWidth(16):SetHeight(16)
 
                 -- Greed
                 if roll.ownerId then
                     Self.CreateRowAction("UI-GroupLoot-Coin", actions, function ()
                         roll:Bid(Roll.ANSWER_GREED)
-                    end)
+                    end, GREED)
                 end
 
                 -- Pass
                 f = Self.CreateRowAction("UI-GroupLoot-Pass", actions, function ()
                     roll:Bid(Roll.ANSWER_PASS)
-                end)
+                end, PASS)
+                Self(f):SetImageSize(13, 13):SetWidth(16):SetHeight(16)
+            end
+
+            -- Trade
+            if not roll.traded and roll.winner and (roll.item.isOwner or roll.winner == UnitName("player")) then
+                f = Self.CreateRowAction("Interface\\GossipFrame\\VendorGossipIcon", actions, function ()
+                    roll:Trade()
+                end, TRADE)
                 Self(f):SetImageSize(13, 13):SetWidth(16):SetHeight(16)
             end
 
@@ -311,7 +319,7 @@ function Rolls.Update()
                     if dialog then
                         dialog.data = roll
                     end
-                end)
+                end, CANCEL)
                 f.image:SetTexCoord(0.22, 0.78, 0.22, 0.78)
             end
 
@@ -402,7 +410,7 @@ function Rolls.UpdateDetails(self, roll)
         children[it()]:SetText(player.bid and L["ROLL_ANSWER_" .. player.bid] or "-")
 
         -- Actions
-        Self(children[it()]):SetText(L["AWARD"]):SetDisabled(not canBeAwarded)
+        Self(children[it()]):SetText(canBeAwarded and L["AWARD"] or "-"):SetDisabled(not canBeAwarded)
     end, "unit")
 
     self:ResumeLayout()
@@ -649,11 +657,21 @@ function Self.UpdateRows(self, items, createFn, updateFn, idPath)
     end
 end
 
-function Self.CreateRowAction(icon, parent, onClick)
-    f = Self("Icon"):SetImage("Interface\\Buttons\\" .. icon .. "-Up")
+function Self.CreateRowAction(icon, parent, onClick, desc)
+    f = Self("Icon"):SetImage(icon:sub(1, 9) == "Interface" and icon or "Interface\\Buttons\\" .. icon .. "-Up")
         :SetImageSize(16, 16):SetHeight(16):SetWidth(16)
         :SetCallback("OnClick", onClick):AddTo(parent)()
-        f.image:SetPoint("TOP")
+    f.image:SetPoint("TOP")
+
+    if desc then
+        f:SetCallback("OnEnter", function (self)
+            GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
+            GameTooltip:SetText(desc, 1, 1, 1, 1)
+            GameTooltip:Show()
+        end)
+        f:SetCallback("OnLeave", function () GameTooltip:Hide() end)
+    end
+
     return f
 end
 

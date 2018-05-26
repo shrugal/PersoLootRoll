@@ -482,6 +482,14 @@ function Self:Cancel()
     return self
 end
 
+-- Trade with the owner or the winner of the roll
+function Self:Trade()
+    local target = self.item.isOwner and self.winner or self.winner == UnitName("player") and self.item.owner
+    if target then
+        Trade.Initiate(target)
+    end
+end
+
 -- Called when the roll's item is traded
 function Self:OnTraded(target)
     if self.status < Self.STATUS_DONE then

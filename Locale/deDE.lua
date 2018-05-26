@@ -26,7 +26,6 @@ if not L then return end
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "Der Besitzer dieses Items benutzt nicht das PersoLootRoll Addon."
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "Das PersoLootRoll Addon unterstützt kein Entzaubern."
 
-L["TRADE"] = "Handeln"
 L["TRADED"] = "Gehandelt"
 L["ITEM"] = "Item"
 L["ID"] = "ID"
@@ -60,10 +59,10 @@ L["ROLL_WINNER_OWN"] = "Du hast %s von dir selbst gewonnen."
 L["ROLL_WINNER_SELF"] = "Du hast %s von %s gewonnen -> %s."
 L["ROLL_WINNER_OTHER"] = "%s hat %s von dir gewonnen -> %s."
 L["ROLL_CANCEL"] = "Breche Verlosung für %s von %s ab."
-L["ROLL_ANSWER_0"] = "Passen"
-L["ROLL_ANSWER_1"] = "Bedarf"
-L["ROLL_ANSWER_2"] = "Gier"
-L["ROLL_ANSWER_3"] = "Entzaubern"
+L["ROLL_ANSWER_0"] = PASS
+L["ROLL_ANSWER_1"] = NEED
+L["ROLL_ANSWER_2"] = GREED
+L["ROLL_ANSWER_3"] = ROLL_DISENCHANT
 L["ROLL_STATUS_-1"] = "Abgebrochen"
 L["ROLL_STATUS_0"] = "Wartend"
 L["ROLL_STATUS_1"] = "Läuft"
