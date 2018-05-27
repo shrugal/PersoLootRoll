@@ -81,6 +81,7 @@ function Self.Add(item, owner, ownerId, timeout)
         ownerId = ownerId,
         timeout = timeout or Self.GetTimeout(),
         status = Self.STATUS_PENDING,
+        bids = {},
         shown = false,
         posted = false,
         traded = false
@@ -93,7 +94,6 @@ function Self.Add(item, owner, ownerId, timeout)
     -- Set ownerId if we are the owner
     if roll.isOwner then
         roll.ownerId = roll.id
-        roll.bids = {}
     end
 
     Addon.GUI.Rolls.Update()
@@ -102,16 +102,21 @@ function Self.Add(item, owner, ownerId, timeout)
 end
 
 -- Process a roll update message
-function Self.Update(data, owner)
+function Self.Update(data, sender)
+    -- TODO: This should change once we have rules for masterlooting
+    if data.owner ~= sender then
+        return
+    end
+
     -- Get or create the roll
-    local roll = Self.Find(data.id, owner, data.item)
+    local roll = Self.Find(data.id, data.owner, data.item)
     if not roll then
         -- No point in creating rolls that are canceled or done
         if data.status == Self.STATUS_CANCELED or data.status == Self.STATUS_DONE and data.winner ~= UnitName("player") then
             return
         end
 
-        roll = Self.Add(data.item, owner, data.id)
+        roll = Self.Add(Item.FromLink(data.item.link, data.item.owner), data.owner, data.id)
     elseif not roll.ownerId then
         roll.ownerId = data.id
     end
@@ -139,6 +144,10 @@ function Self.Update(data, owner)
             -- End the roll if the owner has ended it
             if data.status >= Self.STATUS_DONE and roll.status < Self.STATUS_DONE then
                 roll:End(data.winner)
+            end
+            -- Register when the roll has been traded
+            if data.traded ~= roll.traded then
+                roll:OnTraded(data.traded)
             end
 
             Addon.GUI.Rolls.Update()
@@ -302,11 +311,8 @@ function Self:Bid(answer, sender, isWhisper)
             Util.TblSet(self, {"bids", answer, sender}, isWhisper or false)
             
             -- Check if we can end it now or post to chat
-            if not self:CheckEnd() and not self.posted and Comm.ShouldChat() then
-                self:ExtendTimeLeft()
-
-                Comm.ChatLine("ROLL_START", Comm.TYPE_GROUP, self.item.link)
-                self.posted = true
+            if not self:CheckEnd() and Comm.ShouldChat() then
+                self:Advertise()
             end
         elseif fromSelf then
             -- Send our bid to the owner
@@ -411,6 +417,7 @@ function Self:Award(winner, whisper)
     else
         -- Set winner
         self.winner = winner and Util.GetName(winner) or nil
+        self.isWinner = self.winner == UnitName("player")
 
         -- Let the player know, announce to chat and the winner
         if self.winner then
@@ -484,9 +491,9 @@ end
 
 -- Trade with the owner or the winner of the roll
 function Self:Trade()
-    local target = self.item.isOwner and self.winner or self.winner == UnitName("player") and self.item.owner
+    local target = self.item.isOwner and self.winner or self.isWinner and self.item.owner
     if target then
-        Trade.Initiate(target)
+        Addon.Trade.Initiate(target)
     end
 end
 
@@ -510,9 +517,9 @@ function Self:GetRollFrame()
     local id, frame = self:GetPlrId()
 
     for i=1, NUM_GROUP_LOOT_FRAMES do
-        frame = _G["GroupLootFrame"..i];
+        frame = _G["GroupLootFrame"..i]
         if frame.rollID == id then
-            return frame
+            return frame, i
         end
     end
 end
@@ -528,6 +535,10 @@ function Self:HideRollFrame()
     local frame = self:GetRollFrame()
     if frame then
         GroupLootContainer_RemoveFrame(GroupLootContainer, frame)
+
+        -- TODO: This is required to circumvent a bug in ElvUI
+        GroupLootContainer.rollFrames = Util.TblValues(GroupLootContainer.rollFrames)
+        GroupLootContainer_Update(GroupLootContainer)
     end
 end
 
@@ -541,13 +552,46 @@ end
 --                       Comm                        --
 -------------------------------------------------------
 
+-- Advertise the roll to the group
+function Self:Advertise()
+    if self.posted or not self:CanBeAwarded() then return end
+    
+    self:ExtendTimeLeft()
+
+    -- Get the next free roll slot
+    local posted = Util.TblIter(Addon.rolls, function (roll, _, u)
+        if roll.status == Self.STATUS_RUNNING and type(roll.posted) == "number" then
+            u[roll.posted] = true
+        end
+    end)
+    local i for j=1,50 do if not posted[j] then i = j break end end
+
+    if i < 50 then
+        Comm.ChatLine("ROLL_START", Comm.TYPE_GROUP, self.item.link, 100 + i)
+        self.posted = i
+        self:SendStatus()
+        Addon.GUI.Rolls.Update()
+    end
+end
+
 -- Send the roll status to others
 function Self:SendStatus()
     if not self.isOwner then return end
 
-    local data = Util.TblSelect(self, "id", "status", "started", "timeout", "winner")
-    data.winner = data.winner and Util.GetFullName(data.winner)
-    data.item = self.item.link
+    local data = {
+        id = self.id,
+        owner = self.owner,
+        status = self.status,
+        started = self.started,
+        timeout = self.timeout,
+        posted = self.posted,
+        winner = self.winner and Util.GetFullName(self.winner),
+        traded = self.traded and Util.GetFullName(self.traded),
+        item = {
+            link = self.item.link,
+            owner = Util.GetFullName(self.item.owner)
+        }
+    }
 
     Comm.SendData(Comm.EVENT_ROLL_STATUS, data, target or Comm.TYPE_GROUP)
 end

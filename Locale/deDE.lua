@@ -7,7 +7,7 @@ local L = {}
 setmetatable(L, Locale.MT)
 Locale[lang] = L
 
-L["ROLL_START"] = PLR_CHAT .. " Vergebe %s -> /w me oder /roll!"
+L["ROLL_START"] = PLR_CHAT .. " Vergebe %s -> /w me oder /roll %d!"
 L["ROLL_WINNER"] = PLR_CHAT .. " <%s> hat %s gewonnen -> Mich anhandeln!"
 L["ROLL_WINNER_WHISPER"] = "Du hast %s gewonnen! Bitte handel mich an."
 L["ROLL_ANSWER_BID"] = "Ok, ich hab dein Gebot für %s registriert."
@@ -28,18 +28,20 @@ LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "Das PersoLootRoll Addon unterst�
 
 L["TRADED"] = "Gehandelt"
 L["ITEM"] = "Item"
-L["ID"] = "ID"
+L["ID"] = ID
 L["OWNER"] = "Besitzer"
-L["STATUS"] = "Status"
+L["STATUS"] = STATUS
 L["WINNER"] = "Gewinner"
 L["YOUR_BID"] = "Dein Gebot"
 L["PLAYER"] = "Spieler"
+L["LEVEL"] = LEVEL
 L["ITEM_LEVEL"] = "Gegenstandsstufe"
 L["BID"] = "Gebot"
 L["ACTIONS"] = "Aktionen"
 L["AWARD"] = "Zuweisen"
 L["AWARD_LOOT"] = "Beute zuweisen"
 L["ROLLS"] = "Verlosungen"
+L["ADVERTISE"] = "Im Chat ankündigen"
 
 L["HELP"] = "Verrolle und biete auf items (/PersoLootRoll oder /plr).\n"
  .. "Benutzung: \n"

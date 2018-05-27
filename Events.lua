@@ -116,8 +116,18 @@ Addon:RegisterEvent("CHAT_MSG_SYSTEM", function (event, msg)
         local unit, result, from, to = msg:match(PATTERN_ROLL_RESULT)
         if unit and result and from and to then
             result, from, to = tonumber(result), tonumber(from), tonumber(to)
+            if to ~= 1 then return end
+            
+            -- Find the roll
+            local i, roll = to % 50
+            if i == 0 then
+                roll = lastPostedRoll
+            else
+                roll = Util.TblFirstWhere(Addon.rolls, {isOwner = true, status = Roll.STATUS_RUNNING, posted = i})
+            end
+            
+            -- Get the correct answer
             local answer = to < 100 and Roll.ANSWER_GREED or Roll.ANSWER_NEED
-            local roll = lastPostedRoll
             
             -- Register the unit's bid
             if Util.UnitInGroup(unit, true) and roll and roll:CanBeAwardedTo(unit) and not roll:UnitHasBid(unit, answer) then
@@ -143,18 +153,21 @@ Addon:RegisterEvent("CHAT_MSG_SYSTEM", function (event, msg)
         if unit then
             -- Clear rolls
             Util(Addon.rolls).Where({owner = unit}).Apply(Roll.Clear)
-            Util(Addon.rolls).Filter(function (roll) return roll:CanBeAwarded() end).Iter(function (roll)
-                -- Remove bids
-                Util.TblIter(roll.bids, function (bids)
-                    bids[unit] = nil
-                end)
-                -- Remove from eligible list
-                if roll.item.eligible then
-                    roll.item.eligible[unit] = nil
+            for id, roll in pairs(Addon.rolls) do
+                if roll:CanBeWon(true) then
+                    -- Remove from eligible list
+                    if roll.item.eligible then
+                        roll.item.eligible[unit] = nil
+                    end
+
+                    if roll.isOwner then
+                        -- Remove bids
+                        for _, bids in pairs(roll.bids) do bids[unit] = nil end
+                        -- Check if we can end the rolls now
+                        roll:CheckEnd()
+                    end
                 end
-                -- Check if we can end the rolls now
-                roll:CheckEnd()
-            end)
+            end
 
             -- Clear inspect cache
             Inspect.Clear(unit)
@@ -165,8 +178,8 @@ end)
 
 -- Loot
 
-Addon:RegisterEvent("CHAT_MSG_LOOT", function (event, msg, _, _, _, unit)
-    unit = Util.GetName(unit)
+Addon:RegisterEvent("CHAT_MSG_LOOT", function (event, msg, _, _, _, owner)
+    unit = Util.GetUnit(owner)
     if not Addon:IsTracking() or not Util.UnitInGroup(unit) then return end
 
     local item = Item.GetLink(msg)
@@ -195,31 +208,36 @@ end)
 
 -- Group/Raid/Instance
 
-function Self.OnGroupMessage(event, msg, unit)
-    unit = Util.GetName(unit)
+function Self.OnGroupMessage(event, msg, sender)
+    unit = Util.GetUnit(sender)
     if not Addon:IsTracking() then return end
 
     local fromSelf = UnitIsUnit(unit, "player")
     local fromAddon = Util.StrStartsWith(msg, PLR_CHAT)
 
     local link = Item.GetLink(msg)
-    link = link and select(2, GetItemInfo(link))
-    if not link then return end
-    
-    local roll = Roll.Find(nil, unit, link)
-    if not roll then return end
+    if link then
+        print("Link", link)
+        local item = Item:FromLink(link)
+        item:OnLoaded(function ()
+            print("Loaded", item.link)
+            local roll = Roll.Find(nil, unit, item)
+            if not roll then return end
+            print("Roll", roll)
 
-    -- Remember the last roll posted to chat
-    lastPostedRoll = roll
-    
-    -- Remember that the roll has been posted
-    roll.posted = true
-    
-    if not fromSelf and not fromAddon then
-        -- Roll for the item in chat
-        if Addon.db.profile.roll and Util.In(roll.answer, Roll.ANSWER_NEED, Roll.ANSWER_GREED) then
-            RandomRoll("1", roll.answer == Roll.ANSWER_GREED and "50" or "100")
-        end
+            -- Remember the last roll posted to chat
+            lastPostedRoll = roll
+            
+            -- Remember that the roll has been posted
+            roll.posted = true
+            
+            if not fromSelf and not fromAddon then
+                -- Roll for the item in chat
+                if Addon.db.profile.roll and Util.In(roll.answer, Roll.ANSWER_NEED, Roll.ANSWER_GREED) then
+                    RandomRoll("1", roll.answer == Roll.ANSWER_GREED and "50" or "100")
+                end
+            end
+        end)
     end
 end
 
@@ -230,8 +248,8 @@ Addon:RegisterEvent("CHAT_MSG_RAID_LEADER", Self.OnGroupMessage)
 
 -- Whisper
 
-Addon:RegisterEvent("CHAT_MSG_WHISPER", function (event, msg, unit)
-    unit = Util.GetUnit(unit)
+Addon:RegisterEvent("CHAT_MSG_WHISPER", function (event, msg, sender)
+    unit = Util.GetUnit(sender)
     if not Addon:IsTracking() or not Util.UnitInGroup(unit) then return end
 
     local answer = Addon.db.profile.answer
@@ -291,20 +309,20 @@ end)
 -------------------------------------------------------
 
 -- Roll status
-Comm.Listen(Comm.EVENT_ROLL_STATUS, function (event, data, channel, unit)
-    unit = Util.GetName(unit)
+Comm.Listen(Comm.EVENT_ROLL_STATUS, function (event, data, channel, sender)
+    unit = Util.GetUnit(sender)
     if not Util.UnitInGroup(unit, true) then return end
 
     local success, data = Addon:Deserialize(data)
     
     if success and data.id then
-        Addon.Roll.Update(data, unit)
+        Addon.Roll.Update(data, sender)
     end
 end)
 
 -- Bids
-Comm.Listen(Comm.EVENT_BID, function (event, data, channel, unit)
-    unit = Util.GetName(unit)
+Comm.Listen(Comm.EVENT_BID, function (event, data, channel, sender)
+    unit = Util.GetUnit(sender)
     if not Util.UnitInGroup(unit, true) then return end
 
     local success, data = Addon:Deserialize(data)

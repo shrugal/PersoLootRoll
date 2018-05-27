@@ -76,8 +76,12 @@ end
 
 -- Get a unit's short name with a (*) at the end if the unit is from another realm
 function Self.GetShortenedName(unit)
-    local name, realm = UnitFullName(Self.GetUnit(unit))
-    return name .. (realm and realm ~= "" and " (*)" or "")
+    unit = Self.GetUnit(unit)
+    local name, realm = UnitFullName(unit)
+
+    return name and name ~= "" and name .. (realm and realm ~= "" and " (*)" or "")
+        or unit and unit ~= "" and not unit:find("^[a-z]") and unit:gsub("-.+", " (*)")
+        or nil
 end
 
 -- Get a unit's class color
@@ -709,6 +713,15 @@ function Self.StrIsNumber(str, leadingZero)
 end
 
 -------------------------------------------------------
+--                       Number                      --
+-------------------------------------------------------
+
+-- Rounds a number
+function Self.NumRound(num)
+    return floor(num + .5)
+end
+
+-------------------------------------------------------
 --                      Function                     --
 -------------------------------------------------------
 
@@ -755,6 +768,30 @@ end
 function Self.FnArgs(fn, n)
     return function (...)
         return fn(unpack({...}, 1, n))
+    end
+end
+
+-- Throttle a function, so it is called at most every n seconds
+function Self.FnThrottle(fn, n)
+    local timer
+    return function (...)
+        if not timer then
+            timer = Addon:ScheduleTimer(function (...)
+                timer = nil
+                fn(...)
+            end, n, ...)
+        end
+    end
+end
+
+-- Debounce a function, so it doesn't get called again for n seconds after it has been called
+function Self.FnDebounce(fn, n)
+    local called
+    return function (...)
+        if not called or called + n < GetTime() then
+            called = GetTime()
+            fn(...)
+        end
     end
 end
 
@@ -867,7 +904,6 @@ setmetatable(Self, {
         setmetatable(c, {
             __index = function (c, k)
                 return function (...)
-
                     -- Figure out the correct key
                     local pre = Self.Switch(type(c.v)) {
                         table = "Tbl",

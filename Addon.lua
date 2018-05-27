@@ -209,6 +209,7 @@ function Addon:HandleChatCommand (msg)
 
     Util.Switch(cmd) {
         ["help"] = function () self:Help() end,
+        ["options"] = function () self:ShowOptions() end,
         ["config"] = function () LibStub("AceConfigCmd-3.0").HandleCommand(Addon, "plr config", PLR_NAME, msg:sub(7)) end,
         ["rolls"] = self.GUI.Rolls.Show,
         ["roll"] = function  ()
@@ -258,12 +259,14 @@ function Addon:HandleChatCommand (msg)
             local link = "|cffa335ee|Hitem:152412::::::::110:105::4:3:3613:1457:3528:::|h[Depraved Machinist's Footpads]|h|r"
             local roll = Addon.Roll.Add(link):Start():Bid(Addon.Roll.ANSWER_PASS):Bid(Addon.Roll.ANSWER_NEED, "Zhael", true)
         end,
-        default = function ()
-            -- Have to call it twice because of a blizzard UI bug
-            InterfaceOptionsFrame_OpenToCategory(self.configFrame)
-            InterfaceOptionsFrame_OpenToCategory(self.configFrame)
-        end
+        default = self.GUI.Rolls.Show
     }
+end
+
+function Addon:ShowOptions()
+    -- Have to call it twice because of a blizzard UI bug
+    InterfaceOptionsFrame_OpenToCategory(self.configFrame)
+    InterfaceOptionsFrame_OpenToCategory(self.configFrame)
 end
 
 function Addon:Help()

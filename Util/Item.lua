@@ -558,8 +558,7 @@ end
 
 -- Check the item quality
 function Self:HasSufficientQuality()
-    self:GetLinkInfo()
-    return self.quality >= (IsInRaid() and LE_ITEM_QUALITY_EPIC or LE_ITEM_QUALITY_RARE)
+    return self:GetLinkInfo().quality >= (IsInRaid() and LE_ITEM_QUALITY_EPIC or LE_ITEM_QUALITY_RARE)
 end
 
 -- Check if an item can be equipped
@@ -636,20 +635,28 @@ end
 -- Check who in the group could use the item
 function Self:GetEligible(allOrUnit)
     if not self.eligible then
-        self.eligible = {}
-        Util.SearchGroup(function (i, unit)
-            if unit and self:IsUseful(unit) then
-                self.eligible[unit] = self:HasSufficientLevel(unit)
+        if type(allOrUnit) == "string" then
+            if not self:IsUseful(allOrUnit) then
+                return nil
+            else
+                return self:HasSufficientLevel(allOrUnit)
             end
-        end)
+        else
+            self.eligible = {}
+            Util.SearchGroup(function (i, unit)
+                if unit and self:IsUseful(unit) then
+                    self.eligible[unit] = self:HasSufficientLevel(unit)
+                end
+            end)
 
-        if Addon.DEBUG then
-            self.eligible[UnitName("player")] = self:HasSufficientLevel()
+            if Addon.DEBUG and self:IsUseful(UnitName("player")) then
+                self.eligible[UnitName("player")] = self:HasSufficientLevel()
+            end
         end
     end
 
     if type(allOrUnit) == "string" then
-        return self.eligible[allOrUnit]
+        return self.eligible[Util.GetName(allOrUnit)]
     elseif allOrUnit then
         return self.eligible
     else
@@ -668,7 +675,7 @@ end
 
 -- Check if the addon should offer to bid on an item
 function Self:ShouldBeBidOn()
-    return self:HasSufficientQuality() and self:IsUseful("player") and self:HasSufficientLevel()
+    return self:HasSufficientQuality() and self:GetEligible("player")
 end
 
 -- Check if the addon should start a roll for an item

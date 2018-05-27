@@ -119,15 +119,15 @@ function Self.EnableGroupLootRoll()
 
     --GroupLootContainer:RemoveFrame
     if not Addon:IsHooked("GroupLootContainer_RemoveFrame") then
-        Addon:RawHook("GroupLootContainer_RemoveFrame", function (self, frame)
-            Addon.hooks.GroupLootContainer_RemoveFrame(self, frame)
-
+        Addon:SecureHook("GroupLootContainer_RemoveFrame", function (self, frame)
             -- Find a running roll that hasn't been shown yet
-            local roll = Util.TblFirstWhere(Addon.rolls, {status = Addon.Roll.STATUS_RUNNING, shown = false})
+            local roll = Util.TblFirst(Addon.rolls, function (roll)
+                return not roll.shown and roll.status == Roll.STATUS_RUNNING and roll.item:ShouldBeBidOn()
+            end)
             if roll then
                 roll:ShowRollFrame()
             end
-        end, true)
+        end)
     end
 
     -- GameTooltip:SetLootRollItem

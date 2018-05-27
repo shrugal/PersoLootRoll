@@ -103,8 +103,8 @@ function Self.Chat(msg, target)
     local channel, player = Self.GetDestination(target)
 
     -- TODO: DEBUG
-    -- Addon:Print("@" .. (player or channel) .. ": " .. msg)
-    -- do return end
+    Addon:Print("@" .. (player or channel) .. ": " .. msg)
+    do return end
     -- TODO: DEBUG
 
     SendChatMessage(msg, channel, nil, player)
