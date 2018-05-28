@@ -17,6 +17,11 @@ Self.TYPES = {Self.TYPE_GROUP, Self.TYPE_PARTY, Self.TYPE_RAID, Self.TYPE_GUILD,
 -- Addon events
 Self.EVENT_ROLL_STATUS = "STATUS"
 Self.EVENT_BID = "BID"
+Self.EVENT_VERSION_ASK = "VERSION-ASK"
+Self.EVENT_VERSION = "VERSION"
+Self.EVENT_MASTERLOOT_ASK = "ML-ASK"
+Self.EVENT_MASTERLOOT_ACK = "ML-ACK"
+Self.EVENT_MASTERLOOT_STOP = "ML-STOP"
 
 -- Message patterns
 Self.PATTERN_PARTY_JOINED = ERR_JOINED_GROUP_S:gsub("%%s", "(.+)")
@@ -68,8 +73,8 @@ function Self.ShouldChat(target)
     -- Check whisper target
     if channel == Self.TYPE_WHISPER then
         local target = config.whisper.target
-        local guild = GetGuildInfo(unit)
-        local isGuild, isFriend = guild ~= nil and guild == GetGuildInfo("player"), Util.IsFriend(unit)
+        local guild = Util.GetGuildName(unit)
+        local isGuild, isFriend = guild ~= nil and guild == Util.GetGuildName("player"), Util.UnitIsFriend(unit)
 
         if isGuild or isFriend then
             if isFriend and not target.friend or isGuild and not target.guild then
@@ -125,7 +130,7 @@ function Self.Send(event, txt, target, prio, callbackFn, callbackArg)
     local channel, player = Self.GetDestination(target)
 
     -- Send the message
-    Addon:SendCommMessage(event, txt, channel, player, prio, callbackFn, callbackArg)
+    Addon:SendCommMessage(event, txt or "", channel, player, prio, callbackFn, callbackArg)
 end
 
 -- Send structured addon data
@@ -134,8 +139,23 @@ function Self.SendData(event, data, target, prio, callbackFn, callbackArg)
 end
 
 -- Listen for an addon message
-function Self.Listen(event, method)
-    Addon:RegisterComm(Self.GetPrefix(event), method)
+function Self.Listen(event, method, fromSelf, fromAll)
+    Addon:RegisterComm(Self.GetPrefix(event), function (event, msg, channel, sender)
+        local unit = Util.GetUnit(sender)
+        if fromAll or Util.UnitInGroup(unit, not fromSelf) then
+            method(event, msg, channel, sender, unit)
+        end
+    end)
+end
+
+-- Listen for an addon message with data
+function Self.ListenData(event, method)
+    Self.Listen(event, function (event, data, ...)
+        local success, data = Addon:Deserialize(data)
+        if success then
+            method(event, data, ...)
+        end
+    end)
 end
 
 -------------------------------------------------------

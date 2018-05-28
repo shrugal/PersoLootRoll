@@ -84,6 +84,12 @@ function Self.GetShortenedName(unit)
         or nil
 end
 
+-- Get the unit's guild name, incl. realm if from another realm
+function Self.GetGuildName(unit)
+    local guild, _, _, realm = GetGuildInfo(unit)
+    return guild and guild .. (realm and "-" .. realm or "") or nil
+end
+
 -- Get a unit's class color
 function Self.GetUnitColor(unit)
     return RAID_CLASS_COLORS[select(2, UnitClass(unit))] or {r = 1, g = 1, b = 1, colorStr = "ffffffff"}
@@ -100,8 +106,26 @@ function Self.IsFollowing(unit)
     return AutoFollowStatus:IsShown() and (not unit or unit == AutoFollowStatusText:GetText():match(Self.PATTERN_FOLLOW))
 end
 
--- Check if the given unit is on your friend list
-function Self.IsFriend(unit)
+-- Check if the current group is a guild group (>=80% guild members)
+function Self.IsGuildGroup(guild)
+    guild = guild or Self.GetGuildName("player")
+    if not guild or not IsInGroup() then
+        return false
+    end
+
+    local count = 0
+
+    for i=1, GetNumGroupMembers() do
+        if guild == Self.GetGuildName(GetRaidRosterInfo(i)) then
+            count = count + 1
+        end
+    end
+
+    return count / GetNumGroupMembers() >= 0.8
+end
+
+-- Check if the given unit is on our friend list
+function Self.UnitIsFriend(unit)
     local unit = Self.GetName(unit)
 
     for i=1, GetNumFriends() do
@@ -111,22 +135,10 @@ function Self.IsFriend(unit)
     end
 end
 
--- Check if the current group is a guild group (>=80% guild members)
-function Self.IsGuildGroup()
-    if not IsInGuild() or not IsInGroup() then
-        return false
-    end
-
-    local guild = GetGuildInfo("player")
-    local count = 0
-
-    for i=1, GetNumGroupMembers() do
-        if guild == GetGuildInfo(GetRaidRosterInfo(i)) then
-            count = count + 1
-        end
-    end
-
-    return count / GetNumGroupMembers() >= 0.8
+-- Check if the given unit is in our guild
+function Self.UnitIsGuildMember(unit)
+    local guild = Self.GetGuildName("player")
+    return guild ~= nil and Self.GetGuildName(unit) == guild
 end
 
 -- Shortcut for checking whether a unit is in our party or raid
@@ -137,6 +149,52 @@ function Self.UnitInGroup(unit, onlyOthers)
     else
         return isSelf or UnitInParty(unit) or UnitInRaid(unit)
     end
+end
+
+-- Check if the given unit can become our masterlooter
+function Self.UnitAllowMasterloot(unit)
+    local config = Addon.db.profile.masterloot
+
+    -- Check allow all
+    if config.allowAll then
+        return true
+    end
+
+    -- Check whitelist
+    for i,v in pairs(config.whitelist) do
+        if UnitIsUnit(unit, v) then
+            return true
+        end
+    end
+
+    if config.allow.friend and Self.UnitIsFriend(unit) then
+        return true
+    elseif config.allow.guild and Self.UnitIsGuildMember(unit) then
+        return true
+    elseif config.allow.guildgroup then
+        local guild = Self.GetGuildName(unit)
+        if guild and Self.IsGuildGroup(guild) then
+            return true
+        end
+    end
+
+    return false
+end
+
+-- Check if we should auto-accept masterlooter requests from this unit
+function Self.UnitAcceptMasterloot(unit)
+    local config = Addon.db.profile.masterloot.accept
+
+    if config.friend and Self.UnitIsFriend(unit) then
+        return true
+    elseif Self.UnitIsGuildMember(unit) then
+        local rank = select(3, GetGuildInfo(unit))
+        if config.guildmaster and rank == 1 or config.guildofficer and rank == 2 then
+            return true
+        end
+    end
+
+    return false
 end
 
 -- Get hidden tooltip for scanning
@@ -729,6 +787,7 @@ function Self.Fn(fn) return type(fn) == "string" and _G[fn] or fn end
 function Self.FnId(...) return ... end
 function Self.FnTrue() return true end
 function Self.FnFalse() return false end
+function Self.FnNoop() end
 
 -- Some math
 function Self.FnInc(i) return i+1 end

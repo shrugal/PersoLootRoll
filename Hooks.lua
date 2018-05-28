@@ -273,7 +273,7 @@ function Self.EnableUnitMenus()
             if self.value and Util.StrStartsWith(self.value, NAME) then
                 local roll = Roll.Get(UnitPopupButtons[self.value].roll)
                 if roll and roll:CanBeAwardedTo(unit, true) then
-                    roll:Award(unit)
+                    roll:Finish(unit)
                 end
             end
         end)

@@ -69,6 +69,16 @@ function Self.GetCommLine(line, player, ...)
 end
 
 -------------------------------------------------------
+--                       Helper                      --
+-------------------------------------------------------
+
+function Self.Gender(unit, w, m, ucfirst)
+    local L, g = GetCommLocale(unit), UnitSex(unit)
+    w, m = ucfirst and Util.StrUcFirst(L[w]) or L[w], ucfirst and Util.StrUcFirst(L[m]) or L[m]
+    return g == 2 and m or g == 3 and w or w .. "/" .. m
+end
+
+-------------------------------------------------------
 --                    Lang tables                    --
 -------------------------------------------------------
 

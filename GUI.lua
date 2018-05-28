@@ -26,6 +26,17 @@ StaticPopupDialogs[Self.DIALOG_ROLL_CANCEL] = {
     preferredIndex = 3
 }
 
+Self.DIALOG_MASTERLOOT_ASK = "PLR_MASTERLOOT_ASK"
+StaticPopupDialogs[Self.DIALOG_MASTERLOOT_ASK] = {
+    text = L["DIALOG_MASTERLOOT_ASK"],
+    button1 = YES,
+    button2 = NO,
+    timeout = 30,
+    whileDead = true,
+    hideOnEscape = false,
+    preferredIndex = 3
+}
+
 -------------------------------------------------------
 --                 LootAlertSystem                   --
 -------------------------------------------------------
@@ -43,7 +54,7 @@ function PLR_LootWonAlertFrame_OnClick(self, button, down)
         local roll = Roll.Get(self.rollId)
 
         if roll and not roll.traded then
-            Trade.Initiate(roll.owner)
+            Trade.Initiate(roll.item.owner)
         end
     end
 end
@@ -107,27 +118,34 @@ function Rolls.Show()
 
         -- FILTER
 
-        Rolls.frames.filter = Self("SimpleGroup"):SetLayout("Flow")
+        Rolls.frames.filter = Self("SimpleGroup"):SetLayout(nil)
             :AddTo(Rolls.frames.window)
             :SetPoint("BOTTOMLEFT", 0, 0)
             :SetPoint("BOTTOMRIGHT", -25, 0)
             :SetHeight(24)()
         
         do
-            f = Self("Label"):SetFontObject(GameFontNormal):SetText(L["FILTER"] .. ":"):AddTo(Rolls.frames.filter)()
+            f = Self("Label"):SetFontObject(GameFontNormal):SetText(L["FILTER"] .. ":")
+                :AddTo(Rolls.frames.filter)
+                :SetPoint("TOPLEFT")()
             f:SetWidth(f.label:GetStringWidth() + 30)
-            f.label:SetPoint("TOPLEFT", 15, 0)
+            f.label:SetPoint("TOPLEFT", 15, -6)
 
             for _,key in ipairs({"all", "done", "won", "traded", "canceled"}) do
                 Self.CreateFilterCheckbox(key)
             end
+
+            f = Self("InteractiveLabel"):SetFontObject(GameFontNormal):SetText()
+                :AddTo(Rolls.frames.filter)
+                :SetPoint("TOPRIGHT")
+                :SetPoint("BOTTOMRIGHT")()
         end
 
         -- SCROLL
 
         Rolls.frames.scroll = Self("ScrollFrame"):SetLayout("PLR_Table")
             :SetUserData("table", {
-                columns = {20, 1, 30, 75, 50, 50, 75, 20 * 5 - 4},
+                columns = {20, 1, 30, 75, 75, 50, 50, 75, 20 * 5 - 4},
                 space = 10
             })
             :AddTo(Rolls.frames.window)
@@ -137,13 +155,14 @@ function Rolls.Show()
         do
             local scroll = Rolls.frames.scroll
 
-            local header = {"ID", "ITEM", "LEVEL", "OWNER", "STATUS", "YOUR_BID", "WINNER"}
+            local header = {"ID", "ITEM", "LEVEL", "OWNER", "LOOTMASTER", "STATUS", "YOUR_BID", "WINNER"}
             for i,v in pairs(header) do
                 Self("Label"):SetText(Util.StrUcFirst(L[v])):SetFontObject(GameFontNormal):SetColor(1, 0.82, 0):AddTo(scroll)
             end
 
             local actions = Self("SimpleGroup"):SetLayout(nil)
                 :SetHeight(16)
+                :SetWidth(17)
                 :SetUserData("cell", {alignH = "end"})
                 :AddTo(scroll)()
             local backdrop = {f.frame:GetBackdropColor()}
@@ -199,7 +218,8 @@ function Rolls.Update()
         -- Ilvl
         Self("Label"):SetFontObject(GameFontNormal):AddTo(scroll, first)
 
-        -- Owner
+        -- Owner, Masterlooter
+        Self("InteractiveLabel"):SetFontObject(GameFontNormal):AddTo(scroll, first)
         Self("InteractiveLabel"):SetFontObject(GameFontNormal):AddTo(scroll, first)
 
         -- Status, Your bid
@@ -294,6 +314,22 @@ function Rolls.Update()
             end)
             :SetCallback("OnLeave", function () GameTooltip:Hide() end)
             :SetCallback("OnClick", function () ChatFrame_SendSmartTell(roll.item.owner) end)
+
+        -- Masterlooter
+        local ml = children[it()]
+        if roll.owner ~= roll.item.owner then
+            Self(ml)
+                :SetText(Util.GetColoredName(Util.GetShortenedName(roll.owner), roll.owner))
+                :SetCallback("OnEnter", function (self)
+                    GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
+                    GameTooltip:SetUnit(roll.owner)
+                    GameTooltip:Show()
+                end)
+                :SetCallback("OnLeave", function () GameTooltip:Hide() end)
+                :SetCallback("OnClick", function () ChatFrame_SendSmartTell(roll.owner) end)
+        else
+            Self(ml):SetText("-"):SetCallback("OnEnter", Util.FnNoop):SetCallback("OnLeave", Util.FnNoop):SetCallback("OnClick", Util.FnNoop)
+        end
 
         -- Status
         children[it()]:SetText(roll.traded and L["TRADED"] or L["ROLL_STATUS_" .. roll.status])
@@ -411,6 +447,22 @@ function Rolls.Update()
     filter.children[it()]:SetValue(Rolls.filter.won)
     filter.children[it()]:SetValue(Rolls.filter.traded)
     filter.children[it()]:SetValue(Rolls.filter.canceled)
+
+    local unit = Util.GetName(Addon.masterlooter)
+    local ml = Self(filter.children[it()]):SetText(unit and L["ML"] .. ": " .. Util.GetColoredName(Util.GetShortenedName(unit)) or "")
+        :SetCallback("OnEnter", function (self)
+            if unit then
+                GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
+                GameTooltip:SetUnit(unit)
+                GameTooltip:Show()
+            end
+        end)
+        :SetCallback("OnLeave", function () GameTooltip:Hide() end)
+        :SetCallback("OnClick", function () if unit then ChatFrame_SendSmartTell(unit) end end)()
+    ml:SetWidth(ml.label:GetStringWidth() + 30)
+    ml.label:ClearAllPoints()
+    ml.label:SetPoint("TOPLEFT", 15, -6)
+    ml.label:SetPoint("TOPRIGHT", -15, -6)
 end
 
 -- Hide the rolls frame
@@ -441,7 +493,7 @@ function Rolls.UpdateDetails(self, roll)
         -- Actions
         local f = Self("Button"):SetWidth(100):SetCallback("OnClick", function (self)
             if roll:CanBeAwardedTo(player.unit, true) then
-                roll:Award(player.unit)
+                roll:Finish(player.unit)
             end
         end)()
         f.text:SetFont(GameFontNormal:GetFont())
@@ -525,7 +577,7 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
     local cols = tableObj.columns
     local spaceH = tableObj.spaceH or tableObj.space or 0
     local spaceV = tableObj.spaceV or tableObj.space or 0
-    local totalH = (content.width or content:GetWidth() or 0) - spaceH * (#cols - 1)
+    local totalH = (content:GetWidth() or content.width or 0) - spaceH * (#cols - 1)
     local rowspans = {}
 
     -- Determine fixed size cols, collect weights and calculate scale
@@ -706,6 +758,8 @@ function Self.UpdateRows(self, items, createFn, updateFn, idPath)
 end
 
 function Self.CreateFilterCheckbox(key)
+    local filter = Rolls.frames.filter
+
     f = Self("CheckBox"):SetLabel(L["FILTER_" .. key:upper()])
         :SetCallback("OnValueChanged", function (self, _, checked)
             if Rolls.filter[key] ~= checked then
@@ -721,7 +775,8 @@ function Self.CreateFilterCheckbox(key)
             GameTooltip:Show()
         end)
         :SetCallback("OnLeave", function () GameTooltip:Hide() end)
-        :AddTo(Rolls.frames.filter)()
+        :AddTo(filter)
+        :SetPoint("TOPLEFT", filter.children[#filter.children-1].frame, "TOPRIGHT")()
     f:SetWidth(f.text:GetStringWidth() + 24 + 15)
     return f
 end

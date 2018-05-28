@@ -2,6 +2,7 @@ local Addon = LibStub("AceAddon-3.0"):GetAddon(PLR_NAME)
 local L = LibStub("AceLocale-3.0"):GetLocale(PLR_NAME)
 local Util = Addon.Util
 local Item = Addon.Item
+local Locale = Addon.Locale
 local Comm = Addon.Comm
 local Self = {}
 
@@ -46,12 +47,18 @@ function Self.Find(ownerId, owner, item)
             id = Util.TblFindWhere(Addon.rolls, {ownerId = ownerId, owner = owner})
         end
 
-        -- Search by owner and link
+        -- Search by owner and link/id
         if not id and owner and item then
+            local t = type(item)
             id = Util.TblSearch(Addon.rolls, function (roll)
                 return (ownerId == nil or roll.ownerId == nil)
-                   and roll.owner == owner
-                   and roll.item.link == (item.link or item)
+                    and (
+                        t == "table" and roll.item.link == item.link and roll.item.owner == item.owner or
+                        roll.owner == owner and (
+                            t == "number" and roll.item.id == item or
+                            t == "string" and roll.item.link == item
+                        )
+                    )
             end)
         end
     end
@@ -103,28 +110,28 @@ end
 
 -- Process a roll update message
 function Self.Update(data, sender)
-    -- TODO: This should change once we have rules for masterlooting
-    if data.owner ~= sender then
-        return
-    end
+    local unit = Util.GetUnit(sender)
 
     -- Get or create the roll
     local roll = Self.Find(data.id, data.owner, data.item)
     if not roll then
+        -- Only the item owner can create rolls
+        if data.item.owner ~= sender then return end
+
         -- No point in creating rolls that are canceled or done
-        if data.status == Self.STATUS_CANCELED or data.status == Self.STATUS_DONE and data.winner ~= UnitName("player") then
-            return
-        end
+        if data.status == Self.STATUS_CANCELED or data.status == Self.STATUS_DONE and UnitIsUnit(Util.GetUnit(data.winner), "player") then return end
 
         roll = Self.Add(Item.FromLink(data.item.link, data.item.owner), data.owner, data.id)
-    elseif not roll.ownerId then
-        roll.ownerId = data.id
+    else
+        -- Only the roll owner can send updates
+        if unit ~= roll.owner then return end
+
+        roll.owner = data.owner or roll.owner
+        roll.ownerId = data.id or roll.ownerId
     end
 
     -- We don't need updates on canceled rolles
-    if roll.status == Self.STATUS_CANCELED then
-        return
-    end
+    if roll.status == Self.STATUS_CANCELED then return end
 
     -- Update the timeout
     if data.timeout > roll.timeout then
@@ -212,7 +219,7 @@ end
 
 -- Start a roll
 function Self:Start(started)
-    Addon:Verbose(L["ROLL_START"]:format(self.item.link, Comm.GetPlayerLink(self.owner)))
+    Addon:Verbose(L["ROLL_START"]:format(self.item.link, Comm.GetPlayerLink(self.item.owner)))
 
     self.item:OnLoaded(function ()
         self.item:GetFullInfo()
@@ -236,7 +243,7 @@ function Self:Start(started)
             self.timer = Addon:ScheduleTimer(Self.Finish, self:GetTimeLeft(), self)
 
             -- Let the others know
-            self:SendStatus()
+            self:SendStatus(true)
 
             Addon.GUI.Rolls.Update()
         end
@@ -255,14 +262,15 @@ function Self:Schedule()
 
     self.timer = Addon:ScheduleTimer(function ()
         -- Start the roll if it hasn't been started after the waiting period
-        if self.status == Self.STATUS_PENDING then 
-            if self.isOwner or (self.item:ShouldBeBidOn() and (self.ownerId or self.item:GetFullInfo().isTradable)) then
-                self.timer = nil
+        if self.status == Self.STATUS_PENDING then
+            self.timer = nil
+
+            if self.isOwner and self.item:ShouldBeRolledFor() or self.item:ShouldBeBidOn() then
                 self:Start()
-            elseif not self.item.isEquippable then
-                self:Clear()
-            else
+            elseif self.item.isEquippable then
                 self:Cancel()
+            else
+                self:Clear()
             end
 
             Addon.GUI.Rolls.Update()
@@ -297,9 +305,9 @@ function Self:Bid(answer, sender, isWhisper)
         if fromSelf then
             -- Print some text
             if answer == Self.ANSWER_PASS then
-                Addon:Verbose(L["BID_PASS"]:format((self.item and self.item.link) or L["ITEM"], Comm.GetPlayerLink(self.owner)))
+                Addon:Verbose(L["BID_PASS"]:format((self.item and self.item.link) or L["ITEM"], Comm.GetPlayerLink(self.item.owner)))
             else
-                Addon:Verbose(L["BID_START"]:format(L["ROLL_ANSWER_" .. answer], (self.item and self.item.link) or L["ITEM"], Comm.GetPlayerLink(self.owner)))
+                Addon:Verbose(L["BID_START"]:format(L["ROLL_ANSWER_" .. answer], (self.item and self.item.link) or L["ITEM"], Comm.GetPlayerLink(self.item.owner)))
             end
             
             -- Save the answer
@@ -333,8 +341,8 @@ function Self:CheckEnd()
     end
 
     -- We voted need on our own item
-    if self.answer == Self.ANSWER_NEED then
-        self:End(self.owner)
+    if self.item.isOwner and self.answer == Self.ANSWER_NEED then
+        self:End(self.item.owner)
         return true
     end
 
@@ -348,6 +356,114 @@ function Self:CheckEnd()
     return false
 end
 
+-- End a roll
+function Self:End(winner, whisper)
+    Addon:Verbose(L["ROLL_END"]:format(self.item.link, Comm.GetPlayerLink(self.item.owner)))
+    
+    winner = winner and Util.GetName(winner) or nil
+    
+    -- Check if we can end he roll
+    if self.status < Self.STATUS_DONE then
+        local valid, msg = self:Validate(Self.STATUS_RUNNING, winner)
+        if not valid then
+            Addon:Err(msg)
+            return self
+        end
+
+        if self.isOwner then
+            -- Set our own answer
+            if not self.answer then
+                self:Bid(Self.ANSWER_PASS)
+
+                -- We posted it to chat, so we'll wait a bit longer before we end the roll
+                if self.posted then
+                    return self
+                end
+            end
+
+            -- Determine a winner
+            if not (winner or Addon.db.profile.awardSelf or Addon:IsMasterlooter()) then
+                local bids = Util(Self.ANSWERS).Except(Self.ANSWER_PASS).Map(Util.FnPluckFrom(self.bids)).First()()
+                if bids then
+                    local names = Util.TblKeys(bids)
+                    winner = names[math.random(#names)]
+                end
+            end
+        end
+
+        -- Update status
+        self.status = Self.STATUS_DONE
+    end
+    
+    -- Set winner
+    self.winner = winner
+    self.isWinner = self.winner == UnitName("player")
+
+    -- Let the player know, announce to chat and the winner
+    if self.winner then
+        -- It has already been traded
+        if self.winner == self.item.owner then
+            self:OnTraded(self.winner)
+        end
+
+        -- We won the item
+        if self.isWinner then
+            if not self.isOwner or self.answer ~= Self.ANSWER_NEED then
+                if self.item.isOwner then
+                    Addon:Info(L["ROLL_WINNER_OWN"]:format(self.item.link))
+                else
+                    Addon:Info(L["ROLL_WINNER_SELF"]:format(self.item.link, Comm.GetPlayerLink(self.item.owner), Comm.GetTradeLink(self.item.owner)))
+                end
+
+                self:ShowAlertFrame()
+            end
+
+        -- Someone won our item
+        else
+            if self.item.isOwner then
+                Addon:Info(L["ROLL_WINNER_OTHER"]:format(Comm.GetPlayerLink(self.winner), self.item.link, Comm.GetTradeLink(self.winner)))
+            elseif self.isOwner then
+                Addon:Info(L["ROLL_WINNER_MASTERLOOT"]:format(Comm.GetPlayerLink(self.winner), self.item.link, Comm.GetPlayerLink(self.item.owner)))
+            end
+
+            if self.isOwner then
+                -- Announce to chat
+                if self.posted and Comm.ShouldChat() then
+                    if self.item.isOwner then
+                        Comm.ChatLine("ROLL_WINNER", Comm.TYPE_GROUP, Util.GetFullName(self.winner), self.item.link)
+                    else
+                        Comm.ChatLine("ROLL_WINNER_MASTERLOOT", Comm.TYPE_GROUP, Util.GetFullName(self.winner), self.item.link, Util.GetFullName(self.item.owner), Locale.Gender(self.item.owner, "HER", "HIM"))
+                    end
+                end
+                
+                -- Announce to target
+                if Addon.db.profile.answer then
+                    if whisper or (whisper == nil and Util.TblFlatten(self.bids)[winner]) then
+                        if Util.TblCount(self.item:GetEligible()) == 1 then
+                            if self.item.isOwner then
+                                Comm.ChatLine("ROLL_ANSWER_YES", self.winner)
+                            else
+                                Comm.ChatLine("ROLL_ANSWER_YES_MASTERLOOT", self.winner, self.item.owner)
+                            end
+                        else
+                            if self.item.isOwner then
+                                Comm.ChatLine("ROLL_WINNER_WHISPER", self.winner, self.item.link)
+                            else
+                                Comm.ChatLine("ROLL_WINNER_WHISPER_MASTERLOOT", self.winner, self.item.link, Util.GetFullName(self.item.owner), Locale.Gender(self.item.owner, "HER", "HIM"))
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    Addon.GUI.Rolls.Update()
+    self:SendStatus()
+
+    return self
+end
+
 -- End a roll, including closing UI elements etc.
 function Self:Finish(winner, whisper)
     if self.timer then
@@ -355,119 +471,15 @@ function Self:Finish(winner, whisper)
         self.timer = nil
     end
 
-    if self.isOwner and self.status < Self.STATUS_DONE then
-        self:End(winner, whisper)
-    end
+    self:End(winner, whisper)
 
     self:HideRollFrame()
-end
-
--- End a roll
-function Self:End(winner, whisper)
-    Addon:Verbose(L["ROLL_END"]:format(self.item.link, Comm.GetPlayerLink(self.owner)))
-    
-    -- Check if we can end he roll
-    local valid, msg = self:Validate(Self.STATUS_RUNNING, winner)
-    if not valid then
-        Addon:Err(msg)
-    else
-        winner = winner and Util.GetName(winner) or nil
-
-        if self.isOwner then
-            if not winner then
-                -- Set our own answer
-                if not self.answer then
-                    self:Bid(Self.ANSWER_PASS)
-
-                    -- We posted it to chat, so we'll wait a bit longer before we end the roll
-                    if self.posted then
-                        return self
-                    end
-                end
-
-                -- Determine a winner
-                local bids = Util(Self.ANSWERS).Except(Self.ANSWER_PASS).Map(Util.FnPluckFrom(self.bids)).First()()
-                if bids then
-                    local names = Util.TblKeys(bids)
-                    winner = names[math.random(#names)]
-                end
-            end
-
-            -- Check if we should whisper the target
-            if whisper == nil then
-                whisper = Util.TblFlatten(self.bids)[winner]
-            end
-        end
-
-        -- Update status
-        self.status = Self.STATUS_DONE
-        self:Award(winner, whisper)
-
-        -- Let everyone know
-        self:SendStatus()
-    end
-
-    return self
-end
-
--- Select a winner
-function Self:Award(winner, whisper)
-    if self.status ~= Self.STATUS_DONE then
-        self:Finish(winner, whisper)
-    else
-        -- Set winner
-        self.winner = winner and Util.GetName(winner) or nil
-        self.isWinner = self.winner == UnitName("player")
-
-        -- Let the player know, announce to chat and the winner
-        if self.winner then
-            -- It has already been traded
-            if self.winner == self.owner then
-                self:OnTraded(self.winner)
-            end
-
-            -- We won the item
-            if UnitIsUnit(self.winner, "player") then
-                if not self.isOwner or self.answer ~= Self.ANSWER_NEED then
-                    if self.isOwner then
-                        Addon:Info(L["ROLL_WINNER_OWN"]:format(self.item.link))
-                    else
-                        Addon:Info(L["ROLL_WINNER_SELF"]:format(self.item.link, Comm.GetPlayerLink(self.owner), Comm.GetTradeLink(self.owner)))
-                    end
-
-                    self:ShowAlertFrame()
-                end
-
-            -- Someone won our item
-            elseif self.isOwner then
-                Addon:Info(L["ROLL_WINNER_OTHER"]:format(Comm.GetPlayerLink(self.winner), self.item.link, Comm.GetTradeLink(self.winner)))
-
-                -- Announce to chat
-                if self.posted and Comm.ShouldChat() then
-                    Comm.ChatLine("ROLL_WINNER", Comm.TYPE_GROUP, Util.GetFullName(self.winner), self.item.link)
-                end
-
-                -- Announce to target
-                if whisper and Addon.db.profile.answer then
-                    if Util.TblCount(self.item:GetEligible()) == 1 then
-                        Comm.ChatLine("ROLL_ANSWER_YES", self.winner)
-                    else
-                        Comm.ChatLine("ROLL_WINNER_WHISPER", self.winner, self.item.link)
-                    end
-                end
-            end
-        end
-
-        Addon.GUI.Rolls.Update()
-    end
-
-    return self
 end
 
 -- Cancel a roll
 function Self:Cancel()
     if self.status == Self.STATUS_CANCELED then return end
-    Addon:Verbose(L["ROLL_CANCEL"]:format(self.item.link, Comm.GetPlayerLink(self.owner)))
+    Addon:Verbose(L["ROLL_CANCEL"]:format(self.item.link, Comm.GetPlayerLink(self.item.owner)))
 
     -- Cancel a pending timer
     if self.timer then
@@ -554,7 +566,9 @@ end
 
 -- Advertise the roll to the group
 function Self:Advertise()
-    if self.posted or not self:CanBeAwarded() then return end
+    if self.posted or not self:CanBeAwarded() then
+        return
+    end
     
     self:ExtendTimeLeft()
 
@@ -567,7 +581,12 @@ function Self:Advertise()
     local i for j=1,50 do if not posted[j] then i = j break end end
 
     if i < 50 then
-        Comm.ChatLine("ROLL_START", Comm.TYPE_GROUP, self.item.link, 100 + i)
+        if self.item.isOwner then
+            Comm.ChatLine("ROLL_START", Comm.TYPE_GROUP, self.item.link, 100 + i)
+        else
+            Comm.ChatLine("ROLL_START_MASTERLOOT", Comm.TYPE_GROUP, self.item.link, self.item.owner, 100 + i)
+        end
+
         self.posted = i
         self:SendStatus()
         Addon.GUI.Rolls.Update()
@@ -575,25 +594,25 @@ function Self:Advertise()
 end
 
 -- Send the roll status to others
-function Self:SendStatus()
-    if not self.isOwner then return end
-
-    local data = {
-        id = self.id,
-        owner = self.owner,
-        status = self.status,
-        started = self.started,
-        timeout = self.timeout,
-        posted = self.posted,
-        winner = self.winner and Util.GetFullName(self.winner),
-        traded = self.traded and Util.GetFullName(self.traded),
-        item = {
-            link = self.item.link,
-            owner = Util.GetFullName(self.item.owner)
+function Self:SendStatus(itemOwner)
+    if not itemOwner and self.isOwner or itemOwner and self.item.isOwner then
+        local data = {
+            id = self.ownerId,
+            owner = self.owner,
+            status = self.status,
+            started = self.started,
+            timeout = self.timeout,
+            posted = self.posted,
+            winner = self.winner and Util.GetFullName(self.winner),
+            traded = self.traded and Util.GetFullName(self.traded),
+            item = {
+                link = self.item.link,
+                owner = Util.GetFullName(self.item.owner)
+            }
         }
-    }
 
-    Comm.SendData(Comm.EVENT_ROLL_STATUS, data, target or Comm.TYPE_GROUP)
+        Comm.SendData(Comm.EVENT_ROLL_STATUS, data, target or Comm.TYPE_GROUP)
+    end
 end
 
 -- Send a bid via addon message, whisper or roll in chat
@@ -608,13 +627,13 @@ function Self:SendBid(answer)
     elseif answer ~= Self.ANSWER_PASS then
         if self.posted then
             if Addon.db.profile.roll then
-                RandomRoll("1", "100")
+                RandomRoll("1", answer == Self.ANSWER_GREED and "50" or "100")
             end
-        elseif Comm.ShouldChat(self.owner) then
-            Comm.ChatBid(self.owner, self.item.link)
-            Addon:Info(L["BID_CHAT"]:format(Comm.GetPlayerLink(self.owner), self.item.link, Comm.GetTradeLink(self.owner)))
+        elseif Comm.ShouldChat(self.item.owner) then
+            Comm.ChatBid(self.item.owner, self.item.link)
+            Addon:Info(L["BID_CHAT"]:format(Comm.GetPlayerLink(self.item.owner), self.item.link, Comm.GetTradeLink(self.item.owner)))
         else
-            Addon:Info(L["BID_NO_CHAT"]:format(Comm.GetPlayerLink(self.owner), self.item.link, Comm.GetTradeLink(self.owner)))
+            Addon:Info(L["BID_NO_CHAT"]:format(Comm.GetPlayerLink(self.item.owner), self.item.link, Comm.GetTradeLink(self.item.owner)))
         end
     end
 end

@@ -675,18 +675,12 @@ end
 
 -- Check if the addon should offer to bid on an item
 function Self:ShouldBeBidOn()
-    return self:HasSufficientQuality() and self:GetEligible("player")
+    return self:HasSufficientQuality() and self:GetBasicInfo().isEquippable and self:IsTradable() and self:GetEligible("player")
 end
 
 -- Check if the addon should start a roll for an item
 function Self:ShouldBeRolledFor()
-    -- Check basic item properties
-    if not (self:HasSufficientQuality() and self:GetBasicInfo().isEquippable and self:GetFullInfo().isTradable) then
-        return false
-    end
-
-    -- Check if there are eligible players in the group
-    return next(self:GetEligible()) ~= nil
+    return self:HasSufficientQuality() and self:GetBasicInfo().isEquippable and self:IsTradable() and next(self:GetEligible())
 end
 
 -------------------------------------------------------

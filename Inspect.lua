@@ -117,7 +117,7 @@ function Self.Queue(unit)
         -- Queue all group members with missing or out-of-date cache entries
         Self.lastQueued = GetTime()
         Util.SearchGroup(function (i, unit)
-            if unit and  unit ~= UnitName("player") and not Self.queue[unit] and not Self.IsValid(unit) then
+            if unit and not UnitIsUnit(unit, "player") and not Self.queue[unit] and not Self.IsValid(unit) then
                 Self.queue[unit] = Self.MAX_PER_CHAR
             end
         end)
@@ -153,7 +153,7 @@ function Self.Start()
     local timerIsRunning = Addon:TimerIsRunning(Self.timer)
     local delayHasPassed = Self.timer and GetTime() - (Self.timer.ends - Self.timer.delay) > Self.INSPECT_DELAY
 
-    if Addon:IsTracking() and not InCombatLockdown() and (not timerIsRunning or delayHasPassed) then
+    if Addon:IsTracking() and (not timerIsRunning or delayHasPassed) then
         Self.Stop()
         Self.Loop()
     end
