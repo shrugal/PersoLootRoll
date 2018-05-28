@@ -67,7 +67,8 @@ Self.LootAlertSystem = AlertFrame:AddQueuedAlertFrameSubSystem("PLR_LootWonAlert
 
 local Rolls = {
     frames = {},
-    filter = {all = false, canceled = false, done = true, won = true, traded = false}
+    filter = {all = false, canceled = false, done = true, won = true, traded = false},
+    status = {width = 750, height = 400}
 }
 
 -- Show the rolls frame
@@ -79,12 +80,14 @@ function Rolls.Show()
 
         Rolls.frames.window = Self("Window"):SetLayout(nil):SetTitle("PersoLootRoll - " .. L["ROLLS"])
             :SetCallback("OnClose", function (self)
+                Rolls.status = {width = self.frame:GetWidth(), height = self.frame:GetHeight(), top = self.status.top, left = self.status.left}
                 self.optionsbutton:Release()
                 self.optionsbutton = nil
                 self:Release()
                 wipe(Rolls.frames)
             end)
-            :SetMinResize(600, 120)()
+            :SetMinResize(750, 120)
+            :SetStatusTable(Rolls.status)()
 
         do
             local window = Rolls.frames.window
