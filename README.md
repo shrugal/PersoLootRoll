@@ -6,6 +6,7 @@ A World of Warcraft addon to share and roll on items when using personal loot.
 - Rolls on other player's loot by whispering/rolling in chat or (if the other person has the addon) in the background.
 - Offers loot you don't need to others, and handles accepting bids, picking a winner and trading automatically.
 - Figures out what you and others can use, so you only have to decide when it actually makes sense.
+- Masterloot mode.
 - Most things (like whispers, announces etc.) can be turned on/off based on the type of group (raid/party, guildgroup, LFR) or target (friend, guildmember).
 
 ### Rolling
@@ -36,12 +37,18 @@ process is done in a way that it shouldn't interfere with your gameplay (e.g. it
 and there is a 30 ilvls (60 ilvls for trinkets) threshold in place so the addon doesn't ignore stuff that is
 lower than what you have but e.g. has better stats or a gem slot.
 
+### Masterloot
+When you (or someone else) becomes masterlooter, all loot will be distributed by that person. You will get
+a notice about who's items you won or who won your items, so you can trade them to the right person.
+The masterlooter will see an overview window off all rolls and can view bids and distribute loot from there.
+
 ## Commands
 Use /plr or /PersoLootRoll to open the options window, manually start rolling for items in your bag etc.
 
-- `/plr`: Open options window
+- `/plr`: Open rolls window
 - `/plr roll [item]* (<timeout> <owner>)`: Start a roll for one or more item(s)
 - `/plr bid <owner> ([item])`: Bid for an item from another player
+- `/plr options`: Open options window
 - `/plr config`: Change settings through the command line
 - `/plr help`: Print this help message
 
@@ -56,6 +63,4 @@ These are the things I have planed currently, but feel free to add a ticket here
 - Transmog mode: Check appearance instead of stats, ilvl, ...
 - Block (and maybe answer) all trades, whispers etc. for a few seconds after looting an item
 - Customize messages the addon sends to other players
-- Masterloot mode: Someone in your raid gets a list of all tradable loot and can assign it by hand to whoever rolled
-  on it. I don't quite know about this one, because it would probably include much more stuff (like loot councils), and
-  it might be better to somehow integrate with existing loot-distribution addons like RCLootCouncil.
+- Masterloot Council.

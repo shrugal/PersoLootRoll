@@ -265,12 +265,12 @@ function Self:Start(started)
             self.status = Self.STATUS_RUNNING
 
             -- Show some UI
-            if self.item.isOwner or self.item:ShouldBeBidOn() then
+            local shouldRoll = self.item.isOwner or self.item:ShouldBeBidOn()
+            if shouldRoll then
                 self:ShowRollFrame()
-
-                if Addon.db.profile.ui.showRollsWindow then
-                    Addon.GUI.Rolls.Show()
-                end
+            end
+            if self.isOwner and Addon:IsMasterlooter() or shouldRoll and Addon.db.profile.ui.showRollsWindow then
+                Addon.GUI.Rolls.Show()
             end
 
             -- Schedule timer to end the roll and hide the frame
