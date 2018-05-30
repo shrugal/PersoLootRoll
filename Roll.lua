@@ -264,8 +264,13 @@ function Self:Start(started)
             self.started = started or time()
             self.status = Self.STATUS_RUNNING
 
+            -- Show some UI
             if self.item.isOwner or self.item:ShouldBeBidOn() then
                 self:ShowRollFrame()
+
+                if Addon.db.profile.ui.showRollsWindow then
+                    Addon.GUI.Rolls.Show()
+                end
             end
 
             -- Schedule timer to end the roll and hide the frame
@@ -606,8 +611,12 @@ end
 
 -- Show the roll frame
 function Self:ShowRollFrame()
-    GroupLootFrame_OpenNewFrame(self:GetPlrId(), self:GetRunTime())
-    self.shown = self:GetRollFrame() ~= nil
+    if Addon.db.profile.ui.showRollFrames then
+        GroupLootFrame_OpenNewFrame(self:GetPlrId(), self:GetRunTime())
+        self.shown = self:GetRollFrame() ~= nil
+    else
+        self.shown = true
+    end
 end
 
 -- Hide the roll frame
@@ -617,7 +626,7 @@ function Self:HideRollFrame()
         GroupLootContainer_RemoveFrame(GroupLootContainer, frame)
 
         -- TODO: This is required to circumvent a bug in ElvUI
-        GroupLootContainer.rollFrames = Util.TblValues(GroupLootContainer.rollFrames)
+        GroupLootContainer.showRollFrames = Util.TblValues(GroupLootContainer.rollFrames)
         GroupLootContainer_Update(GroupLootContainer)
     end
 end

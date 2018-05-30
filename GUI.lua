@@ -543,6 +543,15 @@ function Rolls.Hide()
     end
 end
 
+-- Toggle the rolls frame
+function Rolls.Toggle()
+    if Rolls.frames.window then
+        Rolls.Hide()
+    else
+        Rolls.Show()
+    end
+end
+
 -- Update the details view of a row
 function Rolls.UpdateDetails(self, roll)
     self.frame:Show()

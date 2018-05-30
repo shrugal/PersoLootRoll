@@ -7,6 +7,8 @@ TODO:
 ]]
 
 local Addon = LibStub("AceAddon-3.0"):GetAddon(PLR_NAME)
+local LDB = LibStub("LibDataBroker-1.1")
+local LDBIcon = LibStub("LibDBIcon-1.0")
 local L = LibStub("AceLocale-3.0"):GetLocale(PLR_NAME)
 local Util = Addon.Util
 local Item = Addon.Item
@@ -29,12 +31,15 @@ Addon.ECHO_VERBOSE = 3
 Addon.ECHO_DEBUG = 4
 
 Addon.rolls = Util.TblCounter()
-Addon.versions = {}
 Addon.timers = {}
 
 -- Masterloot
 PLR_MASTERLOOTER = nil
 Addon.masterlooting = {}
+
+-- Versions
+Addon.versions = {}
+Addon.versionNoticeShown = false
 
 -------------------------------------------------------
 --                    Addon stuff                    --
@@ -45,6 +50,7 @@ function Addon:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New(PLR_NAME .. "DB", {
         profile = {
             enabled = true,
+            ui = {showRollFrames = true, showRollsWindow = false},
             echo = Addon.ECHO_INFO,
             announce = {lfd = true, party = true, lfr = true, raid = true, guild = true},
             roll = true,
@@ -64,7 +70,146 @@ function Addon:OnInitialize()
     }, true)
     
     -- Register options
+    self:RegisterOptions()
 
+    -- Minimap icon
+    self:RegisterMinimapIcon()
+end
+
+-- Called when the addon is enabled
+function Addon:OnEnable()
+    -- Enable hooks
+    self.Hooks.EnableGroupLootRoll()
+    self.Hooks.EnableChatLinks()
+    self.Hooks.EnableUnitMenus()
+
+    -- Register events
+    self.Events.RegisterEvents()
+
+    -- Register chat commands
+    self:RegisterChatCommand(PLR_NAME, "HandleChatCommand")
+    self:RegisterChatCommand("plr", "HandleChatCommand")
+
+    -- Periodically clear old rolls
+    self.timers.clearRolls = self:ScheduleRepeatingTimer(self.Roll.Clear, self.Roll.CLEAR)
+
+    -- Start inspecting
+    self.Inspect.Start()
+    if not self.Inspect.timer then
+        -- IsInGroup doesn't work right after logging in, so check again after waiting a bit.
+        self.timers.inspectStart = self:ScheduleTimer(self.Inspect.Start, 10)
+    end
+
+    -- Trigger GROUP_JOINED or GROUP_LEFT
+    local event = IsInGroup() and "GROUP_JOINED" or "GROUP_LEFT"
+    self.Events[event](event)
+end
+
+-- Called when the addon is disabled
+function Addon:OnDisable()
+    -- Disable hooks
+    self.Hooks.DisableGroupLootRoll()
+    self.Hooks.DisableChatLinks()
+    self.Hooks.DisableUnitMenus()
+
+    -- Unregister events
+    self.Events.UnregisterEvents()
+
+    -- Stop clear timer
+    if self.timers.clearRolls then
+        self:CancelTimer(self.timers.clearRolls)
+    end
+    self.timers.clearRolls = nil
+
+    -- Stop inspecting
+    self.Inspect.Clear()
+    if self.timers.inspectStart then
+        self:CancelTimer(self.timers.inspectStart)
+        self.timers.inspectStart = nil
+    end
+end
+
+-------------------------------------------------------
+--                   Chat command                    --
+-------------------------------------------------------
+
+-- Chat command handling
+function Addon:HandleChatCommand(msg)
+    local args = {Addon:GetArgs(msg, 10)}
+    local cmd = args[1]
+
+    Util.Switch(cmd) {
+        ["help"] = function () self:Help() end,
+        ["options"] = function () self:ShowOptions() end,
+        ["config"] = function () LibStub("AceConfigCmd-3.0").HandleCommand(Addon, "plr config", PLR_NAME, msg:sub(7)) end,
+        ["rolls"] = self.GUI.Rolls.Show,
+        ["roll"] = function  ()
+            local items, i, item = {}, 1
+    
+            while i do
+                i, item = next(args, i)
+                if i and Item.IsLink(item) then
+                    tinsert(items, item)
+                end
+            end
+    
+            if not next(items) then
+                self:Print(L["USAGE_ROLL"])
+            else
+                i = table.getn(items) + 2
+                local timeout, owner = tonumber(args[i]), args[i+1]
+                
+                for i,item in pairs(items) do
+                    item = Item.FromLink(item)
+                    self.Roll.Add(item, owner or self:GetMasterlooter() or nil, timeout):Start()
+                end
+            end
+        end,
+        ["bid"] = function ()
+            local owner, item, answer = select(2, unpack(args))
+            
+            if Util.StrEmpty(owner) or Item.IsLink(owner)                            -- owner
+            or item and not Item.IsLink(item)                                        -- item
+            or answer and not Util.TblFind(self.Roll.ANSWERS, tonumber(answer)) then -- answer
+                self:Print(L["USAGE_BID"])
+            else
+                local roll = self.Roll.Find(nil, owner, item)
+                if roll then
+                    roll:Bid(answer)
+                else
+                    self.Comm.ChatBid(owner, item)
+                end
+            end
+        end,
+        -- TODO
+        ["trade"] = function ()
+            local target = args[2]
+            Addon.Trade.Initiate(target or "target")
+        end,
+        -- TODO: DEBUG
+        ["test"] = function ()
+            local link = "|cffa335ee|Hitem:152412::::::::110:105::4:3:3613:1457:3528:::|h[Depraved Machinist's Footpads]|h|r"
+            local roll = Addon.Roll.Add(link):Start():Bid(Addon.Roll.ANSWER_PASS):Bid(Addon.Roll.ANSWER_NEED, "Zhael", true)
+        end,
+        default = self.GUI.Rolls.Show
+    }
+end
+
+function Addon:Help()
+    self:Print(L["HELP"])
+end
+
+-------------------------------------------------------
+--                      Options                      --
+-------------------------------------------------------
+
+function Addon:ShowOptions()
+    -- Have to call it twice because of a blizzard UI bug
+    InterfaceOptionsFrame_OpenToCategory(self.configFrame)
+    InterfaceOptionsFrame_OpenToCategory(self.configFrame)
+end
+
+function Addon:RegisterOptions()
     local config = LibStub("AceConfig-3.0")
     local dialog = LibStub("AceConfigDialog-3.0")
 
@@ -80,12 +225,54 @@ function Addon:OnInitialize()
             enable = {
                 name = L["OPT_ENABLE"],
                 desc = L["OPT_ENABLE_DESC"],
+                descStyle = "inline",
                 type = "toggle",
+                order = it(),
                 set = function (_, val)
                     self.db.profile.enabled = val
                     self:Print(L[val and "ENABLED" or "DISABLED"])
                 end,
-                get = function (_) return self.db.profile.enabled end
+                get = function (_) return self.db.profile.enabled end,
+                width = "full"
+            },
+            ui = {type = "header", order = it(), name = L["OPT_UI"]},
+            uiDesc = {type = "description", order = it(), name = L["OPT_UI_DESC"] .. "\n"},
+            minimapIcon = {
+                name = L["OPT_MINIMAP_ICON"],
+                desc = L["OPT_MINIMAP_ICON_DESC"],
+                descStyle = "inline",
+                type = "toggle",
+                order = it(),
+                set = function (_, val)
+                    PersoLootRollIconDB.hide = not val or nil
+                    if val then
+                        LDBIcon:Show(PLR_NAME)
+                    else
+                        LDBIcon:Hide(PLR_NAME)
+                    end
+                end,
+                get = function (_) return not PersoLootRollIconDB.hide end,
+                width = "full"
+            },
+            showRollFrames = {
+                name = L["OPT_ROLL_FRAMES"],
+                desc = L["OPT_ROLL_FRAMES_DESC"],
+                descStyle = "inline",
+                type = "toggle",
+                order = it(),
+                set = function (_, val) self.db.profile.ui.showRollFrames = val end,
+                get = function (_) return self.db.profile.ui.showRollFrames end,
+                width = "full"
+            },
+            showRollsWindow = {
+                name = L["OPT_ROLLS_WINDOW"],
+                desc = L["OPT_ROLLS_WINDOW_DESC"],
+                descStyle = "inline",
+                type = "toggle",
+                order = it(),
+                set = function (_, val) self.db.profile.ui.showRollsWindow = val end,
+                get = function (_) return self.db.profile.ui.showRollsWindow end,
+                width = "full"
             },
         }
     })
@@ -263,141 +450,38 @@ function Addon:OnInitialize()
     -- Profiles
     config:RegisterOptionsTable(PLR_NAME .. "_profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db))
     dialog:AddToBlizOptions(PLR_NAME .. "_profiles", "Profiles", PLR_NAME)
-end
 
--- Called when the addon is enabled
-function Addon:OnEnable()
-    -- Enable hooks
-    self.Hooks.EnableGroupLootRoll()
-    self.Hooks.EnableChatLinks()
-    self.Hooks.EnableUnitMenus()
-
-    -- Register events
-    self.Events.RegisterEvents()
-
-    -- Register chat commands
-    self:RegisterChatCommand(PLR_NAME, "HandleChatCommand")
-    self:RegisterChatCommand("plr", "HandleChatCommand")
-
-    -- Periodically clear old rolls
-    self.timers.clearRolls = self:ScheduleRepeatingTimer(self.Roll.Clear, self.Roll.CLEAR)
-
-    -- Start inspecting
-    self.Inspect.Start()
-    if not self.Inspect.timer then
-        -- IsInGroup doesn't work right after logging in, so check again after waiting a bit.
-        self.timers.inspectStart = self:ScheduleTimer(self.Inspect.Start, 10)
-    end
-
-    -- Trigger GROUP_JOINED or GROUP_LEFT
-    local event = IsInGroup() and "GROUP_JOINED" or "GROUP_LEFT"
-    self.Events[event](event)
-end
-
--- Called when the addon is disabled
-function Addon:OnDisable()
-    -- Disable hooks
-    self.Hooks.DisableGroupLootRoll()
-    self.Hooks.DisableChatLinks()
-    self.Hooks.DisableUnitMenus()
-
-    -- Unregister events
-    self.Events.UnregisterEvents()
-
-    -- Stop clear timer
-    if self.timers.clearRolls then
-        self:CancelTimer(self.timers.clearRolls)
-    end
-    self.timers.clearRolls = nil
-
-    -- Stop inspecting
-    self.Inspect.Clear()
-    if self.timers.inspectStart then
-        self:CancelTimer(self.timers.inspectStart)
-        self.timers.inspectStart = nil
-    end
-end
-
--- Check if we should currently track loot etc.
-function Addon:IsTracking()
-    local methods = {freeforall = true, roundrobin = true, personalloot = true}
-    return self.db.profile.enabled and IsInGroup() and methods[GetLootMethod()]
 end
 
 -------------------------------------------------------
---                   Chat command                    --
+--                        LDB                        --
 -------------------------------------------------------
 
--- Chat command handling
-function Addon:HandleChatCommand (msg)
-    local args = {Addon:GetArgs(msg, 10)}
-    local cmd = args[1]
+function Addon:RegisterMinimapIcon()
+    local plugin = LDB:NewDataObject(PLR_NAME, {
+        type = "data source",
+        text = PLR_NAME,
+        icon = "Interface\\Buttons\\UI-GroupLoot-Dice-Up"
+    })
 
-    Util.Switch(cmd) {
-        ["help"] = function () self:Help() end,
-        ["options"] = function () self:ShowOptions() end,
-        ["config"] = function () LibStub("AceConfigCmd-3.0").HandleCommand(Addon, "plr config", PLR_NAME, msg:sub(7)) end,
-        ["rolls"] = self.GUI.Rolls.Show,
-        ["roll"] = function  ()
-            local items, i, item = {}, 1
-    
-            while i do
-                i, item = next(args, i)
-                if i and Item.IsLink(item) then
-                    tinsert(items, item)
-                end
-            end
-    
-            if not next(items) then
-                self:Print(L["USAGE_ROLL"])
-            else
-                i = table.getn(items) + 2
-                local timeout, owner = tonumber(args[i]), args[i+1]
-                
-                for i,item in pairs(items) do
-                    item = Item.FromLink(item)
-                    self.Roll.Add(item, owner or self:GetMasterlooter() or nil, timeout):Start()
-                end
-            end
-        end,
-        ["bid"] = function ()
-            local owner, item, answer = select(2, unpack(args))
-            
-            if Util.StrEmpty(owner) or Item.IsLink(owner)                            -- owner
-            or item and not Item.IsLink(item)                                        -- item
-            or answer and not Util.TblFind(self.Roll.ANSWERS, tonumber(answer)) then -- answer
-                self:Print(L["USAGE_BID"])
-            else
-                local roll = self.Roll.Find(nil, owner, item)
-                if roll then
-                    roll:Bid(answer)
-                else
-                    self.Comm.ChatBid(owner, item)
-                end
-            end
-        end,
-        -- TODO
-        ["trade"] = function ()
-            local target = args[2]
-            Addon.Trade.Initiate(target or "target")
-        end,
-        -- TODO: DEBUG
-        ["test"] = function ()
-            local link = "|cffa335ee|Hitem:152412::::::::110:105::4:3:3613:1457:3528:::|h[Depraved Machinist's Footpads]|h|r"
-            local roll = Addon.Roll.Add(link):Start():Bid(Addon.Roll.ANSWER_PASS):Bid(Addon.Roll.ANSWER_NEED, "Zhael", true)
-        end,
-        default = self.GUI.Rolls.Show
-    }
-end
+    -- OnClick
+    plugin.OnClick = function (self, btn)
+        if btn == "RightButton" then
+            Addon:ShowOptions()
+        else
+            Addon.GUI.Rolls.Toggle()
+        end
+    end
 
-function Addon:ShowOptions()
-    -- Have to call it twice because of a blizzard UI bug
-    InterfaceOptionsFrame_OpenToCategory(self.configFrame)
-    InterfaceOptionsFrame_OpenToCategory(self.configFrame)
-end
+    -- OnTooltip
+    plugin.OnTooltipShow = function (ToolTip)
+        ToolTip:AddLine(PLR_NAME)
+        ToolTip:AddLine(L["TIP_MINIMAP_ICON"], 1, 1, 1)
+    end
 
-function Addon:Help()
-    self:Print(L["HELP"])
+    -- Icon
+    if not PersoLootRollIconDB then PersoLootRollIconDB = {} end
+    LDBIcon:Register(PLR_NAME, plugin, PersoLootRollIconDB)
 end
 
 -------------------------------------------------------
@@ -446,6 +530,20 @@ end
 -------------------------------------------------------
 --                       Other                       --
 -------------------------------------------------------
+
+-- Check if we should currently track loot etc.
+function Addon:IsTracking()
+    local methods = {freeforall = true, roundrobin = true, personalloot = true}
+    return self.db.profile.enabled and IsInGroup() and methods[GetLootMethod()]
+end
+
+function Addon:SetVersion(unit, version)
+    self.versions[unit] = version
+
+    if version and version > self.VERSION and not self.versionNoticeShown then
+        self:Info(L["VERSION_NOTICE"])
+    end
+end
 
 -- Console output
 

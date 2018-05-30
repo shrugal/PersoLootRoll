@@ -59,6 +59,9 @@ function Self.GROUP_LEFT(event)
 
     -- Clear masterlooter
     Addon:SetMasterlooter(nil)
+
+    -- Clear versions
+    wipe(Addon.versions)
 end
 
 function Self.PARTY_MEMBER_ENABLE(event, unit)
@@ -182,6 +185,9 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
             if unit == Addon:GetMasterlooter() then
                 Addon:SetMasterlooter(nil)
             end
+
+            -- Clear version
+            Addon:SetVersion(unit, nil)
             return
         end
     end
@@ -434,11 +440,11 @@ Comm.ListenData(Comm.EVENT_VERSION_ASK, function (event, data, channel, sender, 
             Addon.timers.versionCheck = nil
         end
 
-        Comm.SendData(Comm.EVENT_VERSION, Addon.VERSION, channel == Comm.TYPE_WHISPER and sender or channel)
+        Comm.SendData(Comm.EVENT_VERSION, floor(Addon.VERSION), channel == Comm.TYPE_WHISPER and sender or channel)
     end
 end, true)
 Comm.Listen(Comm.EVENT_VERSION, function (event, version, channel, sender, unit)
-    Addon.versions[unit] = tonumber(version)
+    Addon:SetVersion(unit, tonumber(version))
 end)
 
 -- Roll status
