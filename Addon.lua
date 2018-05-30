@@ -18,7 +18,7 @@ local Item = Addon.Item
 -------------------------------------------------------
 
 -- Version
-Addon.VERSION = 1
+Addon.VERSION = PLR_VERSION
 
 -- Enable or disable debug stuff
 Addon.DEBUG = true
@@ -230,13 +230,18 @@ function Addon:RegisterOptions()
                 order = it(),
                 set = function (_, val)
                     self.db.profile.enabled = val
-                    self:Print(L[val and "ENABLED" or "DISABLED"])
+                    self:Info(L[val and "ENABLED" or "DISABLED"])
                 end,
                 get = function (_) return self.db.profile.enabled end,
                 width = "full"
             },
+            info = {type = "header", order = it(), name = L["OPT_INFO"]},
+            infoDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_INFO_DESC"] .. "\n"},
+            version = {type = "description", fontSize = "medium", order = it(), name = L["OPT_VERSION"]},
+            author = {type = "description", fontSize = "medium", order = it(), name = L["OPT_AUTHOR"]},
+            translation = {type = "description", fontSize = "medium", order = it(), name = L["OPT_TRANSLATION"]},
             ui = {type = "header", order = it(), name = L["OPT_UI"]},
-            uiDesc = {type = "description", order = it(), name = L["OPT_UI_DESC"] .. "\n"},
+            uiDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_UI_DESC"] .. "\n"},
             minimapIcon = {
                 name = L["OPT_MINIMAP_ICON"],
                 desc = L["OPT_MINIMAP_ICON_DESC"],
@@ -301,7 +306,7 @@ function Addon:RegisterOptions()
                 width = "full"
             },
             masterloot = {type = "header", order = it(), name = L["OPT_MASTERLOOT"]},
-            masterlootDesc = {type = "description", order = it(), name = L["OPT_MASTERLOOT_DESC"] .. "\n"},
+            masterlootDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOT_DESC"] .. "\n"},
             masterlootStart = {
                 name = L["OPT_MASTERLOOT_START"],
                 type = "execute",
@@ -320,7 +325,7 @@ function Addon:RegisterOptions()
                 order = it(),
                 func = function () self:SetMasterlooter(nil) end
             },
-            ["space" .. it()] = {type = "description", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             masterlootAllow = {
                 name = L["OPT_MASTERLOOT_ALLOW"],
                 desc = L["OPT_MASTERLOOT_ALLOW_DESC"],
@@ -352,7 +357,7 @@ function Addon:RegisterOptions()
                 get = function () return self.db.profile.masterloot.allowAll end,
                 width = "full"
             },
-            ["space" .. it()] = {type = "description", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             masterlootAccept = {
                 name = L["OPT_MASTERLOOT_ACCEPT"],
                 desc = L["OPT_MASTERLOOT_ACCEPT_DESC"],
@@ -389,7 +394,7 @@ function Addon:RegisterOptions()
                 get = function () return self.db.profile.echo end
             },
             groupchat = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
-            groupchatDesc = {type = "description", order = it(), name = L["OPT_GROUPCHAT_DESC"] .. "\n"},
+            groupchatDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_GROUPCHAT_DESC"] .. "\n"},
             groupchatAnnounce = {
                 name = L["OPT_GROUPCHAT_ANNOUNCE"],
                 desc = L["OPT_GROUPCHAT_ANNOUNCE_DESC"],
@@ -410,7 +415,7 @@ function Addon:RegisterOptions()
                 width = "full"
             },
             whisper = {type = "header", order = it(), name = L["OPT_WHISPER"]},
-            whisperDesc = {type = "description", order = it(), name = L["OPT_WHISPER_DESC"] .. "\n"},
+            whisperDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_WHISPER_DESC"] .. "\n"},
             whisperGroup = {
                 name = L["OPT_WHISPER_GROUP"],
                 desc = L["OPT_WHISPER_GROUP_DESC"],

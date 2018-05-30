@@ -133,6 +133,11 @@ L["OPT_LOOT_METHOD"] = "Beute-Methode"
 
 L["OPT_ENABLE"] = "Aktiviert"
 L["OPT_ENABLE_DESC"] = "Aktiviere oder deaktiviere das Addon"
+L["OPT_INFO"] = "Informationen"
+L["OPT_INFO_DESC"] = "Ein paar Informationen über das Addon."
+L["OPT_VERSION"] = "|cffffff00Version:|r " .. PLR_VERSION
+L["OPT_AUTHOR"] = "|cffffff00Author:|r Shrugal-Mal'Ganis (EU)"
+L["OPT_TRANSLATION"] = "|cffffff00Übersetzung:|r Shrugal-Mal'Ganis (EU)"
 L["OPT_UI"] = "Benutzerinterface"
 L["OPT_UI_DESC"] = "Passe das Aussehen von " .. PLR_NAME .. " nach deinen Bedürfnissen an."
 L["OPT_MINIMAP_ICON"] = "Show minimap icon"
