@@ -30,7 +30,7 @@ function Self.EnableGroupLootRoll()
 
                 return item.texture, item.name, 1, item.quality, item.bindType == LE_ITEM_BIND_ON_ACQUIRE,
                     true, -- Can need
-                    roll.ownerId ~= nil, -- Can greed
+                    roll.ownerId or roll.itemOwnerId, -- Can greed
                     false, -- Can disenchant
                     5, -- Reason need
                     "PLR_NO_ADDON", -- Reason greed
@@ -61,7 +61,7 @@ function Self.EnableGroupLootRoll()
                 local roll = Roll.Get(id)
 
                 if roll.status == Roll.STATUS_RUNNING then
-                    roll:Bid(answer)
+                    roll:Bid(answer == 0 and Roll.ANSWER_PASS or answer)
                 else
                     roll:HideRollFrame()
                 end

@@ -32,7 +32,6 @@ if not L then return end
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "The owner of this item doesn't use the PersoLootRoll addon."
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "The PersoLootRoll addon doesn't support disenchanting."
 
-L["TRADED"] = "Traded"
 L["ITEM"] = "item"
 L["ID"] = ID
 L["OWNER"] = "Owner"
@@ -50,7 +49,7 @@ L["ROLLS"] = "Rolls"
 L["ADVERTISE"] = "Advertise in chat"
 L["GUILD_MASTER"] = "Guild Master"
 L["GUILD_OFFICER"] = "Guild Officer"
-L["LOOTMASTER"] = "Lootmaster"
+L["MASTERLOOTER"] = "Masterlooter"
 L["ML"] = "ML"
 
 L["HELP"] = "Start rolls and bid for items (/PersoLootRoll or /plr).\n"
@@ -72,14 +71,16 @@ L["ROLL_WINNER_SELF"] = "You have won %s from %s -> %s."
 L["ROLL_WINNER_OTHER"] = "%s has won %s from you -> %s."
 L["ROLL_WINNER_MASTERLOOT"] = "%s has won %s from %s."
 L["ROLL_CANCEL"] = "Canceling roll for %s from %s."
-L["ROLL_ANSWER_0"] = PASS
 L["ROLL_ANSWER_1"] = NEED
 L["ROLL_ANSWER_2"] = GREED
 L["ROLL_ANSWER_3"] = ROLL_DISENCHANT
+L["ROLL_ANSWER_4"] = PASS
 L["ROLL_STATUS_-1"] = "Canceled"
 L["ROLL_STATUS_0"] = "Pending"
 L["ROLL_STATUS_1"] = "Running"
 L["ROLL_STATUS_2"] = "Done"
+L["ROLL_AWARDED"] = "Awarded"
+L["ROLL_TRADED"] = "Traded"
 
 L["BID_START"] = "Bidding with %q for %s from %s."
 L["BID_PASS"] = "Passing on %s from %s."
@@ -89,6 +90,9 @@ L["BID_NO_CHAT"] = "Whispering is disabled, you need to ask %s for %s yourself -
 L["TRADE_START"] = "Starting trade with %s."
 L["TRADE_CANCEL"] = "Canceling trade with %s."
 
+L["MASTERLOOTER_SELF"] = "You are now the masterlooter."
+L["MASTERLOOTER_OTHER"] = "%s is now your masterlooter."
+
 L["FILTER"] = "Filter"
 L["FILTER_ALL"] = "For all players"
 L["FILTER_ALL_DESC"] = "Include rolls for all players, not just yours or those with items that might interest you."
@@ -96,10 +100,17 @@ L["FILTER_CANCELED"] = "Canceled"
 L["FILTER_CANCELED_DESC"] = "Include canceled rolls."
 L["FILTER_DONE"] = "Done"
 L["FILTER_DONE_DESC"] = "Include rolls that have ended."
-L["FILTER_WON"] = "Won"
-L["FILTER_WON_DESC"] = "Include rolls that have been won by someone."
+L["FILTER_AWARDED"] = "Awarded"
+L["FILTER_AWARDED_DESC"] = "Include rolls that have been won by someone."
 L["FILTER_TRADED"] = "Traded"
 L["FILTER_TRADED_DESC"] = "Include rolls whose items have been traded."
+
+L["TIP_MASTERLOOT_START"] = "Become or search for a masterlooter"
+L["TIP_MASTERLOOT_STOP"] = "Remove masterlooter"
+L["TIP_MASTERLOOTING"] = "You are the masterlooter for:"
+
+L["MENU_MASTERLOOT_START"] = "Become masterlooter"
+L["MENU_MASTERLOOT_SEARCH"] = "Search group for a masterlooter"
 
 L["DIALOG_ROLL_CANCEL"] = "Do you want to cancel this roll?"
 L["DIALOG_MASTERLOOT_ASK"] = "<%s> wants to become your masterlooter, do you want to accept that?"
@@ -147,8 +158,9 @@ L["OPT_WHISPER_TARGET_DESC"] = "Whisper others if they got loot you want, depend
 L["OPT_AWARD_SELF"] = "Choose winner yourself"
 L["OPT_AWARD_SELF_DESC"] = "Choose for yourself who should get your loot, instead of letting the addon randomly pick someone."
 L["OPT_MASTERLOOT"] = "Masterloot"
-L["OPT_MASTERLOOT_DESC"] = "When you (or someone else) becomes masterlooter, all loot will be distributed by that person. You will get a notice about who won your items, so you can trade them to the right person."
+L["OPT_MASTERLOOT_DESC"] = "When you (or someone else) becomes masterlooter, all loot will be distributed by that person. You will get a notice about who's items you won or who won your items, so you can trade them to the right person."
 L["OPT_MASTERLOOT_START"] = "Become masterlooter"
+L["OPT_MASTERLOOT_SEARCH"] = "Search masterlooter"
 L["OPT_MASTERLOOT_STOP"] = "Stop masterloot"
 L["OPT_MASTERLOOT_ALLOW"] = "Allow becoming masterlooter"
 L["OPT_MASTERLOOT_ALLOW_DESC"] = "Choose who can request to become your masterlooter. You will still get a popup message asking you to confirm it, so you can decline a masterlooter request when it happens.\n\n"

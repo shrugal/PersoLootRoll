@@ -668,19 +668,19 @@ end
 --                     Decisions                     --
 -------------------------------------------------------
 
--- Do basic and quick check if an item is worthy of further consideration
+-- Check if the item should be handled by the addon
 function Self:ShouldBeConsidered()
-    return self:HasSufficientQuality() -- TODO
+    return self:HasSufficientQuality() and self:GetBasicInfo().isEquippable and self:GetFullInfo().isTradable
 end
 
 -- Check if the addon should offer to bid on an item
 function Self:ShouldBeBidOn()
-    return self:HasSufficientQuality() and self:GetBasicInfo().isEquippable and self:IsTradable() and self:GetEligible("player")
+    return self:ShouldBeConsidered() and self:GetEligible("player")
 end
 
 -- Check if the addon should start a roll for an item
 function Self:ShouldBeRolledFor()
-    return self:HasSufficientQuality() and self:GetBasicInfo().isEquippable and self:IsTradable() and next(self:GetEligible())
+    return self:ShouldBeConsidered() and next(self:GetEligible()) ~= nil
 end
 
 -------------------------------------------------------
@@ -708,8 +708,8 @@ end
 -- Check if item data is fully loaded (loaded + position available)
 function Self:IsFullyLoaded(tradable)
     if not self:IsLoaded() then return false end
-    local bagOrEquip, slot = self:GetPosition()
-    return bagOrEquip and slot ~= 0 and (not tradable or self:IsTradable(bagOrEquip, slot))
+    local bagOrEquip, slot, isTradable = self:GetPosition()
+    return bagOrEquip and slot ~= 0 and (not tradable or isTradable)
 end
 
 -- Run a function when item data is fully loaded
@@ -751,7 +751,7 @@ function Self.IsTradable(selfOrBag, slot)
         if self.isTradable ~= nil then
             return self.isTradable, self.isSoulbound, self.bindTimeout
         elseif self.isEquipped then
-            return false, true, nil
+            return false, true, false
         elseif not self.isOwner then
             local level = self:GetLevelForLocation(self.owner)
             local isTradable = level == 0 or level + self:GetThresholdForLocation() >= self.level
@@ -791,7 +791,7 @@ function Self:GetPosition(refresh)
     if not self.isOwner then
         return
     elseif not refresh and self.bagOrEquip and self.slot ~= 0 then
-        return self.bagOrEquip, self.slot
+        return self.bagOrEquip, self.slot, self.isTradable
     end
 
     -- Check bags
@@ -807,9 +807,9 @@ function Self:GetPosition(refresh)
     end, self.slot == 0 and self.bagOrEquip or nil)
 
     if bag and slot then
-        return bag, slot
+        return bag, slot, isTradable
     elseif self.bagOrEquip and self.slot == 0 then
-        return self.bagOrEquip, self.slot
+        return self.bagOrEquip, self.slot, self.isTradable
     end
 
     -- Check equipment
@@ -817,7 +817,7 @@ function Self:GetPosition(refresh)
 
     for _, equipSlot in pairs(Util.Tbl(Self.SLOTS[self.equipLoc])) do
         if self.link == GetInventoryItemLink(equipSlot) then
-            return equipSlot
+            return equipSlot, nil, false
         end
     end
 end
@@ -834,6 +834,10 @@ function Self:SetPosition(bagOrEquip, slot)
 
     self.isEquipped = bagOrEquip and slot == nil
     self.isSoulbound = self.isSoulbound or self.isEquipped
+    if self.isEquipped and self.isTradable then
+        self.isTradable = false
+        self.bindTimeout = false
+    end
 end
 
 -- Get the equipment location or relic type
@@ -847,7 +851,7 @@ end
 
 -- An item as been moved
 function Self.OnMove(from, to)
-    Util(Addon.rolls).Where({isOwner = true, traded = false}).Find(function (roll)
+    Util(Addon.rolls).Where({item = {isOwner = true}, traded = false}, nil, true).Search(function (roll)
         if Util.TblEquals(from, roll.item.position) then
             roll.item:SetPosition(to)
             return true
@@ -858,7 +862,7 @@ end
 -- Two items have switched places
 function Self.OnSwitch(pos1, pos2)
     local item1, item2
-    local items = Util(Addon.rolls).Where({IsOwner = true, traded = false}).Filter(function (roll)
+    Util(Addon.rolls).Where({item = {isOwner = true}, traded = false}, nil, true).Search(function (roll)
         if not item1 and Util.TblEquals(pos1, roll.item.position) then
             item1 = roll.item
         elseif not item2 and Util.TblEquals(pos2, roll.item.position) then

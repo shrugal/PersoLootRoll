@@ -15,13 +15,15 @@ Self.TYPE_INSTANCE = "INSTANCE_CHAT"
 Self.TYPES = {Self.TYPE_GROUP, Self.TYPE_PARTY, Self.TYPE_RAID, Self.TYPE_GUILD, Self.TYPE_OFFICER, Self.TYPE_BATTLEGROUND, Self.TYPE_WHISPER, Self.TYPE_INSTANCE}
 
 -- Addon events
+Self.EVENT_SYNC = "SYNC"
 Self.EVENT_ROLL_STATUS = "STATUS"
 Self.EVENT_BID = "BID"
 Self.EVENT_VERSION_ASK = "VERSION-ASK"
 Self.EVENT_VERSION = "VERSION"
 Self.EVENT_MASTERLOOT_ASK = "ML-ASK"
+Self.EVENT_MASTERLOOT_OFFER = "ML-OFFER"
 Self.EVENT_MASTERLOOT_ACK = "ML-ACK"
-Self.EVENT_MASTERLOOT_STOP = "ML-STOP"
+Self.EVENT_MASTERLOOT_DEC = "ML-DEC"
 
 -- Message patterns
 Self.PATTERN_PARTY_JOINED = ERR_JOINED_GROUP_S:gsub("%%s", "(.+)")
@@ -72,6 +74,10 @@ function Self.ShouldChat(target)
 
     -- Check whisper target
     if channel == Self.TYPE_WHISPER then
+        if UnitIsUnit(unit, "player") then
+            return false
+        end
+
         local target = config.whisper.target
         local guild = Util.GetGuildName(unit)
         local isGuild, isFriend = guild ~= nil and guild == Util.GetGuildName("player"), Util.UnitIsFriend(unit)

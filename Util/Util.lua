@@ -37,7 +37,7 @@ end
 -- Get a unit's realm name
 function Self.GetRealmName(unit)
     local name, realm = UnitName(Self.GetUnit(unit))
-    return realm
+    return realm ~= "" and realm
         or name and GetRealmName()
         or unit and unit:match("^.+-(.+)$")
         or nil

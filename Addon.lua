@@ -33,7 +33,7 @@ Addon.versions = {}
 Addon.timers = {}
 
 -- Masterloot
-Addon.masterlooter = nil
+PLR_MASTERLOOTER = nil
 Addon.masterlooting = {}
 
 -------------------------------------------------------
@@ -90,6 +90,94 @@ function Addon:OnInitialize()
         }
     })
     self.configFrame = dialog:AddToBlizOptions(PLR_NAME)
+
+    local allowKeys = {"friend", "guild", "guildgroup"}
+    local allowValues = {FRIEND, GUILD, GUILD_GROUP}
+
+    local acceptKeys = {"friend", "guildleader", "guildofficer"}
+    local acceptValues = {FRIEND, L["GUILD_MASTER"], L["GUILD_OFFICER"]}
+
+    -- Loot method
+    it = Util.Iter()
+    config:RegisterOptionsTable(PLR_NAME .. "_lootmethod", {
+        name = L["OPT_LOOT_METHOD"],
+        type = "group",
+        args = {
+            awardSelf = {
+                name = L["OPT_AWARD_SELF"],
+                desc = L["OPT_AWARD_SELF_DESC"],
+                descStyle = "inline",
+                type = "toggle",
+                order = it(),
+                set = function (_, val) self.db.profile.awardSelf = val end,
+                get = function () return self.db.profile.awardSelf end,
+                width = "full"
+            },
+            masterloot = {type = "header", order = it(), name = L["OPT_MASTERLOOT"]},
+            masterlootDesc = {type = "description", order = it(), name = L["OPT_MASTERLOOT_DESC"] .. "\n"},
+            masterlootStart = {
+                name = L["OPT_MASTERLOOT_START"],
+                type = "execute",
+                order = it(),
+                func = function () self:SetMasterlooter("player") end
+            },
+            masterlootSearch = {
+                name = L["OPT_MASTERLOOT_SEARCH"],
+                type = "execute",
+                order = it(),
+                func = function () self.Comm.Send(self.Comm.EVENT_MASTERLOOT_ASK) end
+            },
+            masterlootStop = {
+                name = L["OPT_MASTERLOOT_STOP"],
+                type = "execute",
+                order = it(),
+                func = function () self:SetMasterlooter(nil) end
+            },
+            ["space" .. it()] = {type = "description", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+            masterlootAllow = {
+                name = L["OPT_MASTERLOOT_ALLOW"],
+                desc = L["OPT_MASTERLOOT_ALLOW_DESC"],
+                type = "multiselect",
+                order = it(),
+                values = allowValues,
+                set = function (_, key, val) self.db.profile.masterloot.allow[allowKeys[key]] = val end,
+                get = function (_, key) return self.db.profile.masterloot.allow[allowKeys[key]] end
+            },
+            masterlootWhitelist = {
+                name = L["OPT_MASTERLOOT_WHITELIST"],
+                desc = L["OPT_MASTERLOOT_WHITELIST_DESC"],
+                type = "input",
+                order = it(),
+                set = function (_, val)
+                    local t = {} for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do t[v] = true end
+                    self.db.profile.masterloot.whitelist = t
+                end,
+                get = function () return Util(self.db.profile.masterloot.whitelist).Keys().Sort().Concat(", ")() end,
+                width = "full"
+            },
+            masterlootAllowAll = {
+                name = L["OPT_MASTERLOOT_ALLOW_ALL"],
+                desc = L["OPT_MASTERLOOT_ALLOW_ALL_DESC"],
+                descStyle = "inline",
+                type = "toggle",
+                order = it(),
+                set = function (_, val) self.db.profile.masterloot.allowAll = val end,
+                get = function () return self.db.profile.masterloot.allowAll end,
+                width = "full"
+            },
+            ["space" .. it()] = {type = "description", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+            masterlootAccept = {
+                name = L["OPT_MASTERLOOT_ACCEPT"],
+                desc = L["OPT_MASTERLOOT_ACCEPT_DESC"],
+                type = "multiselect",
+                order = it(),
+                values = acceptValues,
+                set = function (_, key, val) self.db.profile.masterloot.accept[acceptKeys[key]] = val end,
+                get = function (_, key) return self.db.profile.masterloot.accept[acceptKeys[key]] end
+            }
+        }
+    })
+    dialog:AddToBlizOptions(PLR_NAME .. "_lootmethod", L["OPT_LOOT_METHOD"], PLR_NAME)
 
     -- Messages
     it = Util.Iter()
@@ -172,88 +260,6 @@ function Addon:OnInitialize()
     })
     dialog:AddToBlizOptions(PLR_NAME .. "_messages", L["OPT_MESSAGES"], PLR_NAME)
 
-    local allowKeys = {"friend", "guild", "guildgroup"}
-    local allowValues = {FRIEND, GUILD, GUILD_GROUP}
-
-    local acceptKeys = {"friend", "guildleader", "guildofficer"}
-    local acceptValues = {FRIEND, L["GUILD_MASTER"], L["GUILD_OFFICER"]}
-
-    -- Loot method
-    it = Util.Iter()
-    config:RegisterOptionsTable(PLR_NAME .. "_lootmethod", {
-        name = L["OPT_LOOT_METHOD"],
-        type = "group",
-        args = {
-            awardSelf = {
-                name = L["OPT_AWARD_SELF"],
-                desc = L["OPT_AWARD_SELF_DESC"],
-                descStyle = "inline",
-                type = "toggle",
-                order = it(),
-                set = function (_, val) self.db.profile.awardSelf = val end,
-                get = function () return self.db.profile.awardSelf end,
-                width = "full"
-            },
-            masterloot = {type = "header", order = it(), name = L["OPT_MASTERLOOT"]},
-            masterlootDesc = {type = "description", order = it(), name = L["OPT_MASTERLOOT_DESC"] .. "\n"},
-            masterlootStart = {
-                name = L["OPT_MASTERLOOT_START"],
-                type = "execute",
-                order = it(),
-                func = function () self:SetMasterlooter("player") end
-            },
-            masterlootStop = {
-                name = L["OPT_MASTERLOOT_STOP"],
-                type = "execute",
-                order = it(),
-                func = function () self:SetMasterlooter(nil) end
-            },
-            ["space" .. it()] = {type = "description", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
-            masterlootAllow = {
-                name = L["OPT_MASTERLOOT_ALLOW"],
-                desc = L["OPT_MASTERLOOT_ALLOW_DESC"],
-                type = "multiselect",
-                order = it(),
-                values = allowValues,
-                set = function (_, key, val) self.db.profile.masterloot.allow[allowKeys[key]] = val end,
-                get = function (_, key) return self.db.profile.masterloot.allow[allowKeys[key]] end
-            },
-            masterlootWhitelist = {
-                name = L["OPT_MASTERLOOT_WHITELIST"],
-                desc = L["OPT_MASTERLOOT_WHITELIST_DESC"],
-                type = "input",
-                order = it(),
-                set = function (_, val)
-                    local t = {} for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do t[v] = true end
-                    self.db.profile.masterloot.whitelist = t
-                end,
-                get = function () return Util(self.db.profile.masterloot.whitelist).Keys().Sort().Concat(", ")() end,
-                width = "full"
-            },
-            masterlootAllowAll = {
-                name = L["OPT_MASTERLOOT_ALLOW_ALL"],
-                desc = L["OPT_MASTERLOOT_ALLOW_ALL_DESC"],
-                descStyle = "inline",
-                type = "toggle",
-                order = it(),
-                set = function (_, val) self.db.profile.masterloot.allowAll = val end,
-                get = function () return self.db.profile.masterloot.allowAll end,
-                width = "full"
-            },
-            ["space" .. it()] = {type = "description", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
-            masterlootAccept = {
-                name = L["OPT_MASTERLOOT_ACCEPT"],
-                desc = L["OPT_MASTERLOOT_ACCEPT_DESC"],
-                type = "multiselect",
-                order = it(),
-                values = acceptValues,
-                set = function (_, key, val) self.db.profile.masterloot.accept[acceptKeys[key]] = val end,
-                get = function (_, key) return self.db.profile.masterloot.accept[acceptKeys[key]] end
-            }
-        }
-    })
-    dialog:AddToBlizOptions(PLR_NAME .. "_lootmethod", L["OPT_LOOT_METHOD"], PLR_NAME)
-
     -- Profiles
     config:RegisterOptionsTable(PLR_NAME .. "_profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db))
     dialog:AddToBlizOptions(PLR_NAME .. "_profiles", "Profiles", PLR_NAME)
@@ -282,6 +288,10 @@ function Addon:OnEnable()
         -- IsInGroup doesn't work right after logging in, so check again after waiting a bit.
         self.timers.inspectStart = self:ScheduleTimer(self.Inspect.Start, 10)
     end
+
+    -- Trigger GROUP_JOINED or GROUP_LEFT
+    local event = IsInGroup() and "GROUP_JOINED" or "GROUP_LEFT"
+    self.Events[event](event)
 end
 
 -- Called when the addon is disabled
@@ -345,7 +355,8 @@ function Addon:HandleChatCommand (msg)
                 local timeout, owner = tonumber(args[i]), args[i+1]
                 
                 for i,item in pairs(items) do
-                    self.Roll.Add(item, owner, nil, timeout):Start()
+                    item = Item.FromLink(item)
+                    self.Roll.Add(item, owner or self:GetMasterlooter() or nil, timeout):Start()
                 end
             end
         end,
@@ -395,23 +406,26 @@ end
 
 -- Set (or reset) the masterlooter
 function Addon:SetMasterlooter(unit, silent)
-    if self.masterlooter then
-        if unit and UnitIsUnit(self.masterlooter, unit) then
-            return
-        end
+    unit = unit and Util.GetName(unit)
 
-        wipe(self.masterlooting)
-        if not silent then
-            self.Comm.Send(self.Comm.EVENT_MASTERLOOT_STOP, nil, UnitIsUnit(self.masterlooter, "player") and self.Comm.TYPE_GROUP or self.masterlooter)
+    if PLR_MASTERLOOTER then
+        if unit ~= PLR_MASTERLOOTER then
+            wipe(self.masterlooting)
+            if not silent then
+                self.Comm.Send(self.Comm.EVENT_MASTERLOOT_DEC, nil, UnitIsUnit(PLR_MASTERLOOTER, "player") and self.Comm.TYPE_GROUP or PLR_MASTERLOOTER)
+            end
         end
     end
     
-    self.masterlooter = unit
+    PLR_MASTERLOOTER = unit
 
-    if not silent and unit then
-        if UnitIsUnit(self.masterlooter, "player") then
-            self.Comm.Send(self.Comm.EVENT_MASTERLOOT_ASK)
-        else
+    if unit then
+        local isSelf = UnitIsUnit(PLR_MASTERLOOTER, "player")
+        self:Info(isSelf and L["MASTERLOOTER_SELF"] or L["MASTERLOOTER_OTHER"]:format(self.Comm.GetPlayerLink(unit)))
+
+        if isSelf then
+            self.Comm.SendData(self.Comm.EVENT_MASTERLOOT_OFFER, silent)
+        elseif not silent then
             self.Comm.Send(self.Comm.EVENT_MASTERLOOT_ACK, nil, unit)
         end
     end
@@ -420,8 +434,13 @@ function Addon:SetMasterlooter(unit, silent)
 end
 
 -- Check if the unit (or the player) is our masterlooter
+function Addon:GetMasterlooter(unit)
+    return PLR_MASTERLOOTER
+end
+
+-- Check if the unit (or the player) is our masterlooter
 function Addon:IsMasterlooter(unit)
-    return self.masterlooter and UnitIsUnit(self.masterlooter, unit or "player")
+    return PLR_MASTERLOOTER and UnitIsUnit(PLR_MASTERLOOTER, unit or "player")
 end
 
 -------------------------------------------------------
@@ -459,9 +478,10 @@ function Addon:ExtendTimerTo(timer, to)
         Addon:CancelTimer(timer)
         local fn = timer.looping and Addon.ScheduleRepeatingTimer or Addon.ScheduleTimer
         timer = fn(Addon, timer.func, to, unpack(timer, 1, timer.argsCount))
+        return timer, true
+    else
+        return timer, false
     end
-
-    return timer
 end
 
 function Addon:ExtendTimerBy(timer, by)

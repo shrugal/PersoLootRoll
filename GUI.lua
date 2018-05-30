@@ -13,6 +13,8 @@ local Self = {}
 -------------------------------------------------------
 
 Self.DIALOG_ROLL_CANCEL = "PLR_ROLL_CANCEL"
+Self.DIALOG_MASTERLOOT_ASK = "PLR_MASTERLOOT_ASK"
+
 StaticPopupDialogs[Self.DIALOG_ROLL_CANCEL] = {
     text = L["DIALOG_ROLL_CANCEL"],
     button1 = YES,
@@ -26,7 +28,6 @@ StaticPopupDialogs[Self.DIALOG_ROLL_CANCEL] = {
     preferredIndex = 3
 }
 
-Self.DIALOG_MASTERLOOT_ASK = "PLR_MASTERLOOT_ASK"
 StaticPopupDialogs[Self.DIALOG_MASTERLOOT_ASK] = {
     text = L["DIALOG_MASTERLOOT_ASK"],
     button1 = YES,
@@ -36,6 +37,27 @@ StaticPopupDialogs[Self.DIALOG_MASTERLOOT_ASK] = {
     hideOnEscape = false,
     preferredIndex = 3
 }
+
+-------------------------------------------------------
+--                     Dropdowns                     --
+-------------------------------------------------------
+
+local dropDown
+
+-- Masterloot
+dropDown = CreateFrame("FRAME", "PlrMasterlootDropDown", UIParent, "UIDropDownMenuTemplate")
+UIDropDownMenu_Initialize(dropDown, function (self, level, menuList)
+    local info = UIDropDownMenu_CreateInfo()
+    info.text, info.func = L["MENU_MASTERLOOT_START"], function ()
+        Addon:SetMasterlooter("player")
+    end
+    UIDropDownMenu_AddButton(info)
+    info.text, info.func = L["MENU_MASTERLOOT_SEARCH"], function ()
+        Comm.SendData(Comm.EVENT_MASTERLOOT_ASK)
+    end
+    UIDropDownMenu_AddButton(info)
+end, "MENU")
+Self.DROPDOWN_MASTERLOOT = dropDown
 
 -------------------------------------------------------
 --                 LootAlertSystem                   --
@@ -68,7 +90,7 @@ Self.LootAlertSystem = AlertFrame:AddQueuedAlertFrameSubSystem("PLR_LootWonAlert
 local Rolls = {
     frames = {},
     filter = {all = false, canceled = false, done = true, won = true, traded = false},
-    status = {width = 750, height = 400}
+    status = {width = 700, height = 400}
 }
 
 -- Show the rolls frame
@@ -86,7 +108,7 @@ function Rolls.Show()
                 self:Release()
                 wipe(Rolls.frames)
             end)
-            :SetMinResize(750, 120)
+            :SetMinResize(700, 120)
             :SetStatusTable(Rolls.status)()
 
         do
@@ -134,21 +156,70 @@ function Rolls.Show()
             f:SetWidth(f.label:GetStringWidth() + 30)
             f.label:SetPoint("TOPLEFT", 15, -6)
 
-            for _,key in ipairs({"all", "done", "won", "traded", "canceled"}) do
+            for _,key in ipairs({"all", "done", "awarded", "traded", "canceled"}) do
                 Self.CreateFilterCheckbox(key)
             end
 
-            f = Self("InteractiveLabel"):SetFontObject(GameFontNormal):SetText()
+            -- ML action
+            f = Self("Icon")
                 :AddTo(Rolls.frames.filter)
-                :SetPoint("TOPRIGHT")
-                :SetPoint("BOTTOMRIGHT")()
+                :SetCallback("OnEnter", function (self)
+                    GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
+                    GameTooltip:SetText(L["TIP_MASTERLOOT_" .. (Addon:GetMasterlooter() and "STOP" or "START")])
+                    GameTooltip:Show()
+                end)
+                :SetCallback("OnLeave", function () GameTooltip:Hide() end)
+                :SetCallback("OnClick", function (self)
+                    local ml = Addon:GetMasterlooter()
+                    if ml then
+                        Addon:SetMasterlooter(nil)
+                    else
+                        ToggleDropDownMenu(1, nil, Self.DROPDOWN_MASTERLOOT, "cursor", 3, -3)
+                    end
+                end)
+                :SetImageSize(16, 16):SetHeight(16):SetWidth(16)
+                :SetPoint("TOP", 0, -4)
+                :SetPoint("RIGHT")()
+            f.image:SetPoint("TOP")
+
+            -- ML
+            f = Self("InteractiveLabel"):SetFontObject(GameFontNormal)
+                :AddTo(Rolls.frames.filter)
+                :SetText()
+                :SetCallback("OnEnter", function (self)
+                    local ml = Addon:GetMasterlooter()
+                    if Addon:IsMasterlooter() then
+                        GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOM")
+                        GameTooltip:SetText(L["TIP_MASTERLOOTING"])
+
+                        local c = Util.GetUnitColor("player")
+                        GameTooltip:AddLine(ml, c.r, c.g, c.b, false)
+                        for unit,_ in pairs(Addon.masterlooting) do
+                            local c = Util.GetUnitColor(unit)
+                            GameTooltip:AddLine(unit, c.r, c.g, c.b, false)
+                        end
+                        GameTooltip:Show()
+                    elseif ml then
+                        GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
+                        GameTooltip:SetUnit(ml)
+                        GameTooltip:Show()
+                    end
+                end)
+                :SetCallback("OnLeave", function () GameTooltip:Hide() end)
+                :SetCallback("OnClick", function ()
+                    local ml = Addon:GetMasterlooter()
+                    if ml then ChatFrame_SendSmartTell(ml) end
+                end)
+                :SetHeight(12)
+                :SetPoint("TOP", 0, -6)
+                :SetPoint("RIGHT", f.frame, "LEFT")()
         end
 
         -- SCROLL
 
         Rolls.frames.scroll = Self("ScrollFrame"):SetLayout("PLR_Table")
             :SetUserData("table", {
-                columns = {20, 1, 30, 75, 75, 50, 50, 75, 20 * 5 - 4},
+                columns = {20, 1, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, 20 * 5 - 4},
                 space = 10
             })
             :AddTo(Rolls.frames.window)
@@ -158,9 +229,9 @@ function Rolls.Show()
         do
             local scroll = Rolls.frames.scroll
 
-            local header = {"ID", "ITEM", "LEVEL", "OWNER", "LOOTMASTER", "STATUS", "YOUR_BID", "WINNER"}
+            local header = {"ID", "ITEM", "LEVEL", "OWNER", "ML", "STATUS", "YOUR_BID", "WINNER"}
             for i,v in pairs(header) do
-                Self("Label"):SetText(Util.StrUcFirst(L[v])):SetFontObject(GameFontNormal):SetColor(1, 0.82, 0):AddTo(scroll)
+                Self("Label"):SetFontObject(GameFontNormal):SetText(Util.StrUcFirst(L[v])):SetColor(1, 0.82, 0):AddTo(scroll)
             end
 
             local actions = Self("SimpleGroup"):SetLayout(nil)
@@ -203,7 +274,7 @@ function Rolls.Update()
     local player = UnitName("player")
     local rolls = Util(Addon.rolls).Filter(function (roll)
         return (Rolls.filter.all or roll.isOwner or roll.item.isOwner or roll.item:GetEligible(player))
-           and (Rolls.filter.canceled or roll.status ~= Roll.STATUS_CANCELED)
+           and (Rolls.filter.canceled or roll.status >= Roll.STATUS_RUNNING)
            and (Rolls.filter.done or (roll.status ~= Roll.STATUS_DONE))
            and (Rolls.filter.won or not roll.winner)
            and (Rolls.filter.traded or not roll.traded)
@@ -214,14 +285,14 @@ function Rolls.Update()
         Self("Label"):SetFontObject(GameFontNormal):AddTo(scroll, first)
 
         -- Item
-        Self("InteractiveLabel"):SetWidth(216):SetFontObject(GameFontNormal):SetCallback("OnLeave", function ()
+        Self("InteractiveLabel"):SetFontObject(GameFontNormal):SetCallback("OnLeave", function ()
             GameTooltip:Hide()
         end):AddTo(scroll, first)
         
         -- Ilvl
         Self("Label"):SetFontObject(GameFontNormal):AddTo(scroll, first)
 
-        -- Owner, Masterlooter
+        -- Owner, ML
         Self("InteractiveLabel"):SetFontObject(GameFontNormal):AddTo(scroll, first)
         Self("InteractiveLabel"):SetFontObject(GameFontNormal):AddTo(scroll, first)
 
@@ -252,8 +323,9 @@ function Rolls.Update()
                 colspan = 99
             })
             :SetUserData("table", {
-                columns = {1, 75, 75, 100},
-                space = 2
+                columns = {1, {25, 100}, {25, 100}, 100},
+                spaceH = 10,
+                spaceV = 2
             })
             :AddTo(scroll, first)()
 
@@ -275,7 +347,7 @@ function Rolls.Update()
         
             local header = {"PLAYER", "ITEM_LEVEL", "BID"}
             for i,v in pairs(header) do
-                local f = Self("Label"):SetText(Util.StrUcFirst(L[v])):SetFontObject(GameFontNormal):SetColor(1, 0.82, 0)()
+                local f = Self("Label"):SetFontObject(GameFontNormal):SetText(Util.StrUcFirst(L[v])):SetColor(1, 0.82, 0)()
                 if i == #header then
                     f:SetUserData("cell", {colspan = 2})
                 end
@@ -289,7 +361,10 @@ function Rolls.Update()
         children[it(0)]:SetText(roll.id)
 
         -- Item
-        Self(children[it()]):SetText(roll.item.link):SetImage(roll.item.texture)
+        Self(children[it()])
+            :SetText(roll.item.link)
+            :SetImage(roll.item.texture)
+            :SetWidth(217)
             :SetCallback("OnEnter", function (self)
                 GameTooltip:SetOwner(self.frame, "ANCHOR_LEFT")
                 GameTooltip:SetHyperlink(roll.item.link)
@@ -305,7 +380,7 @@ function Rolls.Update()
             end)
 
         -- Ilvl
-        children[it()]:SetText(roll.item:GetBasicInfo().level or "-")
+        Self(children[it()]):SetText(roll.item:GetBasicInfo().level or "-")
 
         -- Owner
         Self(children[it()])
@@ -318,7 +393,7 @@ function Rolls.Update()
             :SetCallback("OnLeave", function () GameTooltip:Hide() end)
             :SetCallback("OnClick", function () ChatFrame_SendSmartTell(roll.item.owner) end)
 
-        -- Masterlooter
+        -- ML
         local ml = children[it()]
         if roll.owner ~= roll.item.owner then
             Self(ml)
@@ -335,10 +410,10 @@ function Rolls.Update()
         end
 
         -- Status
-        children[it()]:SetText(roll.traded and L["TRADED"] or L["ROLL_STATUS_" .. roll.status])
+        Self(children[it()]):SetText(roll.traded and L["ROLL_TRADED"] or roll.winner and L["ROLL_AWARDED"] or L["ROLL_STATUS_" .. roll.status])
 
         -- Your Bid
-        children[it()]:SetText(roll.answer and L["ROLL_ANSWER_" .. roll.answer] or "-")
+        Self(children[it()]):SetText(roll.answer and L["ROLL_ANSWER_" .. roll.answer] or "-")
 
         -- Winner
         Self(children[it()])
@@ -358,7 +433,7 @@ function Rolls.Update()
             local actions = children[it()]
             actions:ReleaseChildren()
 
-            if roll:CanBeWonBy(UnitName("player")) and not roll:UnitHasBid(UnitName("player")) then
+            if roll:CanBeWonBy(UnitName("player")) and not roll.answer then
                 -- Need
                 f = Self.CreateIconButton("UI-GroupLoot-Dice", actions, function ()
                     roll:Bid(Roll.ANSWER_NEED)
@@ -366,7 +441,7 @@ function Rolls.Update()
                 Self(f):SetImageSize(14, 14):SetWidth(16):SetHeight(16)
 
                 -- Greed
-                if roll.ownerId then
+                if roll.ownerId or roll.itemOwnerId then
                     Self.CreateIconButton("UI-GroupLoot-Coin", actions, function ()
                         roll:Bid(Roll.ANSWER_GREED)
                     end, GREED)
@@ -380,9 +455,9 @@ function Rolls.Update()
             end
 
             -- Advertise
-            if roll:CanBeAwarded() and not roll.posted then
+            if roll:ShouldAdvertise(true) then
                 f = Self.CreateIconButton("UI-GuildButton-MOTD", actions, function ()
-                    roll:Advertise()
+                    roll:Advertise(true)
                 end, L["ADVERTISE"])
                 Self(f):SetImageSize(13, 13):SetWidth(16):SetHeight(16)
             end
@@ -451,21 +526,14 @@ function Rolls.Update()
     filter.children[it()]:SetValue(Rolls.filter.traded)
     filter.children[it()]:SetValue(Rolls.filter.canceled)
 
-    local unit = Util.GetName(Addon.masterlooter)
-    local ml = Self(filter.children[it()]):SetText(unit and L["ML"] .. ": " .. Util.GetColoredName(Util.GetShortenedName(unit)) or "")
-        :SetCallback("OnEnter", function (self)
-            if unit then
-                GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-                GameTooltip:SetUnit(unit)
-                GameTooltip:Show()
-            end
-        end)
-        :SetCallback("OnLeave", function () GameTooltip:Hide() end)
-        :SetCallback("OnClick", function () if unit then ChatFrame_SendSmartTell(unit) end end)()
-    ml:SetWidth(ml.label:GetStringWidth() + 30)
-    ml.label:ClearAllPoints()
-    ml.label:SetPoint("TOPLEFT", 15, -6)
-    ml.label:SetPoint("TOPRIGHT", -15, -6)
+    -- ML action
+    local ml = Addon:GetMasterlooter()
+    Self(filter.children[it()]):SetImage(ml and "Interface\\Buttons\\UI-StopButton" or "Interface\\GossipFrame\\WorkOrderGossipIcon")
+
+    -- ML
+    f = Self(filter.children[it()])
+        :SetText(L["ML"] .. ": " .. (ml and Util.GetColoredName(Util.GetShortenedName(ml)) or ""))()
+    f:SetWidth(f.label:GetStringWidth())
 end
 
 -- Hide the rolls frame
@@ -481,7 +549,11 @@ function Rolls.UpdateDetails(self, roll)
     self:PauseLayout()
 
     local players = Util({}).Merge(roll.item:GetEligible(true), roll:GetBids()).Map(function (val, unit)
-        return {unit = unit, bid = type(val) == "number" and val or nil, ilvl = roll.item:GetLevelForLocation(unit)}
+        return {
+            unit = unit,
+            bid = type(val) == "number" and val or nil,
+            ilvl = roll.item:GetLevelForLocation(unit)
+        }
     end).Values().SortBy("bid", 99, "ilvl", 0, "unit")()
     local canBeAwarded = roll:CanBeAwarded(true)
 
@@ -514,10 +586,10 @@ function Rolls.UpdateDetails(self, roll)
             :SetCallback("OnClick", function () ChatFrame_SendSmartTell(player.unit) end)
 
         -- Ilvl
-        children[it()]:SetText(player.ilvl)
+        Self(children[it()]):SetText(player.ilvl)
 
         -- Bid
-        children[it()]:SetText(player.bid and L["ROLL_ANSWER_" .. player.bid] or "-")
+        Self(children[it()]):SetText(player.bid and L["ROLL_ANSWER_" .. player.bid] or "-")
 
         -- Actions
         Self(children[it()]):SetText(canBeAwarded and L["AWARD"] or "-"):SetDisabled(not canBeAwarded)
@@ -533,38 +605,44 @@ Self.Rolls = Rolls
 -------------------------------------------------------
 
 -- Get alignment method and value. Possible alignment methods are a callback, a number, "start", "middle", "end", "fill" or "TOPLEFT", "BOTTOMRIGHT" etc.
-local GetAlign = function (dir, cellObj, colObj, tableObj, cell, total)
+local GetAlign = function (dir, tableObj, colObj, cellObj, cell, child)
     local fn = cellObj["align" .. dir] or cellObj.align or colObj["align" .. dir] or colObj.align or tableObj["align" .. dir] or tableObj.align or "CENTERLEFT"
-    local cell, total, val = cell or 0, total or 0, nil
+    local child, cell, val = child or 0, cell or 0, nil
 
     if type(fn) == "string" then
         fn = fn:lower()
         fn = dir == "V" and (fn:sub(1, 3) == "top" and "start" or fn:sub(1, 6) == "bottom" and "end" or fn:sub(1, 6) == "center" and "middle")
           or dir == "H" and (fn:sub(-4) == "left" and "start" or fn:sub(-5) == "right" and "end" or fn:sub(-6) == "center" and "middle")
           or fn
-        val = (fn == "start" or fn == "fill") and 0 or fn == "end" and total - cell or (total - cell) / 2
+        val = (fn == "start" or fn == "fill") and 0 or fn == "end" and cell - child or (cell - child) / 2
     elseif type(fn) == "function" then
-        val = fn(cell or 0, total, dir)
+        val = fn(child or 0, cell, dir)
     else
         val = fn
     end
 
-    return fn, max(0, min(val, total))
+    return fn, max(0, min(val, cell))
 end
 
--- Get the width for a column, based on abs. width, rel. width or weight.
-local GetWidth = function (col, scale, total)
-    return col.width and col.width < 1 and col.width * total or col.width or (col.weight or 1) * scale
+-- Get width or height for multiple cells combined
+local GetDimension = function (dir, laneDim, from, to, space)
+    local dim = 0
+    for cell=from,to do
+        dim = dim + (laneDim[cell] or 0)
+    end
+    return dim + max(0, to - from) * (space or 0)
 end
 
 --[[ Options
 ============
 Container:
- - columns ({col, col, ...}): Column settings. "col" can be a number (<1: rel. width, <10: weight, >=10: abs. width) or a table with column setting.
+ - columns ({col, col, ...}): Column settings. "col" can be a number (<= 0: content width, <1: rel. width, <10: weight, >=10: abs. width) or a table with column setting.
  - space, spaceH, spaceV: Overall, horizontal and vertical spacing between cells.
  - align, alignH, alignV: Overall, horizontal and vertical cell alignment. See GetAlign() for possible values.
 Columns:
- - width: Fixed column width. <1: rel. width, >=1: abs. width.
+ - width: Fixed column width (nil or <=0: content width, <1: rel. width, >=1: abs. width).
+ - min or 1: Min width for content based width
+ - max or 2: Max width for content based width
  - weight: Flexible column width. The leftover width after accounting for fixed-width columns is distributed to weighted columns according to their weights.
  - align, alignH, alignV: Overwrites the container setting for alignment.
 Cell:
@@ -581,126 +659,152 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
     local spaceH = tableObj.spaceH or tableObj.space or 0
     local spaceV = tableObj.spaceV or tableObj.space or 0
     local totalH = (content:GetWidth() or content.width or 0) - spaceH * (#cols - 1)
-    local rowspans = {}
-
-    -- Determine fixed size cols, collect weights and calculate scale
-    local extantH, weight = totalH, 0
-    for i, col in ipairs(cols) do
-        if type(col) == "number" then
-            col = {[col >= 1 and col < 10 and "weight" or "width"] = col}
-            cols[i] = col
-        end
-
-        if col.width then
-            extantH = max(0, extantH - GetWidth(col, 1, totalH))
-        else
-            weight = weight + (col.weight or 1)
-        end
-    end
-    local scale = weight > 0 and extantH / weight or 0
-
-    -- Arrange children
-    local n, offsetH, offsetV, rowV = 1, 0, 0, 0
-    local slotFound, col, row, rowStart, rowEnd, lastRow, cell, cellH, cellV, cellOffsetV, childH, f, alignFn, align, colspan, rowspan, j
-    for i, child in ipairs(children) do
+    local t, laneH, laneV, rowspans = {}, {}, {}, {}
+    
+    -- Create the grid
+    local n, slotFound = 1
+    for i,child in ipairs(children) do
         if child:IsShown() then
             repeat
-                col = (n - 1) % #cols + 1
-                row = ceil(n / #cols)
-                colObj = cols[col]
-                cellH = GetWidth(colObj, scale, totalH)
-
-                -- First column of a row -> Update/reset variables
-                if col == 1 then
-                    rowStart = i
-                    offsetH, offsetV, rowV = 0, offsetV + rowV + spaceV, 0
-                end
-
-                rowspan = rowspans[col]
-                cell = rowspan and rowspan.cell or child
-                cellObj = cell:GetUserData("cell") or {}
-
-                -- Handle colspan
-                colspan = max(0, min((cellObj.colspan or 1) - 1, #cols - col))
-                for j=col+1, col+colspan do
-                    cellH = cellH + spaceH + GetWidth(cols[j], scale, totalH)
-                end
-                n = n + colspan + 1
-
-                -- Set width and left anchor
+                local col = (n - 1) % #cols + 1
+                local row = ceil(n / #cols)
+                local rowspan = rowspans[col]
+                local cell = rowspan and rowspan.cell or child
+                local cellObj = cell:GetUserData("cell") or {}
                 slotFound = not rowspan
-                lastRow = slotFound and i == #children
-                if slotFound then
-                    f = cell.frame
-                    f:ClearAllPoints()
+                
+                -- First col
+                if col == 1 then t[row] = {} end
 
-                    childH = f:GetWidth() or 0
-                    alignFn, align = GetAlign("H", cellObj, colObj, tableObj, childH, cellH)
-                    f:SetPoint("LEFT", content, offsetH + align, 0)
-                    if cell:IsFullWidth() or alignFn == "fill" or childH > cellH then
-                        f:SetPoint("RIGHT", content, "LEFT", offsetH + align + cellH, 0)
-                    end
-                    
-                    if cell.DoLayout then
-                        cell:DoLayout()
-                    end
-
-                    if cellObj.rowspan then
-                        rowspans[col] = {cell = cell, span = cellObj.rowspan - 1, height = 0}
-                    else
-                        rowV = max(rowV, f:GetHeight() or 0)
-                    end
-                -- Or decrement rowspan counter and update total height
-                else
-                    rowspan.span = rowspan.span - 1
-                    if lastRow or rowspan.span == 0 then
-                        rowV = max(rowV, (cell.frame:GetHeight() or 0) - rowspan.height)
-                    end
+                -- Rowspan
+                if not rowspan and cellObj.rowspan then
+                    rowspan = {cell = cell, from = row, to = row + cellObj.rowspan - 1}
+                    rowspans[col] = rowspan
+                end
+                if rowspan and i == #children then
+                    rowspan.to = row
                 end
 
-                offsetH = offsetH + cellH + spaceH
+                -- Colspan
+                local colspan = max(0, min((cellObj.colspan or 1) - 1, #cols - col))
 
-                -- Last column of a row -> Set top anchors
-                if col+colspan == #cols or lastRow then
-                    j, col, rowEnd = rowStart, 1, col
-                    while col <= rowEnd do
-                        rowspan = rowspans[col]
-                        cell = rowspan and rowspan.cell or children[j]
+                -- Place the cell
+                if not rowspan or rowspan.to == row then
+                    t[row][col + colspan] = {
+                        child = cell,
+                        rowStart = rowspan and rowspan.from or row,
+                        colStart = col,
+                    }
 
-                        if cell:IsShown() then
-                            cellV, cellOffsetV, cellObj =  rowV, offsetV, cell:GetUserData("cell") or {}
-
-                            -- Account for and update cumulative rowspan height
-                            if rowspan then
-                                cellV, cellOffsetV = cellV + rowspan.height, cellOffsetV - rowspan.height
-                                rowspan.height = cellV
-                            end
-
-                            -- No rowspan or the rowspan ends here
-                            if not rowspan or lastRow or rowspan.span == 0 then
-                                f = cell.frame
-                                alignFn, align = GetAlign("V", cellObj, colObj, tableObj, f:GetHeight() or 0, cellV)
-                                if cell:IsFullHeight() or alignFn == "fill" then
-                                    f:SetHeight(cellV)
-                                end
-                                f:SetPoint("TOP", content, 0, -(cellOffsetV + align))
-                                rowspans[col] = nil
-                            end
-
-                            -- Update loop variables
-                            col = col + max(0, min((cellObj.colspan or 1) - 1, #cols - col)) + 1
-                            if not rowspan or rowspan.cell == children[j] then
-                                j = j + 1
-                            end
-                        end
+                    if rowspan then
+                        rowspans[col] = nil
                     end
                 end
+                
+                n = n + colspan + 1
             until slotFound
         end
     end
 
+    -- Determine fixed size cols and collect weights
+    local extantH, totalWeight = totalH, 0
+    for col,colObj in ipairs(cols) do
+        laneH[col] = 0
+
+        if type(colObj) == "number" then
+            colObj = {[colObj >= 1 and colObj < 10 and "weight" or "width"] = colObj}
+            cols[col] = colObj
+        end
+
+        if colObj.weight then
+            -- Weight
+            totalWeight = totalWeight + (colObj.weight or 1)
+        else
+            if not colObj.width or colObj.width <= 0 then
+                -- Content width
+                for row=1,#t do
+                    local cell = t[row][col]
+                    if cell then
+                        local f = cell.child.frame
+                        f:ClearAllPoints()
+                        local childH = f:GetWidth() or 0
+    
+                        laneH[col] = max(laneH[col], childH - GetDimension("H", laneH, cell.colStart, col - 1, spaceH))
+                    end
+                end
+
+                laneH[col] = max(colObj.min or colObj[1] or 0, min(laneH[col], colObj.max or colObj[2] or laneH[col]))
+            else
+                -- Rel./Abs. width
+                laneH[col] = colObj.width < 1 and colObj.width * totalH or colObj.width
+            end
+            extantH = max(0, extantH - laneH[col])
+        end
+    end
+
+    -- Determine sizes based on weight
+    local scale = totalWeight > 0 and extantH / totalWeight or 0
+    for col,colObj in pairs(cols) do
+        if colObj.weight then
+            laneH[col] = scale * colObj.weight
+        end
+    end
+
+    -- Arrange children
+    for row,cells in ipairs(t) do
+        local rowV = 0
+
+        -- Horizontal placement and sizing
+        for col=1,#cols do
+            local cell = t[row][col]
+            if cell then
+                local child = cell.child
+                local colObj = cols[cell.colStart]
+                local cellObj = child:GetUserData("cell") or {}
+                local offsetH = GetDimension("H", laneH, 1, cell.colStart - 1, spaceH) + (cell.colStart == 1 and 0 or spaceH)
+                local cellH = GetDimension("H", laneH, cell.colStart, col, spaceH)
+                
+                local f = child.frame
+                f:ClearAllPoints()
+                local childH = f:GetWidth() or 0
+
+                local alignFn, align = GetAlign("H", tableObj, colObj, cellObj, cellH, childH)
+                f:SetPoint("LEFT", content, offsetH + align, 0)
+                if child:IsFullWidth() or alignFn == "fill" or childH > cellH then
+                    f:SetPoint("RIGHT", content, "LEFT", offsetH + align + cellH, 0)
+                end
+                
+                if child.DoLayout then
+                    child:DoLayout()
+                end
+
+                rowV = max(rowV, (f:GetHeight() or 0) - GetDimension("V", laneV, cell.rowStart, row - 1, spaceV))
+            end
+        end
+
+        laneV[row] = rowV
+
+        -- Vertical placement and sizing
+        for col,cell in pairs(cells) do
+            local child = cell.child
+            local colObj = cols[cell.colStart]
+            local cellObj = child:GetUserData("cell") or {}
+            local offsetV = GetDimension("V", laneV, 1, cell.rowStart - 1, spaceV) + (cell.rowStart == 1 and 0 or spaceV)
+            local cellV = GetDimension("V", laneV, cell.rowStart, row, spaceV)
+                
+            local f = child.frame
+            local childV = f:GetHeight() or 0
+
+            local alignFn, align = GetAlign("V", tableObj, colObj, cellObj, cellV, childV)
+            if child:IsFullHeight() or alignFn == "fill" then
+                f:SetHeight(cellV)
+            end
+            f:SetPoint("TOP", content, 0, -(offsetV + align))
+        end
+    end
+
     -- Calculate total height
-    local totalV = offsetV + rowV
+    local totalV = GetDimension("V", laneV, 1, #laneV, spaceV)
 
     Util.Safecall(obj.LayoutFinished, obj, nil, totalV)
     obj:ResumeLayout()
@@ -818,6 +922,10 @@ setmetatable(Self, {
                             or c.f.image and c.f.image[k] and c.f.image
                             or c.f.label and c.f.label[k] and c.f.label
                         obj[k](obj, unpack(args))
+
+                        if (k == "SetText" or k == "SetFontObject") and (c.f.type == "Label" or c.f.type == "InteractiveLabel") then
+                            c.f.frame:SetWidth(c.f.label:GetStringWidth())
+                        end
                     end
                     return c
                 end

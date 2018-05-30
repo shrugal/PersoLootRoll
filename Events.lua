@@ -1,4 +1,5 @@
 local Addon = LibStub("AceAddon-3.0"):GetAddon(PLR_NAME)
+local L = LibStub("AceLocale-3.0"):GetLocale(PLR_NAME)
 local Util = Addon.Util
 local Item = Addon.Item
 local Locale = Addon.Locale
@@ -28,10 +29,20 @@ Self.lastVersionCheck = nil
 --                      Roster                       --
 -------------------------------------------------------
 
-function Self.GROUP_JOINED(event, ...)
+function Self.GROUP_JOINED(event)
+    -- Send sync event
+    Comm.Send(Comm.EVENT_SYNC)
+
+    -- Restore or ask for masterlooter
+    if Addon:GetMasterlooter() then
+        Addon:SetMasterlooter(Addon:GetMasterlooter(), true)
+    else
+        Comm.Send(Comm.EVENT_MASTERLOOT_ASK)
+    end
+
     -- Schedule version check
     Addon.timers.versionCheck = Addon:ScheduleTimer(function ()
-        Comm.Send(Comm.EVENT_VERSION_ASK)
+        Comm.SendData(Comm.EVENT_VERSION_ASK)
     end, Self.VERSION_CHECK_DELAY)
     
     -- Start inspecting
@@ -39,7 +50,7 @@ function Self.GROUP_JOINED(event, ...)
     Inspect.Start()
 end
 
-function Self.GROUP_LEFT(event, ...)
+function Self.GROUP_LEFT(event)
     -- Clear all rolls
     Util.TblApply(Addon.rolls, Roll.Clear)
 
@@ -74,7 +85,7 @@ function Self.ITEM_PUSH(event, bagId)
 end
 
 function Self.ITEM_LOCKED(event, bagOrEquip, slot)
-    tinsert(Self.lastLocked, slot and {bagOrEquip, slot} or bagOrEquip)
+    tinsert(Self.lastLocked, {bagOrEquip, slot})
 end
 
 function Self.ITEM_UNLOCKED(event, bagOrEquip, slot)
@@ -82,7 +93,7 @@ function Self.ITEM_UNLOCKED(event, bagOrEquip, slot)
     
     if #Self.lastLocked == 1 and not Util.TblEquals(pos, Self.lastLocked[1]) then
         -- The item has been moved
-        Item.OnMove(Self.lastLocked, pos)
+        Item.OnMove(Self.lastLocked[1], pos)
     elseif #Self.lastLocked == 2 then
         -- The item has switched places with another
         Item.OnSwitch(Self.lastLocked[1], Self.lastLocked[2])
@@ -111,22 +122,22 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
         local unit, result, from, to = msg:match(Self.PATTERN_ROLL_RESULT)
         if unit and result and from and to then
             result, from, to = tonumber(result), tonumber(from), tonumber(to)
-            if to ~= 1 then return end
+            local fromSelf = UnitIsUnit(unit, "player")
             
             -- Find the roll
             local i, roll = to % 50
             if i == 0 then
                 roll = Self.lastPostedRoll
             else
-                roll = Util.TblFirstWhere(Addon.rolls, {isOwner = true, status = Roll.STATUS_RUNNING, posted = i})
+                roll = Util.TblFirstWhere(Addon.rolls, {status = Roll.STATUS_RUNNING, posted = i})
             end
             
             -- Get the correct answer
             local answer = to < 100 and Roll.ANSWER_GREED or Roll.ANSWER_NEED
             
             -- Register the unit's bid
-            if Util.UnitInGroup(unit, true) and roll and roll:CanBeAwardedTo(unit) and not roll:UnitHasBid(unit, answer) then
-                roll:Bid(unit, answer, true)
+            if Util.UnitInGroup(unit) and roll and (fromSelf and roll:CanBeWon(unit) or roll:CanBeAwardedTo(unit)) and not roll:UnitHasBid(unit, answer) then
+                roll:Bid(answer, unit, not fromSelf)
             end
             return
         end
@@ -166,6 +177,11 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
 
             -- Clear inspect cache
             Inspect.Clear(unit)
+
+            -- Clear masterlooter
+            if unit == Addon:GetMasterlooter() then
+                Addon:SetMasterlooter(nil)
+            end
             return
         end
     end
@@ -174,6 +190,8 @@ end
 -- Loot
 
 function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
+    local start = GetTime()
+
     unit = Util.GetUnit(sender)
     if not Addon:IsTracking() or not Util.UnitInGroup(unit) then return end
 
@@ -183,21 +201,31 @@ function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
         item = Item.FromLink(item, unit)
 
         -- Do first quick check, to ignore 99.99% of the loot
-        if not item:ShouldBeConsidered() then return end
+        if not item:HasSufficientQuality() then return end
 
         if item.isOwner then
             item:SetPosition(Self.lastLootedBag, 0)
 
             item:OnFullyLoaded(function ()
+                local start = GetTime()
+
                 if item:ShouldBeRolledFor() then
-                    Roll.Add(item, Addon.masterlooter or unit):Start()
+                    Roll.Add(item, Addon:GetMasterlooter() or unit):Start()
                 elseif item:GetBasicInfo().isEquippable then
-                    Roll.Add(item, Addon.masterlooter or unit):Cancel()
+                    Roll.Add(item, unit):Cancel()
+                end
+
+                if GetTime() - start > 0.1 then
+                    print("CHAT_MSG_LOOT.OnFullyLoaded took " .. (GetTime() - start) .."s")
                 end
             end)
         elseif not msg:match(Self.PATTERN_BONUS_LOOT) and not Roll.Find(nil, unit, item) then
             Roll.Add(item, unit):Schedule()
         end
+    end
+
+    if GetTime() - start > 0.1 then
+        print("CHAT_MSG_LOOT took " .. (GetTime() - start) .."s")
     end
 end
 
@@ -212,11 +240,14 @@ function Self.CHAT_MSG_PARTY(event, msg, sender)
 
     local link = Item.GetLink(msg)
     if link then
-        local item = Item.FromLink(link)
+        print("LINK", link)
+        local item = Item.FromLink(link):GetBasicInfo()
+        
+        print("LINK", link, item:IsLoaded(), item.id)
 
         local roll = Roll.Find(nil, unit, item:IsLoaded() and item.link or item.id)
         if roll then
-            print("Roll", roll)
+            print("ROLL", roll)
 
             -- Remember the last roll posted to chat
             Self.lastPostedRoll = roll
@@ -366,8 +397,35 @@ end
 --                   Addon message                   --
 -------------------------------------------------------
 
+-- Sync
+Comm.Listen(Comm.EVENT_SYNC, function (event, msg, channel, sender, unit)
+    -- Reset all owner ids and bids for the unit's rolls and items, because he/she doesn't know them anymore
+    for id, roll in pairs(Addon.rolls) do
+        if roll.owner == unit then
+            roll.ownerId = nil
+
+            if roll.status == Roll.STATUS_RUNNING then
+                roll:Restart(roll.started)
+            elseif roll.status < Roll.STATUS_DONE then
+                roll.answer = nil
+            end
+        end
+        if roll.item.owner == unit then
+            roll.itemOwnerId = nil
+        end
+    end
+
+    -- Send rolls for items that we own
+    Util(Addon.rolls).Where({status = Roll.STATUS_RUNNING, item = {isOwner = true}}, true, true).Iter(function (roll)
+        if roll.item:GetEligible(unit) ~= nil then
+            roll:SendStatus(true, sender)
+        end
+    end)
+end)
+
 -- Version check
-Comm.Listen(Comm.EVENT_VERSION_ASK, function (event, msg, channel, sender, unit)
+Comm.ListenData(Comm.EVENT_VERSION_ASK, function (event, data, channel, sender, unit)
+    -- Send version
     if not Self.lastVersionCheck or Self.lastVersionCheck + Self.VERSION_CHECK_DELAY < GetTime() then
         Self.lastVersionCheck = GetTime()
 
@@ -376,22 +434,21 @@ Comm.Listen(Comm.EVENT_VERSION_ASK, function (event, msg, channel, sender, unit)
             Addon.timers.versionCheck = nil
         end
 
-        Comm.Send(Comm.EVENT_VERSION, Addon.VERSION .. "", channel == Comm.TYPE_WHISPER and sender or channel)
-
-        if Addon:IsMasterlooter() then
-            Comm.Send(Comm.EVENT_MASTERLOOT_ASK, nil, sender)
-        end
+        Comm.SendData(Comm.EVENT_VERSION, Addon.VERSION, channel == Comm.TYPE_WHISPER and sender or channel)
     end
 end, true)
-Comm.Listen(Comm.EVENT_VERSION, function (event, msg, channel, sender, unit)
-    Addon.versions[unit] = tonumber(msg)
+Comm.Listen(Comm.EVENT_VERSION, function (event, version, channel, sender, unit)
+    Addon.versions[unit] = tonumber(version)
 end)
 
 -- Roll status
 Comm.ListenData(Comm.EVENT_ROLL_STATUS, function (event, data, channel, sender, unit)
-    if data.id then
-        Addon.Roll.Update(data, sender)
-    end
+    data.owner = Util.GetName(data.owner)
+    data.item.owner = Util.GetName(data.item.owner)
+    data.winner = Util.GetName(data.winner)
+    data.traded = data.traded and Util.GetName(data.traded)
+
+    Addon.Roll.Update(data, unit)
 end)
 
 -- Bids
@@ -407,26 +464,37 @@ end)
 
 -- Masterlooter
 Comm.Listen(Comm.EVENT_MASTERLOOT_ASK, function (event, msg, channel, sender, unit)
+    if Addon:IsMasterlooter() then
+        Addon.masterlooting[unit] = nil
+        Comm.SendData(Comm.EVENT_MASTERLOOT_OFFER, nil, sender)
+    elseif channel == Comm.TYPE_WHISPER then
+        Comm.Send(Comm.EVENT_MASTERLOOT_DEC, nil, sender)
+    end
+end)
+Comm.ListenData(Comm.EVENT_MASTERLOOT_OFFER, function (event, silent, channel, sender, unit)
     if Addon:IsMasterlooter(unit) then
         Comm.Send(Comm.EVENT_MASTERLOOT_ACK, nil, sender)
     elseif Util.UnitAllowMasterloot(unit) then
         if Util.UnitAcceptMasterloot(unit) then
             Addon:SetMasterlooter(unit)
-        else
-            local dialog = StaticPopupDialogs[Self.DIALOG_MASTERLOOT_ASK]
+        elseif not silent then
+            local dialog = StaticPopupDialogs[GUI.DIALOG_MASTERLOOT_ASK]
             dialog.text = L["DIALOG_MASTERLOOT_ASK"]:format(unit)
             dialog.OnAccept = function ()
                 Addon:SetMasterlooter(unit)
             end
+            StaticPopup_Show(GUI.DIALOG_MASTERLOOT_ASK)
         end
     end
 end)
 Comm.Listen(Comm.EVENT_MASTERLOOT_ACK, function (event, msg, channel, sender, unit)
     if Addon:IsMasterlooter() then
         Addon.masterlooting[unit] = true
+    else
+        Comm.Send(Comm.EVENT_MASTERLOOT_DEC, nil, sender)
     end
 end)
-Comm.Listen(Comm.EVENT_MASTERLOOT_STOP, function (event, msg, channel, sender, unit)
+Comm.Listen(Comm.EVENT_MASTERLOOT_DEC, function (event, msg, channel, sender, unit)
     if Addon:IsMasterlooter() then
         Addon.masterlooting[unit] = nil
     elseif Addon:IsMasterlooter(unit) then
