@@ -92,7 +92,7 @@ end
 
 -- Get a unit's class color
 function Self.GetUnitColor(unit)
-    return RAID_CLASS_COLORS[select(2, UnitClass(unit))] or {r = 1, g = 1, b = 1, colorStr = "ffffffff"}
+    return RAID_CLASS_COLORS[select(2, UnitClass(Self.GetUnit(unit)))] or {r = 1, g = 1, b = 1, colorStr = "ffffffff"}
 end
 
 -- Get a unit's name in class color
@@ -141,6 +141,12 @@ function Self.UnitIsGuildMember(unit)
     return guild ~= nil and Self.GetGuildName(unit) == guild
 end
 
+-- The the unit's rank in our guild
+function Self.UnitGuildRank(unit)
+    local guild, _, rank, realm = GetGuildInfo(unit)
+    return guild and guild .. (realm and "-" .. realm or "") == Self.GetGuildName("player") and rank or nil
+end
+
 -- Shortcut for checking whether a unit is in our party or raid
 function Self.UnitInGroup(unit, onlyOthers)
     local isSelf = UnitIsUnit(unit, "player")
@@ -149,52 +155,6 @@ function Self.UnitInGroup(unit, onlyOthers)
     else
         return isSelf or UnitInParty(unit) or UnitInRaid(unit)
     end
-end
-
--- Check if the given unit can become our masterlooter
-function Self.UnitAllowMasterloot(unit)
-    local config = Addon.db.profile.masterloot
-
-    -- Check allow all
-    if config.allowAll then
-        return true
-    end
-
-    -- Check whitelist
-    for i,v in pairs(config.whitelist) do
-        if UnitIsUnit(unit, v) then
-            return true
-        end
-    end
-
-    if config.allow.friend and Self.UnitIsFriend(unit) then
-        return true
-    elseif config.allow.guild and Self.UnitIsGuildMember(unit) then
-        return true
-    elseif config.allow.guildgroup then
-        local guild = Self.GetGuildName(unit)
-        if guild and Self.IsGuildGroup(guild) then
-            return true
-        end
-    end
-
-    return false
-end
-
--- Check if we should auto-accept masterlooter requests from this unit
-function Self.UnitAcceptMasterloot(unit)
-    local config = Addon.db.profile.masterloot.accept
-
-    if config.friend and Self.UnitIsFriend(unit) then
-        return true
-    elseif Self.UnitIsGuildMember(unit) then
-        local rank = select(3, GetGuildInfo(unit))
-        if config.guildmaster and rank == 1 or config.guildofficer and rank == 2 then
-            return true
-        end
-    end
-
-    return false
 end
 
 -- Get hidden tooltip for scanning
@@ -529,6 +489,23 @@ function Self.TblMap(t, fn)
     end)
 end
 
+-- Change table keys by applying a function
+function Self.TblMapKeys(t, fn)
+    fn = Self.Fn(fn)
+    return Self.TblIter(t, function (v, i, u)
+        u[fn(v, i)] = v
+    end)
+end
+
+-- Change table keys and values by applying a function
+function Self.TblMapBoth(t, fn)
+    fn = Self.Fn(fn)
+    return Self.TblIter(t, function (v, i, u)
+        i, v = fn(v, i)
+        u[i] = v
+    end)
+end
+
 -- Get table keys
 function Self.TblKeys(t)
     return Self.TblIter(t, function (v, i, u) tinsert(u, i) end)
@@ -645,11 +622,12 @@ end
 
 -- Sort a table of tables by given table keys and default values
 function Self.TblSortBy(t, ...)
-    local keys, key, default, cmp = Self.TblTuple({...})
+    local keys = type(...) == "table" and (...) or Self.TblTuple({...})
     return Self.TblSort(t, function (a, b)
         for i,tuple in pairs(keys) do
-            key, default = unpack(tuple)
-            cmp = Self.Compare(Self.TblGet(a, key, default), Self.TblGet(b, key, default))
+            local key, default, fn = unpack(tuple)
+            fn = fn == true and function (a, b) return -Self.Compare(a, b) end or Self.Fn(fn) or Self.Compare
+            local cmp = fn(Self.TblGet(a, key, default), Self.TblGet(b, key, default))
             if cmp == 1 then
                 return false
             elseif cmp == -1 or i == #keys then

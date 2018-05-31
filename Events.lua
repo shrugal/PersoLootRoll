@@ -4,6 +4,7 @@ local Util = Addon.Util
 local Item = Addon.Item
 local Locale = Addon.Locale
 local Comm = Addon.Comm
+local Masterloot = Addon.Masterloot
 local Roll = Addon.Roll
 local Inspect = Addon.Inspect
 local GUI = Addon.GUI
@@ -34,11 +35,7 @@ function Self.GROUP_JOINED(event)
     Comm.Send(Comm.EVENT_SYNC)
 
     -- Restore or ask for masterlooter
-    if Addon:GetMasterlooter() then
-        Addon:SetMasterlooter(Addon:GetMasterlooter(), true)
-    else
-        Comm.Send(Comm.EVENT_MASTERLOOT_ASK)
-    end
+    Masterloot.Restore()
 
     -- Schedule version check
     Addon.timers.versionCheck = Addon:ScheduleTimer(function ()
@@ -58,7 +55,7 @@ function Self.GROUP_LEFT(event)
     Inspect.Clear()
 
     -- Clear masterlooter
-    Addon:SetMasterlooter(nil)
+    Masterloot.SetMasterlooter(nil)
 
     -- Clear versions
     wipe(Addon.versions)
@@ -135,12 +132,12 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
                 roll = Util.TblFirstWhere(Addon.rolls, {status = Roll.STATUS_RUNNING, posted = i})
             end
             
-            -- Get the correct answer
-            local answer = to < 100 and Roll.ANSWER_GREED or Roll.ANSWER_NEED
+            -- Get the correct bid
+            local bid = to < 100 and Roll.BID_GREED or Roll.BID_NEED
             
             -- Register the unit's bid
-            if Util.UnitInGroup(unit) and roll and (fromSelf and roll:CanBeWon(unit) or roll:CanBeAwardedTo(unit)) and not roll:UnitHasBid(unit, answer) then
-                roll:Bid(answer, unit, not fromSelf)
+            if Util.UnitInGroup(unit) and roll and (fromSelf and roll:CanBeWon(unit) or roll:CanBeAwardedTo(unit)) and not roll:UnitHasBid(unit, bid) then
+                roll:Bid(bid, unit, not fromSelf)
             end
             return
         end
@@ -182,8 +179,8 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
             Inspect.Clear(unit)
 
             -- Clear masterlooter
-            if unit == Addon:GetMasterlooter() then
-                Addon:SetMasterlooter(nil)
+            if unit == Masterloot.GetMasterlooter() then
+                Masterloot.SetMasterlooter(nil)
             end
 
             -- Clear version
@@ -216,7 +213,7 @@ function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
                 local start = GetTime()
 
                 if item:ShouldBeRolledFor() then
-                    Roll.Add(item, Addon:GetMasterlooter() or unit):Start()
+                    Roll.Add(item, Masterloot.GetMasterlooter() or unit):Start()
                 elseif item:GetBasicInfo().isEquippable then
                     Roll.Add(item, unit):Cancel()
                 end
@@ -263,8 +260,8 @@ function Self.CHAT_MSG_PARTY(event, msg, sender)
             
             if not fromSelf and not fromAddon then
                 -- Roll for the item in chat
-                if Addon.db.profile.roll and Util.In(roll.answer, Roll.ANSWER_NEED, Roll.ANSWER_GREED) then
-                    RandomRoll("1", roll.answer == Roll.ANSWER_GREED and "50" or "100")
+                if Addon.db.profile.roll and Util.In(roll.bid, Roll.BID_NEED, Roll.BID_GREED) then
+                    RandomRoll("1", roll.bid == Roll.BID_GREED and "50" or "100")
                 end
             end
         end
@@ -313,8 +310,8 @@ function Self.CHAT_MSG_WHISPER(event, msg, sender)
         -- The roll is scheduled or happening
         if roll:CanBeAwarded() then
             -- He is eligible, so register the bid
-            if roll:UnitIsEligible(unit) and not roll:UnitHasBid(unit, Roll.ANSWER_NEED) then
-                roll:Bid(Roll.ANSWER_NEED, unit, true)
+            if roll:UnitIsEligible(unit) and not roll:UnitHasBid(unit, Roll.BID_NEED) then
+                roll:Bid(Roll.BID_NEED, unit, true)
 
                 -- Answer only if his bid didn't end the roll
                 if answer and roll:CanBeAwarded() then
@@ -413,7 +410,7 @@ Comm.Listen(Comm.EVENT_SYNC, function (event, msg, channel, sender, unit)
             if roll.status == Roll.STATUS_RUNNING then
                 roll:Restart(roll.started)
             elseif roll.status < Roll.STATUS_DONE then
-                roll.answer = nil
+                roll.bid = nil
             end
         end
         if roll.item.owner == unit then
@@ -422,11 +419,22 @@ Comm.Listen(Comm.EVENT_SYNC, function (event, msg, channel, sender, unit)
     end
 
     -- Send rolls for items that we own
-    Util(Addon.rolls).Where({status = Roll.STATUS_RUNNING, item = {isOwner = true}}, true, true).Iter(function (roll)
-        if roll.item:GetEligible(unit) ~= nil then
-            roll:SendStatus(true, sender)
+    for _,roll in pairs(Addon.rolls) do
+        if roll.item.isOwner and (roll:CanBid(unit) or roll:CanVote(unit)) then
+            roll:SendStatus(true, sender, roll.isOwner)
         end
-    end)
+    end
+
+    -- As masterlooter we send another update a bid later to inform them about bids and votes
+    if Masterloot.IsMasterlooter() then
+        Addon:ScheduleTimer(function ()
+            for _,roll in pairs(Addon.rolls) do
+                if roll.isOwner and not roll.item.isOwner and (roll:CanBid(unit) or roll:CanVote(unit)) then
+                    roll:SendStatus(true, sender, true)
+                end
+            end
+        end, Roll.DELAY)
+    end
 end)
 
 -- Version check
@@ -459,52 +467,70 @@ end)
 
 -- Bids
 Comm.ListenData(Comm.EVENT_BID, function (event, data, channel, sender, unit)
-    if data.id and data.answer then
-        local roll = Addon.rolls[data.id]
+    local owner = data.fromUnit and unit or nil
+    local fromUnit = data.fromUnit or unit
+
+    if not UnitIsUnit(Util.GetUnit(fromUnit), "player") and (not owner or Masterloot.IsMasterlooter(owner)) then
+        local roll = Roll.Find(data.ownerId, owner)
         
-        if roll and roll.isOwner then
-            roll:Bid(data.answer, unit)
+        if roll then
+            roll:Bid(data.bid, fromUnit)
+        end
+    end
+end)
+
+-- Votes
+Comm.ListenData(Comm.EVENT_VOTE, function (event, data, channel, sender, unit)
+    local owner = data.fromUnit and unit or nil
+    local fromUnit = data.fromUnit or unit
+    
+    if not UnitIsUnit(Util.GetUnit(fromUnit), "player") and (not owner or Masterloot.IsMasterlooter(owner)) then
+        local roll = Roll.Find(data.ownerId, owner)
+        
+        if roll then
+            roll:Vote(data.vote, data.fromUnit or unit)
         end
     end
 end)
 
 -- Masterlooter
 Comm.Listen(Comm.EVENT_MASTERLOOT_ASK, function (event, msg, channel, sender, unit)
-    if Addon:IsMasterlooter() then
-        Addon.masterlooting[unit] = nil
-        Comm.SendData(Comm.EVENT_MASTERLOOT_OFFER, nil, sender)
+    if Masterloot.IsMasterlooter() then
+        Masterloot.masterlooting[unit] = nil
+        Masterloot.SendOffer(sender)
     elseif channel == Comm.TYPE_WHISPER then
         Comm.Send(Comm.EVENT_MASTERLOOT_DEC, nil, sender)
     end
 end)
-Comm.ListenData(Comm.EVENT_MASTERLOOT_OFFER, function (event, silent, channel, sender, unit)
-    if Addon:IsMasterlooter(unit) then
+Comm.ListenData(Comm.EVENT_MASTERLOOT_OFFER, function (event, data, channel, sender, unit)
+    if Masterloot.IsMasterlooter(unit) then
         Comm.Send(Comm.EVENT_MASTERLOOT_ACK, nil, sender)
-    elseif Util.UnitAllowMasterloot(unit) then
-        if Util.UnitAcceptMasterloot(unit) then
-            Addon:SetMasterlooter(unit)
-        elseif not silent then
+        Masterloot.SetSession(data.session)
+    elseif Masterloot.UnitAllow(unit) then
+        if Masterloot.UnitAccept(unit) then
+            Masterloot.SetMasterlooter(unit, data.session)
+        elseif not data.silent then
             local dialog = StaticPopupDialogs[GUI.DIALOG_MASTERLOOT_ASK]
             dialog.text = L["DIALOG_MASTERLOOT_ASK"]:format(unit)
             dialog.OnAccept = function ()
-                Addon:SetMasterlooter(unit)
+                Masterloot.SetMasterlooter(unit, data.session)
             end
             StaticPopup_Show(GUI.DIALOG_MASTERLOOT_ASK)
         end
     end
 end)
 Comm.Listen(Comm.EVENT_MASTERLOOT_ACK, function (event, msg, channel, sender, unit)
-    if Addon:IsMasterlooter() then
-        Addon.masterlooting[unit] = true
+    if Masterloot.IsMasterlooter() then
+        Masterloot.masterlooting[unit] = true
     else
         Comm.Send(Comm.EVENT_MASTERLOOT_DEC, nil, sender)
     end
 end)
 Comm.Listen(Comm.EVENT_MASTERLOOT_DEC, function (event, msg, channel, sender, unit)
-    if Addon:IsMasterlooter() then
-        Addon.masterlooting[unit] = nil
-    elseif Addon:IsMasterlooter(unit) then
-        Addon:SetMasterlooter(nil, true)
+    if Masterloot.IsMasterlooter() then
+        Masterloot.masterlooting[unit] = nil
+    elseif Masterloot.IsMasterlooter(unit) then
+        Masterloot.SetMasterlooter(nil, nil, true)
     end
 end)
 

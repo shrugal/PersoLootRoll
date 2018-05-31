@@ -56,17 +56,17 @@ function Self.EnableGroupLootRoll()
 
     -- RollOnLoot
     if not Addon:IsHooked("RollOnLoot") then
-        Addon:RawHook("RollOnLoot", function (id, answer)
+        Addon:RawHook("RollOnLoot", function (id, bid)
             if Roll.IsPlrId(id) then
                 local roll = Roll.Get(id)
 
                 if roll.status == Roll.STATUS_RUNNING then
-                    roll:Bid(answer == 0 and Roll.ANSWER_PASS or answer)
+                    roll:Bid(bid == 0 and Roll.BID_PASS or bid)
                 else
                     roll:HideRollFrame()
                 end
             else
-                return Addon.hooks.RollOnLoot(id, answer)
+                return Addon.hooks.RollOnLoot(id, bid)
             end
         end, true)
     end

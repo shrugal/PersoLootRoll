@@ -1,7 +1,7 @@
 ## Interface: 70100
 ## Title: PersoLootRoll
 ## Notes: A loot roll addon for personal loot.
-## Version: 0.1
+## Version: 1
 ## SavedVariables: PersoLootRollDB, PersoLootRollIconDB, PLR_MASTERLOOTER
 
 # Libs
@@ -9,16 +9,16 @@ Libs\libs.xml
 
 # Initialization
 Init.lua
-
-# Util
 Util\Util.lua
-Util\Locale.lua
-Util\Comm.lua
-Util\Item.lua
 
 # Locale
+Util\Locale.lua
 Locale\enUS.lua
 Locale\deDE.lua
+
+# Util
+Util\Comm.lua
+Util\Item.lua
 
 # Data
 Data\Realms.lua
@@ -26,6 +26,7 @@ Data\Trinkets.lua
 
 # Application logic
 Addon.lua
+Masterloot.lua
 Roll.lua
 Trade.lua
 Inspect.lua

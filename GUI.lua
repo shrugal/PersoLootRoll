@@ -2,9 +2,10 @@ local Addon = LibStub("AceAddon-3.0"):GetAddon(PLR_NAME)
 local L = LibStub("AceLocale-3.0"):GetLocale(PLR_NAME)
 local AceGUI = LibStub("AceGUI-3.0")
 local Util = Addon.Util
+local Comm = Addon.Comm
+local Masterloot = Addon.Masterloot
 local Roll = Addon.Roll
 local Trade = Addon.Trade
-local Comm = Addon.Comm
 local Inspect = Addon.Inspect
 local Self = {}
 
@@ -49,7 +50,7 @@ dropDown = CreateFrame("FRAME", "PlrMasterlootDropDown", UIParent, "UIDropDownMe
 UIDropDownMenu_Initialize(dropDown, function (self, level, menuList)
     local info = UIDropDownMenu_CreateInfo()
     info.text, info.func = L["MENU_MASTERLOOT_START"], function ()
-        Addon:SetMasterlooter("player")
+        Masterloot.SetMasterlooter("player")
     end
     UIDropDownMenu_AddButton(info)
     info.text, info.func = L["MENU_MASTERLOOT_SEARCH"], function ()
@@ -89,7 +90,7 @@ Self.LootAlertSystem = AlertFrame:AddQueuedAlertFrameSubSystem("PLR_LootWonAlert
 
 local Rolls = {
     frames = {},
-    filter = {all = false, canceled = false, done = true, won = true, traded = false},
+    filter = {all = false, canceled = false, done = true, awarded = true, traded = false},
     status = {width = 700, height = 400}
 }
 
@@ -165,14 +166,14 @@ function Rolls.Show()
                 :AddTo(Rolls.frames.filter)
                 :SetCallback("OnEnter", function (self)
                     GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
-                    GameTooltip:SetText(L["TIP_MASTERLOOT_" .. (Addon:GetMasterlooter() and "STOP" or "START")])
+                    GameTooltip:SetText(L["TIP_MASTERLOOT_" .. (Masterloot.GetMasterlooter() and "STOP" or "START")])
                     GameTooltip:Show()
                 end)
                 :SetCallback("OnLeave", function () GameTooltip:Hide() end)
                 :SetCallback("OnClick", function (self)
-                    local ml = Addon:GetMasterlooter()
+                    local ml = Masterloot.GetMasterlooter()
                     if ml then
-                        Addon:SetMasterlooter(nil)
+                        Masterloot.SetMasterlooter(nil)
                     else
                         ToggleDropDownMenu(1, nil, Self.DROPDOWN_MASTERLOOT, "cursor", 3, -3)
                     end
@@ -187,28 +188,36 @@ function Rolls.Show()
                 :AddTo(Rolls.frames.filter)
                 :SetText()
                 :SetCallback("OnEnter", function (self)
-                    local ml = Addon:GetMasterlooter()
-                    if Addon:IsMasterlooter() then
-                        GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOM")
-                        GameTooltip:SetText(L["TIP_MASTERLOOTING"])
+                    local ml = Masterloot.GetMasterlooter()
+                    if ml then
+                        local s = Masterloot.session
+                        local council = not s.council and "-" or Util(s.council).Keys().Map(function (unit)
+                            return Util.GetColoredName(Util.GetShortenedName(unit), unit)
+                        end).Concat(", ")()
+                        local bids = L[s.bidPublic and "PUBLIC" or "PRIVATE"]
+                        local votes = L[s.votePublic and "PUBLIC" or "PRIVATE"]
 
-                        local c = Util.GetUnitColor("player")
-                        GameTooltip:AddLine(ml, c.r, c.g, c.b, false)
-                        for unit,_ in pairs(Addon.masterlooting) do
-                            local c = Util.GetUnitColor(unit)
-                            GameTooltip:AddLine(unit, c.r, c.g, c.b, false)
+                        GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOM")
+                        GameTooltip:SetText(L["TIP_MASTERLOOT"] .. "\n")
+                        GameTooltip:AddLine(L["TIP_MASTERLOOT_INFO"]:format(Util.GetColoredName(ml), council, bids, votes), 1, 1, 1)
+
+                        if Masterloot.IsMasterlooter() then
+                            GameTooltip:AddLine("\n" .. L["TIP_MASTERLOOTING"])
+
+                            local c = Util.GetUnitColor("player")
+                            GameTooltip:AddLine(ml, c.r, c.g, c.b, false)
+                            for unit,_ in pairs(Masterloot.masterlooting) do
+                                local c = Util.GetUnitColor(unit)
+                                GameTooltip:AddLine(unit, c.r, c.g, c.b, false)
+                            end
                         end
-                        GameTooltip:Show()
-                    elseif ml then
-                        GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-                        GameTooltip:SetUnit(ml)
+
                         GameTooltip:Show()
                     end
                 end)
                 :SetCallback("OnLeave", function () GameTooltip:Hide() end)
                 :SetCallback("OnClick", function ()
-                    local ml = Addon:GetMasterlooter()
-                    if ml then ChatFrame_SendSmartTell(ml) end
+                    if Masterloot.GetMasterlooter() then ChatFrame_SendSmartTell(Masterloot.GetMasterlooter()) end
                 end)
                 :SetHeight(12)
                 :SetPoint("TOP", 0, -6)
@@ -276,7 +285,7 @@ function Rolls.Update()
         return (Rolls.filter.all or roll.isOwner or roll.item.isOwner or roll.item:GetEligible(player))
            and (Rolls.filter.canceled or roll.status >= Roll.STATUS_RUNNING)
            and (Rolls.filter.done or (roll.status ~= Roll.STATUS_DONE))
-           and (Rolls.filter.won or not roll.winner)
+           and (Rolls.filter.awarded or not roll.winner)
            and (Rolls.filter.traded or not roll.traded)
     end).Values().SortBy("id")()
 
@@ -323,7 +332,7 @@ function Rolls.Update()
                 colspan = 99
             })
             :SetUserData("table", {
-                columns = {1, {25, 100}, {25, 100}, 100},
+                columns = {1, {25, 100}, {25, 100}, {25, 100}, 100},
                 spaceH = 10,
                 spaceV = 2
             })
@@ -345,7 +354,7 @@ function Rolls.Update()
                 self.OnRelease = nil
             end
         
-            local header = {"PLAYER", "ITEM_LEVEL", "BID"}
+            local header = {"PLAYER", "ITEM_LEVEL", "BID", "VOTES"}
             for i,v in pairs(header) do
                 local f = Self("Label"):SetFontObject(GameFontNormal):SetText(Util.StrUcFirst(L[v])):SetColor(1, 0.82, 0)()
                 if i == #header then
@@ -395,7 +404,7 @@ function Rolls.Update()
 
         -- ML
         local ml = children[it()]
-        if roll.owner ~= roll.item.owner then
+        if roll.owner ~= roll.item.owner or Masterloot.IsMasterlooter(roll.owner) then
             Self(ml)
                 :SetText(Util.GetColoredName(Util.GetShortenedName(roll.owner), roll.owner))
                 :SetCallback("OnEnter", function (self)
@@ -413,7 +422,7 @@ function Rolls.Update()
         Self(children[it()]):SetText(roll.traded and L["ROLL_TRADED"] or roll.winner and L["ROLL_AWARDED"] or L["ROLL_STATUS_" .. roll.status])
 
         -- Your Bid
-        Self(children[it()]):SetText(roll.answer and L["ROLL_ANSWER_" .. roll.answer] or "-")
+        Self(children[it()]):SetText(roll.bid and L["ROLL_BID_" .. roll.bid] or "-")
 
         -- Winner
         Self(children[it()])
@@ -433,23 +442,23 @@ function Rolls.Update()
             local actions = children[it()]
             actions:ReleaseChildren()
 
-            if roll:CanBeWonBy(UnitName("player")) and not roll.answer then
+            if roll:CanBeWonBy(UnitName("player")) and not roll.bid then
                 -- Need
                 f = Self.CreateIconButton("UI-GroupLoot-Dice", actions, function ()
-                    roll:Bid(Roll.ANSWER_NEED)
+                    roll:Bid(Roll.BID_NEED)
                 end, NEED)
                 Self(f):SetImageSize(14, 14):SetWidth(16):SetHeight(16)
 
                 -- Greed
                 if roll.ownerId or roll.itemOwnerId then
                     Self.CreateIconButton("UI-GroupLoot-Coin", actions, function ()
-                        roll:Bid(Roll.ANSWER_GREED)
+                        roll:Bid(Roll.BID_GREED)
                     end, GREED)
                 end
 
                 -- Pass
                 f = Self.CreateIconButton("UI-GroupLoot-Pass", actions, function ()
-                    roll:Bid(Roll.ANSWER_PASS)
+                    roll:Bid(Roll.BID_PASS)
                 end, PASS)
                 Self(f):SetImageSize(13, 13):SetWidth(16):SetHeight(16)
             end
@@ -522,12 +531,12 @@ function Rolls.Update()
     it = Util.Iter(1)
     filter.children[it()]:SetValue(Rolls.filter.all)
     filter.children[it()]:SetValue(Rolls.filter.done)
-    filter.children[it()]:SetValue(Rolls.filter.won)
+    filter.children[it()]:SetValue(Rolls.filter.awarded)
     filter.children[it()]:SetValue(Rolls.filter.traded)
     filter.children[it()]:SetValue(Rolls.filter.canceled)
 
     -- ML action
-    local ml = Addon:GetMasterlooter()
+    local ml = Masterloot.GetMasterlooter()
     Self(filter.children[it()]):SetImage(ml and "Interface\\Buttons\\UI-StopButton" or "Interface\\GossipFrame\\WorkOrderGossipIcon")
 
     -- ML
@@ -560,17 +569,21 @@ function Rolls.UpdateDetails(self, roll)
     local players = Util({}).Merge(roll.item:GetEligible(true), roll:GetBids()).Map(function (val, unit)
         return {
             unit = unit,
+            ilvl = roll.item:GetLevelForLocation(unit),
             bid = type(val) == "number" and val or nil,
-            ilvl = roll.item:GetLevelForLocation(unit)
+            votes = Util(roll.votes).Only(unit).Count()()
         }
-    end).Values().SortBy("bid", 99, "ilvl", 0, "unit")()
+    end).Values().SortBy({{"bid", 99}, {"votes", 0, true}, {"ilvl", 0}, {"unit"}})()
+
     local canBeAwarded = roll:CanBeAwarded(true)
+    local canVote = roll:CanVote()
 
     Self.UpdateRows(self, players, function (self, player, first)
         -- Unit
         Self("InteractiveLabel"):SetFontObject(GameFontNormal):AddTo(self, first)
 
-        -- Ilvl, Bid
+        -- Ilvl, Bid, Votes
+        Self("Label"):SetFontObject(GameFontNormal):AddTo(self, first)
         Self("Label"):SetFontObject(GameFontNormal):AddTo(self, first)
         Self("Label"):SetFontObject(GameFontNormal):AddTo(self, first)
 
@@ -578,6 +591,8 @@ function Rolls.UpdateDetails(self, roll)
         local f = Self("Button"):SetWidth(100):SetCallback("OnClick", function (self)
             if roll:CanBeAwardedTo(player.unit, true) then
                 roll:Finish(player.unit)
+            elseif roll:CanVote() then
+                roll:Vote(roll.vote ~= player.unit and player.unit or nil)
             end
         end)()
         f.text:SetFont(GameFontNormal:GetFont())
@@ -598,10 +613,16 @@ function Rolls.UpdateDetails(self, roll)
         Self(children[it()]):SetText(player.ilvl)
 
         -- Bid
-        Self(children[it()]):SetText(player.bid and L["ROLL_ANSWER_" .. player.bid] or "-")
+        Self(children[it()]):SetText(player.bid and L["ROLL_BID_" .. player.bid] or "-")
+
+        -- Votes
+        Self(children[it()]):SetText(player.votes > 0 and player.votes or "-")
 
         -- Actions
-        Self(children[it()]):SetText(canBeAwarded and L["AWARD"] or "-"):SetDisabled(not canBeAwarded)
+        local txt = canBeAwarded and L["AWARD"]
+            or canVote and (roll.vote == player.unit and L["VOTE_WITHDRAW"] or L["VOTE"])
+            or "-"
+        Self(children[it()]):SetText(txt):SetDisabled(not (canBeAwarded or canVote))
     end, "unit")
 
     self:ResumeLayout()
