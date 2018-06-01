@@ -25,7 +25,7 @@ Self.lastQueued = 0
 
 -- Get cache entry for given unit and location
 function Self.Get(unit, location)
-    return Util.TblGet(Self.cache, {unit, location}) or 0
+    return Self.cache.unit and Self.cache.unit.location or 0
 end
 
 -- Check if an entry exists and isn't out-of-date
@@ -48,40 +48,45 @@ function Self.Update(unit)
     info.time = GetTime()
 
     -- Determine the level for all basic inventory locations
-    Util(Item.SLOTS).Omit(Self.IGNORE).Map(Util.Tbl).Iter(function (slots, location)
-        local levels = Util(slots).Map(function (slot)
-            local item = Item.FromSlot(slot, unit)
-            if item and select(2, item:GetFullInfo()) then
-                return item.quality ~= LE_ITEM_QUALITY_LEGENDARY and item.level or 0
-            end
-        end).Values()()
+    for equipLoc,slots in pairs(Item.SLOTS) do
+        if not Util.In(equipLoc, Self.IGNORE) then
+            local levels = Util.TblFoldL(slots, function (u, slot)
+                local item = Item.FromSlot(slot, unit)
+                if item and select(2, item:GetBasicInfo()) then
+                    tinsert(item.quality ~= LE_ITEM_QUALITY_LEGENDARY and item.level or 0)
+                end
+                return u
+            end, {})
 
-        -- Only set it if we got links for all slots
-        if #levels == #slots then
-            info[location] = math.max(info[location] or 0, math.min(unpack(levels)))
-        elseif not info[location] then
-            info[location] = false
+            -- Only set it if we got links for all slots
+            if #levels == #slots then
+                info[equipLoc] = max(info[equipLoc] or 0, min(unpack(levels)))
+            elseif not info[equipLoc] then
+                info[equipLoc] = false
+            end
         end
-    end)
+    end
 
     -- Determine the min level of all unique relic types for the currently equipped artifact weapon
     local weapon = Item.GetEquippedArtifact(unit)
     if weapon then
-        local relics = weapon:GetUniqueRelicSlots()
-
-        Util(relics).GroupKeys().Iter(function (slots, location)
-            local levels = Util(slots).Map(function (slot)
+        local relics = Util.TblGroupKeys(weapon:GetUniqueRelicSlots())
+        for relicType,slots in pairs(relics) do
+            local levels = Util.TblFoldL(slots, function (u, slot)
                 local item = weapon:GetGem(slot)
-                return item and select(2, item:GetFullInfo()) and item.level or nil
-            end).Values()()
+                if item and select(2, item:GetBasicInfo()) then
+                    tinsert(item.level or 0)
+                end
+                return u
+            end, {})
 
             -- Only set it if we got links for all slots
             if #levels == #slots then
-                info[location] = math.max(info[location] or 0, math.min(unpack(levels)))
-            elseif not info[location] then
-                info[location] = false
+                info[relicType] = max(info[relicType] or 0, min(unpack(levels)))
+            elseif not info[relicType] then
+                info[relicType] = false
             end
-        end)
+        end
     end
 
     -- Check if the inspect was successfull
@@ -107,6 +112,12 @@ function Self.Clear(unit)
 end
 
 -- Queue a unit or the entire group for inspection
+local searchFn = function (i, unit)
+    if unit and not UnitIsUnit(unit, "player") and not Self.queue[unit] and not Self.IsValid(unit) then
+        Self.queue[unit] = Self.MAX_PER_CHAR
+    end
+end
+
 function Self.Queue(unit)
     unit = Util.GetName(unit)
     if not Addon:IsTracking() or not unit or UnitIsUnit(unit, "player") then return end
@@ -116,15 +127,13 @@ function Self.Queue(unit)
     else
         -- Queue all group members with missing or out-of-date cache entries
         Self.lastQueued = GetTime()
-        Util.SearchGroup(function (i, unit)
-            if unit and not UnitIsUnit(unit, "player") and not Self.queue[unit] and not Self.IsValid(unit) then
-                Self.queue[unit] = Self.MAX_PER_CHAR
-            end
-        end)
+        Util.SearchGroup(searchFn)
     end
 end
 
 -- Start the inspection loop
+local filterFn = function (i, unit) return CanInspect(unit) end
+
 function Self.Loop()
     -- Check if the loop is already running
     if Addon:TimerIsRunning(Self.timer) then return end
@@ -135,8 +144,8 @@ function Self.Loop()
     end
 
     -- Get the next unit to inspect (with max inspects left -> wide search, random -> so we don't get stuck on one unit)
-    local units = Util(Self.queue).Filter(function (i, unit) return CanInspect(unit) end, true)()
-    local unit = next(units) and Util(units).Only(Util(units).Values().Unpack(math.max)(), true).Keys().Random()()
+    local units = Util.TblFilter(Self.queue, filterFn, true)
+    local unit = next(units) and Util(units).Only(max(unpack(Util.TblValues(units))), true).RandomKey()()
     
     if unit then
         -- Request inspection

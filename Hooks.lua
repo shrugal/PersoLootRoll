@@ -87,7 +87,7 @@ function Self.EnableGroupLootRoll()
                 self.Player = f
             end
             
-            local owner = Roll.Get(self.rollID).owner
+            local owner = Roll.Get(self.rollID).item.owner
             local color = Util.GetUnitColor(owner)
             self.Player:SetText(owner)
             self.Player:SetTextColor(color.r, color.g, color.b)

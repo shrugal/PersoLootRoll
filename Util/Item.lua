@@ -184,29 +184,32 @@ Self.TYPE_WRIST = "INVTYPE_WRIST"
 
 -- Armor inventory slots
 Self.SLOTS = {
-    [Self.TYPE_2HWEAPON] = INVSLOT_MAINHAND,
-    [Self.TYPE_BODY] = INVSLOT_BODY,
-    [Self.TYPE_CHEST] = INVSLOT_CHEST,
-    [Self.TYPE_CLOAK] = INVSLOT_BACK,
-    [Self.TYPE_FEET] = INVSLOT_FEET,
+    [Self.TYPE_2HWEAPON] = {INVSLOT_MAINHAND},
+    [Self.TYPE_BODY] = {INVSLOT_BODY},
+    [Self.TYPE_CHEST] = {INVSLOT_CHEST},
+    [Self.TYPE_CLOAK] = {INVSLOT_BACK},
+    [Self.TYPE_FEET] = {INVSLOT_FEET},
     [Self.TYPE_FINGER] = {INVSLOT_FINGER1, INVSLOT_FINGER2},
-    [Self.TYPE_HAND] = INVSLOT_HAND,
-    [Self.TYPE_HEAD] = INVSLOT_HEAD,
-    [Self.TYPE_HOLDABLE] = INVSLOT_OFFHAND,
-    [Self.TYPE_LEGS] = INVSLOT_LEGS,
-    [Self.TYPE_NECK] = INVSLOT_NECK,
-    [Self.TYPE_ROBE] = INVSLOT_CHEST,
-    [Self.TYPE_SHIELD] = INVSLOT_OFFHAND,
-    [Self.TYPE_SHOULDER] = INVSLOT_SHOULDER,
-    [Self.TYPE_TABARD] = INVSLOT_TABARD,
-    [Self.TYPE_THROWN] = nil, -- TODO
+    [Self.TYPE_HAND] = {INVSLOT_HAND},
+    [Self.TYPE_HEAD] = {INVSLOT_HEAD},
+    [Self.TYPE_HOLDABLE] = {INVSLOT_OFFHAND},
+    [Self.TYPE_LEGS] = {INVSLOT_LEGS},
+    [Self.TYPE_NECK] = {INVSLOT_NECK},
+    [Self.TYPE_ROBE] = {INVSLOT_CHEST},
+    [Self.TYPE_SHIELD] = {INVSLOT_OFFHAND},
+    [Self.TYPE_SHOULDER] = {INVSLOT_SHOULDER},
+    [Self.TYPE_TABARD] = {INVSLOT_TABARD},
+    [Self.TYPE_THROWN] = {}, -- TODO
     [Self.TYPE_TRINKET] = {INVSLOT_TRINKET1, INVSLOT_TRINKET2},
-    [Self.TYPE_WAIST] = INVSLOT_WAIST,
+    [Self.TYPE_WAIST] = {INVSLOT_WAIST},
     [Self.TYPE_WEAPON] = {INVSLOT_MAINHAND, INVSLOT_OFFHAND},
-    [Self.TYPE_WEAPONMAINHAND] = INVSLOT_MAINHAND,
-    [Self.TYPE_WEAPONOFFHAND] = INVSLOT_OFFHAND,
-    [Self.TYPE_WRIST] = INVSLOT_WRIST
+    [Self.TYPE_WEAPONMAINHAND] = {INVSLOT_MAINHAND},
+    [Self.TYPE_WEAPONOFFHAND] = {INVSLOT_OFFHAND},
+    [Self.TYPE_WRIST] = {INVSLOT_WRIST}
 }
+
+-- TODO: Clear this cache when we get or loose items
+Self.PLAYER_SLOT_LEVELS = {}
 
 -- New items waiting for the BAG_UPDATE_DELAYED event
 Self.queue = {}
@@ -305,19 +308,19 @@ function Self:GetLinkInfo()
         end
         end
         
-        self.color = info[1]
+        -- self.color = info[1]
         self.id = info[3]
-        self.enchantId = info[4]
-        self.gemIds = {info[5], info[6], info[7], info[8]}
-        self.suffixId = info[9]
-        self.uniqueId = info[10]
-        self.linkLevel = info[11]
-        self.specId = info[12]
-        self.reforgeId = info[13]
-        self.difficultyId = info[14]
-        self.numBonusIds = info[15]
-        self.bonusIds = {info[16], info[17]}
-        self.upgradeValue = info[18]
+        -- self.enchantId = info[4]
+        -- self.gemIds = {info[5], info[6], info[7], info[8]}
+        -- self.suffixId = info[9]
+        -- self.uniqueId = info[10]
+        -- self.linkLevel = info[11]
+        -- self.specId = info[12]
+        -- self.reforgeId = info[13]
+        -- self.difficultyId = info[14]
+        -- self.numBonusIds = info[15]
+        -- self.bonusIds = {info[16], info[17]}
+        -- self.upgradeValue = info[18]
         self.name = info[19]
         self.quality = info[1] and Util.TblFindWhere(ITEM_QUALITY_COLORS, {hex = "|cff" .. info[1]}) or 1
         self.infoLevel = Self.INFO_LINK
@@ -340,20 +343,20 @@ function Self:GetBasicInfo()
             self.link = info[2]
             self.quality = info[3]
             self.level = level or info[4]
-            self.baseLevel = baseLevel or level
-            self.minLevel = info[5]
-            self.type = info[6]
+            -- self.baseLevel = baseLevel or level
+            -- self.minLevel = info[5]
+            -- self.type = info[6]
             self.subType = info[7]
-            self.stackCount = info[8]
+            -- self.stackCount = info[8]
             self.equipLoc = info[9]
             self.texture = info[10]
-            self.sellPrice = info[11]
+            -- self.sellPrice = info[11]
             self.classId = info[12]
             self.subClassId = info[13]
             self.bindType = info[14]
-            self.expacId = info[15]
-            self.setId = info[16]
-            self.isCraftingReagent = info[17]
+            -- self.expacId = info[15]
+            -- self.setId = info[16]
+            -- self.isCraftingReagent = info[17]
             
             -- Some extra info
             self.isRelic = self.subType == "Artifact Relic"
@@ -448,7 +451,7 @@ function Self:GetOwnedForLocation(equipped, bag)
             local weapon = Self.GetEquippedArtifact()
             items = weapon and Util.TblValues(weapon:GetRelics(self.relicType))
         else
-            items = Util(Self.SLOTS[self.equipLoc]).Tbl().Map(Util.FnArgs(Self.FromSlot, 1))()
+            items = Util(Self.SLOTS[self.equipLoc]).Map(Util.FnArgs(Self.FromSlot, 1))()
         end
     end
 
@@ -459,14 +462,16 @@ function Self:GetOwnedForLocation(equipped, bag)
         Util.SearchBags(function (item, id)
             item:GetBasicInfo()
 
-            if self.isRelic then
-                if Self.CLASS_RELICS[classId][id] then
-                    Util.TblMerge(items, Util.TblValues(item:GetRelics(self.relicType)))
-                elseif item.isRelic and item:GetFullInfo().relicType == self.relicType then
+            if item.isEquippable then
+                if self.isRelic then
+                    if Self.CLASS_RELICS[classId][id] then
+                        Util.TblMerge(items, Util.TblValues(item:GetRelics(self.relicType)))
+                    elseif item.isRelic and item:GetFullInfo().relicType == self.relicType then
+                        tinsert(items, item)
+                    end
+                elseif not item.isRelic and Util.TblEquals(Self.SLOTS[item.equipLoc], Self.SLOTS[self.equipLoc]) then
                     tinsert(items, item)
                 end
-            elseif not item.isRelic and Self.SLOTS[item.equipLoc] == Self.SLOTS[self.equipLoc] then
-                tinsert(items, item)
             end
         end)
     end
@@ -484,7 +489,7 @@ function Self:GetSlotCountForLocation()
         self:GetFullInfo()
         return #(Util(Self.CLASS_RELICS[select(3, UnitClass("player"))]).Flatten().Only(self.relicType)())
     else
-        return #(Util.Tbl(Self.SLOTS[self.equipLoc]))
+        return #Self.SLOTS[self.equipLoc]
     end
 end
 
@@ -503,17 +508,21 @@ end
 -- Get the reference level for equipment location
 function Self:GetLevelForLocation(unit)
     unit = Util.GetName(unit or "player")
+    local location = self:GetBasicInfo().isRelic and self:GetFullInfo().relicType or self.equipLoc
 
     if UnitIsUnit(unit, "player") then
         -- For the player
-        return Util(self:GetOwnedForLocation())
-            .Apply(Self.GetBasicInfo)
-            .ExceptWhere({quality = LE_ITEM_QUALITY_LEGENDARY})
-            .Pluck("level")
-            .Sort(true)(self:GetSlotCountForLocation()) or 0
+        if not Self.PLAYER_SLOT_LEVELS[location] then
+            Self.PLAYER_SLOT_LEVELS[location] = Util(self:GetOwnedForLocation())
+                .Iter(Self.GetBasicInfo)
+                .ExceptWhere({quality = LE_ITEM_QUALITY_LEGENDARY})
+                .Pluck("level")
+                .Sort(true)(self:GetSlotCountForLocation()) or 0
+        end
+
+        return Self.PLAYER_SLOT_LEVELS[location]
     else
         -- For other players
-        local location = self:GetBasicInfo().isRelic and self:GetFullInfo().relicType or self.equipLoc
         return Addon.Inspect.Get(unit, location)
     end
 end
@@ -532,14 +541,21 @@ function Self:GetRelics(relicTypes)
     _, success = self:GetBasicInfo()
     if not success then return {} end
 
-    local relics = Util.TblFirst(Self.CLASS_RELICS, Util.FnPluck(self.id))[self.id]
+    local weaponRelics = Util.TblFirstWhere(Self.CLASS_RELICS, self.id)[self.id]
     relicTypes = relicTypes and Util.Tbl(relicTypes)
 
-    return relics and Util(relics).Filter(not relicTypes and Util.FnTrue or Util.FnPrep(Util.TblFind, relicTypes), true).Map(function (relicType, slot)
-        local relic = self:GetGem(slot)
-        if relic then relic.relicType = relicType end
-        return relic
-    end)() or {}
+    local relics = {}
+    for slot,relicType in pairs(weaponRelics) do
+        if not relicTypes or Util.In(relicType, relicTypes) then
+            local relic = self:GetGem(slot)
+            if relic then
+                relic.relicType = relicType
+                relics[slot] = relic
+            end
+        end
+    end
+
+    return relics
 end
 
 -- Get all relic slots with types that only occur in this weapon for the given class
@@ -547,7 +563,7 @@ function Self:GetUniqueRelicSlots()
     _, success = self:GetBasicInfo()
     if not success then return {} end
 
-    local weapons = Self.CLASS_RELICS[Util.TblSearch(Self.CLASS_RELICS, Util.FnPluck(self.id))]
+    local weapons = Util.TblFirstWhere(Self.CLASS_RELICS, self.id)
 
     return Util.TblDiff(weapons[self.id], unpack(Util(weapons).Omit(self.id).Values()()), true)
 end
@@ -592,7 +608,7 @@ function Self:CanBeEquipped(unit)
     end
 
     -- Check if the armor/weapon type can be equipped
-    local list = Util.TblGet(Self.CLASS_GEAR, {self.classId, self.subClassId})
+    local list = Self.CLASS_GEAR[self.classId] and Self.CLASS_GEAR[self.classId][self.subClassId]
     return list and (list == true or Util.TblFind(list, classId) ~= nil)
 end
 
@@ -633,13 +649,13 @@ function Self:IsUseful(unit)
 end
 
 -- Check who in the group could use the item
-function Self:GetEligible(allOrUnit)
+function Self:GetEligible(unit)
     if not self.eligible then
-        if type(allOrUnit) == "string" then
-            if not self:IsUseful(allOrUnit) then
+        if unit then
+            if not self:IsUseful(unit) then
                 return nil
             else
-                return self:HasSufficientLevel(allOrUnit)
+                return self:HasSufficientLevel(unit)
             end
         else
             self.eligible = {}
@@ -655,13 +671,20 @@ function Self:GetEligible(allOrUnit)
         end
     end
 
-    if type(allOrUnit) == "string" then
-        return self.eligible[Util.GetName(allOrUnit)]
-    elseif allOrUnit then
-        return self.eligible
+    if unit then
+        return self.eligible[Util.GetName(unit)]
     else
-        return Util(self.eligible).Only(true, true).Omit(UnitName("player"))()
+        return self.eligible
     end
+end
+
+-- Get the # of eligible players
+function Self:GetNumEligible(checkIlvl)
+    local n = 0
+    for unit,ilvl in pairs(self:GetEligible()) do
+        if not checkIlvl or ilvl then n = n + 1 end
+    end
+    return n
 end
 
 -------------------------------------------------------
@@ -680,7 +703,7 @@ end
 
 -- Check if the addon should start a roll for an item
 function Self:ShouldBeRolledFor()
-    return self:ShouldBeConsidered() and next(self:GetEligible()) ~= nil
+    return self:ShouldBeConsidered() and self:GetNumEligible(true) > 0
 end
 
 -------------------------------------------------------
@@ -815,7 +838,7 @@ function Self:GetPosition(refresh)
     -- Check equipment
     if not select(2, self:GetBasicInfo()) then return end
 
-    for _, equipSlot in pairs(Util.Tbl(Self.SLOTS[self.equipLoc])) do
+    for _, equipSlot in pairs(Self.SLOTS[self.equipLoc]) do
         if self.link == GetInventoryItemLink(equipSlot) then
             return equipSlot, nil, false
         end
@@ -851,7 +874,7 @@ end
 
 -- An item as been moved
 function Self.OnMove(from, to)
-    Util(Addon.rolls).Where({item = {isOwner = true}, traded = false}, nil, true).Search(function (roll)
+    Util(Addon.rolls).Where({item = {isOwner = true}, traded = false}, true).Search(function (roll)
         if Util.TblEquals(from, roll.item.position) then
             roll.item:SetPosition(to)
             return true
@@ -862,7 +885,7 @@ end
 -- Two items have switched places
 function Self.OnSwitch(pos1, pos2)
     local item1, item2
-    Util(Addon.rolls).Where({item = {isOwner = true}, traded = false}, nil, true).Search(function (roll)
+    Util(Addon.rolls).Where({item = {isOwner = true}, traded = false}, true).Search(function (roll)
         if not item1 and Util.TblEquals(pos1, roll.item.position) then
             item1 = roll.item
         elseif not item2 and Util.TblEquals(pos2, roll.item.position) then

@@ -49,7 +49,7 @@ end
 
 function Self.GROUP_LEFT(event)
     -- Clear all rolls
-    Util.TblApply(Addon.rolls, Roll.Clear)
+    Util.TblIter(Addon.rolls, Roll.Clear)
 
     -- Stop inspecting
     Inspect.Clear()
@@ -136,7 +136,7 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
             local bid = to < 100 and Roll.BID_GREED or Roll.BID_NEED
             
             -- Register the unit's bid
-            if Util.UnitInGroup(unit) and roll and (fromSelf and roll:CanBeWon(unit) or roll:CanBeAwardedTo(unit)) and not roll:UnitHasBid(unit, bid) then
+            if Util.UnitInGroup(unit) and roll and (fromSelf and roll:CanBeWon(unit) or roll:CanBeAwardedTo(unit)) and not roll.bids[unit] then
                 roll:Bid(bid, unit, not fromSelf)
             end
             return
@@ -158,20 +158,17 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
         local unit = msg:match(pattern)
         if unit then
             -- Clear rolls
-            Util(Addon.rolls).Where({owner = unit}).Apply(Roll.Clear)
             for id, roll in pairs(Addon.rolls) do
-                if roll:CanBeWon(true) then
+                if roll.owner == unit or roll.item.owner == unit then
+                    roll:Clear()
+                elseif roll:CanBeWon(true) then
                     -- Remove from eligible list
                     if roll.item.eligible then
                         roll.item.eligible[unit] = nil
                     end
 
-                    if roll.isOwner then
-                        -- Remove bids
-                        for _, bids in pairs(roll.bids) do bids[unit] = nil end
-                        -- Check if we can end the rolls now
-                        roll:CheckEnd()
-                    end
+                    roll.bids[unit] = nil
+                    roll:CheckEnd()
                 end
             end
 
@@ -218,18 +215,14 @@ function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
                     Roll.Add(item, unit):Cancel()
                 end
 
-                if GetTime() - start > 0.1 then
-                    print("CHAT_MSG_LOOT.OnFullyLoaded took " .. (GetTime() - start) .."s")
-                end
+                print(("CHAT_MSG_LOOT.OnFullyLoaded took %fs"):format((GetTime() - start)))
             end)
         elseif not msg:match(Self.PATTERN_BONUS_LOOT) and not Roll.Find(nil, unit, item) then
             Roll.Add(item, unit):Schedule()
         end
     end
 
-    if GetTime() - start > 0.1 then
-        print("CHAT_MSG_LOOT took " .. (GetTime() - start) .."s")
-    end
+    print(("CHAT_MSG_LOOT took %fs"):format((GetTime() - start)))
 end
 
 -- Group/Raid/Instance
@@ -243,10 +236,7 @@ function Self.CHAT_MSG_PARTY(event, msg, sender)
 
     local link = Item.GetLink(msg)
     if link then
-        print("LINK", link)
         local item = Item.FromLink(link):GetBasicInfo()
-        
-        print("LINK", link, item:IsLoaded(), item.id)
 
         local roll = Roll.Find(nil, unit, item:IsLoaded() and item.link or item.id)
         if roll then
@@ -310,7 +300,7 @@ function Self.CHAT_MSG_WHISPER(event, msg, sender)
         -- The roll is scheduled or happening
         if roll:CanBeAwarded() then
             -- He is eligible, so register the bid
-            if roll:UnitIsEligible(unit) and not roll:UnitHasBid(unit, Roll.BID_NEED) then
+            if roll:UnitIsEligible(unit) and roll.bids[unit] ~= Roll.BID_NEED then
                 roll:Bid(Roll.BID_NEED, unit, true)
 
                 -- Answer only if his bid didn't end the roll

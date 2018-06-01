@@ -56,10 +56,9 @@ function Self.Start()
     if not Self.target then return end
 
     -- Find items the target has won and add them to the trade window
-    local items = Util(Addon.rolls).Where({item = {isOwner = true}, winner = Self.target, traded = false})()
-    print(#items)
-    for i,item in pairs(items) do
-        PickupContainerItem(item:GetPosition())
+    local rolls = Util(Addon.rolls).Where({item = {isOwner = true}, winner = Self.target, traded = false}, nil, true)()
+    for i,roll in pairs(rolls) do
+        PickupContainerItem(roll.item:GetPosition())
         DropItemOnUnit(Self.target)
     end
 end

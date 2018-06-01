@@ -246,7 +246,7 @@ function Self.RollEnd(roll, isWhisper)
             
             -- Announce to target
             if Addon.db.profile.answer and isWhisper or not Addon.versions[roll.winner] then
-                if Util.TblCount(roll.item:GetEligible()) == 1 then
+                if roll.item:GetNumEligible(true) == 1 then
                     if roll.item.isOwner then
                         Self.ChatLine("ROLL_ANSWER_YES", roll.winner)
                     else

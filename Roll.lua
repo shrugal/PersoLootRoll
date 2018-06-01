@@ -168,8 +168,8 @@ function Self.Update(data, unit)
                     end
                 end
                 -- Copy bids and votes
-                for bid,bids in pairs(data.bids or {}) do
-                    for _,fromUnit in pairs(bids) do roll:Bid(bid, fromUnit) end
+                for fromUnit,bid in pairs(data.bids or {}) do
+                    roll:Bid(bid, fromUnit)
                 end
                 for fromUnit,unit in pairs(data.votes or {}) do
                     roll:Vote(unit, fromUnit)
@@ -286,9 +286,8 @@ function Self:Start(started)
             self.timer = Addon:ScheduleTimer(Self.Finish, self:GetTimeLeft(), self)
 
             -- Let the others know
-            if not self:Advertise() then
-                self:SendStatus(self.item.isOwner)
-            end
+            self:Advertise(false, true)
+            self:SendStatus(self.item.isOwner)
 
             Addon.GUI.Rolls.Update()
         end
@@ -366,11 +365,10 @@ function Self:Bid(bid, fromUnit)
     elseif not Util.TblFind(Self.BIDS, bid) then
         Comm.RollBidError(self, fromUnit)
     else
-        Util.TblSet(self, {"bids", bid, fromUnit}, true)
+        self.bids[fromUnit] = bid
 
         if fromSelf then
             self.bid = bid
-
             Comm.RollBidSelf(self)
         end
 
@@ -386,8 +384,9 @@ function Self:Bid(bid, fromUnit)
                 end
             end
 
-            self:Advertise()
-            self:CheckEnd()
+            if not self:CheckEnd() then
+                self:Advertise()
+            end
         elseif fromSelf then
             if self.ownerId then
                 -- Send to owner
@@ -462,12 +461,13 @@ function Self:ShouldEnd()
     end
 
     -- Check if all eligible players have bid
-    local bids = Util.TblFlatten(self.bids)
-    if not Util.TblSearch(self.item:GetEligible(), function (ilvl, unit) return bids[unit] == nil end) then
-        return true
+    for unit,ilvl in pairs(self.item:GetEligible()) do
+        if ilvl and not self.bids[unit] then
+            return false
+        end
     end
 
-    return false
+    return true
 end
 
 -- Check if we should end the roll prematurely, and then end it
@@ -504,10 +504,14 @@ function Self:End(winner, isWhisper)
 
             -- Determine a winner
             if not (winner or Addon.db.profile.awardSelf or Masterloot.IsMasterlooter()) then
-                local bids = Util(Self.BIDS).Except(Self.BID_PASS).Map(Util.FnPluckFrom(self.bids)).First()()
-                if bids then
-                    local names = Util.TblKeys(bids)
-                    winner = names[math.random(#names)]
+                for i,bid in pairs(Self.BIDS) do
+                    if bid ~= Self.BID_PASS then
+                        local bids = Util(self.bids).Only(bid).Keys()()
+                        if #bids > 0 then
+                            winner = bids[math.random(#bids)]
+                            break
+                        end
+                    end
                 end
             end
         end
@@ -658,7 +662,7 @@ function Self:ShouldAdvertise(manually)
 end
 
 -- Advertise the roll to the group
-function Self:Advertise(manually)
+function Self:Advertise(manually, silent)
     if not self:ShouldAdvertise(manually) then
         return false
     end
@@ -666,12 +670,17 @@ function Self:Advertise(manually)
     self:ExtendTimeLeft()
 
     -- Get the next free roll slot
-    local posted = Util.TblIter(Addon.rolls, function (roll, _, u)
+    local posted, i = {}
+    for _,roll in pairs(Addon.rolls) do
         if roll.status == Self.STATUS_RUNNING and type(roll.posted) == "number" then
-            u[roll.posted] = true
+            posted[roll.posted] = true
         end
-    end)
-    local i for j=1,50 do if not posted[j] then i = j break end end
+    end
+    for j=1,50 do
+        if not posted[j] then
+            i = j break
+        end
+    end
 
     if i < 50 then
         if self.item.isOwner then
@@ -681,7 +690,11 @@ function Self:Advertise(manually)
         end
 
         self.posted = i
-        self:SendStatus()
+
+        if not silent then
+            self:SendStatus()
+        end
+
         Addon.GUI.Rolls.Update()
 
         return true
@@ -711,8 +724,8 @@ function Self:SendStatus(noCheck, target, full)
 
         if full then
             if Masterloot.session.bidPublic or Masterloot.IsOnCouncil(target) then
-                data.bids = Util.TblMap(self.bids, function (bids, bid)
-                    return Util(bids).Keys().Map(Util.GetFullName)()
+                data.bids = Util.TblMapKeys(self.bids, function (bid, fromUnit)
+                    return Util.GetFullName(fromUnit)
                 end)
             end
 
@@ -772,22 +785,13 @@ function Self:ExtendTimeLeft(to)
 end
 
 -------------------------------------------------------
---                       Other                       --
+--                      Helper                       --
 -------------------------------------------------------
 
 -- Check if the given unit is eligible
 function Self:UnitIsEligible(unit, checkIlvl)
     local val = self.item:GetEligible(unit)
     if checkIlvl then return val else return val ~= nil end
-end
-
--- Check if a unit has bid, optionally with the given answer
-function Self:UnitHasBid(unit, bid)
-    if bid then
-        return Util.TblGet(self.bids or {}, {bid, unit}) ~= nil
-    else
-        return Util.TblSearch(self.bids or {}, function (bids) return bids[unit] ~= nil end) ~= nil
-    end
 end
 
 -- Check if the roll can still be won
@@ -830,20 +834,14 @@ function Self:CanVote(unit)
     return self:CanBeVotedOn() and Masterloot.IsOnCouncil(unit)
 end
 
+-- Check if the roll is handled by a masterlooter
+function Self:HasMasterlooter()
+    return self.owner ~= self.item.owner or Masterloot.IsMasterlooter(self.owner)
+end
+
 -- Get the rolls id with PLR prefix
 function Self:GetPlrId()
     return Self.ToPlrId(self.id)
-end
-
--- Get a player: answer map of all bids
-function Self:GetBids()
-    local bids = Util(self.bids).Map(function (t, bid)
-        return Util.TblMap(t, Util.FnVal(bid))
-    end).Flatten()()
-
-    bids[UnitName("player")] = self.bid
-
-    return bids
 end
 
 -- Some common error checks for a loot roll
