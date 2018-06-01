@@ -208,7 +208,7 @@ Self.SLOTS = {
     [Self.TYPE_WRIST] = {INVSLOT_WRIST}
 }
 
--- TODO: Clear this cache when we get or loose items
+-- Cache the player's ilvl per slot
 Self.PLAYER_SLOT_LEVELS = {}
 
 -- New items waiting for the BAG_UPDATE_DELAYED event
@@ -512,15 +512,18 @@ function Self:GetLevelForLocation(unit)
 
     if UnitIsUnit(unit, "player") then
         -- For the player
-        if not Self.PLAYER_SLOT_LEVELS[location] then
-            Self.PLAYER_SLOT_LEVELS[location] = Util(self:GetOwnedForLocation())
+        local cache = Self.PLAYER_SLOT_LEVELS[location] or {}
+        if not cache.time or cache.time + Addon.Inspect.REFRESH < GetTime() then
+            cache.time = GetTime()
+            cache.ilvl = Util(self:GetOwnedForLocation())
                 .Iter(Self.GetBasicInfo)
                 .ExceptWhere({quality = LE_ITEM_QUALITY_LEGENDARY})
                 .Pluck("level")
                 .Sort(true)(self:GetSlotCountForLocation()) or 0
+            Self.PLAYER_SLOT_LEVELS[location] = cache
         end
 
-        return Self.PLAYER_SLOT_LEVELS[location]
+        return cache.ilvl
     else
         -- For other players
         return Addon.Inspect.Get(unit, location)
