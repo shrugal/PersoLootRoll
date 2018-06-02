@@ -1,4 +1,4 @@
-local Addon = LibStub("AceAddon-3.0"):GetAddon(PLR_NAME)
+local Name, Addon = ...
 local Locale = Addon.Locale
 local lang = "enUS"
 
@@ -7,10 +7,10 @@ local L = {}
 setmetatable(L, Locale.MT)
 Locale[lang] = L
 
-L["ROLL_START"] = PLR_CHAT .. " Giving away %s -> /w me or /roll %d!"
-L["ROLL_START_MASTERLOOT"] = PLR_CHAT .. " Giving away %s from <%s> -> /w me or /roll %d!"
-L["ROLL_WINNER"] = PLR_CHAT .. " <%s> has won %s -> Trade me!"
-L["ROLL_WINNER_MASTERLOOT"] = PLR_CHAT .. " <%s> has won %s from <%s> -> Trade %s!"
+L["ROLL_START"] = Addon.PREFIX_CHAT .. " Giving away %s -> /w me or /roll %d!"
+L["ROLL_START_MASTERLOOT"] = Addon.PREFIX_CHAT .. " Giving away %s from <%s> -> /w me or /roll %d!"
+L["ROLL_WINNER"] = Addon.PREFIX_CHAT .. " <%s> has won %s -> Trade me!"
+L["ROLL_WINNER_MASTERLOOT"] = Addon.PREFIX_CHAT .. " <%s> has won %s from <%s> -> Trade %s!"
 L["ROLL_WINNER_WHISPER"] = "You have won %s! Please trade me."
 L["ROLL_WINNER_WHISPER_MASTERLOOT"] = "You have won %s from <%s>! Please trade %s."
 L["ROLL_ANSWER_BID"] = "Ok, I registered your bid for %s."
@@ -26,7 +26,7 @@ L["HER"] = "her"
 L["HIM"] = "him"
 
 -- Addon
-local L = LibStub("AceLocale-3.0"):NewLocale(PLR_NAME, lang, lang == Locale.DEFAULT)
+local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.DEFAULT)
 if not L then return end
 
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "The owner of this item doesn't use the PersoLootRoll addon."
@@ -147,11 +147,11 @@ L["OPT_ENABLE"] = "Enable"
 L["OPT_ENABLE_DESC"] = "Enable or disable the addon"
 L["OPT_INFO"] = "Information"
 L["OPT_INFO_DESC"] = "Some information about this addon."
-L["OPT_VERSION"] = "|cffffff00Version:|r " .. PLR_VERSION
+L["OPT_VERSION"] = "|cffffff00Version:|r " .. Addon.VERSION
 L["OPT_AUTHOR"] = "|cffffff00Author:|r Shrugal-Mal'Ganis (EU)"
 L["OPT_TRANSLATION"] = "|cffffff00Translation:|r Shrugal-Mal'Ganis (EU)"
 L["OPT_UI"] = "User interface"
-L["OPT_UI_DESC"] = "Customize " .. PLR_NAME .. "'s look and feel to your liking."
+L["OPT_UI_DESC"] = "Customize " .. Name .. "'s look and feel to your liking."
 L["OPT_MINIMAP_ICON"] = "Show minimap icon"
 L["OPT_MINIMAP_ICON_DESC"] = "Show or hide the minimap icon"
 L["OPT_ROLL_FRAMES"] = "Show roll frames"

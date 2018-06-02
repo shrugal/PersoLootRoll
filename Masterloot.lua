@@ -1,5 +1,5 @@
-local Addon = LibStub("AceAddon-3.0"):GetAddon(PLR_NAME)
-local L = LibStub("AceLocale-3.0"):GetLocale(PLR_NAME)
+local Name, Addon = ...
+local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Util = Addon.Util
 local Comm = Addon.Comm
 local Self = {}

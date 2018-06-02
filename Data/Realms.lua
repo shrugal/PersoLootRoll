@@ -1,4 +1,4 @@
-local Addon = LibStub("AceAddon-3.0"):GetAddon(PLR_NAME)
+local Name, Addon = ...
 local Self = {}
 
 Self.US = {

@@ -1,5 +1,5 @@
-local Addon = LibStub("AceAddon-3.0"):GetAddon(PLR_NAME)
-local L = LibStub("AceLocale-3.0"):GetLocale(PLR_NAME)
+local Name, Addon = ...
+local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Util = Addon.Util
 local Item = Addon.Item
 local Locale = Addon.Locale
@@ -246,15 +246,15 @@ end
 -- Check for and convert from/to PLR roll id
 
 function Self.IsPlrId(id)
-    return Util.StrStartsWith("" .. id, PLR_PREFIX)
+    return Util.StrStartsWith("" .. id, Addon.PREFIX)
 end
 
 function Self.ToPlrId(id)
-    return PLR_PREFIX .. id
+    return Addon.PREFIX .. id
 end
 
 function Self.FromPlrId(id)
-    return tonumber(("" .. id):sub(PLR_PREFIX:len() + 1))
+    return tonumber(("" .. id):sub(Addon.PREFIX:len() + 1))
 end
 
 -- Calculate the optimal timeout

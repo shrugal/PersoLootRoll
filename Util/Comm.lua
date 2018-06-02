@@ -1,5 +1,5 @@
-local Addon = LibStub("AceAddon-3.0"):GetAddon(PLR_NAME)
-local L = LibStub("AceLocale-3.0"):GetLocale(PLR_NAME)
+local Name, Addon = ...
+local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Util = Addon.Util
 local Locale = Addon.Locale
 local Self = {}
@@ -43,8 +43,8 @@ Self.PATTERNS_LEFT = {Self.PATTERN_PARTY_LEFT, Self.PATTERN_INSTANCE_LEFT, Self.
 
 -- Get the complete message prefix for an event
 function Self.GetPrefix(event)
-    if not Util.StrStartsWith(event, PLR_PREFIX) then
-        event = PLR_PREFIX .. event
+    if not Util.StrStartsWith(event, Addon.PREFIX) then
+        event = Addon.PREFIX .. event
     end
 
     return event
@@ -274,7 +274,6 @@ function Self.GetPlayerLink(player)
 end
 
 function Self.GetTradeLink(player)
-    local L = LibStub("AceLocale-3.0"):GetLocale(PLR_NAME)
     return ("|cff4D85E6|Hplrtrade:%s|h[%s]|h|r"):format(player, TRADE)
 end
 

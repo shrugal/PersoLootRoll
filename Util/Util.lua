@@ -1,4 +1,4 @@
-local Addon = LibStub("AceAddon-3.0"):GetAddon(PLR_NAME)
+local Name, Addon = ...
 local Self = {}
 
 
@@ -160,7 +160,7 @@ end
 -- Get hidden tooltip for scanning
 function Self.GetHiddenTooltip()
     if not Self.hiddenTooltip then
-        Self.hiddenTooltip = CreateFrame("GameTooltip", PLR_PREFIX .. "_HiddenTooltip", nil, "GameTooltipTemplate")
+        Self.hiddenTooltip = CreateFrame("GameTooltip", Addon.PREFIX .. "_HiddenTooltip", nil, "GameTooltipTemplate")
         Self.hiddenTooltip:SetOwner(UIParent, "ANCHOR_NONE")
     end
 
@@ -180,7 +180,7 @@ function Self.ScanTooltip(fn, linkOrbag, slot, ...)
 
     local lines = tooltip:NumLines()
     for i=2, lines do
-        local line = _G[PLR_PREFIX .."_HiddenTooltipTextLeft" .. i]:GetText()
+        local line = _G[Addon.PREFIX .."_HiddenTooltipTextLeft" .. i]:GetText()
         if line then
             local a, b, c = fn(i, line, lines, ...)
             if a ~= nil then

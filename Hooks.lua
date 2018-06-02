@@ -1,5 +1,5 @@
-local Addon = LibStub("AceAddon-3.0"):GetAddon(PLR_NAME)
-local L = LibStub("AceLocale-3.0"):GetLocale(PLR_NAME)
+local Name, Addon = ...
+local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Util = Addon.Util
 local Roll = Addon.Roll
 local Trade = Addon.Trade
@@ -187,7 +187,7 @@ function Self.EnableChatSuppression()
     -- Suppress messages starting with [PLR]
     if not Addon:IsHooked("ChatFrame_OnEvent") then
         Addon:RawHook("ChatFrame_OnEvent", function (...)
-            if not Util.StrStartsWith(arg2, "[" .. PLR_PREFIX .. "]") then
+            if not Util.StrStartsWith(arg2, "[" .. Addon.PREFIX .. "]") then
                 return Addon.hooks.ChatFrame_OnEvent(...)
             end
         end)

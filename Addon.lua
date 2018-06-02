@@ -6,22 +6,16 @@ TODO:
 - Custom messages
 ]]
 
-local Addon = LibStub("AceAddon-3.0"):GetAddon(PLR_NAME)
+local Name, Addon = ...
 local LDB = LibStub("LibDataBroker-1.1")
 local LDBIcon = LibStub("LibDBIcon-1.0")
-local L = LibStub("AceLocale-3.0"):GetLocale(PLR_NAME)
+local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Util = Addon.Util
 local Item = Addon.Item
 
 -------------------------------------------------------
 --                     Constants                     --
 -------------------------------------------------------
-
--- Version
-Addon.VERSION = PLR_VERSION
-
--- Enable or disable debug stuff
-Addon.DEBUG = true
 
 -- Echo levels
 Addon.ECHO_NONE = 0
@@ -43,7 +37,7 @@ Addon.versionNoticeShown = false
 
 -- Called when the addon is loaded
 function Addon:OnInitialize()
-    self.db = LibStub("AceDB-3.0"):New(PLR_NAME .. "DB", {
+    self.db = LibStub("AceDB-3.0"):New(Name .. "DB", {
         profile = {
             enabled = true,
             ui = {showRollFrames = true, showRollsWindow = false},
@@ -87,7 +81,7 @@ function Addon:OnEnable()
     self.Events.RegisterEvents()
 
     -- Register chat commands
-    self:RegisterChatCommand(PLR_NAME, "HandleChatCommand")
+    self:RegisterChatCommand(Name, "HandleChatCommand")
     self:RegisterChatCommand("plr", "HandleChatCommand")
 
     -- Periodically clear old rolls
@@ -141,7 +135,7 @@ function Addon:HandleChatCommand(msg)
     Util.Switch(cmd) {
         ["help"] = function () self:Help() end,
         ["options"] = function () self:ShowOptions() end,
-        ["config"] = function () LibStub("AceConfigCmd-3.0").HandleCommand(Addon, "plr config", PLR_NAME, msg:sub(7)) end,
+        ["config"] = function () LibStub("AceConfigCmd-3.0").HandleCommand(Addon, "plr config", Name, msg:sub(7)) end,
         ["rolls"] = self.GUI.Rolls.Show,
         ["roll"] = function  ()
             local items, i, item = {}, 1
@@ -219,7 +213,7 @@ function Addon:RegisterOptions()
 
     -- General
     local it = Util.Iter()
-    config:RegisterOptionsTable(PLR_NAME, {
+    config:RegisterOptionsTable(Name, {
         type = "group",
         args = {
             enable = {
@@ -251,9 +245,9 @@ function Addon:RegisterOptions()
                 set = function (_, val)
                     PersoLootRollIconDB.hide = not val or nil
                     if val then
-                        LDBIcon:Show(PLR_NAME)
+                        LDBIcon:Show(Name)
                     else
-                        LDBIcon:Hide(PLR_NAME)
+                        LDBIcon:Hide(Name)
                     end
                 end,
                 get = function (_) return not PersoLootRollIconDB.hide end,
@@ -281,7 +275,7 @@ function Addon:RegisterOptions()
             },
         }
     })
-    self.configFrame = dialog:AddToBlizOptions(PLR_NAME)
+    self.configFrame = dialog:AddToBlizOptions(Name)
 
     local allowKeys = {"friend", "guild", "guildgroup", "raidleader", "raidassistant"}
     local allowValues = {FRIEND, GUILD, GUILD_GROUP, L["RAID_LEADER"], L["RAID_ASSISTANT"]}
@@ -294,7 +288,7 @@ function Addon:RegisterOptions()
 
     -- Loot method
     it = Util.Iter()
-    config:RegisterOptionsTable(PLR_NAME .. "_lootmethod", {
+    config:RegisterOptionsTable(Name .. "_lootmethod", {
         name = L["OPT_LOOT_METHOD"],
         type = "group",
         args = {
@@ -426,11 +420,11 @@ function Addon:RegisterOptions()
             },
         }
     })
-    dialog:AddToBlizOptions(PLR_NAME .. "_lootmethod", L["OPT_LOOT_METHOD"], PLR_NAME)
+    dialog:AddToBlizOptions(Name .. "_lootmethod", L["OPT_LOOT_METHOD"], Name)
 
     -- Messages
     it = Util.Iter()
-    config:RegisterOptionsTable(PLR_NAME .. "_messages", {
+    config:RegisterOptionsTable(Name .. "_messages", {
         name = L["OPT_MESSAGES"],
         type = "group",
         args = {
@@ -507,11 +501,11 @@ function Addon:RegisterOptions()
             }
         }
     })
-    dialog:AddToBlizOptions(PLR_NAME .. "_messages", L["OPT_MESSAGES"], PLR_NAME)
+    dialog:AddToBlizOptions(Name .. "_messages", L["OPT_MESSAGES"], Name)
 
     -- Profiles
-    config:RegisterOptionsTable(PLR_NAME .. "_profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db))
-    dialog:AddToBlizOptions(PLR_NAME .. "_profiles", "Profiles", PLR_NAME)
+    config:RegisterOptionsTable(Name .. "_profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db))
+    dialog:AddToBlizOptions(Name .. "_profiles", "Profiles", Name)
 
 end
 
@@ -520,9 +514,9 @@ end
 -------------------------------------------------------
 
 function Addon:RegisterMinimapIcon()
-    local plugin = LDB:NewDataObject(PLR_NAME, {
+    local plugin = LDB:NewDataObject(Name, {
         type = "data source",
-        text = PLR_NAME,
+        text = Name,
         icon = "Interface\\Buttons\\UI-GroupLoot-Dice-Up"
     })
 
@@ -537,13 +531,13 @@ function Addon:RegisterMinimapIcon()
 
     -- OnTooltip
     plugin.OnTooltipShow = function (ToolTip)
-        ToolTip:AddLine(PLR_NAME)
+        ToolTip:AddLine(Name)
         ToolTip:AddLine(L["TIP_MINIMAP_ICON"], 1, 1, 1)
     end
 
     -- Icon
     if not PersoLootRollIconDB then PersoLootRollIconDB = {} end
-    LDBIcon:Register(PLR_NAME, plugin, PersoLootRollIconDB)
+    LDBIcon:Register(Name, plugin, PersoLootRollIconDB)
 end
 
 -------------------------------------------------------

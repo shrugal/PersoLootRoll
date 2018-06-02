@@ -1,4 +1,4 @@
-local Addon = LibStub("AceAddon-3.0"):GetAddon(PLR_NAME)
+local Name, Addon = ...
 local Locale = Addon.Locale
 local lang = "deDE"
 
@@ -7,10 +7,10 @@ local L = {}
 setmetatable(L, Locale.MT)
 Locale[lang] = L
 
-L["ROLL_START"] = PLR_CHAT .. " Vergebe %s -> /w me oder /roll %d!"
-L["ROLL_START_MASTERLOOT"] = PLR_CHAT .. " Vergebe %s von <%s> -> /w me oder /roll %d!"
-L["ROLL_WINNER"] = PLR_CHAT .. " <%s> hat %s gewonnen -> Mich anhandeln!"
-L["ROLL_WINNER_MASTERLOOT"] = PLR_CHAT .. " <%s> hat %s von <%s> gewonnen -> %s anhandeln!"
+L["ROLL_START"] = Addon.PREFIX_CHAT .. " Vergebe %s -> /w me oder /roll %d!"
+L["ROLL_START_MASTERLOOT"] = Addon.PREFIX_CHAT .. " Vergebe %s von <%s> -> /w me oder /roll %d!"
+L["ROLL_WINNER"] = Addon.PREFIX_CHAT .. " <%s> hat %s gewonnen -> Mich anhandeln!"
+L["ROLL_WINNER_MASTERLOOT"] = Addon.PREFIX_CHAT .. " <%s> hat %s von <%s> gewonnen -> %s anhandeln!"
 L["ROLL_WINNER_WHISPER"] = "Du hast %s gewonnen! Bitte handel mich an."
 L["ROLL_WINNER_WHISPER_MASTERLOOT"] = "Du hast %s von <%s> gewonnen! Bitte handel %s an."
 L["ROLL_ANSWER_BID"] = "Ok, ich hab dein Gebot für %s registriert."
@@ -26,7 +26,7 @@ L["HER"] = "sie"
 L["HIM"] = "ihn"
 
 -- Addon
-local L = LibStub("AceLocale-3.0"):NewLocale(PLR_NAME, lang, lang == Locale.DEFAULT)
+local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.DEFAULT)
 if not L then return end
 
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "Der Besitzer dieses Items benutzt nicht das PersoLootRoll Addon."
@@ -147,11 +147,11 @@ L["OPT_ENABLE"] = "Aktiviert"
 L["OPT_ENABLE_DESC"] = "Aktiviere oder deaktiviere das Addon"
 L["OPT_INFO"] = "Informationen"
 L["OPT_INFO_DESC"] = "Ein paar Informationen über das Addon."
-L["OPT_VERSION"] = "|cffffff00Version:|r " .. PLR_VERSION
+L["OPT_VERSION"] = "|cffffff00Version:|r " .. Addon.VERSION
 L["OPT_AUTHOR"] = "|cffffff00Author:|r Shrugal-Mal'Ganis (EU)"
 L["OPT_TRANSLATION"] = "|cffffff00Übersetzung:|r Shrugal-Mal'Ganis (EU)"
 L["OPT_UI"] = "Benutzerinterface"
-L["OPT_UI_DESC"] = "Passe das Aussehen von " .. PLR_NAME .. " nach deinen Bedürfnissen an."
+L["OPT_UI_DESC"] = "Passe das Aussehen von " .. Name .. " nach deinen Bedürfnissen an."
 L["OPT_MINIMAP_ICON"] = "Show minimap icon"
 L["OPT_MINIMAP_ICON_DESC"] = "Show or hide the minimap icon"
 L["OPT_ROLL_FRAMES"] = "Zeige Roll-Fenster"

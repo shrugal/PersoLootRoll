@@ -1,5 +1,5 @@
-local Addon = LibStub("AceAddon-3.0"):GetAddon(PLR_NAME)
-local L = LibStub("AceLocale-3.0"):GetLocale(PLR_NAME)
+local Name, Addon = ...
+local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Util = Addon.Util
 local Item = Addon.Item
 local Locale = Addon.Locale
@@ -224,7 +224,7 @@ function Self.CHAT_MSG_PARTY(event, msg, sender)
     if not Addon:IsTracking() then return end
 
     local fromSelf = UnitIsUnit(unit, "player")
-    local fromAddon = Util.StrStartsWith(msg, PLR_CHAT)
+    local fromAddon = Util.StrStartsWith(msg, Addon.PREFIX_CHAT)
 
     local link = Item.GetLink(msg)
     if link then
