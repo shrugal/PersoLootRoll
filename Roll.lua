@@ -159,6 +159,8 @@ function Self.Update(data, unit)
         else
             -- This stuff needs item data to be loaded
             roll.item:OnLoaded(function ()
+                local bid, vote = self.bid, self.vote
+
                 -- Start (or restart) the roll if the owner has started it
                 if data.status >= Self.STATUS_RUNNING then
                     if roll.status < Self.STATUS_RUNNING then
@@ -167,20 +169,43 @@ function Self.Update(data, unit)
                         roll:Restart(data.started)
                     end
                 end
-                -- Copy bids and votes
-                for fromUnit,bid in pairs(data.bids or {}) do
-                    roll:Bid(bid, fromUnit)
+
+                -- Import bids
+                if next(data.bids) then
+                    self.bid = nil
+                    wipe(self.bids)
+
+                    for fromUnit,bid in pairs(data.bids or {}) do
+                        roll:Bid(bid, fromUnit, true)
+                    end
                 end
-                for fromUnit,unit in pairs(data.votes or {}) do
-                    roll:Vote(unit, fromUnit)
+
+                -- Import votes
+                if next(data.votes) then
+                    self.vote = nil
+                    wipe(self.votes)
+
+                    for fromUnit,unit in pairs(data.votes or {}) do
+                        roll:Vote(unit, fromUnit, true)
+                    end
                 end
+                
                 -- End the roll if the owner has ended it
                 if data.status >= Self.STATUS_DONE and roll.status < Self.STATUS_DONE or data.winner ~= roll.winner then
                     roll:End(data.winner)
                 end
+
                 -- Register when the roll has been traded
                 if data.traded ~= roll.traded then
                     roll:OnTraded(data.traded)
+                end
+
+                -- Bid and vote again if our bid/vote is missing
+                if bid and not self.bid and self:CanBeBidOn() then
+                    self:Bid(bid)
+                end
+                if vote and not self.vote and self:CanBeVotedOn() then
+                    self:Vote(vote)
                 end
 
                 Addon.GUI.Rolls.Update()
@@ -339,6 +364,7 @@ function Self:Restart(started)
     self.status = Self.STATUS_PENDING
 
     self:HideRollFrame()
+
     if self.timer then
         Addon:CancelTimer(self.timer)
         self.timer = nil
@@ -348,7 +374,7 @@ function Self:Restart(started)
 end
 
 -- Bid on a roll
-function Self:Bid(bid, fromUnit)
+function Self:Bid(bid, fromUnit, isImport)
     bid = bid or Self.BID_NEED
     fromUnit = Util.GetName(fromUnit or "player")
     local fromSelf = UnitIsUnit(fromUnit, "player")
@@ -359,7 +385,7 @@ function Self:Bid(bid, fromUnit)
     end
     
     -- Check if we can bid
-    local valid, msg = self:Validate(Self.STATUS_RUNNING, fromUnit)
+    local valid, msg = self:Validate(not isImport and Self.STATUS_RUNNING or nil, fromUnit)
     if not valid then
         Addon:Err(msg)
     elseif not Util.TblFind(Self.BIDS, bid) then
@@ -372,33 +398,35 @@ function Self:Bid(bid, fromUnit)
             Comm.RollBidSelf(self)
         end
 
-        if self.isOwner then
-            local data = {ownerId = self.ownerId, bid = bid, fromUnit = Util.GetFullName(fromUnit)}
+        if self.isOwner and not (self.status == Self.STATUS_DONE or self:CheckEnd()) then
+            self:Advertise()
+        end
 
-            -- Send to all or the council
-            if Addon.db.profile.masterloot.bidPublic then
-                Comm.SendData(Comm.EVENT_BID, data)
-            elseif Masterloot.IsMasterlooter() then
-                for target,_ in pairs(Masterloot.session.council or {}) do
-                    Comm.SendData(Comm.EVENT_BID, data, target)
-                end
-            end
+        if not isImport then
+            if self.isOwner then
+                local data = {ownerId = self.ownerId, bid = bid, fromUnit = Util.GetFullName(fromUnit)}
 
-            if not self:CheckEnd() then
-                self:Advertise()
-            end
-        elseif fromSelf then
-            if self.ownerId then
-                -- Send to owner
-                Comm.SendData(Comm.EVENT_BID, {ownerId = self.ownerId, bid = bid}, self.owner)
-            elseif bid ~= Self.BID_PASS then
-                -- Roll on it in chat or whisper the owner
-                if self.posted then
-                    if Addon.db.profile.roll then
-                        RandomRoll("1", bid == Self.BID_GREED and "50" or "100")
+                -- Send to all or the council
+                if Addon.db.profile.masterloot.bidPublic then
+                    Comm.SendData(Comm.EVENT_BID, data)
+                elseif Masterloot.IsMasterlooter() then
+                    for target,_ in pairs(Masterloot.session.council or {}) do
+                        Comm.SendData(Comm.EVENT_BID, data, target)
                     end
-                else
-                    Comm.RollBid(self.item.owner, self.item.link)
+                end
+            elseif fromSelf then
+                if self.ownerId then
+                    -- Send to owner
+                    Comm.SendData(Comm.EVENT_BID, {ownerId = self.ownerId, bid = bid}, self.owner)
+                elseif bid ~= Self.BID_PASS then
+                    -- Roll on it in chat or whisper the owner
+                    if self.posted then
+                        if Addon.db.profile.roll then
+                            RandomRoll("1", bid == Self.BID_GREED and "50" or "100")
+                        end
+                    else
+                        Comm.RollBid(self.item.owner, self.item.link)
+                    end
                 end
             end
         end
@@ -410,7 +438,7 @@ function Self:Bid(bid, fromUnit)
 end
 
 -- Vote for a unit
-function Self:Vote(vote, fromUnit)
+function Self:Vote(vote, fromUnit, isImport)
     vote = Util.GetName(vote)
     fromUnit = Util.GetName(fromUnit or "player")
     local fromSelf = UnitIsUnit(fromUnit, "player")
@@ -419,7 +447,7 @@ function Self:Vote(vote, fromUnit)
     local valid, msg = self:Validate(nil, vote, fromUnit)
     if not valid then
         Addon:Err(msg)
-    elseif not (fromSelf or self:UnitCanVote(fromUnit)) then
+    elseif not (isImport or self:UnitCanVote(fromUnit)) then
         Comm.RollVoteError(self)
     else
         self.votes[fromUnit] = vote
@@ -428,20 +456,22 @@ function Self:Vote(vote, fromUnit)
             self.vote = vote
         end
 
-        if self.isOwner then
-            local data = {ownerId = self.ownerId, vote = Util.GetFullName(vote), fromUnit = Util.GetFullName(fromUnit)}
+        if not isImport then
+            if self.isOwner then
+                local data = {ownerId = self.ownerId, vote = Util.GetFullName(vote), fromUnit = Util.GetFullName(fromUnit)}
 
-            -- Send to all or the council
-            if Addon.db.profile.masterloot.votePublic then
-                Comm.SendData(Comm.EVENT_VOTE, data)
-            elseif Masterloot.IsMasterlooter() then
-                for target,_ in pairs(Masterloot.session.council or {}) do
-                    Comm.SendData(Comm.EVENT_VOTE, data, target)
+                -- Send to all or the council
+                if Addon.db.profile.masterloot.votePublic then
+                    Comm.SendData(Comm.EVENT_VOTE, data)
+                elseif Masterloot.IsMasterlooter() then
+                    for target,_ in pairs(Masterloot.session.council or {}) do
+                        Comm.SendData(Comm.EVENT_VOTE, data, target)
+                    end
                 end
+            elseif fromSelf then
+                -- Send to owner
+                Comm.SendData(Comm.EVENT_VOTE, {ownerId = self.ownerId, vote = Util.GetFullName(vote)}, Masterloot.GetMasterlooter())
             end
-        elseif fromSelf then
-            -- Send to owner
-            Comm.SendData(Comm.EVENT_VOTE, {ownerId = self.ownerId, vote = Util.GetFullName(vote)}, Masterloot.GetMasterlooter())
         end
 
         Addon.GUI.Rolls.Update()
@@ -627,11 +657,16 @@ end
 
 -- Show the roll frame
 function Self:ShowRollFrame()
-    if Addon.db.profile.ui.showRollFrames then
-        GroupLootFrame_OpenNewFrame(self:GetPlrId(), self:GetRunTime())
-        self.shown = self:GetRollFrame() ~= nil
-    else
-        self.shown = true
+    local frame = self:GetRollFrame()
+    if not frame or not frame:IsShown() then
+        self.shown = false
+
+        if Addon.db.profile.ui.showRollFrames then
+            GroupLootFrame_OpenNewFrame(self:GetPlrId(), self:GetRunTime())
+            self.shown = self:GetRollFrame() ~= nil
+        else
+            self.shown = true
+        end
     end
 end
 

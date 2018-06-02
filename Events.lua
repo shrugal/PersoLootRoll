@@ -403,7 +403,7 @@ Comm.Listen(Comm.EVENT_SYNC, function (event, msg, channel, sender, unit)
     -- Send rolls for items that we own
     for _,roll in pairs(Addon.rolls) do
         if roll.item.isOwner and (roll:UnitCanBid(unit) or roll:UnitCanVote(unit)) then
-            roll:SendStatus(true, sender, roll.isOwner)
+            roll:SendStatus(true, unit, roll.isOwner)
         end
     end
 
@@ -412,7 +412,7 @@ Comm.Listen(Comm.EVENT_SYNC, function (event, msg, channel, sender, unit)
         Addon:ScheduleTimer(function ()
             for _,roll in pairs(Addon.rolls) do
                 if roll.isOwner and not roll.item.isOwner and (roll:UnitCanBid(unit) or roll:UnitCanVote(unit)) then
-                    roll:SendStatus(true, sender, true)
+                    roll:SendStatus(nil, unit, true)
                 end
             end
         end, Roll.DELAY)
@@ -456,7 +456,7 @@ Comm.ListenData(Comm.EVENT_BID, function (event, data, channel, sender, unit)
         local roll = Roll.Find(data.ownerId, owner)
         
         if roll then
-            roll:Bid(data.bid, fromUnit)
+            roll:Bid(data.bid, fromUnit, owner)
         end
     end
 end)
@@ -470,7 +470,7 @@ Comm.ListenData(Comm.EVENT_VOTE, function (event, data, channel, sender, unit)
         local roll = Roll.Find(data.ownerId, owner)
         
         if roll then
-            roll:Vote(data.vote, data.fromUnit or unit)
+            roll:Vote(data.vote, fromUnit, owner)
         end
     end
 end)
