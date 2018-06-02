@@ -402,16 +402,16 @@ Comm.Listen(Comm.EVENT_SYNC, function (event, msg, channel, sender, unit)
 
     -- Send rolls for items that we own
     for _,roll in pairs(Addon.rolls) do
-        if roll.item.isOwner and (roll:CanBid(unit) or roll:CanVote(unit)) then
+        if roll.item.isOwner and (roll:UnitCanBid(unit) or roll:UnitCanVote(unit)) then
             roll:SendStatus(true, sender, roll.isOwner)
         end
     end
 
-    -- As masterlooter we send another update a bid later to inform them about bids and votes
+    -- As masterlooter we send another update a bit later to inform them about bids and votes
     if Masterloot.IsMasterlooter() then
         Addon:ScheduleTimer(function ()
             for _,roll in pairs(Addon.rolls) do
-                if roll.isOwner and not roll.item.isOwner and (roll:CanBid(unit) or roll:CanVote(unit)) then
+                if roll.isOwner and not roll.item.isOwner and (roll:UnitCanBid(unit) or roll:UnitCanVote(unit)) then
                     roll:SendStatus(true, sender, true)
                 end
             end

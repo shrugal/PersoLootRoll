@@ -419,7 +419,7 @@ function Self:Vote(vote, fromUnit)
     local valid, msg = self:Validate(nil, vote, fromUnit)
     if not valid then
         Addon:Err(msg)
-    elseif not (fromSelf or self:CanVote(fromUnit)) then
+    elseif not (fromSelf or self:UnitCanVote(fromUnit)) then
         Comm.RollVoteError(self)
     else
         self.votes[fromUnit] = vote
@@ -506,7 +506,7 @@ function Self:End(winner, isWhisper)
             if not (winner or Addon.db.profile.awardSelf or Masterloot.IsMasterlooter()) then
                 for i,bid in pairs(Self.BIDS) do
                     if bid ~= Self.BID_PASS then
-                        local bids = Util(self.bids).Only(bid).Keys()()
+                        local bids = Util(self.bids).Only(bid, true).Keys()()
                         if #bids > 0 then
                             winner = bids[math.random(#bids)]
                             break
@@ -522,7 +522,7 @@ function Self:End(winner, isWhisper)
     
     -- Set winner
     self.winner = winner
-    self.isWinner = self.winner == UnitName("player")
+    self.isWinner = self.winner and UnitIsUnit(self.winner, "player")
 
     -- Let the player know, announce to chat and the winner
     if self.winner then
@@ -820,8 +820,8 @@ function Self:CanBeBidOn()
 end
 
 -- Check if the given unit can bid on this roll
-function Self:CanBid(unit)
-    return self:CanBeBidOn() and self.item:GetEligible(unit) ~= nil
+function Self:UnitCanBid(unit, checkIlvl)
+    return self:CanBeBidOn() and self:CanBeWonBy(unit, nil, checkIlvl)
 end
 
 -- Check if the roll can be voted on
@@ -830,7 +830,7 @@ function Self:CanBeVotedOn()
 end
 
 -- Check if the given unit can vote on this roll
-function Self:CanVote(unit)
+function Self:UnitCanVote(unit)
     return self:CanBeVotedOn() and Masterloot.IsOnCouncil(unit)
 end
 

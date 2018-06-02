@@ -236,7 +236,7 @@ function Rolls.Show()
         Rolls.frames.scroll = Self("ScrollFrame")
             .SetLayout("PLR_Table")
             .SetUserData("table", {
-                columns = {20, 1, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, 20 * 5 - 4},
+                columns = {20, 1, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, 6 * 20 - 4},
                 space = 10
             })
             .AddTo(Rolls.frames.window)
@@ -280,50 +280,47 @@ function Rolls.Show()
 end
 
 -- Update the rolls frame
-local createFn = function (scroll, roll, first)
+local createFn = function (scroll)
     -- ID
     Self("Label")
         .SetFontObject(GameFontNormal)
-        .SetText(roll.id)
-        .AddTo(scroll, first)
+        .AddTo(scroll)
 
     -- Item
     Self("InteractiveLabel")
         .SetFontObject(GameFontNormal)
-        .SetText(roll.item.link)
-        .SetImage(roll.item.texture)
         .SetWidth(217)
         .SetCallback("OnEnter", function (self)
             GameTooltip:SetOwner(self.frame, "ANCHOR_LEFT")
-            GameTooltip:SetHyperlink(roll.item.link)
+            GameTooltip:SetHyperlink(self:GetUserData("link"))
             GameTooltip:Show()
         end)
         .SetCallback("OnLeave", Self.TooltipHide)
         .SetCallback("OnClick", function (self)
             if IsModifiedClick("DRESSUP") then
-                DressUpItemLink(roll.item.link)
+                DressUpItemLink(self:GetUserData("link"))
             elseif IsModifiedClick("CHATLINK") then
-                ChatEdit_InsertLink(roll.item.link)
+                ChatEdit_InsertLink(self:GetUserData("link"))
             end
         end)
-        .AddTo(scroll, first)
+        .AddTo(scroll)
     
     -- Ilvl
     Self("Label")
         .SetFontObject(GameFontNormal)
-        .AddTo(scroll, first)
+        .AddTo(scroll)
 
     -- Owner
     Self("InteractiveLabel")
         .SetFontObject(GameFontNormal)
         .SetCallback("OnEnter", function (self)
             GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-            GameTooltip:SetUnit(roll.item.owner)
+            GameTooltip:SetUnit(self:GetUserData("owner"))
             GameTooltip:Show()
         end)
         .SetCallback("OnLeave", Self.TooltipHide)
-        .SetCallback("OnClick", function () ChatFrame_SendSmartTell(roll.item.owner) end)
-        .AddTo(scroll, first)
+        .SetCallback("OnClick", function (self) ChatFrame_SendSmartTell(self:GetUserData("owner")) end)
+        .AddTo(scroll)
 
     -- ML
     Self("InteractiveLabel")
@@ -331,46 +328,49 @@ local createFn = function (scroll, roll, first)
         .SetCallback("OnEnter", function (self)
             if roll:HasMasterlooter() then
                 GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-                GameTooltip:SetUnit(roll.owner)
+                GameTooltip:SetUnit(self:GetUserData("roll").owner)
                 GameTooltip:Show()
             end
         end)
         .SetCallback("OnLeave", Self.TooltipHide)
-        .SetCallback("OnClick", function ()
+        .SetCallback("OnClick", function (self)
+            local roll = self:GetUserData("roll")
             if roll:HasMasterlooter() then
                 ChatFrame_SendSmartTell(roll.owner)
             end
         end)
-        .AddTo(scroll, first)
+        .AddTo(scroll)
 
     -- Status, Your bid
-    Self("Label").SetFontObject(GameFontNormal).AddTo(scroll, first)
-    Self("Label").SetFontObject(GameFontNormal).AddTo(scroll, first)
+    Self("Label").SetFontObject(GameFontNormal).AddTo(scroll)
+    Self("Label").SetFontObject(GameFontNormal).AddTo(scroll)
 
     -- Winner
     Self("InteractiveLabel")
         .SetFontObject(GameFontNormal)
         .SetCallback("OnEnter", function (self)
-            if roll.winner then
+            local winner = self:GetUserData("winner")
+            if winner then
                 GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-                GameTooltip:SetUnit(roll.winner)
+                GameTooltip:SetUnit(winner)
                 GameTooltip:Show()
             end
         end)
         .SetCallback("OnLeave", Self.TooltipHide)
-        .SetCallback("OnClick", function ()
-            if roll.winner then
-                ChatFrame_SendSmartTell(roll.winner)
+        .SetCallback("OnClick", function (self)
+            local winner = self:GetUserData("winner")
+            if winner then
+                ChatFrame_SendSmartTell(winner)
             end
         end)
-        .AddTo(scroll, first)
+        .AddTo(scroll)
 
     -- Actions
     f = Self("SimpleGroup")
         .SetLayout(nil)
         .SetHeight(16)
         .SetUserData("cell", {alignH = "end"})
-        .AddTo(scroll, first)()
+        .AddTo(scroll)()
     local backdrop = {f.frame:GetBackdropColor()}
     f.frame:SetBackdropColor(0, 0, 0, 0)
     f.OnRelease = function (self)
@@ -378,20 +378,72 @@ local createFn = function (scroll, roll, first)
         self.OnRelease = nil
     end
 
+    do
+        local actions = f
+
+        -- Need
+        Self.CreateIconButton("UI-GroupLoot-Dice", actions, function (self)
+            self:GetUserData("roll"):Bid(Roll.BID_NEED)
+        end, NEED, 14, 14)
+
+        -- Greed
+        Self.CreateIconButton("UI-GroupLoot-Coin", actions, function (self)
+            self:GetUserData("roll"):Bid(Roll.BID_GREED)
+        end, GREED)
+
+        -- Pass
+        Self.CreateIconButton("UI-GroupLoot-Pass", actions, function (self)
+            self:GetUserData("roll"):Bid(Roll.BID_PASS)
+        end, PASS, 13, 13)
+
+        -- Advertise
+        Self.CreateIconButton("UI-GuildButton-MOTD", actions, function (self)
+            self:GetUserData("roll"):Advertise(true)
+        end, L["ADVERTISE"], 13, 13)
+
+        -- Trade
+        Self.CreateIconButton("Interface\\GossipFrame\\VendorGossipIcon", actions, function (self)
+            self:GetUserData("roll"):Trade()
+        end, TRADE, 13, 13)
+
+        -- Cancel
+        f = Self.CreateIconButton("CancelButton", actions, function (self)
+            local dialog = StaticPopup_Show(Self.DIALOG_ROLL_CANCEL)
+            if dialog then
+                dialog.data = self:GetUserData("roll")
+            end
+        end, CANCEL)
+        f.image:SetTexCoord(0.22, 0.78, 0.22, 0.78)
+
+        -- Toggle
+        f = Self.CreateIconButton("UI-PlusButton", actions, function (self)
+            local roll = self:GetUserData("roll")
+            local details = self:GetUserData("details")
+
+            if details:IsShown() then
+                details.frame:Hide()
+                self:SetImage("Interface\\Buttons\\UI-PlusButton-Up")
+            else
+                Rolls.UpdateDetails(details, roll)
+                self:SetImage("Interface\\Buttons\\UI-MinusButton-Up")
+            end
+            self.parent.parent:DoLayout()
+        end)
+        f.image:SetPoint("TOP", 0, 2)
+    end
+
     -- Details
     local details = Self("SimpleGroup")
         .SetLayout("PLR_Table")
         .SetFullWidth(true)
         .SetUserData("isDetails", true)
-        .SetUserData("cell", {
-            colspan = 99
-        })
+        .SetUserData("cell", {colspan = 99})
         .SetUserData("table", {
             columns = {1, {25, 100}, {25, 100}, {25, 100}, 100},
             spaceH = 10,
             spaceV = 2
         })
-        .AddTo(scroll, first)()
+        .AddTo(scroll)()
 
     do
         details.content:SetPoint("TOPLEFT", details.frame, "TOPLEFT", 8, -8)
@@ -422,102 +474,83 @@ local createFn = function (scroll, roll, first)
     end
 end
 local updateFn = function (scroll, roll, children, it)
-    -- ID, Item
-    it(1)
+    -- ID
+    Self(children[it()]).SetText(roll.id).Show()
+
+    -- Item
+    Self(children[it()])
+        .SetText(roll.item.link)
+        .SetImage(roll.item.texture)
+        .SetUserData("link", roll.item.link)
+        .Show()
 
     -- Ilvl
-    Self(children[it()]).SetText(roll.item:GetBasicInfo().level or "-")
+    Self(children[it()]).SetText(roll.item:GetBasicInfo().level or "-").Show()
 
     -- Owner
-    Self(children[it()]).SetText(Util.GetColoredName(Util.GetShortenedName(roll.item.owner), roll.item.owner))
+    Self(children[it()])
+        .SetText(Util.GetColoredName(Util.GetShortenedName(roll.item.owner), roll.item.owner))
+        .SetUserData("owner", roll.item.owner)
+        .Show()
 
     -- ML
-    Self(children[it()]).SetText(roll:HasMasterlooter() and Util.GetColoredName(Util.GetShortenedName(roll.owner), roll.owner) or "-")
+    Self(children[it()])
+        .SetText(roll:HasMasterlooter() and Util.GetColoredName(Util.GetShortenedName(roll.owner), roll.owner) or "-")
+        .SetUserData("roll", roll)
+        .Show()
 
     -- Status
-    Self(children[it()]).SetText(roll.traded and L["ROLL_TRADED"] or roll.winner and L["ROLL_AWARDED"] or L["ROLL_STATUS_" .. roll.status])
+    Self(children[it()]).SetText(roll.traded and L["ROLL_TRADED"] or roll.winner and L["ROLL_AWARDED"] or L["ROLL_STATUS_" .. roll.status]).Show()
 
     -- Your Bid
-    Self(children[it()]).SetText(roll.bid and L["ROLL_BID_" .. roll.bid] or "-")
+    Self(children[it()]).SetText(roll.bid and L["ROLL_BID_" .. roll.bid] or "-").Show()
 
     -- Winner
-    Self(children[it()]).SetText(roll.winner and Util.GetColoredName(Util.GetShortenedName(roll.winner), roll.winner) or "-")
+    Self(children[it()])
+        .SetText(roll.winner and Util.GetColoredName(Util.GetShortenedName(roll.winner), roll.winner) or "-")
+        .SetUserData("winner", roll.winner)
+        .Show()
 
     -- Actions
     do
         local actions = children[it()]
-        actions:ReleaseChildren()
-
-        if roll:CanBeWonBy(UnitName("player")) and not roll.bid then
-            -- Need
-            f = Self.CreateIconButton("UI-GroupLoot-Dice", actions, function ()
-                roll:Bid(Roll.BID_NEED)
-            end, NEED)
-            Self(f).SetImageSize(14, 14).SetWidth(16).SetHeight(16)
-
-            -- Greed
-            if roll.ownerId or roll.itemOwnerId then
-                Self.CreateIconButton("UI-GroupLoot-Coin", actions, function ()
-                    roll:Bid(Roll.BID_GREED)
-                end, GREED)
-            end
-
-            -- Pass
-            f = Self.CreateIconButton("UI-GroupLoot-Pass", actions, function ()
-                roll:Bid(Roll.BID_PASS)
-            end, PASS)
-            Self(f).SetImageSize(13, 13).SetWidth(16).SetHeight(16)
-        end
-
-        -- Advertise
-        if roll:ShouldAdvertise(true) then
-            f = Self.CreateIconButton("UI-GuildButton-MOTD", actions, function ()
-                roll:Advertise(true)
-            end, L["ADVERTISE"])
-            Self(f).SetImageSize(13, 13).SetWidth(16).SetHeight(16)
-        end
-
-        -- Trade
-        if not roll.traded and roll.winner and (roll.item.isOwner or roll.isWinner) then
-            f = Self.CreateIconButton("Interface\\GossipFrame\\VendorGossipIcon", actions, function ()
-                roll:Trade()
-            end, TRADE)
-            Self(f).SetImageSize(13, 13).SetWidth(16).SetHeight(16)
-        end
-
-        -- Cancel
-        if roll:CanBeAwarded() then
-            f = Self.CreateIconButton("CancelButton", actions, function ()
-                local dialog = StaticPopup_Show(Self.DIALOG_ROLL_CANCEL)
-                if dialog then
-                    dialog.data = roll
-                end
-            end, CANCEL)
-            f.image:SetTexCoord(0.22, 0.78, 0.22, 0.78)
-        end
-
-        -- Toggle
         local details = children[it(0) + 1]
-        f = Self.CreateIconButton("UI-" .. (details:IsShown() and "Minus" or "Plus") .. "Button", actions, function (self)
-            if details:IsShown() then
-                details.frame:Hide()
-                self:SetImage("Interface\\Buttons\\UI-PlusButton-Up")
-            else
-                Rolls.UpdateDetails(details, roll)
-                self:SetImage("Interface\\Buttons\\UI-MinusButton-Up")
-            end
-            self.parent.parent:DoLayout()
-        end)
-        f.image:SetPoint("TOP", 0, 2)
+        local children = actions.children
+        local it = Util.Iter()
+        local canBid = not roll.bid and roll:UnitCanBid("player")
 
-        for i=#actions.children,1,-1 do
-            if i == #actions.children then
-                actions.children[i].frame:SetPoint("TOPRIGHT")
-            else
-                actions.children[i].frame:SetPoint("TOPRIGHT", actions.children[i+1].frame, "TOPLEFT", -4, 0)
+        -- Need
+        Self(children[it()]).SetUserData("roll", roll).Toggle(canBid)
+        -- Greed
+        Self(children[it()]).SetUserData("roll", roll).Toggle(canBid and (roll.ownerId or roll.itemOwnerId))
+        -- Pass
+        Self(children[it()]).SetUserData("roll", roll).Toggle(canBid)
+        -- Advertise
+        Self(children[it()]).SetUserData("roll", roll).Toggle(roll:ShouldAdvertise(true))
+        -- Trade
+        Self(children[it()]).SetUserData("roll", roll).Toggle(not roll.traded and roll.winner and (roll.item.isOwner or roll.isWinner))
+        -- Cancel
+        Self(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeAwarded())
+        -- Toggle
+        Self(children[it()])
+            .SetImage("Interface\\Buttons\\UI-" .. (details:IsShown() and "Minus" or "Plus") .. "Button-Up")
+            .SetUserData("roll", roll)
+            .SetUserData("details", details)
+
+        local n, prev = 0
+        for i=#children,1,-1 do
+            local child = children[i]
+            if child:IsShown() then
+                if not prev then
+                    child.frame:SetPoint("TOPRIGHT")
+                else
+                    child.frame:SetPoint("TOPRIGHT", prev.frame, "TOPLEFT", -4, 0)
+                end
+                n, prev = n + 1, child
             end
         end
-        actions.frame:SetWidth(max(0, 20 * #actions.children - 4))
+
+        Self(actions).SetWidth(max(0, 20 * n - 4)).Show()
     end
 
     -- Details
@@ -545,7 +578,7 @@ function Rolls.Update()
            and (Rolls.filter.traded or not roll.traded)
     end).SortBy("id")()
 
-    Self.UpdateRows(scroll, rolls, createFn, updateFn)
+    Self.UpdateRows(scroll, rolls, createFn, updateFn, 9)
 
     scroll:ResumeLayout()
     scroll:DoLayout()
@@ -553,8 +586,8 @@ function Rolls.Update()
     -- FILTER
 
     local filter = Rolls.frames.filter
+    local it = Util.Iter(1)
 
-    it = Util.Iter(1)
     filter.children[it()]:SetValue(Rolls.filter.all)
     filter.children[it()]:SetValue(Rolls.filter.done)
     filter.children[it()]:SetValue(Rolls.filter.awarded)
@@ -586,33 +619,33 @@ function Rolls.Toggle()
 end
 
 -- Update the details view of a row
-local createFn = function (self, player, first, roll)
+local createFn = function (self)
     -- Unit
     Self("InteractiveLabel")
         .SetFontObject(GameFontNormal)
-        .SetText(Util.GetColoredName(Util.GetShortenedName(player.unit), player.unit))
         .SetCallback("OnEnter", function (self)
             GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-            GameTooltip:SetUnit(player.unit)
+            GameTooltip:SetUnit(self:GetUserData("unit"))
             GameTooltip:Show()
         end)
         .SetCallback("OnLeave", Self.TooltipHide)
-        .SetCallback("OnClick", function () ChatFrame_SendSmartTell(player.unit) end)
-        .AddTo(self, first)
+        .SetCallback("OnClick", function (self) ChatFrame_SendSmartTell(self:GetUserData("unit")) end)
+        .AddTo(self)
 
     -- Ilvl, Bid, Votes
-    Self("Label").SetFontObject(GameFontNormal).AddTo(self, first)
-    Self("Label").SetFontObject(GameFontNormal).AddTo(self, first)
-    Self("Label").SetFontObject(GameFontNormal).AddTo(self, first)
+    Self("Label").SetFontObject(GameFontNormal).AddTo(self)
+    Self("Label").SetFontObject(GameFontNormal).AddTo(self)
+    Self("Label").SetFontObject(GameFontNormal).AddTo(self)
 
     -- Actions
     local f = Self("Button")
         .SetWidth(100)
         .SetCallback("OnClick", function (self)
-            if roll:CanBeAwardedTo(player.unit, true) then
-                roll:Finish(player.unit)
-            elseif roll:CanVote() then
-                roll:Vote(roll.vote ~= player.unit and player.unit or nil)
+            local roll = self:GetUserData("roll")
+            if roll:CanBeAwardedTo(self:GetUserData("unit"), true) then
+                roll:Finish(self:GetUserData("unit"))
+            elseif roll:UnitCanVote() then
+                roll:Vote(roll.vote ~= self:GetUserData("unit") and self:GetUserData("unit") or nil)
             end
         end)()
     f.text:SetFont(GameFontNormal:GetFont())
@@ -620,27 +653,31 @@ local createFn = function (self, player, first, roll)
 end
 local updateFn = function (self, player, children, it, roll, canBeAwarded, canVote)
     -- Unit
-    it(0)
+    Self(children[it()])
+        .SetText(Util.GetColoredName(Util.GetShortenedName(player.unit), player.unit))
+        .SetUserData("unit", player.unit)
+        .Show()
 
-    -- Ilvl
-    Self(children[it()]).SetText(player.ilvl)
-
-    -- Bid
-    Self(children[it()]).SetText(player.bid and L["ROLL_BID_" .. player.bid] or "-")
-
-    -- Votes
-    Self(children[it()]).SetText(player.votes > 0 and player.votes or "-")
+    -- Ilvl, Bid, Votes
+    Self(children[it()]).SetText(player.ilvl).Show()
+    Self(children[it()]).SetText(player.bid and L["ROLL_BID_" .. player.bid] or "-").Show()
+    Self(children[it()]).SetText(player.votes > 0 and player.votes or "-").Show()
 
     -- Actions
     local txt = canBeAwarded and L["AWARD"]
         or canVote and (roll.vote == player.unit and L["VOTE_WITHDRAW"] or L["VOTE"])
         or "-"
-    Self(children[it()]).SetText(txt).SetDisabled(not (canBeAwarded or canVote))
+    Self(children[it()])
+        .SetText(txt)
+        .SetDisabled(not (canBeAwarded or canVote))
+        .SetUserData("unit", player.unit)
+        .SetUserData("roll", roll)
+        .Show()
 end
 
-function Rolls.UpdateDetails(self, roll)
-    self.frame:Show()
-    self:PauseLayout()
+function Rolls.UpdateDetails(details, roll)
+    details.frame:Show()
+    details:PauseLayout()
 
     local players = Util({}).Merge(roll.item:GetEligible(), roll.bids).FoldL(function (u, val, unit)
         tinsert(u, {
@@ -652,9 +689,9 @@ function Rolls.UpdateDetails(self, roll)
         return u
     end, {}).SortBy("bid", 99, false, "votes", 0, true, "ilvl", 0, false, "unit")()
 
-    Self.UpdateRows(self, players, createFn, updateFn, "unit", roll, roll:CanBeAwarded(true), roll:CanVote())
+    Self.UpdateRows(details, players, createFn, updateFn, 4, roll, roll:CanBeAwarded(true), roll:UnitCanVote())
 
-    self:ResumeLayout()
+    details:ResumeLayout()
 end
 
 Self.Rolls = Rolls
@@ -886,59 +923,27 @@ end)
 -------------------------------------------------------
 
 -- Update table rows in-place
-local searchFn = function (child) return child:GetUserData("row-id") end
-local foldLFn = function (rows, child, i)
-    local id = child and child:GetUserData("row-id")
-    if id then rows[id] = i end
-    return rows
-end
-
-function Self.UpdateRows(self, items, createFn, updateFn, idPath, ...)
-    local children = self.children
-    idPath = idPath or "id"
-    start = Util.TblSearch(children, searchFn) or #children + 1
-
-    local rows = Util.TblFoldL(children, foldLFn, {})
+function Self.UpdateRows(parent, items, createFn, updateFn, skip, ...)
+    local children = parent.children
 
     -- Create and/or update rows
-    local it = Util.Iter(start - 1)
+    local it = Util.Iter(skip or 0)
     for _,item in ipairs(items) do
-        local i = it()
-        local id, first = item[idPath], children[i]
+        local id, child = item[idPath], children[it(0) + 1]
 
-        -- Create the row or move it to the current position
-        if not first or first:GetUserData("row-id") ~= id then
-            if not rows[id] then
-                -- Create rows
-                createFn(self, item, first, ...)
-            else
-                -- Move rows
-                local n = 0
-                repeat
-                    tinsert(children, i + n, tremove(children, rows[id] + n))
-                    n = n + 1
-                until not children[rows[id] + n] or children[rows[id] + n]:GetUserData("row-id")
-
-                -- Update row map
-                for id,row in pairs(rows) do
-                    if row > i and row < rows[id] then
-                        rows[id] = row + n
-                    end
-                end
-                rows[id] = i
-            end
-
-            first = children[i]
+        -- Create the row
+        if not child then
+            createFn(parent, ...)
+            child = children[it(0) + 1]
         end
 
-        first:SetUserData("row-id", id)
-        updateFn(self, item, children, it, ...)
+        -- Update the row
+        updateFn(parent, item, children, it, ...)
     end
 
-    -- Remove the rest
+    -- Hide the rest
     while children[it()] do
-        children[it(0)]:Release()
-        children[it(0)] = nil
+        children[it(0)].frame:Hide()
     end
 end
 
@@ -967,10 +972,10 @@ function Self.CreateFilterCheckbox(key)
     return f
 end
 
-function Self.CreateIconButton(icon, parent, onClick, desc)
+function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
     f = Self("Icon")
         .SetImage(icon:sub(1, 9) == "Interface" and icon or "Interface\\Buttons\\" .. icon .. "-Up")
-        .SetImageSize(16, 16).SetHeight(16).SetWidth(16)
+        .SetImageSize(width or 16, height or 16).SetHeight(16).SetWidth(16)
         .SetCallback("OnClick", function (...) onClick(...) GameTooltip:Hide() end)
         .AddTo(parent)()
     f.image:SetPoint("TOP")
@@ -1000,6 +1005,10 @@ local Fn = function (...)
         local parent, beforeWidget = ...
         parent:AddChild(f, beforeWidget)
     else
+        if k == "Toggle" then
+            k = (...) and "Show" or "Hide"
+        end
+
         local obj = f[k] and f
             or f.frame and f.frame[k] and f.frame
             or f.image and f.image[k] and f.image

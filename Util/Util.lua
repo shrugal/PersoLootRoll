@@ -250,8 +250,8 @@ end
 -- Create an iterator
 function Self.Iter(from, to, step)
     local i = from or 0
-    return function (steps)
-        i = i + (step or 1) * (steps or 1)
+    return function (steps, reset)
+        i = (reset and (from or 0) or i) + (step or 1) * (steps or 1)
         return (not to or i <= to) and i or nil
     end
 end
