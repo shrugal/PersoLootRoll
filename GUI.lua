@@ -650,7 +650,7 @@ function Rolls.UpdateDetails(self, roll)
             votes = Util(roll.votes).Only(unit).Count()()
         })
         return u
-    end, {}).SortBy({{"bid", 99}, {"votes", 0, true}, {"ilvl", 0}, {"unit"}})()
+    end, {}).SortBy("bid", 99, false, "votes", 0, true, "ilvl", 0, false, "unit")()
 
     Self.UpdateRows(self, players, createFn, updateFn, "unit", roll, roll:CanBeAwarded(true), roll:CanVote())
 

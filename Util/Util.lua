@@ -168,7 +168,7 @@ function Self.GetHiddenTooltip()
 end
 
 -- Fill a tooltip and scan it line by line
-function Self.ScanTooltip(fn, linkOrbag, slot)
+function Self.ScanTooltip(fn, linkOrbag, slot, ...)
     local tooltip = Self.GetHiddenTooltip()
     tooltip:ClearLines()
 
@@ -182,7 +182,10 @@ function Self.ScanTooltip(fn, linkOrbag, slot)
     for i=2, lines do
         local line = _G[PLR_PREFIX .."_HiddenTooltipTextLeft" .. i]:GetText()
         if line then
-            fn(i, line, lines)
+            local a, b, c = fn(i, line, lines, ...)
+            if a ~= nil then
+                return a, b, c
+            end
         end
     end
 end
@@ -212,18 +215,18 @@ end
 
 -- Search through the bags with a function. Providing startBag will only search that bag,
 -- providing startSlot as well will search through all bags/slots after from that combination.
-function Self.SearchBags(fn, startBag, startSlot)
+function Self.SearchBags(fn, startBag, startSlot, ...)
     local endBag = not startSlot and startBag or NUM_BAG_SLOTS
     startBag = startBag or 0
     startSlot = startSlot or 1
 
     for bag = startBag, endBag do
         for slot = bag == startBag and startSlot or 1, GetContainerNumSlots(bag) do
-            local id = GetContainerItemID(bag, slot)
-            if id then
-                local r = {fn(Addon.Item.FromBagSlot(bag, slot), id, bag, slot)}
-                if r[1] ~= nil then
-                    return unpack(r)
+            local link = GetContainerItemLink(bag, slot)
+            if link then
+                local a, b, c = fn(link, bag, slot, ...)
+                if a ~= nil then
+                    return a, b, c
                 end
             end
         end
@@ -332,10 +335,40 @@ function Self.TblCopy(t, deep)
     return u
 end
 
--- Count, sum up, multiply
+-- COUNT, SUM, MULTIPLY
+
 function Self.TblCount(t) return Self.TblFoldL(t, Self.FnInc, 0) end
 function Self.TblSum(t) return Self.TblFoldL(t, Self.FnAdd, 0) end
 function Self.TblMul(t) return Self.TblFoldL(t, Self.FnMul, 1) end
+
+-- Count the # of occurences of val
+function Self.TblCountVal(t, val)
+    local n = 0
+    for i,v in pairs(t) do
+        if v == val then n = n + 1 end
+    end
+    return n
+end
+
+-- Count the # of tables that have given key/val pairs
+function Self.TblCountWhere(t, keyOrTbl, valOrDeep)
+    local isTbl, n = type(keyOrTbl) == "table", 0
+    for i,v in pairs(t) do
+        if isTbl and Self.TblContains(v, keyOrTbl, valOrDeep) or not isTbl and (valOrDeep == nil and v[keyOrTbl] ~= nil or valOrDeep ~= nil and v[keyOrTbl] == valOrDeep) then
+            n = n + 1
+        end
+    end
+    return n
+end
+
+-- Count using a function
+function Self.TblCountFn(t, fn, ...)
+    local fn, n = Self.Fn(fn), 0
+    for i,v in pairs(t) do
+        n = n + fn(v, ...)
+    end
+    return n
+end
 
 -- SEARCH
 
@@ -351,6 +384,12 @@ end
 
 -- Check if one table is contained within the other
 function Self.TblContains(t, u, deep)
+    if t == u then
+        return true
+    elseif (t == nil) ~= (u == nil) then
+        return false
+    end
+
     for i,v in pairs(u) do
         if deep and type(t[i]) == "table" and type(v) == "table" then
             if not Self.TblContains(t[i], v, true) then
@@ -379,7 +418,7 @@ end
 function Self.TblFindWhere(t, keyOrTbl, valOrDeep)
     local isTbl = type(keyOrTbl) == "table"
     for i,v in pairs(t) do
-        if isTbl and Self.TblContains(v, keyOrTbl, valOrDeep) or not isTbl and (valOrDeep == nil and t[keyOrTbl] ~= nil or t[keyOrTbl] == valOrDeep) then
+        if isTbl and Self.TblContains(v, keyOrTbl, valOrDeep) or not isTbl and (valOrDeep == nil and v[keyOrTbl] ~= nil or valOrDeep ~= nil and v[keyOrTbl] == valOrDeep) then
             return i
         end
     end
@@ -397,7 +436,7 @@ end
 function Self.TblFirstWhere(t, keyOrTbl, valOrDeep)
     local isTbl = type(keyOrTbl) == "table"
     for i,v in pairs(t) do
-        if isTbl and Self.TblContains(v, keyOrTbl, valOrDeep) or not isTbl and (valOrDeep == nil and t[keyOrTbl] ~= nil or t[keyOrTbl] == valOrDeep) then
+        if isTbl and Self.TblContains(v, keyOrTbl, valOrDeep) or not isTbl and (valOrDeep == nil and v[keyOrTbl] ~= nil or valOrDeep ~= nil and v[keyOrTbl] == valOrDeep) then
             return v
         end
     end
@@ -419,8 +458,10 @@ end
 
 -- Pick specific keys from a table
 function Self.TblSelect(t, ...)
+    local isTbl = type(...) == "table"
     local u = {}
-    for i,v in pairs(type(...) == "table" and (...) or {...}) do
+    for i=1,isTbl and #... or select("#", ...) do
+        local v = isTbl and (...)[i] or select(i, ...)
         u[v] = t[v]
     end
     return u
@@ -428,12 +469,10 @@ end
 
 -- Omit specific keys from a table
 function Self.TblOmit(t, ...)
-    local keys = Self.TblFlip(type(...) == "table" and (...) or {...}, Self.FnTrue)
-    local u = {}
-    for i,v in pairs(t) do
-        if not keys[i] then
-            u[i] = v
-        end
+    local isTbl = type(...) == "table"
+    local u = Self.TblCopy(t)
+    for i=1,isTbl and #... or select("#", ...) do
+        u[Tbl and (...)[i] or select(i, ...)] = nil
     end
     return u
 end
@@ -465,7 +504,7 @@ function Self.TblWhere(t, keyOrTbl, valOrDeep, k)
     local isTbl = type(keyOrTbl) == "table"
     local u = {}
     for i,v in pairs(t) do
-        if isTbl and Self.TblContains(v, keyOrTbl, valOrDeep) or not isTbl and (valOrDeep == nil and t[keyOrTbl] ~= nil or t[keyOrTbl] == valOrDeep) then
+        if isTbl and Self.TblContains(v, keyOrTbl, valOrDeep) or not isTbl and (valOrDeep == nil and v[keyOrTbl] ~= nil or valOrDeep ~= nil and v[keyOrTbl] == valOrDeep) then
             if k then u[i] = v else tinsert(u, v) end
         end
     end
@@ -477,7 +516,7 @@ function Self.TblExceptWhere(t, keyOrTbl, valOrDeep, k)
     local isTbl = type(keyOrTbl) == "table"
     local u = {}
     for i,v in pairs(t) do
-        if isTbl and not Self.TblContains(v, keyOrTbl, valOrDeep) or not isTbl and not (valOrDeep == nil and t[keyOrTbl] ~= nil or t[keyOrTbl] == valOrDeep) then
+        if isTbl and not Self.TblContains(v, keyOrTbl, valOrDeep) or not isTbl and not (valOrDeep == nil and v[keyOrTbl] ~= nil or valOrDeep ~= nil and v[keyOrTbl] == valOrDeep) then
             if k then u[i] = v else tinsert(u, v) end
         end
     end
@@ -601,12 +640,11 @@ end
 
 -- Calculate the intersection of tables
 function Self.TblIntersect(t, ...)
-    local args = {...}
-    local k = args[#args] == true and tremove(args)
+    local k = select(select("#", ...), ...) == true
 
     local u = Self.TblCopy(t)
-    for _,tbl in pairs(args) do
-        tbl = Self.TblFlip(tbl, Self.FnTrue)
+    for i=1,select("#", ...) - (k and 1 or 0) do
+        tbl = Self.TblFlip(select(i, ...), Self.FnTrue)
         for i,v in pairs(u) do
             if not tbl[v] then
                 if k then u[i] = nil else tremove(u, i) end
@@ -618,12 +656,11 @@ end
 
 -- Calculate the difference between tables
 function Self.TblDiff(t, ...)
-    local args = {...}
-    local k = args[#args] == true and tremove(args)    
+    local k = select(select("#", ...), ...) == true
 
     local u = Self.TblCopy(t)
-    for _,tbl in pairs(args) do
-        tbl = Self.TblFlip(tbl, Self.FnTrue)
+    for i=1,select("#", ...) - (k and 1 or 0) do
+        tbl = Self.TblFlip(select(i, ...), Self.FnTrue)
         for i,v in pairs(u) do
             if tbl[v] then
                 if k then u[i] = nil else tremove(u, i) end
@@ -664,17 +701,18 @@ end
 
 -- Sort a table of tables by given table keys and default values
 local Fn = function (a, b) return -Self.Compare(a, b) end
+
 function Self.TblSortBy(t, ...)
-    local keys = type(...) == "table" and (...) or Self.TblTuple({...})
+    local args = type(...) == "table" and (...) or {...}
     return Self.TblSort(t, function (a, b)
-        for i,tuple in pairs(keys) do
-            local key, default, fn = unpack(tuple)
+        for i=1, #args, 3 do
+            local key, default, fn = args[i], args[i+1], args[i+2]
             fn = fn == true and Fn or Self.Fn(fn) or Self.Compare
             local cmp = fn(a[key] or default, b[key] or default)
 
             if cmp == 1 then
                 return false
-            elseif cmp == -1 or i == #keys then
+            elseif cmp == -1 or i+2 >= #args then
                 return true
             end
         end
@@ -684,11 +722,11 @@ end
 -- Merge two or more tables
 function Self.TblMerge(t, ...)
     t = t or {}
-    for _,u in pairs({...}) do
-        local i = 1
-        for k,v in pairs(u) do
-            if k == i then tinsert(t, v) else t[k] = v end
-            i = i + 1
+    for i=1,select("#", ...) do
+        local j = 1
+        for k,v in pairs(select(i, ...)) do
+            if k == j then tinsert(t, v) else t[k] = v end
+            j = j + 1
         end
     end
     return t
@@ -815,34 +853,12 @@ function Self.FnSub(a, b) return a-b end
 function Self.FnMul(a, b) return a*b end
 function Self.FnDiv(a, b) return a/b end
 
--- Get a function that always returns the same values
-function Self.FnVal(...)
-    local args = {...}
-    return function () return unpack(args) end
-end
-
 -- Get a function that always compares to a given value
 function Self.FnEq(v)
     return function (w) return w == v end
 end
 
 -- MODIFY
-
--- Fill in some function arguments already
-function Self.FnPrep(fn, ...)
-    fn = Self.Fn(fn)
-    local args = {...}
-    return function (...)
-        return fn(unpack(Self.TblMerge({}, args, {...})))
-    end
-end
-
--- Make the function only accept n arguments and ignore the rest
-function Self.FnArgs(fn, n)
-    return function (...)
-        return fn(unpack({...}, 1, n))
-    end
-end
 
 -- Throttle a function, so it is called at most every n seconds
 function Self.FnThrottle(fn, n)
@@ -931,10 +947,14 @@ end
 
 -- IN
 
--- Shortcut for TblFind
+-- Shortcut for val == x or val == y or ...
 function Self.In(val, ...)
-    local t = #{...} > 1 and {...} or ...
-    return Self.TblFind(t, val) ~= nil
+    for i=1,select("#", ...) do
+        if select(i, ...) == val then
+            return true
+        end
+    end
+    return false
 end
 
 -- TO STRING
@@ -973,8 +993,8 @@ end
 
 -- Dump all given values
 function Self.Dump(...)
-    for i, v in pairs({...}) do
-        print(Self.ToString(v))
+    for i=1,select("#", ...) do
+        print(Self.ToString((select(i, ...))))
     end
 end
 

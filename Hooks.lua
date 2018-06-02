@@ -224,7 +224,7 @@ function Self.EnableUnitMenus()
             local unit = Util.GetName(dropdownMenu.unit or dropdownMenu.chatTarget)
             local which = UIDROPDOWNMENU_MENU_VALUE or dropdownMenu.which
 
-            if unit and Util.In(which, MENUS) then
+            if unit and Util.TblFind(MENUS, which) then
                 local i = Util.TblFind(UnitPopupMenus[which], NAME)
                 if i then
                     if Util.UnitInGroup(unit) then

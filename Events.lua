@@ -190,8 +190,6 @@ end
 -- Loot
 
 function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
-    local start = GetTime()
-
     unit = Util.GetUnit(sender)
     if not Addon:IsTracking() or not Util.UnitInGroup(unit) then return end
 
@@ -207,22 +205,16 @@ function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
             item:SetPosition(Self.lastLootedBag, 0)
 
             item:OnFullyLoaded(function ()
-                local start = GetTime()
-
                 if item:ShouldBeRolledFor() then
                     Roll.Add(item, Masterloot.GetMasterlooter() or unit):Start()
                 elseif item:GetBasicInfo().isEquippable then
                     Roll.Add(item, unit):Cancel()
                 end
-
-                print(("CHAT_MSG_LOOT.OnFullyLoaded took %fs"):format((GetTime() - start)))
             end)
         elseif not msg:match(Self.PATTERN_BONUS_LOOT) and not Roll.Find(nil, unit, item) then
             Roll.Add(item, unit):Schedule()
         end
     end
-
-    print(("CHAT_MSG_LOOT took %fs"):format((GetTime() - start)))
 end
 
 -- Group/Raid/Instance

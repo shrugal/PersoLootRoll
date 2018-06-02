@@ -208,8 +208,51 @@ Self.SLOTS = {
     [Self.TYPE_WRIST] = {INVSLOT_WRIST}
 }
 
+-- Item info positions
+Self.INFO = {
+    link = {
+        color = 1,
+        id = 3,
+        -- enchantId = 4,
+        -- gemIds = {5, 6, 7, 8},
+        -- suffixId = 9,
+        -- uniqueId = 10,
+        -- linkLevel = 11,
+        -- specId = 12,
+        -- reforgeId = 13,
+        -- difficultyId = 14,
+        -- numBonusIds = 15,
+        -- bonusIds = {16, 17},
+        -- upgradeValue = 18,
+        name = 19
+    },
+    basic = {
+        name = 1,
+        link = 2,
+        quality = 3,
+        level = 4,
+        -- minLevel = 5,
+        -- type = 6,
+        subType = 7,
+        -- stackCount = 8,
+        equipLoc = 9,
+        texture = 10,
+        -- sellPrice = 11,
+        classId = 12,
+        subClassId = 13,
+        bindType = 14,
+        -- expacId = 15,
+        -- setId = 16,
+        -- isCraftingReagent = 17
+    },
+    full = {
+        classes = true,
+        relicType = true
+    }
+}
+
 -- Cache the player's ilvl per slot
-Self.PLAYER_SLOT_LEVELS = {}
+Self.playerSlotLevels = {}
 
 -- New items waiting for the BAG_UPDATE_DELAYED event
 Self.queue = {}
@@ -240,6 +283,56 @@ end
 -- Make item link printable
 function Self.GetPrintableLink(str)
     return gsub(str.link or str, "\124", "\124\124");
+end
+
+-- Get just one item attribute, without creating an item instance or figuring out all other attributes as well
+local scanFn = function (i, line, lines, attr)
+    -- classes
+    if attr == "classes" then
+        local classes = line:match(Self.PATTERN_CLASSES)
+        return classes and Util.StrSplit(classes, ", ")
+    -- relicType
+    elseif attr == "relicType" then
+        return line:match(Self.PATTERN_RELIC_TYPE)
+    end
+end
+
+function Self.GetInfo(link, attr)
+    link = link.link or link
+
+    if not link then
+        return
+    -- isRelic
+    elseif attr == "isRelic" then
+        return Self.GetInfo(link, "subType") == "Artifact Relic"
+    -- isEquippable
+    elseif attr == "isEquippable" then
+        return IsEquippableItem(link) or Self.GetInfo(link, "isRelic")
+    -- level, baseLevel
+    elseif Util.In(attr, "level", "baseLevel") then
+        return (select(attr == "level" and 1 or 3, GetDetailedItemLevelInfo(link)))
+    -- quality
+    elseif attr == "quality" then
+        local color = Self.GetInfo(link, "color")
+        return color and Util.TblFindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. color) or 1
+    -- From link
+    elseif Self.INFO.link[attr] then
+        local v = select(Self.INFO.link[attr] + 2, link:find(Self.PATTERN_LINK_DATA))
+
+        if v == "" then
+            return attr == "expacId" and 0 or nil
+        elseif Util.StrIsNumber(v) then
+            return tonumber(v)
+        else
+            return v
+        end
+    -- From GetItemInfo()
+    elseif Self.INFO.basic[attr] then
+        return select(Self.INFO.basic[attr], GetItemInfo(link))
+    -- From Tooltip scanning
+    elseif Self.INFO.full[attr] then
+        return Util.ScanTooltip(scanFn, link, nil, nil, attr)
+    end
 end
 
 -------------------------------------------------------
@@ -284,9 +377,12 @@ function Self.GetEquippedArtifact(unit)
     unit = unit or "player"
     local classId = select(3, UnitClass(unit))
 
-    return Util(Self.SLOTS[Self.TYPE_WEAPON]).Map(Util.FnPrep(Self.FromSlot, nil, unit)).First(function (item)
-        return Self.CLASS_RELICS[classId][item:GetBasicInfo().id]
-    end)()
+    for i,slot in pairs(Self.SLOTS[Self.TYPE_WEAPON]) do
+        local id = GetInventoryItemID(unit, slot)
+        if id and Self.CLASS_RELICS[classId][id] then
+            return Self.FromSlot(slot, unit)
+        end
+    end
 end
 
 -------------------------------------------------------
@@ -302,27 +398,24 @@ function Self:GetLinkInfo()
         -- Clean up data
         for i,v in pairs(info) do
             if v == "" then
-            info[i] = i == 15 and 0 or nil
+                info[i] = i == 15 and 0 or nil
             elseif Util.StrIsNumber(v) then
-            info[i] = tonumber(v)
+                info[i] = tonumber(v)
+            end
         end
+
+        -- Set info
+        for attr,pos in pairs(Self.INFO.link) do
+            self[attr] = info[pos]
+            if type(self[attr]) == "table" then
+                for i,pos in ipairs(self[attr]) do
+                    self[attr][i] = info[pos]
+                end
+            end
         end
         
-        -- self.color = info[1]
-        self.id = info[3]
-        -- self.enchantId = info[4]
-        -- self.gemIds = {info[5], info[6], info[7], info[8]}
-        -- self.suffixId = info[9]
-        -- self.uniqueId = info[10]
-        -- self.linkLevel = info[11]
-        -- self.specId = info[12]
-        -- self.reforgeId = info[13]
-        -- self.difficultyId = info[14]
-        -- self.numBonusIds = info[15]
-        -- self.bonusIds = {info[16], info[17]}
-        -- self.upgradeValue = info[18]
-        self.name = info[19]
-        self.quality = info[1] and Util.TblFindWhere(ITEM_QUALITY_COLORS, {hex = "|cff" .. info[1]}) or 1
+        -- Some extra infos
+        self.quality = info[1] and Util.TblFindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. info[1]) or 1
         self.infoLevel = Self.INFO_LINK
     end
 
@@ -330,35 +423,25 @@ function Self:GetLinkInfo()
 end
 
 -- Get info from GetItemInfo()
+local mapFn = function (trinkets, i, id) return trinkets[id] and i end
+
 function Self:GetBasicInfo()
     self:GetLinkInfo()
     
     if self.infoLevel == Self.INFO_LINK then
-        local info = {GetItemInfo(self.link or self.id)}
+        local info = {GetItemInfo(self.link)}
         if #info > 0 then
             -- Get correct level
-            local level, _, baseLevel = GetDetailedItemLevelInfo(self.link or self.id)
+            local level, _, baseLevel = GetDetailedItemLevelInfo(self.link)
 
-            self.name = info[1]
-            self.link = info[2]
-            self.quality = info[3]
-            self.level = level or info[4]
-            -- self.baseLevel = baseLevel or level
-            -- self.minLevel = info[5]
-            -- self.type = info[6]
-            self.subType = info[7]
-            -- self.stackCount = info[8]
-            self.equipLoc = info[9]
-            self.texture = info[10]
-            -- self.sellPrice = info[11]
-            self.classId = info[12]
-            self.subClassId = info[13]
-            self.bindType = info[14]
-            -- self.expacId = info[15]
-            -- self.setId = info[16]
-            -- self.isCraftingReagent = info[17]
+            -- Set info
+            for attr,pos in pairs(Self.INFO.basic) do
+                self[attr] = info[pos]
+            end
             
             -- Some extra info
+            self.level = level or self.level
+            -- self.baseLevel = baseLevel or self.level
             self.isRelic = self.subType == "Artifact Relic"
             self.isEquippable = IsEquippableItem(self.link) or self.isRelic
             self.isSoulbound = self.bindType == LE_ITEM_BIND_ON_ACQUIRE or self.isEquipped and self.bindType == LE_ITEM_BIND_ON_EQUIP
@@ -367,7 +450,7 @@ function Self:GetBasicInfo()
 
             -- Trinket info
             if self.equipLoc == Self.TYPE_TRINKET then
-                self.trinketTypes = Util.TblMap(Self.TRINKETS, function (trinkets, i) return trinkets[self.id] and i end)
+                self.trinketTypes = Util.TblMap(Self.TRINKETS, mapFn, self.id)
             end
         end
     end
@@ -376,7 +459,7 @@ function Self:GetBasicInfo()
 end
 
 -- Get extra info by scanning the tooltip
-function Self:GetFullInfo(bag)
+function Self:GetFullInfo()
     self:GetBasicInfo()
 
     -- TODO: Optimize (e.g. restrict line numbers)!
@@ -433,6 +516,28 @@ end
 -------------------------------------------------------
 
 -- Get a list of owned items by equipment location
+local searchFn = function (link, b, s, items, self, classId)
+    if Self.GetInfo(link, "isEquippable") then
+        if self.isRelic then
+            local id = Self.GetInfo(link, "id")
+            if Self.CLASS_RELICS[classId][id] then
+                for i=1,3 do
+                    if Self.CLASS_RELICS[classId][id][i] == self.relicType then
+                        tinsert(items, (select(2, GetItemGem(link, i))))
+                    end
+                end
+            elseif Self.GetInfo(link, "isRelic") and Self.GetInfo(link, "relicType") == self.relicType then
+                tinsert(items, link)
+            end
+        elseif Self.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY then
+            local subType, _, equipLoc = select(7, GetItemInfo(link))
+            if subType and subType ~= "Artifact Relic" and equipLoc and Util.TblEquals(Self.SLOTS[equipLoc], Self.SLOTS[self.equipLoc]) then
+                tinsert(items, link)
+            end
+        end
+    end
+end
+
 function Self:GetOwnedForLocation(equipped, bag)
     local items = {}
 
@@ -449,31 +554,18 @@ function Self:GetOwnedForLocation(equipped, bag)
     if equipped ~= false then
         if self.isRelic then
             local weapon = Self.GetEquippedArtifact()
-            items = weapon and Util.TblValues(weapon:GetRelics(self.relicType))
-        else
-            items = Util(Self.SLOTS[self.equipLoc]).Map(Util.FnArgs(Self.FromSlot, 1))()
-        end
+            items = weapon and weapon:GetRelics(self.relicType) or items
+        else for i,slot in pairs(Self.SLOTS[self.equipLoc]) do
+            local link = GetInventoryItemLink("player", slot)
+            if link and Self.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY then
+                tinsert(items, link)
+            end
+        end end
     end
 
     -- Get item(s) from bag
     if bag ~= false then
-        local classId = select(3, UnitClass("player"))
-
-        Util.SearchBags(function (item, id)
-            item:GetBasicInfo()
-
-            if item.isEquippable then
-                if self.isRelic then
-                    if Self.CLASS_RELICS[classId][id] then
-                        Util.TblMerge(items, Util.TblValues(item:GetRelics(self.relicType)))
-                    elseif item.isRelic and item:GetFullInfo().relicType == self.relicType then
-                        tinsert(items, item)
-                    end
-                elseif not item.isRelic and Util.TblEquals(Self.SLOTS[item.equipLoc], Self.SLOTS[self.equipLoc]) then
-                    tinsert(items, item)
-                end
-            end
-        end)
+        Util.SearchBags(searchFn, nil, nil, items, self, (select(3, UnitClass("player"))))
     end
 
     return items
@@ -486,8 +578,7 @@ function Self:GetSlotCountForLocation()
     if not success then return 0 end
 
     if self.isRelic then
-        self:GetFullInfo()
-        return #(Util(Self.CLASS_RELICS[select(3, UnitClass("player"))]).Flatten().Only(self.relicType)())
+        return Util.TblCountFn(Self.CLASS_RELICS[select(3, UnitClass("player"))], Util.TblCountVal, self:GetFullInfo().relicType)
     else
         return #Self.SLOTS[self.equipLoc]
     end
@@ -512,15 +603,15 @@ function Self:GetLevelForLocation(unit)
 
     if UnitIsUnit(unit, "player") then
         -- For the player
-        local cache = Self.PLAYER_SLOT_LEVELS[location] or {}
+        local cache = Self.playerSlotLevels[location] or {}
         if not cache.time or cache.time + Addon.Inspect.REFRESH < GetTime() then
             cache.time = GetTime()
-            cache.ilvl = Util(self:GetOwnedForLocation())
-                .Iter(Self.GetBasicInfo)
-                .ExceptWhere({quality = LE_ITEM_QUALITY_LEGENDARY})
-                .Pluck("level")
-                .Sort(true)(self:GetSlotCountForLocation()) or 0
-            Self.PLAYER_SLOT_LEVELS[location] = cache
+
+            local items = self:GetOwnedForLocation()
+            for i,link in pairs(items) do
+                items[i] = Self.GetInfo(link, "level")
+            end
+            cache.ilvl = Util.TblSort(items, true)[self:GetSlotCountForLocation()] or 0
         end
 
         return cache.ilvl
@@ -536,7 +627,7 @@ end
 
 -- Get gems in the item
 function Self:GetGem(slot)
-    return Self.FromLink(select(2, GetItemGem(self.link, slot)), self.owner, self.isEquipped)
+    return (select(2, GetItemGem(self.link, slot)))
 end
 
 -- Get artifact relics in the item
@@ -549,12 +640,8 @@ function Self:GetRelics(relicTypes)
 
     local relics = {}
     for slot,relicType in pairs(weaponRelics) do
-        if not relicTypes or Util.In(relicType, relicTypes) then
-            local relic = self:GetGem(slot)
-            if relic then
-                relic.relicType = relicType
-                relics[slot] = relic
-            end
+        if not relicTypes or Util.TblFind(relicTypes, relicType) then
+            tinsert(relics, self:GetGem(slot))
         end
     end
 
@@ -567,8 +654,22 @@ function Self:GetUniqueRelicSlots()
     if not success then return {} end
 
     local weapons = Util.TblFirstWhere(Self.CLASS_RELICS, self.id)
+    local selfRelics = Util.TblCopy(weapons[self.id])
 
-    return Util.TblDiff(weapons[self.id], unpack(Util(weapons).Omit(self.id).Values()()), true)
+    -- Remove all relicTypes that occur in other weapons
+    for id,relics in pairs(weapons) do
+        if id ~= self.id then
+            for _,relicType in pairs(relics) do
+                for slot,selfRelicType in pairs(selfRelics) do
+                    if relicType == selfRelicType then
+                        selfRelics[slot] = nil
+                    end
+                end
+            end
+        end
+    end
+
+    return selfRelics
 end
 
 -------------------------------------------------------
@@ -591,7 +692,7 @@ function Self:CanBeEquipped(unit)
     local className, _, classId = UnitClass(unit or "player")
 
     -- Check if there are class restrictions
-    if self.classes and not Util.In(className, self.classes) then
+    if self.classes and not Util.TblFind(self.classes, className) then
         return false
     end
 
@@ -603,7 +704,7 @@ function Self:CanBeEquipped(unit)
     -- Check relic type
     if self.isRelic then
         for itemId, types in pairs(Self.CLASS_RELICS[classId]) do
-            if Util.In(self.relicType, types) then
+            if Util.TblFind(types, self.relicType) then
                 return true
             end
         end
@@ -628,7 +729,7 @@ function Self:HasMatchingAttributes(unit)
     local classId = select(3, UnitClass(unit or "player"))
 
     return Util.TblSearch(self.attributes, function (v, attr)
-        return Util.In(classId, Self.CLASS_ATTRIBUTES[attr])
+        return Util.TblFind(Self.CLASS_ATTRIBUTES[attr], classId)
     end) ~= nil
 end
 
@@ -822,8 +923,8 @@ function Self:GetPosition(refresh)
 
     -- Check bags
     local bag, slot, isTradable
-    Util.SearchBags(function (item, _, b, s)
-        if item.link == self.link then
+    Util.SearchBags(function (link, b, s)
+        if link == self.link then
             isTradable = Self.IsTradable(b, s)
             if isTradable or not (bag and slot) then
                 bag, slot = b, s
@@ -839,11 +940,11 @@ function Self:GetPosition(refresh)
     end
 
     -- Check equipment
-    if not select(2, self:GetBasicInfo()) then return end
-
-    for _, equipSlot in pairs(Self.SLOTS[self.equipLoc]) do
-        if self.link == GetInventoryItemLink(equipSlot) then
-            return equipSlot, nil, false
+    if select(2, self:GetBasicInfo()) and not self.isRelic then
+        for _, equipSlot in pairs(Self.SLOTS[self.equipLoc]) do
+            if self.link == GetInventoryItemLink(self.owner, equipSlot) then
+                return equipSlot, nil, false
+            end
         end
     end
 end
