@@ -512,56 +512,60 @@ function Self:CheckEnd()
 end
 
 -- End a roll
-function Self:End(winner, isWhisper)
+function Self:End(winner)
     Addon:Verbose(L["ROLL_END"]:format(self.item.link, Comm.GetPlayerLink(self.item.owner)))
-
     if self.winner then return end
-    winner = winner and Util.GetName(winner) or nil
+
+    local award = winner == true
+    if award then
+        winner = nil
+    else
+        winner = winner and Util.GetName(winner) or nil
+    end
     
-    -- Check if we can end he roll
+    -- End it if it is running
     if self.status < Self.STATUS_DONE then
+        -- Check if we can end the roll
         local valid, msg = self:Validate(Self.STATUS_RUNNING, winner)
         if not valid then
             Addon:Err(msg)
             return self
         end
 
-        if self.isOwner then
-            -- We posted it to chat, so we'll wait a bit longer before we end the roll
-            if not winner and self:Advertise() then
-                return self
-            end
-
-            -- Determine a winner
-            if not (winner or Addon.db.profile.awardSelf or Masterloot.IsMasterlooter()) then
-                for i,bid in pairs(Self.BIDS) do
-                    if bid ~= Self.BID_PASS then
-                        local bids = Util(self.bids).Only(bid, true).Keys()()
-                        if #bids > 0 then
-                            winner = bids[math.random(#bids)]
-                            break
-                        end
-                    end
-                end
-            end
+        -- Check if we should post it to chat first
+        if self.isOwner and not award and not winner and self:Advertise() then
+            return self
         end
 
         -- Update status
         self.status = Self.STATUS_DONE
+    end
+
+    -- Determine a winner
+    if self.isOwner and (award or not (winner or Addon.db.profile.awardSelf or Masterloot.IsMasterlooter())) then
+        for i,bid in pairs(Self.BIDS) do
+            if bid ~= Self.BID_PASS then
+                local bids = Util(self.bids).Only(bid, true).Keys()()
+                if #bids > 0 then
+                    winner = bids[math.random(#bids)]
+                    break
+                end
+            end
+        end
     end
     
     -- Set winner
     self.winner = winner
     self.isWinner = self.winner and UnitIsUnit(self.winner, "player")
 
-    -- Let the player know, announce to chat and the winner
     if self.winner then
         -- It has already been traded
         if self.winner == self.item.owner then
             self:OnTraded(self.winner)
         end
 
-        Comm.RollEnd(self, isWhisper)
+        -- Let the player know, announce to chat and the winner
+        Comm.RollEnd(self)
     end
 
     Addon.GUI.Rolls.Update()
@@ -571,8 +575,8 @@ function Self:End(winner, isWhisper)
 end
 
 -- End a roll, including closing UI elements etc.
-function Self:Finish(winner, isWhisper)
-    self:End(winner, isWhisper)
+function Self:Finish(winner)
+    self:End(winner)
 
     if self.status == Self.STATUS_DONE then
         if self.timer then
@@ -867,6 +871,11 @@ end
 -- Check if the given unit can vote on this roll
 function Self:UnitCanVote(unit)
     return self:CanBeVotedOn() and Masterloot.IsOnCouncil(unit)
+end
+
+-- Check if we can restart a roll
+function Self:CanBeRestarted()
+    return self.isOwner and Util.In(self.status, Self.STATUS_CANCELED, Self.STATUS_DONE) and (not self.traded or UnitIsUnit(self.traded, self.item.owner))
 end
 
 -- Check if the roll is handled by a masterlooter

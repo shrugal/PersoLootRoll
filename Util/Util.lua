@@ -350,6 +350,15 @@ function Self.TblCountVal(t, val)
     return n
 end
 
+-- Count the # of occurences of everything except val
+function Self.TblCountNot(t, val)
+    local n = 0
+    for i,v in pairs(t) do
+        if v ~= val then n = n + 1 end
+    end
+    return n
+end
+
 -- Count the # of tables that have given key/val pairs
 function Self.TblCountWhere(t, keyOrTbl, valOrDeep)
     local isTbl, n = type(keyOrTbl) == "table", 0

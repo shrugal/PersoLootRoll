@@ -13,9 +13,8 @@ local Self = {}
 --                  Popup dialogs                    --
 -------------------------------------------------------
 
-Self.DIALOG_ROLL_CANCEL = "PLR_ROLL_CANCEL"
-Self.DIALOG_MASTERLOOT_ASK = "PLR_MASTERLOOT_ASK"
 
+Self.DIALOG_ROLL_CANCEL = "PLR_ROLL_CANCEL"
 StaticPopupDialogs[Self.DIALOG_ROLL_CANCEL] = {
     text = L["DIALOG_ROLL_CANCEL"],
     button1 = YES,
@@ -29,6 +28,21 @@ StaticPopupDialogs[Self.DIALOG_ROLL_CANCEL] = {
     preferredIndex = 3
 }
 
+Self.DIALOG_ROLL_RESTART = "PLR_ROLL_RESTART"
+StaticPopupDialogs[Self.DIALOG_ROLL_RESTART] = {
+    text = L["DIALOG_ROLL_RESTART"],
+    button1 = YES,
+    button2 = NO,
+    OnAccept = function(self, roll)
+        roll:Restart()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3
+}
+
+Self.DIALOG_MASTERLOOT_ASK = "PLR_MASTERLOOT_ASK"
 StaticPopupDialogs[Self.DIALOG_MASTERLOOT_ASK] = {
     text = L["DIALOG_MASTERLOOT_ASK"],
     button1 = YES,
@@ -401,10 +415,25 @@ local createFn = function (scroll)
             self:GetUserData("roll"):Advertise(true)
         end, L["ADVERTISE"], 13, 13)
 
+        -- Award randomly
+        Self.CreateIconButton("Interface\\GossipFrame\\BankerGossipIcon", actions, function (self)
+            self:GetUserData("roll"):End(true)
+        end, L["AWARD_RANDOMLY"], 11, 11)
+
         -- Trade
         Self.CreateIconButton("Interface\\GossipFrame\\VendorGossipIcon", actions, function (self)
             self:GetUserData("roll"):Trade()
         end, TRADE, 13, 13)
+
+        -- Restart
+        f = Self.CreateIconButton("UI-RotationLeft-Button", actions, function (self)
+            local dialog = StaticPopup_Show(Self.DIALOG_ROLL_RESTART)
+            if dialog then
+                dialog.data = self:GetUserData("roll")
+            end
+        end, L["RESTART"])
+        f.image:SetPoint("TOP", 0, 2)
+        f.image:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 
         -- Cancel
         f = Self.CreateIconButton("CancelButton", actions, function (self)
@@ -413,7 +442,8 @@ local createFn = function (scroll)
                 dialog.data = self:GetUserData("roll")
             end
         end, CANCEL)
-        f.image:SetTexCoord(0.22, 0.78, 0.22, 0.78)
+        f.image:SetPoint("TOP", 0, 1)
+        f.image:SetTexCoord(0.2, 0.8, 0.2, 0.8)
 
         -- Toggle
         f = Self.CreateIconButton("UI-PlusButton", actions, function (self)
@@ -517,7 +547,9 @@ local updateFn = function (scroll, roll, children, it)
         local details = children[it(0) + 1]
         local children = actions.children
         local it = Util.Iter()
+
         local canBid = not roll.bid and roll:UnitCanBid("player")
+        local canBeAwarded = roll:CanBeAwarded(true)
 
         -- Need
         Self(children[it()]).SetUserData("roll", roll).Toggle(canBid)
@@ -527,10 +559,14 @@ local updateFn = function (scroll, roll, children, it)
         Self(children[it()]).SetUserData("roll", roll).Toggle(canBid)
         -- Advertise
         Self(children[it()]).SetUserData("roll", roll).Toggle(roll:ShouldAdvertise(true))
+        -- Award randomly
+        Self(children[it()]).SetUserData("roll", roll).Toggle(roll.status == roll.STATUS_DONE and canBeAwarded and Util.TblCountNot(roll.bids, Roll.BID_PASS) > 0)
         -- Trade
         Self(children[it()]).SetUserData("roll", roll).Toggle(not roll.traded and roll.winner and (roll.item.isOwner or roll.isWinner))
+        -- Restart
+        Self(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeRestarted())
         -- Cancel
-        Self(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeAwarded())
+        Self(children[it()]).SetUserData("roll", roll).Toggle(canBeAwarded)
         -- Toggle
         Self(children[it()])
             .SetImage("Interface\\Buttons\\UI-" .. (details:IsShown() and "Minus" or "Plus") .. "Button-Up")
