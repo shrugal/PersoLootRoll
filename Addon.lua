@@ -4,6 +4,7 @@ TODO:
 - Transmog mode: Check appearance, don't cancel rolls for items that some ppl could wear but have a higher ilvl, prompt to answer only when someone asks for the item
 - Block all trades and whispers
 - Custom messages
+- Roll.traded should be uncoupled from the rest of the roll lifecycle
 ]]
 
 local Name, Addon = ...
@@ -12,10 +13,6 @@ local LDBIcon = LibStub("LibDBIcon-1.0")
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Util = Addon.Util
 local Item = Addon.Item
-
--------------------------------------------------------
---                     Constants                     --
--------------------------------------------------------
 
 -- Echo levels
 Addon.ECHO_NONE = 0
@@ -555,6 +552,7 @@ function Addon:SetVersion(unit, version)
 
     if version and version > self.VERSION and not self.versionNoticeShown then
         self:Info(L["VERSION_NOTICE"])
+        self.versionNoticeShown = true
     end
 end
 
