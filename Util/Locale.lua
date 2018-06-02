@@ -1,6 +1,6 @@
 local Name, Addon = ...
 local Util = Addon.Util
-local Self = {}
+local Self = Addon.Locale
 
 Self.DEFAULT = "enUS"
 
@@ -13,9 +13,9 @@ end
 function Self.GetLanguage(realm)
     local region = Self.GetRegion()
 
-    if Addon.Locale.Realms[region] then
+    if Self.REALMS[region] then
         realm = realm or GetRealmName()
-        return Addon.Locale.Realms[region][realm] or Self.DEFAULT
+        return Self.REALMS[region][realm] or Self.DEFAULT
     else
         return region:lower() .. region
     end
@@ -91,7 +91,3 @@ Self.MT = {
         return string.format(table[line], ...)
     end
 }
-
--- Export
-
-Addon.Locale = Self

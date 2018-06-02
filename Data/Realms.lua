@@ -520,4 +520,4 @@ Self.EU = {
     ["Ясеневыйлес"] = "ruRU",
 }
 
-Addon.Locale.Realms = Self
+Addon.Locale.REALMS = Self

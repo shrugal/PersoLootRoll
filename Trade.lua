@@ -1,10 +1,10 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Util = Addon.Util
 local Comm = Addon.Comm
 local Item = Addon.Item
 local Roll = Addon.Roll
-local Self = {}
+local Util = Addon.Util
+local Self = Addon.Trade
 
 Self.items = {player = {}, target = {}}
 Self.timers = {}
@@ -153,7 +153,3 @@ end
 function Self.OnCancel()
     Self.Clear()
 end
-
--- Export
-
-Addon.Trade = Self

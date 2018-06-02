@@ -1,9 +1,9 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Util = Addon.Util
 local Roll = Addon.Roll
 local Trade = Addon.Trade
-local Self = {}
+local Util = Addon.Util
+local Self = Addon.Hooks
 
 -------------------------------------------------------
 --                   GroupLootRoll                   --
@@ -308,7 +308,3 @@ function Self.DisableUnitMenus()
         if button then Addon:Unhook(button, "OnEnter") end
     end
 end
-
--- Export
-
-Addon.Hooks = Self

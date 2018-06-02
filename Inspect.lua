@@ -1,7 +1,7 @@
 local Name, Addon = ...
-local Util = Addon.Util
 local Item = Addon.Item
-local Self = {}
+local Util = Addon.Util
+local Self = Addon.Inspect
 
 -- How long before refreshing cache entries (s)
 Self.REFRESH = 1800
@@ -201,7 +201,3 @@ function Self.OnInspectReady(unit)
         Self.timer = Addon:ExtendTimerTo(Self.timer, Self.INSPECT_DELAY)
     end
 end
-
--- Export
-
-Addon.Inspect = Self

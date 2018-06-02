@@ -1,11 +1,13 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Util = Addon.Util
+local Comm = Addon.Comm
+local GUI = Addon.GUI
 local Item = Addon.Item
 local Locale = Addon.Locale
-local Comm = Addon.Comm
 local Masterloot = Addon.Masterloot
-local Self = {}
+local Trade = Addon.Trade
+local Util = Addon.Util
+local Self = Addon.Roll
 
 -- Default schedule delay
 Self.DELAY = 1
@@ -120,7 +122,7 @@ function Self.Add(item, owner, timeout, ownerId, itemOwnerId)
         roll.itemOwnerId = roll.id
     end
 
-    Addon.GUI.Rolls.Update()
+    GUI.Rolls.Update()
 
     return roll
 end
@@ -208,7 +210,7 @@ function Self.Update(data, unit)
                     self:Vote(vote)
                 end
 
-                Addon.GUI.Rolls.Update()
+                GUI.Rolls.Update()
             end)
         end
     -- The winner can inform us that it has been traded, or the item owner if the winner doesn't have the addon or he traded it to someone else
@@ -221,7 +223,7 @@ function Self.Update(data, unit)
         end)
     end
 
-    Addon.GUI.Rolls.Update()
+    GUI.Rolls.Update()
 
     return roll
 end
@@ -240,7 +242,7 @@ function Self.Clear(self)
         Addon.rolls[roll.id] = nil
     end
 
-    Addon.GUI.Rolls.Update()
+    GUI.Rolls.Update()
 end
 
 -- Check for and convert from/to PLR roll id
@@ -304,7 +306,7 @@ function Self:Start(started)
                 self:ShowRollFrame()
             end
             if self.isOwner and Masterloot.IsMasterlooter() or shouldRoll and Addon.db.profile.ui.showRollsWindow then
-                Addon.GUI.Rolls.Show()
+                GUI.Rolls.Show()
             end
 
             -- Schedule timer to end the roll and hide the frame
@@ -314,7 +316,7 @@ function Self:Start(started)
             self:Advertise(false, true)
             self:SendStatus(self.item.isOwner)
 
-            Addon.GUI.Rolls.Update()
+            GUI.Rolls.Update()
         end
     end)
 
@@ -342,7 +344,7 @@ function Self:Schedule()
                 self:Clear()
             end
 
-            Addon.GUI.Rolls.Update()
+            GUI.Rolls.Update()
         end
     end, Self.DELAY)
 
@@ -431,7 +433,7 @@ function Self:Bid(bid, fromUnit, isImport)
             end
         end
 
-        Addon.GUI.Rolls.Update()
+        GUI.Rolls.Update()
     end
 
     return self
@@ -474,7 +476,7 @@ function Self:Vote(vote, fromUnit, isImport)
             end
         end
 
-        Addon.GUI.Rolls.Update()
+        GUI.Rolls.Update()
     end
 end
 
@@ -568,7 +570,7 @@ function Self:End(winner)
         Comm.RollEnd(self)
     end
 
-    Addon.GUI.Rolls.Update()
+    GUI.Rolls.Update()
     self:SendStatus()
 
     return self
@@ -608,7 +610,7 @@ function Self:Cancel()
     -- Let everyone know
     self:SendStatus()
         
-    Addon.GUI.Rolls.Update()
+    GUI.Rolls.Update()
     
     return self
 end
@@ -617,7 +619,7 @@ end
 function Self:Trade()
     local target = self.item.isOwner and self.winner or self.isWinner and self.item.owner
     if target then
-        Addon.Trade.Initiate(target)
+        Trade.Initiate(target)
     end
 end
 
@@ -640,7 +642,7 @@ function Self:OnTraded(target)
 
     self:SendStatus(self.item.isOwner or self.isWinner)
         
-    Addon.GUI.Rolls.Update()
+    GUI.Rolls.Update()
 end
 
 -------------------------------------------------------
@@ -689,7 +691,7 @@ end
 -- Show the alert frame for winning an item
 function Self:ShowAlertFrame()
     -- itemLink, quantity, rollType, roll, specID, isCurrency, showFactionBG, lootSource, lessAwesome, isUpgraded, wonRoll, showRatedBG, plrId
-    Addon.GUI.LootAlertSystem:AddAlert(self.item.link, 1, nil, nil, nil, false, false, nil, false, false, true, false, self.id)
+    GUI.LootAlertSystem:AddAlert(self.item.link, 1, nil, nil, nil, false, false, nil, false, false, true, false, self.id)
 end
 
 -------------------------------------------------------
@@ -734,7 +736,7 @@ function Self:Advertise(manually, silent)
             self:SendStatus()
         end
 
-        Addon.GUI.Rolls.Update()
+        GUI.Rolls.Update()
 
         return true
     else
@@ -910,7 +912,3 @@ function Self:Validate(status, ...)
         return true
     end
 end
-
--- Export
-
-Addon.Roll = Self

@@ -1,6 +1,5 @@
 local Name, Addon = ...
-local Self = {}
-
+local Self = Addon.Util
 
 -------------------------------------------------------
 --                        WoW                        --
@@ -1051,7 +1050,3 @@ setmetatable(Self, {
         return Self.C
     end
 })
-
--- Export
-
-Addon.Util = Self

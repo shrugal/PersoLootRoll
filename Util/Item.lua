@@ -1,6 +1,7 @@
 local Name, Addon = ...
+local Inspect = Addon.Inspect
 local Util = Addon.Util
-local Self = {}
+local Self = Addon.Item
 
 -------------------------------------------------------
 --                     Constants                     --
@@ -604,7 +605,7 @@ function Self:GetLevelForLocation(unit)
     if UnitIsUnit(unit, "player") then
         -- For the player
         local cache = Self.playerSlotLevels[location] or {}
-        if not cache.time or cache.time + Addon.Inspect.REFRESH < GetTime() then
+        if not cache.time or cache.time + Inspect.REFRESH < GetTime() then
             cache.time = GetTime()
 
             local items = self:GetOwnedForLocation()
@@ -617,7 +618,7 @@ function Self:GetLevelForLocation(unit)
         return cache.ilvl
     else
         -- For other players
-        return Addon.Inspect.Get(unit, location)
+        return Inspect.Get(unit, location)
     end
 end
 
@@ -1001,7 +1002,3 @@ function Self.OnSwitch(pos1, pos2)
     if item1 then item1:SetPosition(pos2) end
     if item2 then item2:SetPosition(pos1) end
 end
-
--- Export
-
-Addon.Item = Self

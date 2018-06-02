@@ -1,8 +1,10 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Util = Addon.Util
 local Locale = Addon.Locale
-local Self = {}
+local Masterloot = Addon.Masterloot
+local Roll = Addon.Roll
+local Util = Addon.Util
+local Self = Addon.Comm
 
 -- Distribution types
 Self.TYPE_GROUP = "GROUP"
@@ -193,7 +195,7 @@ end
 
 -- Show a confirmation message for a bid by the player
 function Self.RollBidSelf(roll)
-    if roll.bid == Addon.Roll.BID_PASS then
+    if roll.bid == Roll.BID_PASS then
         Addon:Verbose(L["BID_PASS"]:format((roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner)))
     else
         Addon:Verbose(L["BID_START"]:format(L["ROLL_BID_" .. roll.bid], (roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner)))
@@ -216,7 +218,7 @@ end
 function Self.RollEnd(roll, isWhisper)
     -- We won the item
     if roll.isWinner then
-        if not roll.isOwner or roll.bid ~= Addon.Roll.BID_NEED or Addon.Masterloot.GetMasterlooter() then
+        if not roll.isOwner or roll.bid ~= Roll.BID_NEED or Masterloot.GetMasterlooter() then
             if roll.item.isOwner then
                 Addon:Info(L["ROLL_WINNER_OWN"]:format(roll.item.link))
             else
@@ -276,7 +278,3 @@ end
 function Self.GetTradeLink(player)
     return ("|cff4D85E6|Hplrtrade:%s|h[%s]|h|r"):format(player, TRADE)
 end
-
--- Export
-
-Addon.Comm = Self

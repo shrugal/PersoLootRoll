@@ -1,13 +1,13 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local AceGUI = LibStub("AceGUI-3.0")
-local Util = Addon.Util
 local Comm = Addon.Comm
+local Inspect = Addon.Inspect
 local Masterloot = Addon.Masterloot
 local Roll = Addon.Roll
 local Trade = Addon.Trade
-local Inspect = Addon.Inspect
-local Self = {}
+local Util = Addon.Util
+local Self = Addon.GUI
 
 -------------------------------------------------------
 --                  Popup dialogs                    --
@@ -1074,7 +1074,3 @@ setmetatable(Self, {
         return Self.C
     end
 })
-
--- Export
-
-Addon.GUI = Self

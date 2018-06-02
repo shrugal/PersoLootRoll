@@ -1,14 +1,15 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Util = Addon.Util
+local Comm = Addon.Comm
+local GUI = Addon.GUI
+local Inspect = Addon.Inspect
 local Item = Addon.Item
 local Locale = Addon.Locale
-local Comm = Addon.Comm
 local Masterloot = Addon.Masterloot
 local Roll = Addon.Roll
-local Inspect = Addon.Inspect
-local GUI = Addon.GUI
-local Self = {}
+local Trade = Addon.Trade
+local Util = Addon.Util
+local Self = Addon.Events
 
 -- Message patterns
 Self.PATTERN_BONUS_LOOT = LOOT_ITEM_BONUS_ROLL:gsub("%%s", ".+")
@@ -327,11 +328,11 @@ function Self.RegisterEvents()
     -- Inspect
     Addon:RegisterEvent("INSPECT_READY", Self.INSPECT_READY)
     -- Trade
-    Addon:RegisterEvent("TRADE_SHOW", Addon.Trade.OnOpen)
-    Addon:RegisterEvent("TRADE_PLAYER_ITEM_CHANGED", Addon.Trade.OnPlayerItem)
-    Addon:RegisterEvent("TRADE_TARGET_ITEM_CHANGED", Addon.Trade.OnTargetItem)
-    Addon:RegisterEvent("TRADE_CLOSED", Addon.Trade.OnClose)
-    Addon:RegisterEvent("TRADE_REQUEST_CANCEL", Addon.Trade.OnCancel)
+    Addon:RegisterEvent("TRADE_SHOW", Trade.OnOpen)
+    Addon:RegisterEvent("TRADE_PLAYER_ITEM_CHANGED", Trade.OnPlayerItem)
+    Addon:RegisterEvent("TRADE_TARGET_ITEM_CHANGED", Trade.OnTargetItem)
+    Addon:RegisterEvent("TRADE_CLOSED", Trade.OnClose)
+    Addon:RegisterEvent("TRADE_REQUEST_CANCEL", Trade.OnCancel)
     -- Item
     Addon:RegisterEvent("ITEM_PUSH", Self.ITEM_PUSH)
     Addon:RegisterEvent("ITEM_LOCKED", Self.ITEM_LOCKED)
@@ -444,7 +445,7 @@ Comm.ListenData(Comm.EVENT_ROLL_STATUS, function (event, data, channel, sender, 
     data.winner = Util.GetName(data.winner)
     data.traded = data.traded and Util.GetName(data.traded)
 
-    Addon.Roll.Update(data, unit)
+    Roll.Update(data, unit)
 end)
 
 -- Bids
@@ -515,7 +516,3 @@ Comm.Listen(Comm.EVENT_MASTERLOOT_DEC, function (event, msg, channel, sender, un
         Masterloot.SetMasterlooter(nil, nil, true)
     end
 end)
-
--- Export
-
-Addon.Events = Self

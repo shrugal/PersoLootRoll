@@ -1,8 +1,9 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Util = Addon.Util
 local Comm = Addon.Comm
-local Self = {}
+local GUI = Addon.GUI
+local Util = Addon.Util
+local Self = Addon.Masterloot
 
 Self.masterlooter = nil
 Self.session = {}
@@ -42,7 +43,7 @@ function Self.SetMasterlooter(unit, session, silent)
         end
     end
 
-    Addon.GUI.Rolls.Update()
+    GUI.Rolls.Update()
 end
 
 -- Check if the unit (or the player) is our masterlooter
@@ -186,7 +187,3 @@ function Self.SendOffer(unit, silent)
         Comm.SendData(Comm.EVENT_MASTERLOOT_OFFER, {session = Self.session, silent = silent}, unit)
     end
 end
-
--- Export
-
-Addon.Masterloot = Self

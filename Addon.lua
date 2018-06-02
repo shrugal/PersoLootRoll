@@ -4,18 +4,20 @@ TODO:
 - Transmog mode: Check appearance, don't cancel rolls for items that some ppl could wear but have a higher ilvl, prompt to answer only when someone asks for the item
 - Block all trades and whispers
 - Custom messages
+
+Internal
+- Roll.traded should be uncoupled from the rest of the roll lifecycle
 ]]
 
 local Name, Addon = ...
 local LDB = LibStub("LibDataBroker-1.1")
 local LDBIcon = LibStub("LibDBIcon-1.0")
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Util = Addon.Util
+local GUI = Addon.GUI
 local Item = Addon.Item
-
--------------------------------------------------------
---                     Constants                     --
--------------------------------------------------------
+local Roll = Addon.Roll
+local Trade = Addon.Trade
+local Util = Addon.Util
 
 -- Echo levels
 Addon.ECHO_NONE = 0
@@ -178,12 +180,12 @@ function Addon:HandleChatCommand(msg)
         -- TODO
         ["trade"] = function ()
             local target = args[2]
-            Addon.Trade.Initiate(target or "target")
+            Trade.Initiate(target or "target")
         end,
         -- TODO: DEBUG
         ["test"] = function ()
             local link = "|cffa335ee|Hitem:152412::::::::110:105::4:3:3613:1457:3528:::|h[Depraved Machinist's Footpads]|h|r"
-            local roll = Addon.Roll.Add(link):Start():Bid(Addon.Roll.BID_PASS):Bid(Addon.Roll.BID_NEED, "Zhael", true)
+            local roll = Roll.Add(link):Start():Bid(Roll.BID_PASS):Bid(Roll.BID_NEED, "Zhael", true)
         end,
         default = self.GUI.Rolls.Show
     }
@@ -525,7 +527,7 @@ function Addon:RegisterMinimapIcon()
         if btn == "RightButton" then
             Addon:ShowOptions()
         else
-            Addon.GUI.Rolls.Toggle()
+            GUI.Rolls.Toggle()
         end
     end
 
@@ -555,6 +557,7 @@ function Addon:SetVersion(unit, version)
 
     if version and version > self.VERSION and not self.versionNoticeShown then
         self:Info(L["VERSION_NOTICE"])
+        self.versionNoticeShown = true
     end
 end
 

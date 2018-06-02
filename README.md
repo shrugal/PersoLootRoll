@@ -63,4 +63,3 @@ These are the things I have planed currently, but feel free to add a ticket here
 - Transmog mode: Check appearance instead of stats, ilvl, ...
 - Block (and maybe answer) all trades, whispers etc. for a few seconds after looting an item
 - Customize messages the addon sends to other players
-- Masterloot Council.
