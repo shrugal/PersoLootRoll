@@ -3,6 +3,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Locale = Addon.Locale
 local Masterloot = Addon.Masterloot
 local Roll = Addon.Roll
+local Unit = Addon.Unit
 local Util = Addon.Util
 local Self = Addon.Comm
 
@@ -67,7 +68,7 @@ function Self.GetDestination(target)
     elseif Util.TblFind(Self.TYPES, target) then
         return target
     else
-        return Self.TYPE_WHISPER, Util.GetName(target)
+        return Self.TYPE_WHISPER, Unit.Name(target)
     end
 end
 
@@ -83,8 +84,8 @@ function Self.ShouldChat(target)
         end
 
         local target = config.whisper.target
-        local guild = Util.GetGuildName(unit)
-        local isGuild, isFriend = guild ~= nil and guild == Util.GetGuildName("player"), Util.UnitIsFriend(unit)
+        local guild = Unit.GuildName(unit)
+        local isGuild, isFriend = guild ~= nil and guild == Unit.GuildName("player"), Unit.IsFriend(unit)
 
         if isGuild or isFriend then
             if isFriend and not target.friend or isGuild and not target.guild then
@@ -151,8 +152,8 @@ end
 -- Listen for an addon message
 function Self.Listen(event, method, fromSelf, fromAll)
     Addon:RegisterComm(Self.GetPrefix(event), function (event, msg, channel, sender)
-        local unit = Util.GetUnit(sender)
-        if fromAll or Util.UnitInGroup(unit, not fromSelf) then
+        local unit = Unit(sender)
+        if fromAll or Unit.InGroup(unit, not fromSelf) then
             method(event, msg, channel, sender, unit)
         end
     end)
@@ -240,9 +241,9 @@ function Self.RollEnd(roll, isWhisper)
             -- Announce to chat
             if roll.posted and Self.ShouldChat() then
                 if roll.item.isOwner then
-                    Self.ChatLine("ROLL_WINNER", Self.TYPE_GROUP, Util.GetFullName(roll.winner), roll.item.link)
+                    Self.ChatLine("ROLL_WINNER", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link)
                 else
-                    Self.ChatLine("ROLL_WINNER_MASTERLOOT", Self.TYPE_GROUP, Util.GetFullName(roll.winner), roll.item.link, Util.GetFullName(roll.item.owner), Locale.Gender(roll.item.owner, "HER", "HIM"))
+                    Self.ChatLine("ROLL_WINNER_MASTERLOOT", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "HER", "HIM"))
                 end
             end
             
@@ -258,7 +259,7 @@ function Self.RollEnd(roll, isWhisper)
                     if roll.item.isOwner then
                         Self.ChatLine("ROLL_WINNER_WHISPER", roll.winner, roll.item.link)
                     else
-                        Self.ChatLine("ROLL_WINNER_WHISPER_MASTERLOOT", roll.winner, roll.item.link, Util.GetFullName(roll.item.owner), Locale.Gender(roll.item.owner, "HER", "HIM"))
+                        Self.ChatLine("ROLL_WINNER_WHISPER_MASTERLOOT", roll.winner, roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "HER", "HIM"))
                     end
                 end
             end
@@ -271,7 +272,7 @@ end
 -------------------------------------------------------
 
 function Self.GetPlayerLink(player)
-    local color = Util.GetUnitColor(player)
+    local color = Unit.Color(player)
     return ("|c%s|Hplayer:%s|h[%s]|h|r"):format(color.colorStr, player, player)
 end
 

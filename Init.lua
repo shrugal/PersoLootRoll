@@ -5,9 +5,9 @@ LibStub("AceAddon-3.0"):NewAddon(Addon, Name, "AceConsole-3.0", "AceComm-3.0", "
 Addon.PREFIX = "PLR"
 Addon.PREFIX_CHAT = "[" .. Addon.PREFIX .. "]"
 Addon.VERSION = 1
-Addon.DEBUG = true
+Addon.DEBUG = false
 
--- Members
+-- Modules
 Addon.Comm = {}
 Addon.Events = {}
 Addon.GUI = {}
@@ -18,8 +18,10 @@ Addon.Locale = {}
 Addon.Masterloot = {}
 Addon.Roll = {}
 Addon.Trade = {}
+Addon.Unit = {}
 Addon.Util = {}
 
-if Addon.DEBUG then
+-- TODO: DEBUG
+if true or Addon.DEBUG then
     PLR = Addon
 end

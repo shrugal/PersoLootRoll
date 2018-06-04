@@ -32,6 +32,8 @@ if not L then return end
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "Der Besitzer dieses Items benutzt nicht das PersoLootRoll Addon."
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "Das PersoLootRoll Addon unterstützt kein Entzaubern."
 
+L["ENABLED"] = "Aktiviert"
+L["DISABLED"] = "Deaktiviert"
 L["ITEM"] = "Item"
 L["ID"] = ID
 L["OWNER"] = "Besitzer"
@@ -130,6 +132,7 @@ L["DIALOG_ROLL_CANCEL"] = "Möchtest du diese Verlosung abbrechen?"
 L["DIALOG_ROLL_RESTART"] = "Möchtest du diese Verlosung neu starten?"
 L["DIALOG_MASTERLOOT_ASK"] = "<%s> möchte dein Plündermeister werden, willst du das akzeptieren?"
 
+L["ERROR_CMD_UNKNOWN"] = "Unbekannter Befehl '%s'"
 L["ERROR_PLAYER_NOT_FOUND"] = "Kann Spieler %s nicht finden."
 L["ERROR_ITEM_NOT_TRADABLE"] = "Du kannst dieses Item nicht handeln."
 L["ERROR_NOT_IN_GROUP"] = "Du bist nicht in einer Gruppe/Raid."

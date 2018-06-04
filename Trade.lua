@@ -3,6 +3,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Comm = Addon.Comm
 local Item = Addon.Item
 local Roll = Addon.Roll
+local Unit = Addon.Unit
 local Util = Addon.Util
 local Self = Addon.Trade
 
@@ -15,7 +16,7 @@ Self.timers = {}
 
 -- Try to initiate a trade
 function Self.Initiate(target)
-    target = Util.GetName(target)
+    target = Unit.Name(target)
 
     -- Cancel any other trade
     Self.Cancel()
@@ -56,10 +57,11 @@ function Self.Start()
     if not Self.target then return end
 
     -- Find items the target has won and add them to the trade window
-    local rolls = Util(Addon.rolls).Where({item = {isOwner = true}, winner = Self.target, traded = false}, nil, true)()
-    for i,roll in pairs(rolls) do
-        PickupContainerItem(roll.item:GetPosition())
-        DropItemOnUnit(Self.target)
+    for i,roll in pairs(Addon.rolls) do
+        if roll.item.isOwner and winner == Self.target and not traded then
+            PickupContainerItem(roll.item:GetPosition())
+            DropItemOnUnit(Self.target)
+        end
     end
 end
 

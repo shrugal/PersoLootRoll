@@ -1,5 +1,6 @@
 local Name, Addon = ...
 local Item = Addon.Item
+local Unit = Addon.Unit
 local Util = Addon.Util
 local Self = Addon.Inspect
 
@@ -25,7 +26,7 @@ Self.lastQueued = 0
 
 -- Get cache entry for given unit and location
 function Self.Get(unit, location)
-    return Self.cache.unit and Self.cache.unit.location or 0
+    return Self.cache[unit] and Self.cache[unit][location] or 0
 end
 
 -- Check if an entry exists and isn't out-of-date
@@ -39,7 +40,7 @@ end
 
 -- Update the cache entry for the given player
 function Self.Update(unit)
-    unit = Util.GetName(unit)
+    unit = Unit.Name(unit)
 
     local info = Self.cache[unit] or {}
 
@@ -116,28 +117,32 @@ function Self.Clear(unit)
 end
 
 -- Queue a unit or the entire group for inspection
-local searchFn = function (i, unit)
-    if unit and not UnitIsUnit(unit, "player") and not Self.queue[unit] and not Self.IsValid(unit) then
-        Self.queue[unit] = Self.MAX_PER_CHAR
-    end
-end
-
 function Self.Queue(unit)
-    unit = Util.GetName(unit)
-    if not Addon:IsTracking() or not unit or UnitIsUnit(unit, "player") then return end
+    unit = Unit.Name(unit)
+    if not Addon:IsTracking() or unit and UnitIsUnit(unit, "player") then
+        return
+    end
 
     if unit then
         Self.queue[unit] = Self.queue[unit] or Self.MAX_PER_CHAR
     else
         -- Queue all group members with missing or out-of-date cache entries
-        Self.lastQueued = GetTime()
-        Util.SearchGroup(searchFn)
+        local unitFound = false
+        Util.SearchGroup(function (i, unit)
+            unitFound = unitFound or unit and not UnitIsUnit(unit, "player")
+            if unit and not UnitIsUnit(unit, "player") and not Self.queue[unit] and not Self.IsValid(unit) then
+                Self.queue[unit] = Self.MAX_PER_CHAR
+            end
+        end)
+        
+        if unitFound then
+            Self.lastQueued = GetTime()
+        end
     end
 end
 
 -- Start the inspection loop
 local filterFn = function (i, unit) return CanInspect(unit) end
-
 function Self.Loop()
     -- Check if the loop is already running
     if Addon:TimerIsRunning(Self.timer) then return end
@@ -148,17 +153,16 @@ function Self.Loop()
     end
 
     -- Get the next unit to inspect (with max inspects left -> wide search, random -> so we don't get stuck on one unit)
-    local units = Util.TblFilter(Self.queue, filterFn, true)
-    local unit = next(units) and Util(units).Only(max(unpack(Util.TblValues(units))), true).RandomKey()()
+    local units = Util.TblCopyFilter(Self.queue, filterFn, true)
+    local unit = next(units) and Util(units).Only(Util.TblMax(units), true).RandomKey()()
     
     if unit then
-        -- Request inspection
         Self.target = unit
         NotifyInspect(unit)
-        Self.timer = Addon:ScheduleTimer(Self.Loop, Self.INSPECT_DELAY)
-    else
-        Self.timer = Addon:ScheduleTimer(Self.Loop, Self.QUEUE_DELAY - (GetTime() - Self.lastQueued))
     end
+
+    local delay = max(Self.INSPECT_DELAY, Util.TblCount(Self.queue) == 0 and Self.QUEUE_DELAY - (GetTime() - Self.lastQueued) or 0)
+    Self.timer = Addon:ScheduleTimer(Self.Loop, delay)
  end
 
 -- Check if we should start the loop, and then start it
@@ -188,7 +192,7 @@ end
 function Self.OnInspectReady(unit)
     -- Inspect the unit
     if unit == Self.target then
-        if Self.queue[unit] and Util.UnitInGroup(unit, true) then
+        if Self.queue[unit] and Unit.InGroup(unit, true) then
             Self.Update(unit)
         end
 

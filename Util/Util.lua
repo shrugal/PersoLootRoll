@@ -1,23 +1,10 @@
 local Name, Addon = ...
+local Unit = Addon.Unit
 local Self = Addon.Util
 
 -------------------------------------------------------
 --                        WoW                        --
 -------------------------------------------------------
-
--- Classes
-Self.DEATH_KNIGHT = 6
-Self.DEMON_HUNTER = 12
-Self.DRUID = 11
-Self.HUNTER = 3
-Self.MAGE = 8
-Self.MONK = 10
-Self.PALADIN = 2
-Self.PRIEST = 5
-Self.ROGUE = 4
-Self.SHAMAN = 7
-Self.WARLOCK = 9
-Self.WARRIOR = 1
 
 -- Interaction distances
 Self.INTERACT_INSPECT = 1 -- 28 yards
@@ -27,87 +14,9 @@ Self.INTERACT_FOLLOW = 4  -- 28 yards
 
 Self.PATTERN_FOLLOW = AUTOFOLLOWSTART:gsub("%%s", "(.+)")
 
--- Unit names and realms
-
-function Self.GetUnit(unit)
-    return unit and unit:gsub("-" .. GetRealmName(), "") or ""
-end
-
--- Get a unit's realm name
-function Self.GetRealmName(unit)
-    local name, realm = UnitName(Self.GetUnit(unit))
-    return realm ~= "" and realm
-        or name and GetRealmName()
-        or unit and unit:match("^.+-(.+)$")
-        or nil
-end
-
--- Get a unit's name (incl. realm name if from another realm)
-function Self.GetName(unit)
-    unit = Self.GetUnit(unit)
-    local name, realm = UnitName(unit)
-
-    return name and name .. (realm and realm ~= "" and "-" .. realm or "")
-        or unit and unit ~= "" and not unit:find("^[a-z]") and unit
-        or nil
-end
-
--- Get a unit's short name (without realm name)
-function Self.GetShortName(unit)
-    local name = UnitName(Self.GetUnit(unit))
-
-    return name and name
-        or unit and unit:match("^(.+)-.+$")
-        or unit and unit ~= "" and not unit:find("^[a-z]") and unit
-        or nil
-end
-
--- Get a unit's full name (always incl. realm name)
-function Self.GetFullName(unit)
-    local name, realm = UnitFullName(Self.GetUnit(unit))
-    realm = realm ~= "" and realm or GetRealmName()
-
-    return name and name .. "-" .. realm
-        or unit and unit:match("^(.*-.*)$")
-        or unit and unit ~= "" and not unit:find("^[a-z]") and unit .. "-" .. realm
-        or nil
-end
-
--- Get a unit's short name with a (*) at the end if the unit is from another realm
-function Self.GetShortenedName(unit)
-    unit = Self.GetUnit(unit)
-    local name, realm = UnitFullName(unit)
-
-    return name and name ~= "" and name .. (realm and realm ~= "" and " (*)" or "")
-        or unit and unit ~= "" and not unit:find("^[a-z]") and unit:gsub("-.+", " (*)")
-        or nil
-end
-
--- Get the unit's guild name, incl. realm if from another realm
-function Self.GetGuildName(unit)
-    local guild, _, _, realm = GetGuildInfo(unit)
-    return guild and guild .. (realm and "-" .. realm or "") or nil
-end
-
--- Get a unit's class color
-function Self.GetUnitColor(unit)
-    return RAID_CLASS_COLORS[select(2, UnitClass(Self.GetUnit(unit)))] or {r = 1, g = 1, b = 1, colorStr = "ffffffff"}
-end
-
--- Get a unit's name in class color
-function Self.GetColoredName(name, unit)
-    local color = Self.GetUnitColor(unit or name)
-    return ("|c%s%s|r"):format(color.colorStr, name)
-end
-
--- Check if the player is following someone
-function Self.IsFollowing(unit)
-    return AutoFollowStatus:IsShown() and (not unit or unit == AutoFollowStatusText:GetText():match(Self.PATTERN_FOLLOW))
-end
-
 -- Check if the current group is a guild group (>=80% guild members)
 function Self.IsGuildGroup(guild)
-    guild = guild or Self.GetGuildName("player")
+    guild = guild or Unit.GuildName("player")
     if not guild or not IsInGroup() then
         return false
     end
@@ -115,45 +24,12 @@ function Self.IsGuildGroup(guild)
     local count = 0
 
     for i=1, GetNumGroupMembers() do
-        if guild == Self.GetGuildName(GetRaidRosterInfo(i)) then
+        if guild == Unit.GuildName(GetRaidRosterInfo(i)) then
             count = count + 1
         end
     end
 
     return count / GetNumGroupMembers() >= 0.8
-end
-
--- Check if the given unit is on our friend list
-function Self.UnitIsFriend(unit)
-    local unit = Self.GetName(unit)
-
-    for i=1, GetNumFriends() do
-        if GetFriendInfo(i) == unit then
-            return true
-        end
-    end
-end
-
--- Check if the given unit is in our guild
-function Self.UnitIsGuildMember(unit)
-    local guild = Self.GetGuildName("player")
-    return guild ~= nil and Self.GetGuildName(unit) == guild
-end
-
--- The the unit's rank in our guild
-function Self.UnitGuildRank(unit)
-    local guild, _, rank, realm = GetGuildInfo(unit)
-    return guild and guild .. (realm and "-" .. realm or "") == Self.GetGuildName("player") and rank or nil
-end
-
--- Shortcut for checking whether a unit is in our party or raid
-function Self.UnitInGroup(unit, onlyOthers)
-    local isSelf = UnitIsUnit(unit, "player")
-    if onlyOthers and isSelf then
-        return false
-    else
-        return isSelf or UnitInParty(unit) or UnitInRaid(unit)
-    end
 end
 
 -- Get hidden tooltip for scanning
@@ -298,6 +174,20 @@ function Self.TblCounter(t)
     return t
 end
 
+-- Get table keys
+function Self.TblKeys(t)
+    local u = {}
+    for i,v in pairs(t) do tinsert(u, i) end
+    return u
+end
+
+-- Get table values as continuously indexed list
+function Self.TblValues(t)
+    local u = {}
+    for i,v in pairs(t) do tinsert(u, v) end
+    return u
+end
+
 -- SUB
 
 function Self.TblSub(t, s, e) return {unpack(t, s or 1, e)} end
@@ -308,10 +198,14 @@ function Self.TblSplice(t, s, e, u) return Self.TblMerge(Self.TblHead(t, s), u o
 -- ITERATE
 
 -- Good old FoldLeft
-function Self.TblFoldL(t, fn, u, ...)
+function Self.TblFoldL(t, fn, u, index, ...)
     fn = Self.Fn(fn)
     for i,v in pairs(t) do
-        u = fn(u, v, i, ...)
+        if index then
+            u = fn(u, v, i, ...)
+        else
+            u = fn(u, v, ...)
+        end
     end
     return u
 end
@@ -325,44 +219,37 @@ function Self.TblIter(t, fn, ...)
     return t
 end
 
--- Copy a table
-function Self.TblCopy(t, deep)
-    local u = {}
-    for i,v in pairs(t) do
-        u[i] = deep and type(v) == "table" and Self.TblCopy(v, deep) or v
-    end
-    return u
-end
-
--- COUNT, SUM, MULTIPLY
+-- COUNT, SUM, MULTIPLY, MIN, MAX
 
 function Self.TblCount(t) return Self.TblFoldL(t, Self.FnInc, 0) end
 function Self.TblSum(t) return Self.TblFoldL(t, Self.FnAdd, 0) end
 function Self.TblMul(t) return Self.TblFoldL(t, Self.FnMul, 1) end
+function Self.TblMin(t, start) return Self.TblFoldL(t, math.min, start or select(2, next(t))) end
+function Self.TblMax(t, start) return Self.TblFoldL(t, math.max, start or select(2, next(t))) end
 
--- Count the # of occurences of val
-function Self.TblCountVal(t, val)
+-- Count the # of occurences of given value(s)
+function Self.TblCountVal(t, ...)
     local n = 0
     for i,v in pairs(t) do
-        if v == val then n = n + 1 end
+        if Self.In(v, ...) then n = n + 1 end
     end
     return n
 end
 
--- Count the # of occurences of everything except val
-function Self.TblCountNot(t, val)
+-- Count the # of occurences of everything except given value(s)
+function Self.TblCountNot(t, ...)
     local n = 0
     for i,v in pairs(t) do
-        if v ~= val then n = n + 1 end
+        if not Self.In(v, ...) then n = n + 1 end
     end
     return n
 end
 
 -- Count the # of tables that have given key/val pairs
 function Self.TblCountWhere(t, keyOrTbl, valOrDeep)
-    local isTbl, n = type(keyOrTbl) == "table", 0
-    for i,v in pairs(t) do
-        if isTbl and Self.TblContains(v, keyOrTbl, valOrDeep) or not isTbl and (valOrDeep == nil and v[keyOrTbl] ~= nil or valOrDeep ~= nil and v[keyOrTbl] == valOrDeep) then
+    local n = 0
+    for i,u in pairs(t) do
+        if Self.TblFindWhere(u, keyOrTbl, valOrDeep) then
             n = n + 1
         end
     end
@@ -371,7 +258,7 @@ end
 
 -- Count using a function
 function Self.TblCountFn(t, fn, ...)
-    local fn, n = Self.Fn(fn), 0
+    local n, fn = 0, Self.Fn(fn)
     for i,v in pairs(t) do
         n = n + fn(v, ...)
     end
@@ -412,7 +299,7 @@ end
 
 -- Check if two tables are equal
 function Self.TblEquals(a, b, deep)
-    return type(b) == "table" and Self.TblContains(a, b, deep) and Self.TblContains(b, a, deep)
+    return type(a) == "table" and type(b) == "table" and Self.TblContains(a, b, deep) and Self.TblContains(b, a, deep)
 end
 
 -- Find a value in a table
@@ -442,18 +329,104 @@ end
 
 -- Find the first set of key/value pairs in a table
 function Self.TblFirstWhere(t, keyOrTbl, valOrDeep)
-    local isTbl = type(keyOrTbl) == "table"
-    for i,v in pairs(t) do
-        if isTbl and Self.TblContains(v, keyOrTbl, valOrDeep) or not isTbl and (valOrDeep == nil and v[keyOrTbl] ~= nil or valOrDeep ~= nil and v[keyOrTbl] == valOrDeep) then
-            return v
-        end
-    end
+    local i = Self.TblFindWhere(t, keyOrTbl, valOrDeep)
+    if i ~= nil then return t[i] end
 end
 
 -- FILTER
 
 -- Filter by a function
 function Self.TblFilter(t, fn, k, ...)
+    fn = Self.Fn(fn) or Self.FnId
+    for i,v in pairs(t) do
+        if not fn(v, i, ...) then
+            if k then t[i] = nil else tremove(t, i) end
+        end
+    end
+    return t
+end
+
+-- Pick specific keys from a table
+function Self.TblSelect(t, ...)
+    for i,v in pairs(t) do
+        if not Util.In(i, ...) then
+            t[i] = nil
+        end
+    end
+    return t
+end
+
+-- Omit specific keys from a table
+function Self.TblUnselect(t, ...)
+    if type(...) == "table" then
+        for i,v in pairs(...) do t[v] = nil end
+    else
+        for i=1,select("#", ...) do t[select(i, ...)] = nil end
+    end
+    return t
+end
+
+-- Filter by a value
+function Self.TblOnly(t, val, k)
+    for i,v in pairs(t) do
+        if v ~= val then
+            if k then t[i] = nil else tremove(t, i) end
+        end
+    end
+    return t
+end
+
+-- Filter by not being a value
+function Self.TblExcept(t, val, k)
+    for i,v in pairs(t) do
+        if v == val then
+            if k then t[i] = nil else tremove(t, i) end
+        end
+    end
+    return t
+end
+
+-- Filter by a set of key/value pairs in a table
+function Self.TblWhere(t, keyOrTbl, valOrDeep, k)
+    for i,v in pairs(t) do
+        if not Self.TblFindWhere(v, keyOrTbl, valOrDeep) then
+            if k then t[i] = nil else tremove(t, i) end
+        end
+    end
+    return t
+end
+
+-- Filter by not having a set of key/value pairs in a table
+function Self.TblExceptWhere(t, keyOrTbl, valOrDeep, k)
+    for i,v in pairs(t) do
+        if Self.TblFindWhere(t, keyOrTbl, valOrDeep) then
+            if k then t[i] = nil else tremove(t, i) end
+        end
+    end
+    return t
+end
+
+-- COPY
+
+-- Copy a table and optionally apply a function to every entry
+function Self.TblCopy(t, fn, index, ...)
+    local fn, u = Self.Fn(fn), {}
+    for i,v in pairs(t) do
+        if fn then
+            if index then
+                u[i] = fn(v, i, ...)
+            else
+                u[i] = fn(v, ...)
+            end
+        else
+            u[i] = v
+        end
+    end
+    return u
+end
+
+-- Filter by a function
+function Self.TblCopyFilter(t, fn, k, ...)
     fn = Self.Fn(fn) or Self.FnId
     local u = {}
     for i,v in pairs(t) do
@@ -465,28 +438,32 @@ function Self.TblFilter(t, fn, k, ...)
 end
 
 -- Pick specific keys from a table
-function Self.TblSelect(t, ...)
-    local isTbl = type(...) == "table"
+function Self.TblCopySelect(t, ...)
     local u = {}
-    for i=1,isTbl and #... or select("#", ...) do
-        local v = isTbl and (...)[i] or select(i, ...)
-        u[v] = t[v]
+    if type(...) == "table" then
+        for i,v in pairs(...) do u[v] = t[v] end
+    else
+        for i=1,select("#", ...) do
+            local v = select(i, ...)
+            u[v] = t[v]
+        end
     end
     return u
 end
 
 -- Omit specific keys from a table
-function Self.TblOmit(t, ...)
-    local isTbl = type(...) == "table"
-    local u = Self.TblCopy(t)
-    for i=1,isTbl and #... or select("#", ...) do
-        u[Tbl and (...)[i] or select(i, ...)] = nil
+function Self.TblCopyUnselect(t, ...)
+    local u, isTbl = {}, type(...) == "table"
+    for i,v in pairs(t) do
+        if not Util.In(i, ...) then
+            u[i] = v
+        end
     end
     return u
 end
 
 -- Filter by a value
-function Self.TblOnly(t, val, k)
+function Self.TblCopyOnly(t, val, k)
     local u = {}
     for i,v in pairs(t) do
         if v == val then
@@ -497,7 +474,7 @@ function Self.TblOnly(t, val, k)
 end
 
 -- Filter by not being a value
-function Self.TblExcept(t, val, k)
+function Self.TblCopyExcept(t, val, k)
     local u = {}
     for i,v in pairs(t) do
         if v ~= val then
@@ -508,11 +485,10 @@ function Self.TblExcept(t, val, k)
 end
 
 -- Filter by a set of key/value pairs in a table
-function Self.TblWhere(t, keyOrTbl, valOrDeep, k)
-    local isTbl = type(keyOrTbl) == "table"
+function Self.TblCopyWhere(t, keyOrTbl, valOrDeep, k)
     local u = {}
     for i,v in pairs(t) do
-        if isTbl and Self.TblContains(v, keyOrTbl, valOrDeep) or not isTbl and (valOrDeep == nil and v[keyOrTbl] ~= nil or valOrDeep ~= nil and v[keyOrTbl] == valOrDeep) then
+        if Self.TblFindWhere(u, keyOrTbl, valOrDeep) then
             if k then u[i] = v else tinsert(u, v) end
         end
     end
@@ -520,11 +496,10 @@ function Self.TblWhere(t, keyOrTbl, valOrDeep, k)
 end
 
 -- Filter by not having a set of key/value pairs in a table
-function Self.TblExceptWhere(t, keyOrTbl, valOrDeep, k)
-    local isTbl = type(keyOrTbl) == "table"
+function Self.TblCopyExceptWhere(t, keyOrTbl, valOrDeep, k)
     local u = {}
     for i,v in pairs(t) do
-        if isTbl and not Self.TblContains(v, keyOrTbl, valOrDeep) or not isTbl and not (valOrDeep == nil and v[keyOrTbl] ~= nil or valOrDeep ~= nil and v[keyOrTbl] == valOrDeep) then
+        if not Self.TblFindWhere(u, keyOrTbl, valOrDeep) then
             if k then u[i] = v else tinsert(u, v) end
         end
     end
@@ -534,48 +509,38 @@ end
 -- MAP
 
 -- Change table values by applying a function
-function Self.TblMap(t, fn, ...)
+function Self.TblMap(t, fn, index, ...)
     fn = Self.Fn(fn)
-    local u = {}
     for i,v in pairs(t) do
-        u[i] = fn(v, i, ...)
+        if index then
+            t[i] = fn(v, i, ...)
+        else
+            t[i] = fn(v, ...)
+        end
     end
-    return u
+    return t
 end
 
 -- Change table keys by applying a function
-function Self.TblMapKeys(t, fn, ...)
+function Self.TblMapKeys(t, fn, value, ...)
     fn = Self.Fn(fn)
     local u = {}
     for i,v in pairs(t) do
-        u[fn(v, i, ...)] = v
+        if value then
+            u[fn(i, v, ...)] = v
+        else
+            u[fn(i, ...)] = v
+        end
     end
     return u
 end
 
--- Change table keys and values by applying a function
-function Self.TblMapBoth(t, fn, ...)
-    fn = Self.Fn(fn)
-    local u = {}
+-- Change table values by extracting a key
+function Self.TblPluck(t, k)
     for i,v in pairs(t) do
-        i, v = fn(v, i, ...)
-        u[i] = v
+        t[i] = v[k]
     end
-    return u
-end
-
--- Get table keys
-function Self.TblKeys(t)
-    local u = {}
-    for i,v in pairs(t) do tinsert(u, i) end
-    return u
-end
-
--- Get table values as continuously indexed list
-function Self.TblValues(t)
-    local u = {}
-    for i,v in pairs(t) do tinsert(u, v) end
-    return u
+    return t
 end
 
 -- Flip table keys and values
@@ -583,16 +548,11 @@ function Self.TblFlip(t, fn, ...)
     fn = Self.Fn(fn)
     local u = {}
     for i,v in pairs(t) do
-        if fn then u[v] = fn(v, i, ...) else u[v] = i end
-    end
-    return u
-end
-
--- Extract a list of property values
-function Self.TblPluck(t, k)
-    local u = {}
-    for i,v in pairs(t) do
-        u[i] = v[k]
+        if fn then
+            u[v] = fn(v, i, ...)
+        else
+            u[v] = i
+        end
     end
     return u
 end
@@ -636,46 +596,60 @@ end
 -- SET
 
 -- Make sure all table entries are unique 
-local Fn = function (v, u)
-    local r = not u[v]
-    u[v] = true
-    return r
-end
 function Self.TblUnique(t, k)
-    local u = {}
-    return Self.Filter(t, Fn, k, u)
-end
-
--- Calculate the intersection of tables
-function Self.TblIntersect(t, ...)
-    local k = select(select("#", ...), ...) == true
-
-    local u = Self.TblCopy(t)
-    for i=1,select("#", ...) - (k and 1 or 0) do
-        tbl = Self.TblFlip(select(i, ...), Self.FnTrue)
-        for i,v in pairs(u) do
-            if not tbl[v] then
-                if k then u[i] = nil else tremove(u, i) end
-            end
+    for i,v in pairs(t) do
+        if Self.TblCountVal(t, v) > 1 then
+            if k then t[i] = nil else tremove(t, i) end
         end
     end
-    return u
 end
 
--- Calculate the difference between tables
+-- Substract the given tables from the table
 function Self.TblDiff(t, ...)
     local k = select(select("#", ...), ...) == true
 
-    local u = Self.TblCopy(t)
-    for i=1,select("#", ...) - (k and 1 or 0) do
-        tbl = Self.TblFlip(select(i, ...), Self.FnTrue)
-        for i,v in pairs(u) do
-            if tbl[v] then
-                if k then u[i] = nil else tremove(u, i) end
+    for i,v in pairs(t) do
+        for i=1, select("#", ...) - (k and 1 or 0) do
+            if Self.In(v, (select(i, ...))) then
+                if k then t[i] = nil else tremove(t, i) end
+                break
             end
         end
     end
-    return u
+    return t
+end
+
+-- Intersect the table with given tables
+function Self.TblIntersect(t, ...)
+    local k = select(select("#", ...), ...) == true
+
+    for i,v in pairs(t) do
+        for i=1, select("#", ...) - (k and 1 or 0) do
+            if not Self.In(v, (select(i, ...))) then
+                if k then t[i] = nil else tremove(t, i) end
+                break
+            end
+        end
+    end
+    return t
+end
+
+-- Check if the intersection of the given tables is not empty
+function Self.TblIntersects(t, ...)
+    for i,v in pairs(t) do
+        local found = true
+        for i=1, select("#", ...) do
+            if not Self.In(v, (select(i, ...))) then
+                found = false
+                break
+            end
+        end
+
+        if found then
+            return true
+        end
+    end
+    return false
 end
 
 -- CHANGE
@@ -709,7 +683,6 @@ end
 
 -- Sort a table of tables by given table keys and default values
 local Fn = function (a, b) return -Self.Compare(a, b) end
-
 function Self.TblSortBy(t, ...)
     local args = type(...) == "table" and (...) or {...}
     return Self.TblSort(t, function (a, b)
@@ -896,8 +869,7 @@ end
 --                       Other                       --
 -------------------------------------------------------
 
--- xpcall safecall implementation
-
+-- Safecall
 local xpcall = xpcall
 
 local function errorhandler(err)
@@ -939,33 +911,20 @@ function Self.Safecall(func, ...)
 	return Dispatchers[select("#", ...)](func, ...)
 end
 
--- SWITCH
-
--- Almost a real switch statement for lua
-function Self.Switch(case)
-    return function(code)
-        local r = code[case] or code.default
-        if type(r) == "function" then
-            return r(case)
-        else
-            return r
-        end
-    end
-end
-
--- IN
-
 -- Shortcut for val == x or val == y or ...
 function Self.In(val, ...)
-    for i=1,select("#", ...) do
-        if select(i, ...) == val then
-            return true
+    if type(...) == "table" then
+        for i,v in pairs(...) do
+            if v == val then return true end
+        end
+    else
+        for i=1,select("#", ...) do
+            if select(i, ...) == val then return true end
         end
     end
+
     return false
 end
-
--- TO STRING
 
 -- Get string representation values for dumping
 function Self.ToString(val, depth)
@@ -984,7 +943,7 @@ function Self.ToString(val, depth)
                 if i ~= j then s = s .. i .. " = " end
                 j = j + 1
                 return s .. Self.ToString(v, depth-1)
-            end, "{") .. "}"
+            end, "{", true) .. "}"
         end
     elseif t == "boolean" then
         return val and "true" or "false"
@@ -997,16 +956,12 @@ function Self.ToString(val, depth)
     end
 end
 
--- DUMP
-
 -- Dump all given values
 function Self.Dump(...)
     for i=1,select("#", ...) do
         print(Self.ToString((select(i, ...))))
     end
 end
-
--- TRACE
 
 -- Stacktrace
 function Self.Trace()
@@ -1022,15 +977,11 @@ end
 Self.C = {v = nil, k = nil}
 local Fn = function (...)
     local c, k, v = Self.C, rawget(Self.C, "k"), rawget(Self.C, "v")
-    local pre = Self.Switch(type(v)) {
-        table = "Tbl",
-        string = "Str",
-        number = "Num",
-        ["function"] = "Fn"
-    }
-    k = pre and Self[pre .. k] and pre .. k or k
 
-    c.v = Self[k](v, ...)
+    local t = type(v)
+    local pre = t == "table" and "Tbl" or t == "string" and "Str" or t == "number" and "num" or t == "function" and "Fn"
+
+    c.v = Self[pre and Self[pre .. k] and pre .. k or k](v, ...)
     return c
 end
 setmetatable(Self.C, {

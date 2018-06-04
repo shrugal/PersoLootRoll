@@ -1,5 +1,6 @@
 local Name, Addon = ...
 local Inspect = Addon.Inspect
+local Unit = Addon.Unit
 local Util = Addon.Util
 local Self = Addon.Item
 
@@ -37,99 +38,99 @@ Self.ATTRIBUTES = {ITEM_MOD_STRENGTH_SHORT, ITEM_MOD_INTELLECT_SHORT, ITEM_MOD_A
 
 -- What primary attributes classes use
 Self.CLASS_ATTRIBUTES = {
-    [ITEM_MOD_STRENGTH_SHORT] = {Util.DEATH_KNIGHT, Util.PALADIN, Util.WARRIOR},
-    [ITEM_MOD_INTELLECT_SHORT] = {Util.DRUID, Util.MAGE, Util.MONK, Util.PALADIN, Util.PRIEST, Util.SHAMAN, Util.WARLOCK},
-    [ITEM_MOD_AGILITY_SHORT] = {Util.DEMON_HUNTER, Util.DRUID, Util.HUNTER, Util.MONK, Util.ROGUE, Util.SHAMAN}
+    [ITEM_MOD_STRENGTH_SHORT] = {Unit.DEATH_KNIGHT, Unit.PALADIN, Unit.WARRIOR},
+    [ITEM_MOD_INTELLECT_SHORT] = {Unit.DRUID, Unit.MAGE, Unit.MONK, Unit.PALADIN, Unit.PRIEST, Unit.SHAMAN, Unit.WARLOCK},
+    [ITEM_MOD_AGILITY_SHORT] = {Unit.DEMON_HUNTER, Unit.DRUID, Unit.HUNTER, Unit.MONK, Unit.ROGUE, Unit.SHAMAN}
 }
 
 -- What gear classes can equip
 Self.CLASS_GEAR = {
     [LE_ITEM_CLASS_ARMOR] = {
         [LE_ITEM_ARMOR_GENERIC] = true,
-        [LE_ITEM_ARMOR_CLOTH] = {Util.MAGE, Util.PRIEST, Util.WARLOCK},
-        [LE_ITEM_ARMOR_LEATHER] = {Util.DEMON_HUNTER, Util.DRUID, Util.MONK, Util.ROGUE},
-        [LE_ITEM_ARMOR_MAIL] = {Util.HUNTER, Util.SHAMAN},
-        [LE_ITEM_ARMOR_PLATE] = {Util.DEATH_KNIGHT, Util.PALADIN, Util.WARRIOR},
-        [LE_ITEM_ARMOR_SHIELD] = {Util.PALADIN, Util.SHAMAN, Util.WARRIOR}
+        [LE_ITEM_ARMOR_CLOTH] = {Unit.MAGE, Unit.PRIEST, Unit.WARLOCK},
+        [LE_ITEM_ARMOR_LEATHER] = {Unit.DEMON_HUNTER, Unit.DRUID, Unit.MONK, Unit.ROGUE},
+        [LE_ITEM_ARMOR_MAIL] = {Unit.HUNTER, Unit.SHAMAN},
+        [LE_ITEM_ARMOR_PLATE] = {Unit.DEATH_KNIGHT, Unit.PALADIN, Unit.WARRIOR},
+        [LE_ITEM_ARMOR_SHIELD] = {Unit.PALADIN, Unit.SHAMAN, Unit.WARRIOR}
     },
     [LE_ITEM_CLASS_WEAPON] = {
-        [LE_ITEM_WEAPON_AXE1H] = {Util.DEATH_KNIGHT, Util.DEMON_HUNTER, Util.HUNTER, Util.MONK, Util.PALADIN, Util.ROGUE, Util.SHAMAN, Util.WARRIOR},
-        [LE_ITEM_WEAPON_MACE1H] = {Util.DEATH_KNIGHT, Util.DRUID, Util.MONK, Util.PALADIN, Util.PRIEST, Util.ROGUE, Util.SHAMAN, Util.WARRIOR},
-        [LE_ITEM_WEAPON_SWORD1H] = {Util.DEATH_KNIGHT, Util.DEMON_HUNTER, Util.HUNTER, Util.MAGE, Util.MONK, Util.PALADIN, Util.ROGUE, Util.WARLOCK, Util.WARRIOR},
-        [LE_ITEM_WEAPON_WARGLAIVE] = {Util.DEMON_HUNTER},
-        [LE_ITEM_WEAPON_DAGGER] = {Util.DEMON_HUNTER, Util.DRUID, Util.HUNTER, Util.MAGE, Util.PRIEST, Util.ROGUE, Util.SHAMAN, Util.WARLOCK, Util.WARRIOR},
-        [LE_ITEM_WEAPON_UNARMED] = {Util.DEMON_HUNTER, Util.DRUID, Util.HUNTER, Util.MONK, Util.ROGUE, Util.SHAMAN, Util.WARRIOR},
-        [LE_ITEM_WEAPON_WAND] = {Util.MAGE, Util.PRIEST, Util.WARLOCK},
-        [LE_ITEM_WEAPON_AXE2H] = {Util.DEATH_KNIGHT, Util.PALADIN, Util.SHAMAN, Util.WARRIOR},
-        [LE_ITEM_WEAPON_MACE2H] = {Util.DEATH_KNIGHT, Util.PALADIN, Util.SHAMAN, Util.WARRIOR},
-        [LE_ITEM_WEAPON_SWORD2H] = {Util.DEATH_KNIGHT, Util.PALADIN, Util.WARRIOR},
-        [LE_ITEM_WEAPON_POLEARM] = {Util.DEATH_KNIGHT, Util.DRUID, Util.HUNTER, Util.MONK, Util.PALADIN, Util.WARRIOR},
-        [LE_ITEM_WEAPON_STAFF] = {Util.DRUID, Util.HUNTER, Util.MAGE, Util.MONK, Util.PRIEST, Util.SHAMAN, Util.WARLOCK, Util.WARRIOR},
-        [LE_ITEM_WEAPON_BOWS] = {Util.HUNTER, Util.WARRIOR},
-        [LE_ITEM_WEAPON_CROSSBOW] = {Util.HUNTER, Util.WARRIOR},
-        [LE_ITEM_WEAPON_GUNS] = {Util.HUNTER, Util.WARRIOR},
-        [LE_ITEM_WEAPON_THROWN] = {Util.ROGUE, Util.WARRIOR}
+        [LE_ITEM_WEAPON_AXE1H] = {Unit.DEATH_KNIGHT, Unit.DEMON_HUNTER, Unit.HUNTER, Unit.MONK, Unit.PALADIN, Unit.ROGUE, Unit.SHAMAN, Unit.WARRIOR},
+        [LE_ITEM_WEAPON_MACE1H] = {Unit.DEATH_KNIGHT, Unit.DRUID, Unit.MONK, Unit.PALADIN, Unit.PRIEST, Unit.ROGUE, Unit.SHAMAN, Unit.WARRIOR},
+        [LE_ITEM_WEAPON_SWORD1H] = {Unit.DEATH_KNIGHT, Unit.DEMON_HUNTER, Unit.HUNTER, Unit.MAGE, Unit.MONK, Unit.PALADIN, Unit.ROGUE, Unit.WARLOCK, Unit.WARRIOR},
+        [LE_ITEM_WEAPON_WARGLAIVE] = {Unit.DEMON_HUNTER},
+        [LE_ITEM_WEAPON_DAGGER] = {Unit.DEMON_HUNTER, Unit.DRUID, Unit.HUNTER, Unit.MAGE, Unit.PRIEST, Unit.ROGUE, Unit.SHAMAN, Unit.WARLOCK, Unit.WARRIOR},
+        [LE_ITEM_WEAPON_UNARMED] = {Unit.DEMON_HUNTER, Unit.DRUID, Unit.HUNTER, Unit.MONK, Unit.ROGUE, Unit.SHAMAN, Unit.WARRIOR},
+        [LE_ITEM_WEAPON_WAND] = {Unit.MAGE, Unit.PRIEST, Unit.WARLOCK},
+        [LE_ITEM_WEAPON_AXE2H] = {Unit.DEATH_KNIGHT, Unit.PALADIN, Unit.SHAMAN, Unit.WARRIOR},
+        [LE_ITEM_WEAPON_MACE2H] = {Unit.DEATH_KNIGHT, Unit.PALADIN, Unit.SHAMAN, Unit.WARRIOR},
+        [LE_ITEM_WEAPON_SWORD2H] = {Unit.DEATH_KNIGHT, Unit.PALADIN, Unit.WARRIOR},
+        [LE_ITEM_WEAPON_POLEARM] = {Unit.DEATH_KNIGHT, Unit.DRUID, Unit.HUNTER, Unit.MONK, Unit.PALADIN, Unit.WARRIOR},
+        [LE_ITEM_WEAPON_STAFF] = {Unit.DRUID, Unit.HUNTER, Unit.MAGE, Unit.MONK, Unit.PRIEST, Unit.SHAMAN, Unit.WARLOCK, Unit.WARRIOR},
+        [LE_ITEM_WEAPON_BOWS] = {Unit.HUNTER, Unit.WARRIOR},
+        [LE_ITEM_WEAPON_CROSSBOW] = {Unit.HUNTER, Unit.WARRIOR},
+        [LE_ITEM_WEAPON_GUNS] = {Unit.HUNTER, Unit.WARRIOR},
+        [LE_ITEM_WEAPON_THROWN] = {Unit.ROGUE, Unit.WARRIOR}
     }
 }
 
 -- Artifact relic slots
 Self.CLASS_RELICS = {
-    [Util.DEATH_KNIGHT] = {
+    [Unit.DEATH_KNIGHT] = {
         [128402] = {RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_IRON}, -- Blood
         [128292] = {RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_FROST}, -- Frost
         [128403] = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_BLOOD}, -- Unholy
     },
-    [Util.DEMON_HUNTER] = {
+    [Unit.DEMON_HUNTER] = {
         [127829] = {RELIC_SLOT_TYPE_FEL, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_FEL}, -- Havoc
         [128832] = {RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_FEL}, -- Vengeance
     },
-    [Util.DRUID] = {
+    [Unit.DRUID] = {
         [128858] = {RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_ARCANE}, -- Balance
         [128860] = {RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_LIFE}, -- Feral
         [128821] = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_LIFE}, -- Guardian
         [128306] = {RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_LIFE}, -- Restoration
     },
-    [Util.HUNTER] = {
+    [Unit.HUNTER] = {
         [128861] = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_IRON}, -- Beast Mastery
         [128826] = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_LIFE}, -- Marksmanship
         [128808] = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_BLOOD}, -- Survival
     },
-    [Util.MAGE] = {
+    [Unit.MAGE] = {
         [127857] = {RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_ARCANE}, -- Arcane
         [128820] = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_FIRE}, -- Fire
         [128862] = {RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_FROST}, -- Frost
     },
-    [Util.MONK] = {
+    [Unit.MONK] = {
         [128938] = {RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON}, -- Brewmaster
         [128937] = {RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_WIND}, -- Mistweaver
         [128940] = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_WIND}, -- Windwalker
     },
-    [Util.PALADIN] = {
+    [Unit.PALADIN] = {
         [128823] = {RELIC_SLOT_TYPE_HOLY, RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_HOLY}, -- Holy
         [128866] = {RELIC_SLOT_TYPE_HOLY, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_ARCANE}, -- Protection
         [120978] = {RELIC_SLOT_TYPE_HOLY, RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_HOLY}, -- Retribution
     },
-    [Util.PRIEST] = {
+    [Unit.PRIEST] = {
         [128868] = {RELIC_SLOT_TYPE_HOLY, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_HOLY}, -- Discipline
         [128825] = {RELIC_SLOT_TYPE_HOLY, RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_HOLY}, -- Holy
         [128827] = {RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_SHADOW}, -- Shadow
     },
-    [Util.ROGUE] = {
+    [Unit.ROGUE] = {
         [128870] = {RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_BLOOD}, -- Assassination
         [128872] = {RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_WIND}, -- Outlaw
         [128476] = {RELIC_SLOT_TYPE_FEL, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_FEL}, -- Subtlety
     },
-    [Util.SHAMAN] = {
+    [Unit.SHAMAN] = {
         [128935] = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_WIND}, -- Elemental
         [128819] = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_WIND}, -- Enhancement
         [128911] = {RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_LIFE}, -- Restoration
     },
-    [Util.WARLOCK] = {
+    [Unit.WARLOCK] = {
         [128942] = {RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_SHADOW}, -- Affliction
         [128943] = {RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_FEL}, -- Demonology
         [128941] = {RELIC_SLOT_TYPE_FEL, RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_FEL}, -- Destruction
     },
-    [Util.WARRIOR] = {
+    [Unit.WARRIOR] = {
         [128910] = {RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_SHADOW}, -- Arms
         [128908] = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON}, -- Fury
         [128289] = {RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_FIRE}, -- Protection
@@ -145,18 +146,18 @@ Self.TRINKET_TANK = 5
 
 -- What trinkets classes use
 Self.CLASS_TRINKETS = {
-    [Util.DEATH_KNIGHT] =   {Self.TRINKET_STR, Self.TRINKET_TANK},
-    [Util.DEMON_HUNTER] =   {Self.TRINKET_AGI, Self.TRINKET_TANK},
-    [Util.DRUID] =          {Self.TRINKET_AGI, Self.TRINKET_INT, Self.TRINKET_HEAL, Self.TRINKET_TANK},
-    [Util.HUNTER] =         {Self.TRINKET_AGI},
-    [Util.MAGE] =           {Self.TRINKET_INT},
-    [Util.MONK] =           {Self.TRINKET_AGI, Self.TRINKET_HEAL, Self.TRINKET_TANK},
-    [Util.PALADIN] =        {Self.TRINKET_STR, Self.TRINKET_HEAL, Self.TRINKET_TANK},
-    [Util.PRIEST] =         {Self.TRINKET_INT, Self.TRINKET_HEAL},
-    [Util.ROGUE] =          {Self.TRINKET_AGI},
-    [Util.SHAMAN] =         {Self.TRINKET_AGI, Self.TRINKET_INT, Self.TRINKET_HEAL},
-    [Util.WARLOCK] =        {Self.TRINKET_INT},
-    [Util.WARRIOR] =        {Self.TRINKET_STR, Self.TRINKET_TANK}
+    [Unit.DEATH_KNIGHT] =   {Self.TRINKET_STR, Self.TRINKET_TANK},
+    [Unit.DEMON_HUNTER] =   {Self.TRINKET_AGI, Self.TRINKET_TANK},
+    [Unit.DRUID] =          {Self.TRINKET_AGI, Self.TRINKET_INT, Self.TRINKET_HEAL, Self.TRINKET_TANK},
+    [Unit.HUNTER] =         {Self.TRINKET_AGI},
+    [Unit.MAGE] =           {Self.TRINKET_INT},
+    [Unit.MONK] =           {Self.TRINKET_AGI, Self.TRINKET_HEAL, Self.TRINKET_TANK},
+    [Unit.PALADIN] =        {Self.TRINKET_STR, Self.TRINKET_HEAL, Self.TRINKET_TANK},
+    [Unit.PRIEST] =         {Self.TRINKET_INT, Self.TRINKET_HEAL},
+    [Unit.ROGUE] =          {Self.TRINKET_AGI},
+    [Unit.SHAMAN] =         {Self.TRINKET_AGI, Self.TRINKET_INT, Self.TRINKET_HEAL},
+    [Unit.WARLOCK] =        {Self.TRINKET_INT},
+    [Unit.WARRIOR] =        {Self.TRINKET_STR, Self.TRINKET_TANK}
 }
 
 -- Armor locations
@@ -343,7 +344,7 @@ end
 -- Create an item instance from a link
 function Self.FromLink(item, owner, bagOrEquip, slot)
     if type(item) == "string" then
-        owner = Util.GetName(owner or "player")
+        owner = Unit.Name(owner or "player")
         item = {
             link = item,
             owner = owner,
@@ -451,7 +452,7 @@ function Self:GetBasicInfo()
 
             -- Trinket info
             if self.equipLoc == Self.TYPE_TRINKET then
-                self.trinketTypes = Util.TblMap(Self.TRINKETS, mapFn, self.id)
+                self.trinketTypes = Util.TblCopy(Self.TRINKETS, mapFn, self.id)
             end
         end
     end
@@ -599,23 +600,21 @@ end
 
 -- Get the reference level for equipment location
 function Self:GetLevelForLocation(unit)
-    unit = Util.GetName(unit or "player")
+    unit = Unit.Name(unit or "player")
     local location = self:GetBasicInfo().isRelic and self:GetFullInfo().relicType or self.equipLoc
 
     if UnitIsUnit(unit, "player") then
         -- For the player
         local cache = Self.playerSlotLevels[location] or {}
-        if not cache.time or cache.time + Inspect.REFRESH < GetTime() then
+        if not cache.ilvl or not cache.time or cache.time + Inspect.REFRESH < GetTime() then
             cache.time = GetTime()
-
-            local items = self:GetOwnedForLocation()
-            for i,link in pairs(items) do
-                items[i] = Self.GetInfo(link, "level")
-            end
-            cache.ilvl = Util.TblSort(items, true)[self:GetSlotCountForLocation()] or 0
+            cache.ilvl = Util(self:GetOwnedForLocation())
+                .Map(Self.GetInfo, false, "level")
+                .Sort(true)(self:GetSlotCountForLocation())
+            Self.playerSlotLevels[location] = cache
         end
 
-        return cache.ilvl
+        return cache.ilvl or 0
     else
         -- For other players
         return Inspect.Get(unit, location)
@@ -746,8 +745,7 @@ function Self:IsUseful(unit)
     if not (self:CanBeEquipped(unit) and self:HasMatchingAttributes(unit)) then
         return false
     elseif self:GetBasicInfo().equipLoc == Self.TYPE_TRINKET then
-        -- Check if it's the right trinket type
-        return not next(self.trinketTypes) or next(Util.TblIntersect(self.trinketTypes, Self.CLASS_TRINKETS[select(3, UnitClass(unit))]))
+        return not next(self.trinketTypes) or Util.TblIntersects(self.trinketTypes, Self.CLASS_TRINKETS[select(3, UnitClass(unit))])
     else
         return true
     end
@@ -765,19 +763,19 @@ function Self:GetEligible(unit)
         else
             self.eligible = {}
             Util.SearchGroup(function (i, unit)
-                if unit and self:IsUseful(unit) then
+                if unit and (self.isOwner or self:IsUseful(unit)) then
                     self.eligible[unit] = self:HasSufficientLevel(unit)
                 end
             end)
 
-            if Addon.DEBUG and self:IsUseful(UnitName("player")) then
-                self.eligible[UnitName("player")] = self:HasSufficientLevel()
+            if Addon.DEBUG and self.isOwner and self.eligible[UnitName("player")] == nil then
+                self.eligible[UnitName("player")] = self:IsUseful() and self:HasSufficientLevel()
             end
         end
     end
 
     if unit then
-        return self.eligible[Util.GetName(unit)]
+        return self.eligible[Unit.Name(unit)]
     else
         return self.eligible
     end
@@ -979,25 +977,29 @@ end
 
 -- An item as been moved
 function Self.OnMove(from, to)
-    Util(Addon.rolls).Where({item = {isOwner = true}, traded = false}, true).Search(function (roll)
-        if Util.TblEquals(from, roll.item.position) then
-            roll.item:SetPosition(to)
-            return true
+    for i,roll in pairs(Addon.rolls) do
+        if roll.item.isOwner and not roll.traded then
+            if Util.TblEquals(from, roll.item.position) then
+                roll.item:SetPosition(to)
+                return true
+            end
         end
-    end)
+    end
 end
 
 -- Two items have switched places
 function Self.OnSwitch(pos1, pos2)
     local item1, item2
-    Util(Addon.rolls).Where({item = {isOwner = true}, traded = false}, true).Search(function (roll)
+    for i,roll in pairs(Addon.rolls) do
         if not item1 and Util.TblEquals(pos1, roll.item.position) then
             item1 = roll.item
         elseif not item2 and Util.TblEquals(pos2, roll.item.position) then
             item2 = roll.item
         end
-        return item1 and item2
-    end)
+        if item1 and item2 then
+            break
+        end
+    end
 
     if item1 then item1:SetPosition(pos2) end
     if item2 then item2:SetPosition(pos1) end

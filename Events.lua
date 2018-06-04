@@ -8,6 +8,7 @@ local Locale = Addon.Locale
 local Masterloot = Addon.Masterloot
 local Roll = Addon.Roll
 local Trade = Addon.Trade
+local Unit = Addon.Unit
 local Util = Addon.Util
 local Self = Addon.Events
 
@@ -137,7 +138,7 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
             local bid = to < 100 and Roll.BID_GREED or Roll.BID_NEED
             
             -- Register the unit's bid
-            if Util.UnitInGroup(unit) and roll and (fromSelf and roll:CanBeWon(unit) or roll:CanBeAwardedTo(unit)) and not roll.bids[unit] then
+            if Unit.InGroup(unit) and roll and (fromSelf and roll:CanBeWon(unit) or roll:CanBeAwardedTo(unit)) and not roll.bids[unit] then
                 roll:Bid(bid, unit, not fromSelf)
             end
             return
@@ -191,8 +192,8 @@ end
 -- Loot
 
 function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
-    unit = Util.GetUnit(sender)
-    if not Addon:IsTracking() or not Util.UnitInGroup(unit) then return end
+    unit = Unit(sender)
+    if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
 
     local item = Item.GetLink(msg)
 
@@ -221,7 +222,7 @@ end
 -- Group/Raid/Instance
 
 function Self.CHAT_MSG_PARTY(event, msg, sender)
-    unit = Util.GetUnit(sender)
+    unit = Unit(sender)
     if not Addon:IsTracking() then return end
 
     local fromSelf = UnitIsUnit(unit, "player")
@@ -254,8 +255,8 @@ end
 -- Whisper
 
 function Self.CHAT_MSG_WHISPER(event, msg, sender)
-    unit = Util.GetUnit(sender)
-    if not Addon:IsTracking() or not Util.UnitInGroup(unit) then return end
+    unit = Unit(sender)
+    if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
 
     local answer = Addon.db.profile.answer
     local link = Item.GetLink(msg)
@@ -440,10 +441,10 @@ end)
 
 -- Roll status
 Comm.ListenData(Comm.EVENT_ROLL_STATUS, function (event, data, channel, sender, unit)
-    data.owner = Util.GetName(data.owner)
-    data.item.owner = Util.GetName(data.item.owner)
-    data.winner = Util.GetName(data.winner)
-    data.traded = data.traded and Util.GetName(data.traded)
+    data.owner = Unit.Name(data.owner)
+    data.item.owner = Unit.Name(data.item.owner)
+    data.winner = Unit.Name(data.winner)
+    data.traded = data.traded and Unit.Name(data.traded)
 
     Roll.Update(data, unit)
 end)
@@ -453,7 +454,7 @@ Comm.ListenData(Comm.EVENT_BID, function (event, data, channel, sender, unit)
     local owner = data.fromUnit and unit or nil
     local fromUnit = data.fromUnit or unit
 
-    if not UnitIsUnit(Util.GetUnit(fromUnit), "player") and (not owner or Masterloot.IsMasterlooter(owner)) then
+    if not UnitIsUnit(Unit(fromUnit), "player") and (not owner or Masterloot.IsMasterlooter(owner)) then
         local roll = Roll.Find(data.ownerId, owner)
         
         if roll then
@@ -467,7 +468,7 @@ Comm.ListenData(Comm.EVENT_VOTE, function (event, data, channel, sender, unit)
     local owner = data.fromUnit and unit or nil
     local fromUnit = data.fromUnit or unit
     
-    if not UnitIsUnit(Util.GetUnit(fromUnit), "player") and (not owner or Masterloot.IsMasterlooter(owner)) then
+    if not UnitIsUnit(Unit(fromUnit), "player") and (not owner or Masterloot.IsMasterlooter(owner)) then
         local roll = Roll.Find(data.ownerId, owner)
         
         if roll then

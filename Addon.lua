@@ -134,61 +134,68 @@ function Addon:HandleChatCommand(msg)
     local args = {Addon:GetArgs(msg, 10)}
     local cmd = args[1]
 
-    Util.Switch(cmd) {
-        ["help"] = function () self:Help() end,
-        ["options"] = function () self:ShowOptions() end,
-        ["config"] = function () LibStub("AceConfigCmd-3.0").HandleCommand(Addon, "plr config", Name, msg:sub(7)) end,
-        ["rolls"] = self.GUI.Rolls.Show,
-        ["roll"] = function  ()
-            local items, i, item = {}, 1
-    
-            while i do
-                i, item = next(args, i)
-                if i and Item.IsLink(item) then
-                    tinsert(items, item)
-                end
+    -- Help
+    if cmd == "help" then
+        self:Help()
+    -- Options
+    elseif cmd == "options" then
+        self:ShowOptions()
+    -- Config
+    elseif cmd == "config" then
+        LibStub("AceConfigCmd-3.0").HandleCommand(Addon, "plr config", Name, msg:sub(7))
+    -- Roll
+    elseif cmd == "roll" then
+        local items, i, item = {}, 1
+
+        while i do
+            i, item = next(args, i)
+            if i and Item.IsLink(item) then
+                tinsert(items, item)
             end
-    
-            if not next(items) then
-                self:Print(L["USAGE_ROLL"])
-            else
-                i = table.getn(items) + 2
-                local timeout, owner = tonumber(args[i]), args[i+1]
-                
-                for i,item in pairs(items) do
-                    item = Item.FromLink(item)
-                    self.Roll.Add(item, owner or self.Masterloot.GetMasterlooter() or nil, timeout):Start()
-                end
-            end
-        end,
-        ["bid"] = function ()
-            local owner, item, bid = select(2, unpack(args))
+        end
+
+        if not next(items) then
+            self:Print(L["USAGE_ROLL"])
+        else
+            i = table.getn(items) + 2
+            local timeout, owner = tonumber(args[i]), args[i+1]
             
-            if Util.StrEmpty(owner) or Item.IsLink(owner)                            -- owner
-            or item and not Item.IsLink(item)                                        -- item
-            or bid and not Util.TblFind(self.Roll.BIDS, tonumber(bid)) then -- answer
-                self:Print(L["USAGE_BID"])
-            else
-                local roll = self.Roll.Find(nil, owner, item)
-                if roll then
-                    roll:Bid(bid)
-                else
-                    self.Comm.RollBid(owner, item, true)
-                end
+            for i,item in pairs(items) do
+                item = Item.FromLink(item)
+                self.Roll.Add(item, owner or self.Masterloot.GetMasterlooter() or nil, timeout):Start()
             end
-        end,
-        -- TODO
-        ["trade"] = function ()
-            local target = args[2]
-            Trade.Initiate(target or "target")
-        end,
-        -- TODO: DEBUG
-        ["test"] = function ()
-            local link = "|cffa335ee|Hitem:152412::::::::110:105::4:3:3613:1457:3528:::|h[Depraved Machinist's Footpads]|h|r"
-            local roll = Roll.Add(link):Start():Bid(Roll.BID_PASS):Bid(Roll.BID_NEED, "Zhael", true)
-        end,
-        default = self.GUI.Rolls.Show
-    }
+        end
+    -- Bid
+    elseif cmd == "bid" then
+        local owner, item, bid = select(2, unpack(args))
+        
+        if Util.StrEmpty(owner) or Item.IsLink(owner)                            -- owner
+        or item and not Item.IsLink(item)                                        -- item
+        or bid and not Util.TblFind(self.Roll.BIDS, tonumber(bid)) then -- answer
+            self:Print(L["USAGE_BID"])
+        else
+            local roll = self.Roll.Find(nil, owner, item)
+            if roll then
+                roll:Bid(bid)
+            else
+                self.Comm.RollBid(owner, item, true)
+            end
+        end
+    -- Trade
+    elseif cmd == "trade" then
+        local target = args[2]
+        Trade.Initiate(target or "target")
+    -- Test TODO: DEBUG
+    elseif cmd == "test" then
+        local link = "|cffa335ee|Hitem:152412::::::::110:105::4:3:3613:1457:3528:::|h[Depraved Machinist's Footpads]|h|r"
+        local roll = Roll.Add(link):Start():Bid(Roll.BID_PASS):Bid(Roll.BID_NEED, "Zhael", true)
+    -- Rolls/None
+    elseif cmd == "rolls" or not cmd then
+        self.GUI.Rolls.Show()
+    -- Unknown
+    else
+        self:Err(L["ERROR_CMD_UNKNOWN"]:format(cmd))
+    end
 end
 
 function Addon:Help()

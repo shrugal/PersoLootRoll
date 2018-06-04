@@ -32,6 +32,8 @@ if not L then return end
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "The owner of this item doesn't use the PersoLootRoll addon."
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "The PersoLootRoll addon doesn't support disenchanting."
 
+L["ENABLED"] = "Enabled"
+L["DISABLED"] = "Disabled"
 L["ITEM"] = "item"
 L["ID"] = ID
 L["OWNER"] = "Owner"
@@ -130,6 +132,7 @@ L["DIALOG_ROLL_CANCEL"] = "Do you want to cancel this roll?"
 L["DIALOG_ROLL_RESTART"] = "Do you want to restart this roll?"
 L["DIALOG_MASTERLOOT_ASK"] = "<%s> wants to become your masterlooter, do you want to accept that?"
 
+L["ERROR_CMD_UNKNOWN"] = "Unknown command '%s'"
 L["ERROR_PLAYER_NOT_FOUND"] = "Cannot find player %s."
 L["ERROR_ITEM_NOT_TRADABLE"] = "You cannot trade that item."
 L["ERROR_NOT_IN_GROUP"] = "You are not in a group or raid."

@@ -2,6 +2,7 @@ local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Roll = Addon.Roll
 local Trade = Addon.Trade
+local Unit = Addon.Unit
 local Util = Addon.Util
 local Self = Addon.Hooks
 
@@ -88,7 +89,7 @@ function Self.EnableGroupLootRoll()
             end
             
             local owner = Roll.Get(self.rollID).item.owner
-            local color = Util.GetUnitColor(owner)
+            local color = Unit.Color(owner)
             self.Player:SetText(owner)
             self.Player:SetTextColor(color.r, color.g, color.b)
             self.Player:Show()
@@ -221,18 +222,18 @@ function Self.EnableUnitMenus()
     if not Addon:IsHooked("UnitPopup_HideButtons") then
         Addon:SecureHook("UnitPopup_HideButtons", function ()
             local dropdownMenu = UIDROPDOWNMENU_INIT_MENU;
-            local unit = Util.GetName(dropdownMenu.unit or dropdownMenu.chatTarget)
+            local unit = Unit.Name(dropdownMenu.unit or dropdownMenu.chatTarget)
             local which = UIDROPDOWNMENU_MENU_VALUE or dropdownMenu.which
 
             if unit and Util.TblFind(MENUS, which) then
                 local i = Util.TblFind(UnitPopupMenus[which], NAME)
                 if i then
-                    if Util.UnitInGroup(unit) then
+                    if Unit.InGroup(unit) then
                         -- Populate submenu list with all awardable items for that unit
                         UnitPopupMenus[NAME] = Util.TblMap(Roll.ForUnit(unit, true), function (roll, i)
                             UnitPopupButtons[NAME .. i] = {text = roll.item.link, dist = 0, roll = roll.id}
                             return NAME .. i
-                        end)
+                        end, true)
 
                         -- Show parent entry if submenu isn't empty
                         UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][i] = next(UnitPopupMenus[NAME]) and 1 or 0
@@ -252,7 +253,7 @@ function Self.EnableUnitMenus()
 
             -- Disable all items buttons that can't be won anymore
             if dropdownMenu and dropdownMenu.which == NAME then
-                local unit = Util.GetName(dropdownMenu.unit or dropdownMenu.chatTarget)
+                local unit = Unit.Name(dropdownMenu.unit or dropdownMenu.chatTarget)
 
                 for i,_ in pairs(UnitPopupMenus[NAME]) do
                     local roll = Roll.Get(UnitPopupButtons[NAME .. i].roll)
@@ -268,7 +269,7 @@ function Self.EnableUnitMenus()
     if not Addon:IsHooked("UnitPopup_OnClick") then
         Addon:SecureHook("UnitPopup_OnClick", function (self)
             local dropdownMenu = UIDROPDOWNMENU_INIT_MENU
-            local unit = Util.GetName(dropdownMenu.unit or dropdownMenu.chatTarget)
+            local unit = Unit.Name(dropdownMenu.unit or dropdownMenu.chatTarget)
 
             if self.value and Util.StrStartsWith(self.value, NAME) then
                 local roll = Roll.Get(UnitPopupButtons[self.value].roll)

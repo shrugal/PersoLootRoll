@@ -6,6 +6,7 @@ local Item = Addon.Item
 local Locale = Addon.Locale
 local Masterloot = Addon.Masterloot
 local Trade = Addon.Trade
+local Unit = Addon.Unit
 local Util = Addon.Util
 local Self = Addon.Roll
 
@@ -39,7 +40,7 @@ end
 
 -- Get a roll by id and owner
 function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner)
-    owner = Util.GetName(owner or "player")
+    owner = Unit.Name(owner or "player")
     local id
     
     -- It's our own item
@@ -82,15 +83,15 @@ end
 
 -- Find rolls that the given unit can win from us
 function Self.ForUnit(unit, includeDone, k)
-    unit = Util.GetName(unit)
-    return Util.TblFilter(Addon.rolls, function (roll)
+    unit = Unit.Name(unit)
+    return Util.TblCopyFilter(Addon.rolls, function (roll)
         return roll:CanBeAwardedTo(unit, includeDone)
     end, k)
 end
 
 -- Add a roll to the list
 function Self.Add(item, owner, timeout, ownerId, itemOwnerId)
-    owner = Util.GetName(owner or "player")
+    owner = Unit.Name(owner or "player")
     item = Item.FromLink(item, owner)
 
     -- Create the roll entry
@@ -229,17 +230,22 @@ function Self.Update(data, unit)
 end
 
 -- Clear old rolls
-function Self.Clear(self)
-    local rolls = self and {self} or Util.TblFilter(Addon.rolls, function (roll, id)
-        return roll.created + Self.CLEAR < time()
-    end)
-    
-    for i, roll in pairs(rolls) do
-        if roll.status  < Self.STATUS_DONE then
-            roll:Cancel()
-        end
+local Fn = function (roll)
+    if roll.status  < Self.STATUS_DONE then
+        roll:Cancel()
+    end
 
-        Addon.rolls[roll.id] = nil
+    Addon.rolls[roll.id] = nil
+end
+function Self.Clear(self)
+    if self then
+        Fn(self)
+    else
+        for i, roll in pairs(Addon.rolls) do
+            if roll.created + Self.CLEAR < time() then
+                Fn(roll)
+            end
+        end
     end
 
     GUI.Rolls.Update()
@@ -378,7 +384,7 @@ end
 -- Bid on a roll
 function Self:Bid(bid, fromUnit, isImport)
     bid = bid or Self.BID_NEED
-    fromUnit = Util.GetName(fromUnit or "player")
+    fromUnit = Unit.Name(fromUnit or "player")
     local fromSelf = UnitIsUnit(fromUnit, "player")
 
     -- Hide the roll frame
@@ -406,7 +412,7 @@ function Self:Bid(bid, fromUnit, isImport)
 
         if not isImport then
             if self.isOwner then
-                local data = {ownerId = self.ownerId, bid = bid, fromUnit = Util.GetFullName(fromUnit)}
+                local data = {ownerId = self.ownerId, bid = bid, fromUnit = Unit.FullName(fromUnit)}
 
                 -- Send to all or the council
                 if Addon.db.profile.masterloot.bidPublic then
@@ -441,8 +447,8 @@ end
 
 -- Vote for a unit
 function Self:Vote(vote, fromUnit, isImport)
-    vote = Util.GetName(vote)
-    fromUnit = Util.GetName(fromUnit or "player")
+    vote = Unit.Name(vote)
+    fromUnit = Unit.Name(fromUnit or "player")
     local fromSelf = UnitIsUnit(fromUnit, "player")
 
     -- Check if we can vote
@@ -460,7 +466,7 @@ function Self:Vote(vote, fromUnit, isImport)
 
         if not isImport then
             if self.isOwner then
-                local data = {ownerId = self.ownerId, vote = Util.GetFullName(vote), fromUnit = Util.GetFullName(fromUnit)}
+                local data = {ownerId = self.ownerId, vote = Unit.FullName(vote), fromUnit = Unit.FullName(fromUnit)}
 
                 -- Send to all or the council
                 if Addon.db.profile.masterloot.votePublic then
@@ -472,7 +478,7 @@ function Self:Vote(vote, fromUnit, isImport)
                 end
             elseif fromSelf then
                 -- Send to owner
-                Comm.SendData(Comm.EVENT_VOTE, {ownerId = self.ownerId, vote = Util.GetFullName(vote)}, Masterloot.GetMasterlooter())
+                Comm.SendData(Comm.EVENT_VOTE, {ownerId = self.ownerId, vote = Unit.FullName(vote)}, Masterloot.GetMasterlooter())
             end
         end
 
@@ -522,7 +528,7 @@ function Self:End(winner)
     if award then
         winner = nil
     else
-        winner = winner and Util.GetName(winner) or nil
+        winner = winner and Unit.Name(winner) or nil
     end
     
     -- End it if it is running
@@ -547,11 +553,23 @@ function Self:End(winner)
     if self.isOwner and (award or not (winner or Addon.db.profile.awardSelf or Masterloot.IsMasterlooter())) then
         for i,bid in pairs(Self.BIDS) do
             if bid ~= Self.BID_PASS then
-                local bids = Util(self.bids).Only(bid, true).Keys()()
-                if #bids > 0 then
-                    winner = bids[math.random(#bids)]
-                    break
+                local n = Util.TblCountVal(self.bids, bid)
+                if n > 0 then
+                    n = math.random(n)
+                    for unit,unitBid in pairs(self.bids) do
+                        if unitBid == bid then
+                            n = n - 1
+                        end
+                        if n == 0 then
+                            winner = unit
+                            break
+                        end
+                    end
                 end
+            end
+
+            if winner then
+                break
             end
         end
     end
@@ -748,32 +766,28 @@ end
 function Self:SendStatus(noCheck, target, full)
     if noCheck or self.isOwner then
         local data = {
-            owner = Util.GetFullName(self.owner),
+            owner = Unit.FullName(self.owner),
             ownerId = self.ownerId,
             itemOwnerId = self.itemOwnerId,
             status = self.status,
             started = self.started,
             timeout = self.timeout,
             posted = self.posted,
-            winner = self.winner and Util.GetFullName(self.winner),
-            traded = self.traded and Util.GetFullName(self.traded),
+            winner = self.winner and Unit.FullName(self.winner),
+            traded = self.traded and Unit.FullName(self.traded),
             item = {
                 link = self.item.link,
-                owner = Util.GetFullName(self.item.owner)
+                owner = Unit.FullName(self.item.owner)
             }
         }
 
         if full then
             if Masterloot.session.bidPublic or Masterloot.IsOnCouncil(target) then
-                data.bids = Util.TblMapKeys(self.bids, function (bid, fromUnit)
-                    return Util.GetFullName(fromUnit)
-                end)
+                data.bids = Util.TblMapKeys(self.bids, Unit.FullName)
             end
 
             if Masterloot.session.votePublic or Masterloot.IsOnCouncil(target) then
-                data.votes = Util.TblMapBoth(self.votes, function (unit, fromUnit)
-                    return Util.GetFullName(fromUnit), Util.GetFullName(unit)
-                end)
+                data.votes = Util(self.votes).MapKeys(Unit.FullName).Map(Unit.FullName)()
             end
         end
 
@@ -904,7 +918,7 @@ function Self:Validate(status, ...)
         return false, L["ERROR_NOT_IN_GROUP"]
     else
         for _,unit in pairs({self.owner, ...}) do
-            if not UnitExists(unit) or not Util.UnitInGroup(unit) then
+            if not UnitExists(unit) or not Unit.InGroup(unit) then
                 return false, L["ERROR_PLAYER_NOT_FOUND"]:format(unit)
             end
         end

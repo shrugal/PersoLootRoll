@@ -11,12 +11,12 @@ Libs\libs.xml
 Init.lua
 Util\Util.lua
 
-# Locale
+# Util, Locale
+Util\Util.lua
+Util\Unit.lua
 Util\Locale.lua
 Locale\enUS.lua
 Locale\deDE.lua
-
-# Util
 Util\Comm.lua
 Util\Item.lua
 

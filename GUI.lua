@@ -6,6 +6,7 @@ local Inspect = Addon.Inspect
 local Masterloot = Addon.Masterloot
 local Roll = Addon.Roll
 local Trade = Addon.Trade
+local Unit = Addon.Unit
 local Util = Addon.Util
 local Self = Addon.GUI
 
@@ -105,7 +106,7 @@ Self.LootAlertSystem = AlertFrame:AddQueuedAlertFrameSubSystem("PLR_LootWonAlert
 local Rolls = {
     frames = {},
     filter = {all = false, canceled = false, done = true, awarded = true, traded = false},
-    status = {width = 650, height = 400}
+    status = {width = 600, height = 400}
 }
 
 -- Show the rolls frame
@@ -125,7 +126,7 @@ function Rolls.Show()
                 self:Release()
                 wipe(Rolls.frames)
             end)
-            .SetMinResize(650, 120)
+            .SetMinResize(600, 120)
             .SetStatusTable(Rolls.status)()
 
         do
@@ -213,22 +214,22 @@ function Rolls.Show()
                     if ml then
                         local s = Masterloot.session
                         local council = not s.council and "-" or Util(s.council).Keys().Map(function (unit)
-                            return Util.GetColoredName(Util.GetShortenedName(unit), unit)
+                            return Unit.ColoredName(Unit.ShortenedName(unit), unit)
                         end).Concat(", ")()
                         local bids = L[s.bidPublic and "PUBLIC" or "PRIVATE"]
                         local votes = L[s.votePublic and "PUBLIC" or "PRIVATE"]
 
                         GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOM")
                         GameTooltip:SetText(L["TIP_MASTERLOOT"] .. "\n")
-                        GameTooltip:AddLine(L["TIP_MASTERLOOT_INFO"]:format(Util.GetColoredName(ml), council, bids, votes), 1, 1, 1)
+                        GameTooltip:AddLine(L["TIP_MASTERLOOT_INFO"]:format(Unit.ColoredName(ml), council, bids, votes), 1, 1, 1)
 
                         if Masterloot.IsMasterlooter() then
                             GameTooltip:AddLine("\n" .. L["TIP_MASTERLOOTING"])
 
-                            local c = Util.GetUnitColor("player")
+                            local c = Unit.Color("player")
                             GameTooltip:AddLine(ml, c.r, c.g, c.b, false)
                             for unit,_ in pairs(Masterloot.masterlooting) do
-                                local c = Util.GetUnitColor(unit)
+                                local c = Unit.Color(unit)
                                 GameTooltip:AddLine(unit, c.r, c.g, c.b, false)
                             end
                         end
@@ -324,60 +325,12 @@ local createFn = function (scroll)
         .SetFontObject(GameFontNormal)
         .AddTo(scroll)
 
-    -- Owner
-    Self("InteractiveLabel")
-        .SetFontObject(GameFontNormal)
-        .SetCallback("OnEnter", function (self)
-            GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-            GameTooltip:SetUnit(self:GetUserData("owner"))
-            GameTooltip:Show()
-        end)
-        .SetCallback("OnLeave", Self.TooltipHide)
-        .SetCallback("OnClick", function (self) ChatFrame_SendSmartTell(self:GetUserData("owner")) end)
-        .AddTo(scroll)
-
-    -- ML
-    Self("InteractiveLabel")
-        .SetFontObject(GameFontNormal)
-        .SetCallback("OnEnter", function (self)
-            if roll:HasMasterlooter() then
-                GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-                GameTooltip:SetUnit(self:GetUserData("roll").owner)
-                GameTooltip:Show()
-            end
-        end)
-        .SetCallback("OnLeave", Self.TooltipHide)
-        .SetCallback("OnClick", function (self)
-            local roll = self:GetUserData("roll")
-            if roll:HasMasterlooter() then
-                ChatFrame_SendSmartTell(roll.owner)
-            end
-        end)
-        .AddTo(scroll)
-
-    -- Status, Your bid
+    -- Owner, ML, Status, Your bid, Winner
+    Self.CreateUnitLabel(scroll)
+    Self.CreateUnitLabel(scroll)
     Self("Label").SetFontObject(GameFontNormal).AddTo(scroll)
     Self("Label").SetFontObject(GameFontNormal).AddTo(scroll)
-
-    -- Winner
-    Self("InteractiveLabel")
-        .SetFontObject(GameFontNormal)
-        .SetCallback("OnEnter", function (self)
-            local winner = self:GetUserData("winner")
-            if winner then
-                GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-                GameTooltip:SetUnit(winner)
-                GameTooltip:Show()
-            end
-        end)
-        .SetCallback("OnLeave", Self.TooltipHide)
-        .SetCallback("OnClick", function (self)
-            local winner = self:GetUserData("winner")
-            if winner then
-                ChatFrame_SendSmartTell(winner)
-            end
-        end)
-        .AddTo(scroll)
+    Self.CreateUnitLabel(scroll)
 
     -- Actions
     f = Self("SimpleGroup")
@@ -503,7 +456,7 @@ local createFn = function (scroll)
         details.frame:Hide()
     end
 end
-local updateFn = function (scroll, roll, children, it)
+local updateFn = function (roll, children, it)
     -- ID
     Self(children[it()]).SetText(roll.id).Show()
 
@@ -519,14 +472,14 @@ local updateFn = function (scroll, roll, children, it)
 
     -- Owner
     Self(children[it()])
-        .SetText(Util.GetColoredName(Util.GetShortenedName(roll.item.owner), roll.item.owner))
-        .SetUserData("owner", roll.item.owner)
+        .SetText(Unit.ColoredName(Unit.ShortenedName(roll.item.owner), roll.item.owner))
+        .SetUserData("unit", roll.item.owner)
         .Show()
 
     -- ML
     Self(children[it()])
-        .SetText(roll:HasMasterlooter() and Util.GetColoredName(Util.GetShortenedName(roll.owner), roll.owner) or "-")
-        .SetUserData("roll", roll)
+        .SetText(roll:HasMasterlooter() and Unit.ColoredName(Unit.ShortenedName(roll.owner), roll.owner) or "-")
+        .SetUserData("unit", roll:HasMasterlooter() and roll.owner or nil)
         .Show()
 
     -- Status
@@ -537,8 +490,8 @@ local updateFn = function (scroll, roll, children, it)
 
     -- Winner
     Self(children[it()])
-        .SetText(roll.winner and Util.GetColoredName(Util.GetShortenedName(roll.winner), roll.winner) or "-")
-        .SetUserData("winner", roll.winner)
+        .SetText(roll.winner and Unit.ColoredName(Unit.ShortenedName(roll.winner), roll.winner) or "-")
+        .SetUserData("unit", roll.winner or nil)
         .Show()
 
     -- Actions
@@ -595,7 +548,13 @@ local updateFn = function (scroll, roll, children, it)
         Rolls.UpdateDetails(details, roll)
     end
 end
-
+local filterFn = function (roll)
+    return (Rolls.filter.all or roll.isOwner or roll.item.isOwner or roll.item:GetEligible("player"))
+       and (Rolls.filter.canceled or roll.status >= Roll.STATUS_RUNNING)
+       and (Rolls.filter.done or (roll.status ~= Roll.STATUS_DONE))
+       and (Rolls.filter.awarded or not roll.winner)
+       and (Rolls.filter.traded or not roll.traded)
+end
 function Rolls.Update()
     if not Rolls.frames.window then return end
     local f
@@ -605,16 +564,7 @@ function Rolls.Update()
     local scroll = Rolls.frames.scroll
     scroll:PauseLayout()
 
-    local player = UnitName("player")
-    local rolls = Util(Addon.rolls).Filter(function (roll)
-        return (Rolls.filter.all or roll.isOwner or roll.item.isOwner or roll.item:GetEligible(player))
-           and (Rolls.filter.canceled or roll.status >= Roll.STATUS_RUNNING)
-           and (Rolls.filter.done or (roll.status ~= Roll.STATUS_DONE))
-           and (Rolls.filter.awarded or not roll.winner)
-           and (Rolls.filter.traded or not roll.traded)
-    end).SortBy("id")()
-
-    Self.UpdateRows(scroll, rolls, createFn, updateFn, 9)
+    Self.UpdateRows(scroll, Util(Addon.rolls).CopyFilter(filterFn).SortBy("id")(), createFn, updateFn, 9)
 
     scroll:ResumeLayout()
     scroll:DoLayout()
@@ -635,7 +585,7 @@ function Rolls.Update()
     filter.children[it()]:SetImage(ml and "Interface\\Buttons\\UI-StopButton" or "Interface\\GossipFrame\\WorkOrderGossipIcon")
 
     -- ML
-    f = Self(filter.children[it()]).SetText(L["ML"] .. ": " .. (ml and Util.GetColoredName(Util.GetShortenedName(ml)) or ""))
+    f = Self(filter.children[it()]).SetText(L["ML"] .. ": " .. (ml and Unit.ColoredName(Unit.ShortenedName(ml)) or ""))
 end
 
 -- Hide the rolls frame
@@ -655,23 +605,12 @@ function Rolls.Toggle()
 end
 
 -- Update the details view of a row
-local createFn = function (self)
-    -- Unit
-    Self("InteractiveLabel")
-        .SetFontObject(GameFontNormal)
-        .SetCallback("OnEnter", function (self)
-            GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-            GameTooltip:SetUnit(self:GetUserData("unit"))
-            GameTooltip:Show()
-        end)
-        .SetCallback("OnLeave", Self.TooltipHide)
-        .SetCallback("OnClick", function (self) ChatFrame_SendSmartTell(self:GetUserData("unit")) end)
-        .AddTo(self)
-
-    -- Ilvl, Bid, Votes
-    Self("Label").SetFontObject(GameFontNormal).AddTo(self)
-    Self("Label").SetFontObject(GameFontNormal).AddTo(self)
-    Self("Label").SetFontObject(GameFontNormal).AddTo(self)
+local createFn = function (details)
+    -- Unit, Ilvl, Bid, Votes
+    Self.CreateUnitLabel(details)
+    Self("Label").SetFontObject(GameFontNormal).AddTo(details)
+    Self("Label").SetFontObject(GameFontNormal).AddTo(details)
+    Self("Label").SetFontObject(GameFontNormal).AddTo(details)
 
     -- Actions
     local f = Self("Button")
@@ -685,12 +624,12 @@ local createFn = function (self)
             end
         end)()
     f.text:SetFont(GameFontNormal:GetFont())
-    self:AddChild(f)
+    details:AddChild(f)
 end
-local updateFn = function (self, player, children, it, roll, canBeAwarded, canVote)
+local updateFn = function (player, children, it, roll, canBeAwarded, canVote)
     -- Unit
     Self(children[it()])
-        .SetText(Util.GetColoredName(Util.GetShortenedName(player.unit), player.unit))
+        .SetText(Unit.ColoredName(Unit.ShortenedName(player.unit), player.unit))
         .SetUserData("unit", player.unit)
         .Show()
 
@@ -710,7 +649,6 @@ local updateFn = function (self, player, children, it, roll, canBeAwarded, canVo
         .SetUserData("roll", roll)
         .Show()
 end
-
 function Rolls.UpdateDetails(details, roll)
     details.frame:Show()
     details:PauseLayout()
@@ -720,10 +658,10 @@ function Rolls.UpdateDetails(details, roll)
             unit = unit,
             ilvl = roll.item:GetLevelForLocation(unit),
             bid = type(val) == "number" and val or nil,
-            votes = Util(roll.votes).Only(unit).Count()()
+            votes = Util.TblCountVal(roll.votes, unit)
         })
         return u
-    end, {}).SortBy("bid", 99, false, "votes", 0, true, "ilvl", 0, false, "unit")()
+    end, {}, true).SortBy("bid", 99, false, "votes", 0, true, "ilvl", 0, false, "unit")()
 
     Self.UpdateRows(details, players, createFn, updateFn, 4, roll, roll:CanBeAwarded(true), roll:UnitCanVote())
 
@@ -974,7 +912,7 @@ function Self.UpdateRows(parent, items, createFn, updateFn, skip, ...)
         end
 
         -- Update the row
-        updateFn(parent, item, children, it, ...)
+        updateFn(item, children, it, ...)
     end
 
     -- Hide the rest
@@ -1028,9 +966,39 @@ function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
     return f
 end
 
--- It's just used so often
+function Self.CreateUnitLabel(parent, baseTooltip)
+    return Self("InteractiveLabel")
+        .SetFontObject(GameFontNormal)
+        .SetCallback("OnEnter", baseTooltip and Self.TooltipUnit or Self.TooltipUnitFullName)
+        .SetCallback("OnLeave", Self.TooltipHide)
+        .SetCallback("OnClick", Self.Whisper)
+        .AddTo(parent)
+end
+
+function Self.TooltipUnit(self)
+    GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
+    GameTooltip:SetUnit(self:GetUserData("unit"))
+    GameTooltip:Show()
+end
+
+function Self.TooltipUnitFullName(self)
+    local unit = self:GetUserData("unit")
+    if unit and unit ~= Unit(unit) then
+        GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
+        GameTooltip:SetText(unit)
+        GameTooltip:Show()
+    end
+end
+
 function Self.TooltipHide()
     GameTooltip:Hide()
+end
+
+function Self.Whisper(self)
+    local unit = self:GetUserData("unit")
+    if unit then
+        ChatFrame_SendSmartTell(unit)
+    end
 end
 
 -- Enable chain-calling

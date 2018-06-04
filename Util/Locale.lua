@@ -1,4 +1,5 @@
 local Name, Addon = ...
+local Unit = Addon.Unit
 local Util = Addon.Util
 local Self = Addon.Locale
 
@@ -42,14 +43,14 @@ function Self.GetCommLanguage(player)
 
     -- Check single player
     if player then
-        if lang ~= Self.GetLanguage(Util.GetRealmName(player)) then
+        if lang ~= Self.GetLanguage(Unit.RealmName(player)) then
             return Self.DEFAULT
         end
     -- Check group/raid
     elseif IsInGroup() then
         for i=1, GetNumGroupMembers() do
             player = GetRaidRosterInfo(i)
-            if lang ~= Self.GetLanguage(Util.GetRealmName(player)) then
+            if lang ~= Self.GetLanguage(Unit.RealmName(player)) then
                 return Self.DEFAULT
             end
         end

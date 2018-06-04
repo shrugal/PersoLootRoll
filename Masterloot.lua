@@ -2,6 +2,7 @@ local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Comm = Addon.Comm
 local GUI = Addon.GUI
+local Unit = Addon.Unit
 local Util = Addon.Util
 local Self = Addon.Masterloot
 
@@ -15,7 +16,7 @@ Self.masterlooting = {}
 
 -- Set (or reset) the masterlooter
 function Self.SetMasterlooter(unit, session, silent)
-    unit = unit and Util.GetName(unit)
+    unit = unit and Unit.Name(unit)
 
     if Self.masterlooter then
         if unit ~= Self.masterlooter then
@@ -62,11 +63,11 @@ end
 
 -- Check if the given unit can become our masterlooter
 function Self.UnitAllow(unit)
-    unit = Util.GetName(unit)
+    unit = Unit.Name(unit)
     local config = Addon.db.profile.masterloot
 
     -- Always deny
-    if not unit or not Util.UnitInGroup(unit) then
+    if not unit or not Unit.InGroup(unit) then
         return false
     end
 
@@ -82,12 +83,12 @@ function Self.UnitAllow(unit)
         end
     end
     
-    local guild = Util.GetGuildName(unit)
+    local guild = Unit.GuildName(unit)
 
     -- Check everything else
-    if config.allow.friend and Util.UnitIsFriend(unit) then
+    if config.allow.friend and Unit.IsFriend(unit) then
         return true
-    elseif config.allow.guild and Util.UnitIsGuildMember(unit) then
+    elseif config.allow.guild and Unit.IsGuildMember(unit) then
         return true
     elseif config.allow.guildgroup and guild and Util.IsGuildGroup(guild) then
         return true
@@ -106,9 +107,9 @@ end
 function Self.UnitAccept(unit)
     local config = Addon.db.profile.masterloot.accept
 
-    if config.friend and Util.UnitIsFriend(unit) then
+    if config.friend and Unit.IsFriend(unit) then
         return true
-    elseif Util.UnitIsGuildMember(unit) then
+    elseif Unit.IsGuildMember(unit) then
         local rank = select(3, GetGuildInfo(unit))
         if config.guildmaster and rank == 1 or config.guildofficer and rank == 2 then
             return true
@@ -139,23 +140,23 @@ function Self.SetSession(session, silent)
         local council = {}
 
         for unit,_ in pairs(config.councilWhitelist) do
-            if Util.UnitInGroup(unit) then
-                council[Util.GetFullName(unit)] = true
+            if Unit.InGroup(unit) then
+                council[Unit.FullName(unit)] = true
             end
         end
 
         Util.SearchGroup(function (i, unit, rank)
             if config.council.raidleader and rank == 2 or config.council.raidassistant and rank == 1 then
-                council[Util.GetFullName(unit)] = true
+                council[Unit.FullName(unit)] = true
             else
-                local guildRank = Util.UnitGuildRank(unit)
+                local guildRank = Unit.GuildRank(unit)
                 if config.council.guildleader and rank == 0 or config.council.guildofficer and rank == 1 then
-                    council[Util.GetFullName(unit)] = true
+                    council[Unit.FullName(unit)] = true
                 end
             end
         end)
 
-        council[Util.GetFullName("player")] = nil
+        council[Unit.FullName("player")] = nil
 
         Self.session = {
             bidPublic = config.bidPublic,
@@ -175,7 +176,7 @@ end
 
 -- Check if the unit is on the loot council
 function Self.IsOnCouncil(unit)
-    return Self.session.council and Self.session.council[Util.GetFullName(unit or "player")]
+    return Self.session.council and Self.session.council[Unit.FullName(unit or "player")]
 end
 
 -------------------------------------------------------
