@@ -134,21 +134,27 @@ function Self.Update(data, unit)
     local roll = Self.Find(data.ownerId, data.owner, data.item, data.itemOwnerId, data.item.owner)
     if not roll then
         -- Only the item owner can create rolls
-        if data.item.owner ~= unit then return end
+        if data.item.owner ~= unit then
+            return
+        end
 
         roll = Self.Add(Item.FromLink(data.item.link, data.item.owner), data.owner, data.timeout, data.ownerId, data.itemOwnerId)
 
-        -- Start the roll if the item owner has started it
-        if data.status >= Self.STATUS_RUNNING and roll.status < Self.STATUS_RUNNING then
-            roll:Start(data.started)
-        end
+        if roll.isOwner then roll.item:OnLoaded(function ()
+            if roll.item:ShouldBeRolledFor() or roll.item:ShouldBeBidOn() then
+                roll:Start()
+            elseif roll.item.isEquippable then
+                roll:Schedule():SendStatus()
+            else
+                roll:Cancel()
+            end
+        end) end
     end
 
     -- Only the roll owner can send updates
     if unit == roll.owner then
         roll.owner = data.owner or roll.owner
         roll.ownerId = data.ownerId or roll.ownerId
-        roll.itemOwnerId = data.itemOwnerId or roll.itemOwnerId
         roll.posted = data.posted
 
         -- Update the timeout
@@ -159,10 +165,13 @@ function Self.Update(data, unit)
         -- Cancel the roll if the owner has canceled it
         if data.status == Self.STATUS_CANCELED and roll.status ~= Self.STATUS_CANCELED then
             roll:Cancel()
-        else
-            -- This stuff needs item data to be loaded
-            roll.item:OnLoaded(function ()
-                local bid, vote = self.bid, self.vote
+        else roll.item:OnLoaded(function ()
+            -- Declare our interest if the roll is pending
+            if data.status == Self.STATUS_PENDING and roll.item:ShouldBeBidOn() then
+                roll.item:SetEligible("player")
+                Comm.SendData(Comm.EVENT_INTEREST, {ownerId = roll.ownerId}, roll.owner)
+            else
+                local bid, vote = roll.bid, roll.vote
 
                 -- Start (or restart) the roll if the owner has started it
                 if data.status >= Self.STATUS_RUNNING then
@@ -174,9 +183,9 @@ function Self.Update(data, unit)
                 end
 
                 -- Import bids
-                if next(data.bids) then
-                    self.bid = nil
-                    wipe(self.bids)
+                if data.bids and next(data.bids) then
+                    roll.bid = nil
+                    wipe(roll.bids)
 
                     for fromUnit,bid in pairs(data.bids or {}) do
                         roll:Bid(bid, fromUnit, true)
@@ -184,9 +193,9 @@ function Self.Update(data, unit)
                 end
 
                 -- Import votes
-                if next(data.votes) then
-                    self.vote = nil
-                    wipe(self.votes)
+                if data.votes and next(data.votes) then
+                    roll.vote = nil
+                    wipe(roll.votes)
 
                     for fromUnit,unit in pairs(data.votes or {}) do
                         roll:Vote(unit, fromUnit, true)
@@ -204,16 +213,16 @@ function Self.Update(data, unit)
                 end
 
                 -- Bid and vote again if our bid/vote is missing
-                if bid and not self.bid and self:CanBeBidOn() then
-                    self:Bid(bid)
+                if bid and not roll.bid and roll:CanBeBidOn() then
+                    roll:Bid(bid)
                 end
-                if vote and not self.vote and self:CanBeVotedOn() then
-                    self:Vote(vote)
+                if vote and not roll.vote and roll:CanBeVotedOn() then
+                    roll:Vote(vote)
                 end
 
                 GUI.Rolls.Update()
-            end)
-        end
+            end
+        end) end
     -- The winner can inform us that it has been traded, or the item owner if the winner doesn't have the addon or he traded it to someone else
     elseif roll.winner and (unit == roll.winner or unit == roll.item.owner and (not Addon.versions[roll.winner]) or data.traded ~= roll.winner) then
         roll.item:OnLoaded(function()
@@ -320,7 +329,7 @@ function Self:Start(started)
 
             -- Let the others know
             self:Advertise(false, true)
-            self:SendStatus(self.item.isOwner)
+            self:SendStatus()
 
             GUI.Rolls.Update()
         end
@@ -331,10 +340,10 @@ end
 
 -- Add a roll now and start it later
 function Self:Schedule()
-    -- Don't schedule a 2nd time
-    if self.timer then return end
+    if self.timer then
+        return
+    end
 
-    -- Start loading basic item info
     self.item:GetBasicInfo()
 
     self.timer = Addon:ScheduleTimer(function ()
@@ -342,7 +351,7 @@ function Self:Schedule()
         if self.status == Self.STATUS_PENDING then
             self.timer = nil
 
-            if self.isOwner and self.item:ShouldBeRolledFor() or self.item:ShouldBeBidOn() then
+            if self.isOwner and self.item:ShouldBeRolledFor() or not self.isOwner and self.item:ShouldBeBidOn() then
                 self:Start()
             elseif self.item.isEquippable then
                 self:Cancel()

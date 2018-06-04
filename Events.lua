@@ -206,11 +206,22 @@ function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
         if item.isOwner then
             item:SetPosition(Self.lastLootedBag, 0)
 
+            local owner = Masterloot.GetMasterlooter() or unit
+            local isOwner = UnitIsUnit(owner, "player")
+
             item:OnFullyLoaded(function ()
-                if item:ShouldBeRolledFor() then
-                    Roll.Add(item, Masterloot.GetMasterlooter() or unit):Start()
-                elseif item:GetBasicInfo().isEquippable then
-                    Roll.Add(item, unit):Cancel()
+                if isOwner and item:ShouldBeRolledFor() then
+                    Roll.Add(item, owner):Start()
+                elseif item.isEquippable then
+                    if item:GetFullInfo().isTradable then
+                        local roll = Roll.Add(item, owner)
+                        if isOwner then
+                            roll:Schedule()
+                        end
+                        roll:SendStatus(true)
+                    else
+                        Roll.Add(item, unit):Cancel()
+                    end
                 end
             end)
         elseif not msg:match(Self.PATTERN_BONUS_LOOT) and not Roll.Find(nil, unit, item) then
@@ -435,12 +446,13 @@ Comm.ListenData(Comm.EVENT_VERSION_ASK, function (event, data, channel, sender, 
         Comm.SendData(Comm.EVENT_VERSION, floor(Addon.VERSION), channel == Comm.TYPE_WHISPER and sender or channel)
     end
 end, true)
-Comm.Listen(Comm.EVENT_VERSION, function (event, version, channel, sender, unit)
+Comm.ListenData(Comm.EVENT_VERSION, function (event, version, channel, sender, unit)
     Addon:SetVersion(unit, tonumber(version))
 end)
 
 -- Roll status
 Comm.ListenData(Comm.EVENT_ROLL_STATUS, function (event, data, channel, sender, unit)
+    print("RECEIVING")
     data.owner = Unit.Name(data.owner)
     data.item.owner = Unit.Name(data.item.owner)
     data.winner = Unit.Name(data.winner)
@@ -474,6 +486,14 @@ Comm.ListenData(Comm.EVENT_VOTE, function (event, data, channel, sender, unit)
         if roll then
             roll:Vote(data.vote, fromUnit, owner)
         end
+    end
+end)
+
+-- Declaring interest
+Comm.ListenData(Comm.EVENT_INTEREST, function (event, data, channel, sender, unit)
+    local roll = Roll.Find(data.ownerId)
+    if roll then
+        roll.item:SetEligible(unit)
     end
 end)
 

@@ -78,7 +78,7 @@ function Self.UnitAllow(unit)
 
     -- Check whitelist
     for i,v in pairs(config.whitelist) do
-        if UnitIsUnit(unit, v) then
+        if UnitIsUnit(unit, i) then
             return true
         end
     end

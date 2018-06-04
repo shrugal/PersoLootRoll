@@ -914,16 +914,13 @@ end
 -- Shortcut for val == x or val == y or ...
 function Self.In(val, ...)
     if type(...) == "table" then
-        for i,v in pairs(...) do
-            if v == val then return true end
-        end
+        return Self.TblFind((...), val) ~= nil
     else
         for i=1,select("#", ...) do
             if select(i, ...) == val then return true end
         end
+        return false
     end
-
-    return false
 end
 
 -- Get string representation values for dumping
@@ -979,9 +976,9 @@ local Fn = function (...)
     local c, k, v = Self.C, rawget(Self.C, "k"), rawget(Self.C, "v")
 
     local t = type(v)
-    local pre = t == "table" and "Tbl" or t == "string" and "Str" or t == "number" and "num" or t == "function" and "Fn"
+    local pre = t == "table" and "Tbl" or t == "string" and "Str" or t == "number" and "num" or t == "function" and "Fn" or ""
 
-    c.v = Self[pre and Self[pre .. k] and pre .. k or k](v, ...)
+    c.v = (Self[pre .. k] or Self[k])(v, ...)
     return c
 end
 setmetatable(Self.C, {

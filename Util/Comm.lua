@@ -22,6 +22,7 @@ Self.TYPES = {Self.TYPE_GROUP, Self.TYPE_PARTY, Self.TYPE_RAID, Self.TYPE_GUILD,
 Self.EVENT_ROLL_STATUS = "STATUS"
 Self.EVENT_BID = "BID"
 Self.EVENT_VOTE = "VOTE"
+Self.EVENT_INTEREST = "INTEREST"
 Self.EVENT_SYNC = "SYNC"
 Self.EVENT_VERSION_ASK = "VERSION-ASK"
 Self.EVENT_VERSION = "VERSION"
@@ -77,9 +78,14 @@ function Self.ShouldChat(target)
     local channel, unit = Self.GetDestination(target)
     local config = Addon.db.profile
 
+    -- Check group
+    if not IsInGroup() or Util.TblCount(Addon.versions) + 1 == GetNumGroupMembers() then
+        return false
+    end
+
     -- Check whisper target
     if channel == Self.TYPE_WHISPER then
-        if UnitIsUnit(unit, "player") then
+        if Addon.versions[unit] or UnitIsUnit(unit, "player") then
             return false
         end
 
@@ -107,11 +113,9 @@ function Self.ShouldChat(target)
         return group.guild
     elseif IsInRaid() then
         return group.raid
-    elseif IsInGroup() then
+    else
         return group.party
     end
-
-    return true
 end
 
 -- Send a chat line
@@ -160,13 +164,13 @@ function Self.Listen(event, method, fromSelf, fromAll)
 end
 
 -- Listen for an addon message with data
-function Self.ListenData(event, method)
+function Self.ListenData(event, method, fromSelf, fromAll)
     Self.Listen(event, function (event, data, ...)
         local success, data = Addon:Deserialize(data)
         if success then
             method(event, data, ...)
         end
-    end)
+    end, fromSelf, fromAll)
 end
 
 -------------------------------------------------------

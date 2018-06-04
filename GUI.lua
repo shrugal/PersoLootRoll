@@ -106,7 +106,8 @@ Self.LootAlertSystem = AlertFrame:AddQueuedAlertFrameSubSystem("PLR_LootWonAlert
 local Rolls = {
     frames = {},
     filter = {all = false, canceled = false, done = true, awarded = true, traded = false},
-    status = {width = 600, height = 400}
+    status = {width = 700, height = 300},
+    open = {}
 }
 
 -- Show the rolls frame
@@ -120,13 +121,15 @@ function Rolls.Show()
             .SetLayout(nil)
             .SetTitle("PersoLootRoll - " .. L["ROLLS"])
             .SetCallback("OnClose", function (self)
-                Rolls.status = {width = self.frame:GetWidth(), height = self.frame:GetHeight(), top = self.status.top, left = self.status.left}
+                Rolls.status.width = self.frame:GetWidth()
+                Rolls.status.height = self.frame:GetHeight()
                 self.optionsbutton:Release()
                 self.optionsbutton = nil
                 self:Release()
                 wipe(Rolls.frames)
+                wipe(Rolls.open)
             end)
-            .SetMinResize(600, 120)
+            .SetMinResize(700, 120)
             .SetStatusTable(Rolls.status)()
 
         do
@@ -404,9 +407,11 @@ local createFn = function (scroll)
             local details = self:GetUserData("details")
 
             if details:IsShown() then
+                Rolls.open[roll.id] = nil
                 details.frame:Hide()
                 self:SetImage("Interface\\Buttons\\UI-PlusButton-Up")
             else
+                Rolls.open[roll.id] = true
                 Rolls.UpdateDetails(details, roll)
                 self:SetImage("Interface\\Buttons\\UI-MinusButton-Up")
             end
@@ -522,7 +527,7 @@ local updateFn = function (roll, children, it)
         Self(children[it()]).SetUserData("roll", roll).Toggle(canBeAwarded)
         -- Toggle
         Self(children[it()])
-            .SetImage("Interface\\Buttons\\UI-" .. (details:IsShown() and "Minus" or "Plus") .. "Button-Up")
+            .SetImage("Interface\\Buttons\\UI-" .. (Rolls.open[roll.id] and "Minus" or "Plus") .. "Button-Up")
             .SetUserData("roll", roll)
             .SetUserData("details", details)
 
@@ -544,8 +549,10 @@ local updateFn = function (roll, children, it)
 
     -- Details
     local details = children[it()]
-    if details:IsShown() then
+    if Rolls.open[roll.id] then
         Rolls.UpdateDetails(details, roll)
+    else
+        details.frame:Hide()
     end
 end
 local filterFn = function (roll)
@@ -915,9 +922,10 @@ function Self.UpdateRows(parent, items, createFn, updateFn, skip, ...)
         updateFn(item, children, it, ...)
     end
 
-    -- Hide the rest
+    -- Release the rest
     while children[it()] do
-        children[it(0)].frame:Hide()
+        children[it(0)]:Release()
+        children[it(0)] = nil
     end
 end
 

@@ -692,7 +692,7 @@ function Self:CanBeEquipped(unit)
     local className, _, classId = UnitClass(unit or "player")
 
     -- Check if there are class restrictions
-    if self.classes and not Util.TblFind(self.classes, className) then
+    if self.classes and not Util.In(className, self.classes) then
         return false
     end
 
@@ -704,7 +704,7 @@ function Self:CanBeEquipped(unit)
     -- Check relic type
     if self.isRelic then
         for itemId, types in pairs(Self.CLASS_RELICS[classId]) do
-            if Util.TblFind(types, self.relicType) then
+            if Util.In(self.relicType, types) then
                 return true
             end
         end
@@ -751,20 +751,26 @@ function Self:IsUseful(unit)
     end
 end
 
+-- Register an eligible unit's interest
+function Self:SetEligible(unit)
+    self:GetEligible()
+    self.eligible[Unit.Name(unit)] = true
+end
+
 -- Check who in the group could use the item
 function Self:GetEligible(unit)
     if not self.eligible then
         if unit then
-            if not self:IsUseful(unit) then
+            if not self:CanBeEquipped(unit) then
                 return nil
             else
-                return self:HasSufficientLevel(unit)
+                return self:IsUseful(unit) and self:HasSufficientLevel(unit)
             end
         else
             self.eligible = {}
             Util.SearchGroup(function (i, unit)
-                if unit and (self.isOwner or self:IsUseful(unit)) then
-                    self.eligible[unit] = self:HasSufficientLevel(unit)
+                if unit and self:CanBeEquipped(unit) then
+                    self.eligible[unit] = self:IsUseful(unit) and self:HasSufficientLevel(unit)
                 end
             end)
 
@@ -806,7 +812,7 @@ end
 
 -- Check if the addon should start a roll for an item
 function Self:ShouldBeRolledFor()
-    return self:ShouldBeConsidered() and self:GetNumEligible(true) > 0
+    return self:ShouldBeConsidered() and self:GetNumEligible(true) > (self:GetEligible(self.owner) and 1 or 0)
 end
 
 -------------------------------------------------------
