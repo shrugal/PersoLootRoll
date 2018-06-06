@@ -1,10 +1,6 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Locale = Addon.Locale
-local Masterloot = Addon.Masterloot
-local Roll = Addon.Roll
-local Unit = Addon.Unit
-local Util = Addon.Util
+local Locale, Masterloot, Roll, Unit, Util = Addon.Locale, Addon.Masterloot, Addon.Roll, Addon.Unit, Addon.Util
 local Self = Addon.Comm
 
 -- Distribution types
@@ -282,4 +278,8 @@ end
 
 function Self.GetTradeLink(player)
     return ("|cff4D85E6|Hplrtrade:%s|h[%s]|h|r"):format(player, TRADE)
+end
+
+function Self.GetBidLink(roll, player, bid)
+    return ("|cff4D85E6|Hplrbid:%d:%s:%d|h[%s]|h|r"):format(roll.id, player, bid, L["ROLL_BID_" .. bid])
 end

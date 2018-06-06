@@ -1,13 +1,6 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Comm = Addon.Comm
-local GUI = Addon.GUI
-local Item = Addon.Item
-local Locale = Addon.Locale
-local Masterloot = Addon.Masterloot
-local Trade = Addon.Trade
-local Unit = Addon.Unit
-local Util = Addon.Util
+local Comm, GUI, Item, Locale, Masterloot, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Item, Addon.Locale, Addon.Masterloot, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.Roll
 
 -- Default schedule delay

@@ -1,13 +1,7 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local AceGUI = LibStub("AceGUI-3.0")
-local Comm = Addon.Comm
-local Inspect = Addon.Inspect
-local Masterloot = Addon.Masterloot
-local Roll = Addon.Roll
-local Trade = Addon.Trade
-local Unit = Addon.Unit
-local Util = Addon.Util
+local Comm, Inspect, Masterloot, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.GUI
 
 -------------------------------------------------------
@@ -313,7 +307,6 @@ local createFn = function (scroll)
     -- Item
     Self("InteractiveLabel")
         .SetFontObject(GameFontNormal)
-        .SetWidth(217)
         .SetCallback("OnEnter", function (self)
             GameTooltip:SetOwner(self.frame, "ANCHOR_LEFT")
             GameTooltip:SetHyperlink(self:GetUserData("link"))
@@ -1071,7 +1064,7 @@ local Fn = function (...)
         obj[k](obj, ...)
 
         if (k == "SetText" or k == "SetFontObject") and (f.type == "Label" or f.type == "InteractiveLabel") then
-            f.frame:SetWidth(f.label:GetStringWidth())
+            f:SetWidth(max(f.imageshown and 200 + f.image:GetWidth() or 0, f.label:GetStringWidth() + (f.imageshown and f.image:GetWidth() + 4 or 0)))
         end
     end
     return c

@@ -1,9 +1,6 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Comm = Addon.Comm
-local GUI = Addon.GUI
-local Unit = Addon.Unit
-local Util = Addon.Util
+local Comm, GUI, Unit, Util = Addon.Comm, Addon.GUI, Addon.Unit, Addon.Util
 local Self = Addon.Masterloot
 
 Self.masterlooter = nil

@@ -1,15 +1,6 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Comm = Addon.Comm
-local GUI = Addon.GUI
-local Inspect = Addon.Inspect
-local Item = Addon.Item
-local Locale = Addon.Locale
-local Masterloot = Addon.Masterloot
-local Roll = Addon.Roll
-local Trade = Addon.Trade
-local Unit = Addon.Unit
-local Util = Addon.Util
+local Comm, GUI, Inspect, Item, Locale, Masterloot, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Inspect, Addon.Item, Addon.Locale, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.Events
 
 -- Message patterns
@@ -27,6 +18,8 @@ Self.lastLootedBag = nil
 Self.lastPostedRoll = nil
 -- Remember the last time a version check happened
 Self.lastVersionCheck = nil
+-- Remember the last time we chatted with someone, so we know when to respond
+Self.lastChatted = {}
 
 -------------------------------------------------------
 --                      Roster                       --
@@ -61,6 +54,11 @@ function Self.GROUP_LEFT(event)
 
     -- Clear versions
     wipe(Addon.versions)
+
+    -- Clear lastXYZ stuff
+    Self.lastPostedRoll = nil
+    Self.lastVersionCheck = nil
+    wipe(Self.lastChatted)
 end
 
 function Self.PARTY_MEMBER_ENABLE(event, unit)
@@ -307,42 +305,52 @@ function Self.CHAT_MSG_WHISPER(event, msg, sender)
     end
 
 
-    -- No roll found
-    if not roll then
-        return
-    -- The item is not tradable
-    elseif not roll.item.isTradable then
-        if answer then Comm.ChatLine("ROLL_ANSWER_NOT_TRADABLE", unit) end
-    -- I need it for myself
-    elseif roll.status == Roll.STATUS_CANCELED or UnitIsUnit(roll.winner, "player") then
-        if answer then Comm.ChatLine("ROLL_ANSWER_NO_SELF", unit) end
-    -- Someone else won or got it
-    elseif roll.winner and roll.winner ~= unit or roll.traded and roll.traded ~= unit then
-        if answer then Comm.ChatLine("ROLL_ANSWER_NO_OTHER", unit) end
-    else
-        -- The roll is scheduled or happening
-        if roll:CanBeAwarded() then
-            -- He is eligible, so register the bid
-            if roll:UnitIsEligible(unit) and roll.bids[unit] ~= Roll.BID_NEED then
-                roll:Bid(Roll.BID_NEED, unit, true)
-
-                -- Answer only if his bid didn't end the roll
-                if answer and roll:CanBeAwarded() then
-                    Comm.ChatLine("ROLL_ANSWER_BID", unit, roll.item.link)
-                end
+    if roll then
+        -- We chatted with this player after starting the roll, so it might be about something else
+        if not link and Self.lastChatted[unit] and roll.started and Self.lastChatted[unit] > roll.started then
+            if roll:CanBeAwardedTo(unit) and not roll.bids[unit] then
+                Addon:Info(L["ROLL_IGNORING_BID"]:format(Comm.GetPlayerLink(unit), roll.item.link, Comm.GetBidLink(roll, unit, Roll.BID_NEED), Comm.GetBidLink(roll, unit, Roll.BID_GREED)))
             end
-        -- He can have it
-        elseif (not roll.winner or roll.winner == unit) and not roll.traded then
-            roll.winner = unit
-            if answer then
-                if roll.item.isOwner then
-                    Comm.ChatLine("ROLL_ANSWER_YES", unit)
-                else
-                    Comm.ChatLine("ROLL_ANSWER_YES_MASTERLOOT", unit, roll.item.owner)
+        -- The item is not tradable
+        elseif not roll.item.isTradable then
+            if answer then Comm.ChatLine("ROLL_ANSWER_NOT_TRADABLE", unit) end
+        -- I need it for myself
+        elseif roll.status == Roll.STATUS_CANCELED or UnitIsUnit(roll.winner, "player") then
+            if answer then Comm.ChatLine("ROLL_ANSWER_NO_SELF", unit) end
+        -- Someone else won or got it
+        elseif roll.winner and roll.winner ~= unit or roll.traded and roll.traded ~= unit then
+            if answer then Comm.ChatLine("ROLL_ANSWER_NO_OTHER", unit) end
+        else
+            -- The roll is scheduled or happening
+            if roll:CanBeAwarded() then
+                -- He is eligible, so register the bid
+                if roll:UnitIsEligible(unit) and roll.bids[unit] ~= Roll.BID_NEED then
+                    roll:Bid(Roll.BID_NEED, unit, true)
+
+                    -- Answer only if his bid didn't end the roll
+                    if answer and roll:CanBeAwarded() then
+                        Comm.ChatLine("ROLL_ANSWER_BID", unit, roll.item.link)
+                    end
+                end
+            -- He can have it
+            elseif (not roll.winner or roll.winner == unit) and not roll.traded then
+                roll.winner = unit
+                if answer then
+                    if roll.item.isOwner then
+                        Comm.ChatLine("ROLL_ANSWER_YES", unit)
+                    else
+                        Comm.ChatLine("ROLL_ANSWER_YES_MASTERLOOT", unit, roll.item.owner)
+                    end
                 end
             end
         end
     end
+    
+    Self.lastChatted[unit] = time()
+end
+
+function Self.CHAT_MSG_WHISPER_INFORM(event, msg, receiver)
+    Self.lastChatted[Unit.Name(receiver)] = time()
 end
 
 -- Register
@@ -376,6 +384,7 @@ function Self.RegisterEvents()
     Addon:RegisterEvent("CHAT_MSG_RAID", Self.CHAT_MSG_PARTY)
     Addon:RegisterEvent("CHAT_MSG_RAID_LEADER", Self.CHAT_MSG_PARTY)
     Addon:RegisterEvent("CHAT_MSG_WHISPER", Self.CHAT_MSG_WHISPER)
+    Addon:RegisterEvent("CHAT_MSG_WHISPER_INFORM", Self.CHAT_MSG_WHISPER_INFORM)
 end
 
 function Self.UnregisterEvents()
@@ -407,6 +416,7 @@ function Self.UnregisterEvents()
     Addon:UnregisterEvent("CHAT_MSG_RAID")
     Addon:UnregisterEvent("CHAT_MSG_RAID_LEADER")
     Addon:UnregisterEvent("CHAT_MSG_WHISPER")
+    Addon:UnregisterEvent("CHAT_MSG_WHISPER_INFORM")
 end
 
 -------------------------------------------------------

@@ -1,7 +1,5 @@
 local Name, Addon = ...
-local Item = Addon.Item
-local Unit = Addon.Unit
-local Util = Addon.Util
+local Item, Unit, Util = Addon.Item, Addon.Unit, Addon.Util
 local Self = Addon.Inspect
 
 -- How long before refreshing cache entries (s)

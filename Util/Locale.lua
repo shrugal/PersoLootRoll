@@ -1,6 +1,5 @@
 local Name, Addon = ...
-local Unit = Addon.Unit
-local Util = Addon.Util
+local Unit, Util = Addon.Unit, Addon.Util
 local Self = Addon.Locale
 
 Self.DEFAULT = "enUS"

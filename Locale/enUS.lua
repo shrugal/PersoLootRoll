@@ -84,6 +84,7 @@ L["ROLL_WINNER_SELF"] = "You have won %s from %s -> %s."
 L["ROLL_WINNER_OTHER"] = "%s has won %s from you -> %s."
 L["ROLL_WINNER_MASTERLOOT"] = "%s has won %s from %s."
 L["ROLL_CANCEL"] = "Canceling roll for %s from %s."
+L["ROLL_IGNORING_BID"] = "Ignoring bid from %s for %s, because you chatted before -> Bid: %s or %s."
 L["ROLL_BID_1"] = NEED
 L["ROLL_BID_2"] = GREED
 L["ROLL_BID_3"] = ROLL_DISENCHANT

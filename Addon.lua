@@ -13,11 +13,7 @@ local Name, Addon = ...
 local LDB = LibStub("LibDataBroker-1.1")
 local LDBIcon = LibStub("LibDBIcon-1.0")
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local GUI = Addon.GUI
-local Item = Addon.Item
-local Roll = Addon.Roll
-local Trade = Addon.Trade
-local Util = Addon.Util
+local GUI, Item, Roll, Trade, Util = Addon.GUI, Addon.Item, Addon.Roll, Addon.Trade, Addon.Util
 
 -- Echo levels
 Addon.ECHO_NONE = 0

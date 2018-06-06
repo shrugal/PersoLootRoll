@@ -1,7 +1,5 @@
 local Name, Addon = ...
-local Inspect = Addon.Inspect
-local Unit = Addon.Unit
-local Util = Addon.Util
+local Inspect, Unit, Util = Addon.Inspect, Addon.Unit, Addon.Util
 local Self = Addon.Item
 
 -------------------------------------------------------

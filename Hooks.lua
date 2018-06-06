@@ -1,9 +1,6 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Roll = Addon.Roll
-local Trade = Addon.Trade
-local Unit = Addon.Unit
-local Util = Addon.Util
+local Roll, Trade, Unit, Util = Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.Hooks
 
 -------------------------------------------------------
@@ -169,6 +166,12 @@ function Self.EnableChatLinks()
 
             if linkType == "plrtrade" then
                 Trade.Initiate(args)
+            elseif linkType == "plrbid" then
+                local id, unit, bid = args:match("(%d+):(%a+):(%d)")
+                local roll = id and Roll.Get(tonumber(id))
+                if roll and unit and bid and roll:CanBeAwardedTo(unit) then
+                    roll:Bid(tonumber(bid), unit)
+                end
             else
                 return Addon.hooks.SetItemRef(link, text, button, frame)
             end
