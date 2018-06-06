@@ -4,6 +4,16 @@ local AceGUI = LibStub("AceGUI-3.0")
 local Comm, Inspect, Masterloot, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.GUI
 
+local frame = CreateFrame("Frame", nil, UIParent)
+frame:SetFrameStrata("BACKGROUND")
+frame:Hide()
+local tex = frame:CreateTexture(nil, "BACKGROUND")
+tex:SetTexture("Interface\\Buttons\\UI-Listbox-Highlight")
+tex:SetVertexColor(1, 1, 1, .5)
+tex:SetAllPoints(frame)
+Self.HighlightFrame = frame
+Self.HighlightFrame.HighlightTexture = tex
+
 -------------------------------------------------------
 --                  Popup dialogs                    --
 -------------------------------------------------------
@@ -458,6 +468,7 @@ local createFn = function (scroll)
         end
 
         details.frame:Hide()
+        Self.TableRowHighlight(details, 4)
     end
 end
 local updateFn = function (roll, children, it)
@@ -466,8 +477,8 @@ local updateFn = function (roll, children, it)
 
     -- Item
     Self(children[it()])
-        .SetText(roll.item.link)
         .SetImage(roll.item.texture)
+        .SetText(roll.item.link)
         .SetUserData("link", roll.item.link)
         .Show()
 
@@ -707,6 +718,184 @@ end
 Self.Rolls = Rolls
 
 -------------------------------------------------------
+--                      Helper                       --
+-------------------------------------------------------
+
+-- Update table rows in-place
+function Self.UpdateRows(parent, items, createFn, updateFn, skip, ...)
+    local children = parent.children
+
+    -- Create and/or update rows
+    local it = Util.Iter(skip or 0)
+    for _,item in ipairs(items) do
+        local id, child = item[idPath], children[it(0) + 1]
+
+        -- Create the row
+        if not child then
+            createFn(parent, ...)
+            child = children[it(0) + 1]
+        end
+
+        -- Update the row
+        updateFn(item, children, it, ...)
+    end
+
+    -- Release the rest
+    while children[it()] do
+        children[it(0)]:Release()
+        children[it(0)] = nil
+    end
+end
+
+-- Create a filter checkbox
+function Self.CreateFilterCheckbox(key)
+    local filter = Rolls.frames.filter
+
+    f = Self("CheckBox")
+        .SetLabel(L["FILTER_" .. key:upper()])
+        .SetCallback("OnValueChanged", function (self, _, checked)
+            if Rolls.filter[key] ~= checked then
+                Rolls.filter[key] = checked
+                Rolls.Update()
+            end
+        end)
+        .SetCallback("OnEnter", function (self)
+            GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
+            GameTooltip:ClearLines()
+            GameTooltip:AddLine(L["FILTER_" .. key:upper()])
+            GameTooltip:AddLine(L["FILTER_" .. key:upper() .. "_DESC"], 1, 1, 1, true)
+            GameTooltip:Show()
+        end)
+        .SetCallback("OnLeave", Self.TooltipHide)
+        .AddTo(filter)
+        .SetPoint("TOPLEFT", filter.children[#filter.children-1].frame, "TOPRIGHT")()
+    f:SetWidth(f.text:GetStringWidth() + 24 + 15)
+    return f
+end
+
+-- Create an icon button
+function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
+    f = Self("Icon")
+        .SetImage(icon:sub(1, 9) == "Interface" and icon or "Interface\\Buttons\\" .. icon .. "-Up")
+        .SetImageSize(width or 16, height or 16).SetHeight(16).SetWidth(16)
+        .SetCallback("OnClick", function (...) onClick(...) GameTooltip:Hide() end)
+        .AddTo(parent)()
+    f.image:SetPoint("TOP")
+
+    if desc then
+        f:SetCallback("OnEnter", function (self)
+            GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
+            GameTooltip:SetText(desc, 1, 1, 1, 1)
+            GameTooltip:Show()
+        end)
+        f:SetCallback("OnLeave", Self.TooltipHide)
+    end
+
+    return f
+end
+
+-- Create an interactive label for a unit, with tooltip, unitmenu and whispering on click
+function Self.CreateUnitLabel(parent, baseTooltip)
+    return Self("InteractiveLabel")
+        .SetFontObject(GameFontNormal)
+        .SetCallback("OnEnter", baseTooltip and Self.TooltipUnit or Self.TooltipUnitFullName)
+        .SetCallback("OnLeave", Self.TooltipHide)
+        .SetCallback("OnClick", Self.UnitClick)
+        .AddTo(parent)
+end
+
+-- Display a regular unit tooltip
+function Self.TooltipUnit(self)
+    GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
+    GameTooltip:SetUnit(self:GetUserData("unit"))
+    GameTooltip:Show()
+end
+
+-- Display a tooltip showing only the full name of an x-realm player
+function Self.TooltipUnitFullName(self)
+    local unit = self:GetUserData("unit")
+    if unit and Unit.Realm(unit) ~= GetRealmName() then
+        local c = Unit.Color(unit)
+        GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
+        GameTooltip:SetText(Unit.FullName(unit), c.r, c.g, c.b, false)
+        GameTooltip:Show()
+    end
+end
+
+-- Hide the tooltip
+function Self.TooltipHide()
+    GameTooltip:Hide()
+end
+
+-- Handle clicks on unit labels
+function Self.UnitClick(self, event, button)
+    local unit = self:GetUserData("unit")
+    if unit then
+        if button == "LeftButton" then
+            ChatFrame_SendSmartTell(unit)
+        elseif button == "RightButton" then
+            Self.DROPDOWN_UNIT.which = UnitIsUnit(unit, "player") and "SELF" or UnitInRaid(unit) and "RAID_PLAYER" or UnitInParty(unit) and "PARTY" or "PLAYER"
+            Self.DROPDOWN_UNIT.unit = unit
+            ToggleDropDownMenu(1, nil, Self.DROPDOWN_UNIT, "cursor", 3, -3)
+        end
+    end
+end
+
+-- Add row-highlighting to a table
+function Self.TableRowHighlight(parent, skip)
+    skip = skip or 0
+    local frame = parent.frame
+    local isOver = false
+    local tblObj = parent:GetUserData("table")
+    local spaceV = tblObj.spaceV or tblObj.space or 0
+
+    frame:SetScript("OnEnter", function (self)
+        if not isOver then
+            self:SetScript("OnUpdate", function (self)
+                if not MouseIsOver(self) then
+                    isOver = false
+                    self:SetScript("OnUpdate", nil)
+                    
+                    if Self.HighlightFrame:GetParent() == self then
+                        Self.HighlightFrame:SetParent(UIParent)
+                        Self.HighlightFrame:Hide()
+                    end
+                else
+                    local scale = UIParent:GetEffectiveScale()
+                    local cY = select(2, GetCursorPosition()) / scale
+                    local frameTop, frameBottom = parent.frame:GetTop(), parent.frame:GetBottom()
+                    local top, bottom
+                    
+                    for i,child in ipairs(parent.children) do
+                        if i > skip then
+                            local childTop, childBottom = child.frame:GetTop(), child.frame:GetBottom()
+                            if childTop + spaceV >= cY and childBottom - spaceV <= cY then
+                                top =  min(frameTop, max(top or 0, childTop + spaceV/2))
+                                bottom = max(frameBottom, min(bottom or frameTop, childBottom - spaceV/2))
+                            elseif top then
+                                break
+                            end
+                        end
+                    end
+                    
+                    if top and bottom then
+                        Self(Self.HighlightFrame)
+                            .SetParent(self)
+                            .SetPoint("LEFT").SetPoint("RIGHT")
+                            .SetPoint("TOP", 0, top - frameTop)
+                            .SetHeight(top - bottom)
+                            .Show()
+                    else
+                        Self.HighlightFrame:Hide()
+                    end
+                end
+            end)
+        end
+        isOver = true
+    end)
+end
+
+-------------------------------------------------------
 --               AceGUI table layout                 --
 -------------------------------------------------------
 
@@ -928,123 +1117,6 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
     obj:ResumeLayout()
 end)
 
--------------------------------------------------------
---                      Helper                       --
--------------------------------------------------------
-
--- Update table rows in-place
-function Self.UpdateRows(parent, items, createFn, updateFn, skip, ...)
-    local children = parent.children
-
-    -- Create and/or update rows
-    local it = Util.Iter(skip or 0)
-    for _,item in ipairs(items) do
-        local id, child = item[idPath], children[it(0) + 1]
-
-        -- Create the row
-        if not child then
-            createFn(parent, ...)
-            child = children[it(0) + 1]
-        end
-
-        -- Update the row
-        updateFn(item, children, it, ...)
-    end
-
-    -- Release the rest
-    while children[it()] do
-        children[it(0)]:Release()
-        children[it(0)] = nil
-    end
-end
-
-function Self.CreateFilterCheckbox(key)
-    local filter = Rolls.frames.filter
-
-    f = Self("CheckBox")
-        .SetLabel(L["FILTER_" .. key:upper()])
-        .SetCallback("OnValueChanged", function (self, _, checked)
-            if Rolls.filter[key] ~= checked then
-                Rolls.filter[key] = checked
-                Rolls.Update()
-            end
-        end)
-        .SetCallback("OnEnter", function (self)
-            GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
-            GameTooltip:ClearLines()
-            GameTooltip:AddLine(L["FILTER_" .. key:upper()])
-            GameTooltip:AddLine(L["FILTER_" .. key:upper() .. "_DESC"], 1, 1, 1, true)
-            GameTooltip:Show()
-        end)
-        .SetCallback("OnLeave", Self.TooltipHide)
-        .AddTo(filter)
-        .SetPoint("TOPLEFT", filter.children[#filter.children-1].frame, "TOPRIGHT")()
-    f:SetWidth(f.text:GetStringWidth() + 24 + 15)
-    return f
-end
-
-function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
-    f = Self("Icon")
-        .SetImage(icon:sub(1, 9) == "Interface" and icon or "Interface\\Buttons\\" .. icon .. "-Up")
-        .SetImageSize(width or 16, height or 16).SetHeight(16).SetWidth(16)
-        .SetCallback("OnClick", function (...) onClick(...) GameTooltip:Hide() end)
-        .AddTo(parent)()
-    f.image:SetPoint("TOP")
-
-    if desc then
-        f:SetCallback("OnEnter", function (self)
-            GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
-            GameTooltip:SetText(desc, 1, 1, 1, 1)
-            GameTooltip:Show()
-        end)
-        f:SetCallback("OnLeave", Self.TooltipHide)
-    end
-
-    return f
-end
-
-function Self.CreateUnitLabel(parent, baseTooltip)
-    return Self("InteractiveLabel")
-        .SetFontObject(GameFontNormal)
-        .SetCallback("OnEnter", baseTooltip and Self.TooltipUnit or Self.TooltipUnitFullName)
-        .SetCallback("OnLeave", Self.TooltipHide)
-        .SetCallback("OnClick", Self.UnitClick)
-        .AddTo(parent)
-end
-
-function Self.TooltipUnit(self)
-    GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-    GameTooltip:SetUnit(self:GetUserData("unit"))
-    GameTooltip:Show()
-end
-
-function Self.TooltipUnitFullName(self)
-    local unit = self:GetUserData("unit")
-    if unit and Unit.Realm(unit) ~= GetRealmName() then
-        local c = Unit.Color(unit)
-        GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
-        GameTooltip:SetText(Unit.FullName(unit), c.r, c.g, c.b, false)
-        GameTooltip:Show()
-    end
-end
-
-function Self.TooltipHide()
-    GameTooltip:Hide()
-end
-
-function Self.UnitClick(self, event, button)
-    local unit = self:GetUserData("unit")
-    if unit then
-        if button == "LeftButton" then
-            ChatFrame_SendSmartTell(unit)
-        elseif button == "RightButton" then
-            Self.DROPDOWN_UNIT.which = UnitIsUnit(unit, "player") and "SELF" or UnitInRaid(unit) and "RAID_PLAYER" or UnitInParty(unit) and "PARTY" or "PLAYER"
-            Self.DROPDOWN_UNIT.unit = unit
-            ToggleDropDownMenu(1, nil, Self.DROPDOWN_UNIT, "cursor", 3, -3)
-        end
-    end
-end
-
 -- Enable chain-calling
 Self.C = {f = nil, k = nil}
 local Fn = function (...)
@@ -1063,7 +1135,7 @@ local Fn = function (...)
             or f.label and f.label[k] and f.label
         obj[k](obj, ...)
 
-        if (k == "SetText" or k == "SetFontObject") and (f.type == "Label" or f.type == "InteractiveLabel") then
+        if (k == "SetText" or k == "SetFontObject" or k == "SetImage") and (f.type == "Label" or f.type == "InteractiveLabel") then
             f:SetWidth(max(f.imageshown and 200 + f.image:GetWidth() or 0, f.label:GetStringWidth() + (f.imageshown and f.image:GetWidth() + 4 or 0)))
         end
     end
