@@ -33,7 +33,7 @@ function Self.Initiate(target)
         -- Check distance until we can trade
         Self.timers.follow = Addon:ScheduleRepeatingTimer(function ()
             -- Stop if not following anymore
-            if not Util.IsFollowing(target) then
+            if not Unit.IsFollowing(target) then
                 Self.Cancel()
             elseif CheckInteractDistance(target, Util.INTERACT_TRADE) then
                 Addon:CancelTimer(Self.timers.follow)

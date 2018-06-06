@@ -225,6 +225,9 @@ function Addon:RegisterOptions()
     config:RegisterOptionsTable(Name, {
         type = "group",
         args = {
+            version = {type = "description", fontSize = "medium", order = it(), name = L["OPT_VERSION"]},
+            author = {type = "description", fontSize = "medium", order = it(), name = L["OPT_AUTHOR"]},
+            translation = {type = "description", fontSize = "medium", order = it(), name = L["OPT_TRANSLATION"] .. "\n"},
             enable = {
                 name = L["OPT_ENABLE"],
                 desc = L["OPT_ENABLE_DESC"],
@@ -238,11 +241,6 @@ function Addon:RegisterOptions()
                 get = function (_) return self.db.profile.enabled end,
                 width = "full"
             },
-            info = {type = "header", order = it(), name = L["OPT_INFO"]},
-            infoDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_INFO_DESC"] .. "\n"},
-            version = {type = "description", fontSize = "medium", order = it(), name = L["OPT_VERSION"]},
-            author = {type = "description", fontSize = "medium", order = it(), name = L["OPT_AUTHOR"]},
-            translation = {type = "description", fontSize = "medium", order = it(), name = L["OPT_TRANSLATION"]},
             ui = {type = "header", order = it(), name = L["OPT_UI"]},
             uiDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_UI_DESC"] .. "\n"},
             minimapIcon = {

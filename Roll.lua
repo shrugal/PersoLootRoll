@@ -71,7 +71,7 @@ function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner)
                 and (roll.ownerId == ownerId or not (roll.ownerId and ownerId))
                 and (roll.itemOwnerId == itemOwnerId or not (roll.itemOwnerId and itemOwnerId))
                 and (
-                        t == "table" and roll.item.link == item.link
+                       t == "table" and roll.item.link == item.link
                     or t == "number" and item == roll.item.id
                     or t == "string" and item == roll.item.link
                 )

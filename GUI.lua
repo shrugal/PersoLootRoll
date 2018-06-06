@@ -75,6 +75,13 @@ UIDropDownMenu_Initialize(dropDown, function (self, level, menuList)
 end, "MENU")
 Self.DROPDOWN_MASTERLOOT = dropDown
 
+-- Unit
+dropDown = CreateFrame("FRAME", "PlrUnitDropDown", UIParent, "UIDropDownMenuTemplate")
+UIDropDownMenu_SetInitializeFunction(dropDown, function (self, level, menuList)
+    UnitPopup_ShowMenu(self, self.which, self.unit)
+end)
+Self.DROPDOWN_UNIT = dropDown
+
 -------------------------------------------------------
 --                 LootAlertSystem                   --
 -------------------------------------------------------
@@ -129,7 +136,7 @@ function Rolls.Show()
                 wipe(Rolls.frames)
                 wipe(Rolls.open)
             end)
-            .SetMinResize(700, 120)
+            .SetMinResize(550, 120)
             .SetStatusTable(Rolls.status)()
 
         do
@@ -228,21 +235,20 @@ function Rolls.Show()
 
                         if Masterloot.IsMasterlooter() then
                             GameTooltip:AddLine("\n" .. L["TIP_MASTERLOOTING"])
-
-                            local c = Unit.Color("player")
-                            GameTooltip:AddLine(ml, c.r, c.g, c.b, false)
+                            local units = Unit.ColoredName(UnitName("player"))
                             for unit,_ in pairs(Masterloot.masterlooting) do
-                                local c = Unit.Color(unit)
-                                GameTooltip:AddLine(unit, c.r, c.g, c.b, false)
+                                units = units .. ", " .. Unit.ColoredName(Unit.ShortenedName(unit), unit)
                             end
+                            GameTooltip:AddLine(units, 1, 1, 1, 1)
                         end
 
                         GameTooltip:Show()
                     end
                 end)
                 .SetCallback("OnLeave", Self.TooltipHide)
-                .SetCallback("OnClick", function ()
-                    if Masterloot.GetMasterlooter() then ChatFrame_SendSmartTell(Masterloot.GetMasterlooter()) end
+                .SetCallback("OnClick", function (self, ...)
+                    self:SetUserData("unit", Masterloot.GetMasterlooter())
+                    Self.UnitClick(self, ...)
                 end)
                 .SetHeight(12)
                 .SetPoint("TOP", 0, -6)
@@ -520,7 +526,12 @@ local updateFn = function (roll, children, it)
         -- Award randomly
         Self(children[it()]).SetUserData("roll", roll).Toggle(roll.status == roll.STATUS_DONE and canBeAwarded and Util.TblCountNot(roll.bids, Roll.BID_PASS) > 0)
         -- Trade
-        Self(children[it()]).SetUserData("roll", roll).Toggle(not roll.traded and roll.winner and (roll.item.isOwner or roll.isWinner))
+        Self(children[it()]).SetUserData("roll", roll).Toggle(
+            not roll.traded and (
+                (roll.winner and roll.item.isOwner or roll.isWinner) or
+                (roll.bid and roll.bid ~= Roll.BID_PASS and not roll.ownerId)
+            )
+        )
         -- Restart
         Self(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeRestarted())
         -- Cancel
@@ -613,11 +624,30 @@ end
 
 -- Update the details view of a row
 local createFn = function (details)
-    -- Unit, Ilvl, Bid, Votes
+    -- Unit, Ilvl, Bid
     Self.CreateUnitLabel(details)
     Self("Label").SetFontObject(GameFontNormal).AddTo(details)
     Self("Label").SetFontObject(GameFontNormal).AddTo(details)
-    Self("Label").SetFontObject(GameFontNormal).AddTo(details)
+
+    -- Votes
+    Self("Label")
+        .SetFontObject(GameFontNormal)
+        .SetCallback("OnEnter", function (self)
+            local roll, unit = self:GetUserData("roll"), self:GetUserData("unit")
+            if Util.TblCountVal(roll.votes, unit) > 0 then
+                GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOM")
+                GameTooltip:SetText(L["TIP_VOTES"])
+                for toUnit,fromUnit in pairs(roll.votes) do
+                    if unit == toUnit then
+                        local c = Unit.Color(fromUnit)
+                        GameTooltip:AddLine(Unit.ShortenedName(fromUnit), c.r, c.g, c.b, false)
+                    end
+                end
+                GameTooltip:Show()
+            end
+        end)
+        .SetCallback("OnLeave", Self.TooltipHide)
+        .AddTo(details)
 
     -- Actions
     local f = Self("Button")
@@ -640,10 +670,16 @@ local updateFn = function (player, children, it, roll, canBeAwarded, canVote)
         .SetUserData("unit", player.unit)
         .Show()
 
-    -- Ilvl, Bid, Votes
+    -- Ilvl, Bid
     Self(children[it()]).SetText(player.ilvl).Show()
     Self(children[it()]).SetText(player.bid and L["ROLL_BID_" .. player.bid] or "-").Show()
-    Self(children[it()]).SetText(player.votes > 0 and player.votes or "-").Show()
+
+    -- Votes
+    Self(children[it()])
+        .SetText(player.votes > 0 and player.votes or "-")
+        .SetUserData("roll", roll)
+        .SetUserData("unit", player.unit)
+        .Show()
 
     -- Actions
     local txt = canBeAwarded and L["AWARD"]
@@ -979,7 +1015,7 @@ function Self.CreateUnitLabel(parent, baseTooltip)
         .SetFontObject(GameFontNormal)
         .SetCallback("OnEnter", baseTooltip and Self.TooltipUnit or Self.TooltipUnitFullName)
         .SetCallback("OnLeave", Self.TooltipHide)
-        .SetCallback("OnClick", Self.Whisper)
+        .SetCallback("OnClick", Self.UnitClick)
         .AddTo(parent)
 end
 
@@ -991,9 +1027,10 @@ end
 
 function Self.TooltipUnitFullName(self)
     local unit = self:GetUserData("unit")
-    if unit and unit ~= Unit(unit) then
+    if unit and Unit.Realm(unit) ~= GetRealmName() then
+        local c = Unit.Color(unit)
         GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
-        GameTooltip:SetText(unit)
+        GameTooltip:SetText(Unit.FullName(unit), c.r, c.g, c.b, false)
         GameTooltip:Show()
     end
 end
@@ -1002,10 +1039,16 @@ function Self.TooltipHide()
     GameTooltip:Hide()
 end
 
-function Self.Whisper(self)
+function Self.UnitClick(self, event, button)
     local unit = self:GetUserData("unit")
     if unit then
-        ChatFrame_SendSmartTell(unit)
+        if button == "LeftButton" then
+            ChatFrame_SendSmartTell(unit)
+        elseif button == "RightButton" then
+            Self.DROPDOWN_UNIT.which = UnitIsUnit(unit, "player") and "SELF" or UnitInRaid(unit) and "RAID_PLAYER" or UnitInParty(unit) and "PARTY" or "PLAYER"
+            Self.DROPDOWN_UNIT.unit = unit
+            ToggleDropDownMenu(1, nil, Self.DROPDOWN_UNIT, "cursor", 3, -3)
+        end
     end
 end
 

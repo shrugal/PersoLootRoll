@@ -124,6 +124,7 @@ L["TIP_MASTERLOOT_STOP"] = "Plündermeister entfernen"
 L["TIP_MASTERLOOT"] = "Plündermeister ist aktiv"
 L["TIP_MASTERLOOT_INFO"] = "|cffffff00Plündermeister:|r %s\n|cffffff00Rat:|r %s\n|cffffff00Gebote:|r %s\n|cffffff00Stimmen:|r %s"
 L["TIP_MASTERLOOTING"] = "Du bist der Plündermeister von:"
+L["TIP_VOTES"] = "Stimmen von:"
 
 L["MENU_MASTERLOOT_START"] = "Werde Plündermeister"
 L["MENU_MASTERLOOT_SEARCH"] = "Suche Plündermeister in Gruppe"

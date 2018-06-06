@@ -101,9 +101,17 @@ end
 --                       Other                       --
 -------------------------------------------------------
 
+-- Get a unit's realm name
+function Self.Realm(unit)
+    local name, realm = UnitFullName(Self(unit))
+    realm = realm ~= "" and realm or GetRealmName()
+
+    return name and realm or unit and unit:match("^.*-(.*)$") or nil
+end
+
 -- Get a unit's class color
 function Self.Color(unit)
-    return RAID_CLASS_COLORS[select(2, UnitClass(Self(unit)))] or {r = 1, g = 1, b = 1, colorStr = "ffffffff"}
+    return RAID_CLASS_COLORS[select(2, UnitClass(Self(unit))) or "PRIEST"]
 end
 
 -- Check if the player is following someone

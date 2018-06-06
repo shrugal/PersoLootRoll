@@ -125,6 +125,19 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
         if unit and result and from and to then
             result, from, to = tonumber(result), tonumber(from), tonumber(to)
             local fromSelf = UnitIsUnit(unit, "player")
+
+            -- We don't get the full names for x-realm players
+            if not UnitExists(unit) then
+                unit = Util.SearchGroup(function (i, unitGroup)
+                    if Util.StrStartsWith(unitGroup, unit) then
+                        return unitGroup
+                    end
+                end)
+
+                if not unit then
+                    return
+                end
+            end
             
             -- Find the roll
             local i, roll = to % 50
@@ -139,7 +152,7 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
             
             -- Register the unit's bid
             if Unit.InGroup(unit) and roll and (fromSelf and roll:CanBeWon(unit) or roll:CanBeAwardedTo(unit)) and not roll.bids[unit] then
-                roll:Bid(bid, unit, not fromSelf)
+                roll:Bid(bid, unit)
             end
             return
         end
@@ -288,6 +301,11 @@ function Self.CHAT_MSG_WHISPER(event, msg, sender)
             roll = rolls[1]
         end
     end
+
+    if IsInRaid(LE_PARTY_CATEGORY_INSTANCE) or IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
+        print("ROLL", roll)
+    end
+
 
     -- No roll found
     if not roll then

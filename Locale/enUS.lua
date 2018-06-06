@@ -124,6 +124,7 @@ L["TIP_MASTERLOOT_STOP"] = "Remove masterlooter"
 L["TIP_MASTERLOOT"] = "Masterloot is active"
 L["TIP_MASTERLOOT_INFO"] = "|cffffff00Masterlooter:|r %s\n|cffffff00Council:|r %s\n|cffffff00Bids:|r %s\n|cffffff00Votes:|r %s"
 L["TIP_MASTERLOOTING"] = "You are the masterlooter for:"
+L["TIP_VOTES"] = "Votes from:"
 
 L["MENU_MASTERLOOT_START"] = "Become masterlooter"
 L["MENU_MASTERLOOT_SEARCH"] = "Search group for a masterlooter"
