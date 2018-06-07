@@ -262,8 +262,6 @@ function Self.CHAT_MSG_PARTY(event, msg, sender)
 
         local roll = Roll.Find(nil, unit, item:IsLoaded() and item.link or item.id)
         if roll then
-            print("ROLL", roll)
-
             -- Remember the last roll posted to chat
             Self.lastPostedRoll = roll
             
@@ -304,10 +302,6 @@ function Self.CHAT_MSG_WHISPER(event, msg, sender)
         else
             roll = rolls[1]
         end
-    end
-
-    if IsInRaid(LE_PARTY_CATEGORY_INSTANCE) or IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
-        print("ROLL", roll)
     end
 
 
@@ -486,7 +480,6 @@ end)
 
 -- Roll status
 Comm.ListenData(Comm.EVENT_ROLL_STATUS, function (event, data, channel, sender, unit)
-    print("RECEIVING")
     data.owner = Unit.Name(data.owner)
     data.item.owner = Unit.Name(data.item.owner)
     data.winner = Unit.Name(data.winner)
