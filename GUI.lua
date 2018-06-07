@@ -1135,8 +1135,9 @@ local Fn = function (...)
             or f.label and f.label[k] and f.label
         obj[k](obj, ...)
 
-        if (k == "SetText" or k == "SetFontObject" or k == "SetImage") and (f.type == "Label" or f.type == "InteractiveLabel") then
-            f:SetWidth(max(f.imageshown and 200 + f.image:GetWidth() or 0, f.label:GetStringWidth() + (f.imageshown and f.image:GetWidth() + 4 or 0)))
+        -- Fix Label's stupid image anchoring
+        if (k == "SetText" or k == "SetFontObject" or k == "SetImage") and (obj.type == "Label" or obj.type == "InteractiveLabel") then
+            obj:SetWidth(max(obj.imageshown and (201 + obj.image:GetWidth()) or 0, obj.label:GetStringWidth() + (obj.imageshown and obj.image:GetWidth() + 4 or 0)))
         end
     end
     return c
