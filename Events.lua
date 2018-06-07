@@ -122,7 +122,11 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
         local unit, result, from, to = msg:match(Self.PATTERN_ROLL_RESULT)
         if unit and result and from and to then
             result, from, to = tonumber(result), tonumber(from), tonumber(to)
-            local fromSelf = UnitIsUnit(unit, "player")
+
+            -- Rolls lower than 50 will screw with the result scaling
+            if to < 50 then
+                return
+            end
 
             -- We don't get the full names for x-realm players
             if not UnitExists(unit) then
@@ -145,13 +149,15 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
                 roll = Util.TblFirstWhere(Addon.rolls, {status = Roll.STATUS_RUNNING, posted = i})
             end
             
-            -- Get the correct bid
+            -- Get the correct bid and scaled roll result
             local bid = to < 100 and Roll.BID_GREED or Roll.BID_NEED
+            result = result * 100 / to
             
             -- Register the unit's bid
-            if Unit.InGroup(unit) and roll and (fromSelf and roll:CanBeWon(unit) or roll:CanBeAwardedTo(unit)) and not roll.bids[unit] then
-                roll:Bid(bid, unit)
+            if Unit.InGroup(unit) and roll and (UnitIsUnit(unit, "player") and roll:CanBeWon(unit) or roll:CanBeAwardedTo(unit)) and not roll.bids[unit] then
+                roll:Bid(bid, unit, result)
             end
+
             return
         end
     end
@@ -315,7 +321,7 @@ function Self.CHAT_MSG_WHISPER(event, msg, sender)
         elseif not roll.item.isTradable then
             if answer then Comm.ChatLine("ROLL_ANSWER_NOT_TRADABLE", unit) end
         -- I need it for myself
-        elseif roll.status == Roll.STATUS_CANCELED or UnitIsUnit(roll.winner, "player") then
+        elseif roll.status == Roll.STATUS_CANCELED or roll.isWinner then
             if answer then Comm.ChatLine("ROLL_ANSWER_NO_SELF", unit) end
         -- Someone else won or got it
         elseif roll.winner and roll.winner ~= unit or roll.traded and roll.traded ~= unit then

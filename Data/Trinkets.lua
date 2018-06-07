@@ -62,6 +62,7 @@ Self[Item.TRINKET_AGI] = {
     [142159] = true, -- Bloodstained Handkerchief
     [140794] = true, -- Arcanogolem Digit
     [154173] = true, -- Aggramar's Conviction
+    [151968] = true, -- Shadow-Singed Fang
 }
 
 Self[Item.TRINKET_INT] = {
@@ -142,6 +143,7 @@ Self[Item.TRINKET_STR] = {
     [142508] = true, -- Chains of the Valorous
     [142159] = true, -- Bloodstained Handkerchief
     [154173] = true, -- Aggramar's Conviction
+    [151968] = true, -- Shadow-Singed Fang
 }
 
 Self[Item.TRINKET_HEAL] = {

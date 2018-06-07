@@ -98,6 +98,7 @@ function Self.Add(item, owner, timeout, ownerId, itemOwnerId)
         timeout = timeout or Self.GetTimeout(),
         status = Self.STATUS_PENDING,
         bids = {},
+        rolls = {},
         votes = {},
         shown = false,
         posted = false,
@@ -363,15 +364,17 @@ end
 function Self:Restart(started)
     self.started = nil
     self.bid = nil
-    self.bids = {}
     self.vote = nil
-    self.votes = {}
     self.winner = nil
     self.isWinner = nil
     self.shown = false
     self.posted = false
     self.traded = false
     self.status = Self.STATUS_PENDING
+
+    wipe(self.bids)
+    wipe(self.rolls)
+    wipe(self.votes)
 
     self:HideRollFrame()
 
@@ -384,7 +387,7 @@ function Self:Restart(started)
 end
 
 -- Bid on a roll
-function Self:Bid(bid, fromUnit, isImport)
+function Self:Bid(bid, fromUnit, rollOrImport)
     bid = bid or Self.BID_NEED
     fromUnit = Unit.Name(fromUnit or "player")
     local fromSelf = UnitIsUnit(fromUnit, "player")
@@ -393,6 +396,9 @@ function Self:Bid(bid, fromUnit, isImport)
     if fromSelf then
         self:HideRollFrame()
     end
+
+    -- It might be a roll in chat or an import operation
+    local rollResult, isImport = type(rollOrImport) == "number" and rollOrImport, rollOrImport == true
     
     -- Check if we can bid
     local valid, msg = self:Validate(not isImport and Self.STATUS_RUNNING or nil, fromUnit)
@@ -401,17 +407,24 @@ function Self:Bid(bid, fromUnit, isImport)
     elseif not Util.TblFind(Self.BIDS, bid) then
         Comm.RollBidError(self, fromUnit)
     else
+        -- Register the bid
         self.bids[fromUnit] = bid
+
+        if rollResult then
+            self.rolls[fromUnit] = rollResult
+        end
 
         if fromSelf then
             self.bid = bid
             Comm.RollBidSelf(self)
         end
 
+        -- Check if we should advertise to chat
         if self.isOwner and not (self.status == Self.STATUS_DONE or self:CheckEnd()) then
             self:Advertise()
         end
 
+        -- Inform others
         if not isImport then
             if self.isOwner then
                 local data = {ownerId = self.ownerId, bid = bid, fromUnit = Unit.FullName(fromUnit)}
@@ -460,12 +473,14 @@ function Self:Vote(vote, fromUnit, isImport)
     elseif not (isImport or self:UnitCanVote(fromUnit)) then
         Comm.RollVoteError(self)
     else
+        -- Register the vote
         self.votes[fromUnit] = vote
 
         if fromSelf then
             self.vote = vote
         end
 
+        -- Inform others
         if not isImport then
             if self.isOwner then
                 local data = {ownerId = self.ownerId, vote = Unit.FullName(vote), fromUnit = Unit.FullName(fromUnit)}
@@ -553,27 +568,7 @@ function Self:End(winner)
 
     -- Determine a winner
     if self.isOwner and (award or not (winner or Addon.db.profile.awardSelf or Masterloot.IsMasterlooter())) then
-        for i,bid in pairs(Self.BIDS) do
-            if bid ~= Self.BID_PASS then
-                local n = Util.TblCountVal(self.bids, bid)
-                if n > 0 then
-                    n = math.random(n)
-                    for unit,unitBid in pairs(self.bids) do
-                        if unitBid == bid then
-                            n = n - 1
-                        end
-                        if n == 0 then
-                            winner = unit
-                            break
-                        end
-                    end
-                end
-            end
-
-            if winner then
-                break
-            end
-        end
+        winner = self:DetermineWinner()
     end
     
     -- Set winner
@@ -844,6 +839,37 @@ end
 -------------------------------------------------------
 --                      Helper                       --
 -------------------------------------------------------
+
+-- Figure out a random winner
+function Self:DetermineWinner()
+    for i,bid in pairs(Self.BIDS) do
+        if bid ~= Self.BID_PASS then
+            local n = Util.TblCountVal(self.bids, bid)
+            if n > 0 then
+                n = math.random(n)
+                for unit,unitBid in pairs(self.bids) do
+                    if unitBid == bid then
+                        n = n - 1
+                    end
+                    if n == 0 then
+                        -- We have a winner, now let's check if someone rolled higher in chat
+                        if not self.rolls[unit] then
+                            return unit
+                        else
+                            local winner, maxRoll = unit, self.rolls[unit]
+                            for unitRoll,rollResult in pairs(self.rolls) do
+                                if rollResult > maxRoll and self.bids[unitRoll] == bid then
+                                    winner, maxRoll = unitRoll, rollResult
+                                end
+                            end
+                            return winner
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
 
 -- Check if the given unit is eligible
 function Self:UnitIsEligible(unit, checkIlvl)

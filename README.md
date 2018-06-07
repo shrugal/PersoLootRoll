@@ -6,7 +6,7 @@ A World of Warcraft addon to share and roll on items when using personal loot.
 - Rolls on other player's loot by whispering/rolling in chat or (if the other person has the addon) in the background.
 - Offers loot you don't need to others, and handles accepting bids, picking a winner and trading automatically.
 - Figures out what you and others can use, so you only have to decide when it actually makes sense.
-- Masterloot mode.
+- Masterloot mode including support for loot councils.
 - Most things (like whispers, announces etc.) can be turned on/off based on the type of group (raid/party, guildgroup, LFR) or target (friend, guildmember).
 
 ### Rolling
