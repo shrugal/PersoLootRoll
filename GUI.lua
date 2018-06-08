@@ -869,7 +869,7 @@ function Self.TableRowHighlight(parent, skip)
                     for i,child in ipairs(parent.children) do
                         if i > skip then
                             local childTop, childBottom = child.frame:GetTop(), child.frame:GetBottom()
-                            if childTop + spaceV >= cY and childBottom - spaceV <= cY then
+                            if childTop and childBottom and childTop + spaceV >= cY and childBottom - spaceV <= cY then
                                 top =  min(frameTop, max(top or 0, childTop + spaceV/2))
                                 bottom = max(frameBottom, min(bottom or frameTop, childBottom - spaceV/2))
                             elseif top then
