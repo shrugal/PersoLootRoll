@@ -1,4 +1,4 @@
-## Interface: 70100
+## Interface: 80000
 ## Title: PersoLootRoll
 ## Notes: A loot roll addon for personal loot.
 ## Version: 7
