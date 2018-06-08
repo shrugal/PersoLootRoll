@@ -51,6 +51,7 @@ function Self.GROUP_LEFT(event)
 
     -- Clear masterlooter
     Masterloot.SetMasterlooter(nil)
+    wipe(Masterloot.masterlooting)
 
     -- Clear versions
     wipe(Addon.versions)
@@ -196,8 +197,10 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
 
             -- Clear masterlooter
             if unit == Masterloot.GetMasterlooter() then
-                Masterloot.SetMasterlooter(nil)
+                Masterloot.SetMasterlooter(nil, nil, true)
             end
+            Masterloot.SetMasterlooting(unit, nil)
+            Masterloot.ClearMasterlooting(unit)
 
             -- Clear version
             Addon:SetVersion(unit, nil)
@@ -214,11 +217,8 @@ function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
 
     local item = Item.GetLink(msg)
 
-    if item and unit then
+    if item and unit and Item.HasSufficientQuality(item) then
         item = Item.FromLink(item, unit)
-
-        -- Do first quick check, to ignore 99.99% of the loot
-        if not item:HasSufficientQuality() then return end
 
         if item.isOwner then
             item:SetPosition(Self.lastLootedBag, 0)
@@ -527,15 +527,19 @@ end)
 -- Masterlooter
 Comm.Listen(Comm.EVENT_MASTERLOOT_ASK, function (event, msg, channel, sender, unit)
     if Masterloot.IsMasterlooter() then
-        Masterloot.masterlooting[unit] = nil
-        Masterloot.SendOffer(sender)
+        Masterloot.SetMasterlooting(unit, nil)
+        Masterloot.SendOffer(unit)
     elseif channel == Comm.TYPE_WHISPER then
-        Comm.Send(Comm.EVENT_MASTERLOOT_DEC, nil, sender)
+        Masterloot.SendCancellation(nil, unit)
+    elseif Masterloot.GetMasterlooter() then
+        Masterloot.SendConfirmation(unit)
     end
 end)
 Comm.ListenData(Comm.EVENT_MASTERLOOT_OFFER, function (event, data, channel, sender, unit)
+    Masterloot.SetMasterlooting(unit, unit)
+
     if Masterloot.IsMasterlooter(unit) then
-        Comm.Send(Comm.EVENT_MASTERLOOT_ACK, nil, sender)
+        Masterloot.SendConfirmation()
         Masterloot.SetSession(data.session)
     elseif Masterloot.UnitAllow(unit) then
         if Masterloot.UnitAccept(unit) then
@@ -550,17 +554,28 @@ Comm.ListenData(Comm.EVENT_MASTERLOOT_OFFER, function (event, data, channel, sen
         end
     end
 end)
-Comm.Listen(Comm.EVENT_MASTERLOOT_ACK, function (event, msg, channel, sender, unit)
-    if Masterloot.IsMasterlooter() then
-        Masterloot.masterlooting[unit] = true
-    else
-        Comm.Send(Comm.EVENT_MASTERLOOT_DEC, nil, sender)
+Comm.Listen(Comm.EVENT_MASTERLOOT_ACK, function (event, ml, channel, sender, unit)
+    ml = Unit(ml)
+    if ml then
+        if UnitIsUnit(ml, "player") and not Masterloot.IsMasterlooter() then
+            Masterloot.SendCancellation(nil, channel == Comm.TYPE_WHISPER and unit or nil)
+        else
+            Masterloot.SetMasterlooting(unit, ml)
+        end
     end
 end)
-Comm.Listen(Comm.EVENT_MASTERLOOT_DEC, function (event, msg, channel, sender, unit)
-    if Masterloot.IsMasterlooter() then
-        Masterloot.masterlooting[unit] = nil
-    elseif Masterloot.IsMasterlooter(unit) then
+Comm.Listen(Comm.EVENT_MASTERLOOT_DEC, function (event, player, channel, sender, unit)
+    player = Unit(player)
+
+    -- Clear the player's masterlooter
+    if Masterloot.IsMasterlooter(unit) and (Util.StrIsEmpty(player) or UnitIsUnit(player, "player")) then
         Masterloot.SetMasterlooter(nil, nil, true)
+    elseif player == unit or Masterloot.masterlooting[player] == unit then
+        Masterloot.SetMasterlooting(player, nil)
+    end
+
+    -- Clear everybody who has the sender as masterlooter
+    if Util.StrIsEmpty(player) then
+        Masterloot.ClearMasterlooting(unit)
     end
 end)

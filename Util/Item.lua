@@ -585,8 +585,9 @@ function Self:GetSlotCountForLocation()
 end
 
 -- Get the threshold for the item's slot
-function Self:GetThresholdForLocation()
-    local threshold = Self.ILVL_THRESHOLD
+function Self:GetThresholdForLocation(unit, upper)
+    -- Use DB option only for 
+    local threshold = UnitIsUnit(unit or "player", "player") and not upper and Addon.db.profile.ilvlThreshold or Self.ILVL_THRESHOLD
 
     -- Trinkets have double the normal threshold
     if self:GetBasicInfo().equipLoc == Self.TYPE_TRINKET then
@@ -676,7 +677,8 @@ end
 
 -- Check the item quality
 function Self:HasSufficientQuality()
-    return self:GetLinkInfo().quality >= (IsInRaid() and LE_ITEM_QUALITY_EPIC or LE_ITEM_QUALITY_RARE)
+    local quality = type(self) == "table" and self:GetLinkInfo().quality or type(self) == "string" and Self.GetInfo(self, "quality")
+    return quality and quality >= (IsInRaid() and LE_ITEM_QUALITY_EPIC or LE_ITEM_QUALITY_RARE)
 end
 
 -- Check if an item can be equipped
@@ -733,7 +735,8 @@ end
 
 -- Check against equipped ilvl
 function Self:HasSufficientLevel(unit)
-    return self:GetBasicInfo().level + self:GetThresholdForLocation() >= self:GetLevelForLocation(unit or "player")
+    unit = unit or "player"
+    return self:GetBasicInfo().level + self:GetThresholdForLocation(unit) >= self:GetLevelForLocation(unit)
 end
 
 -- Check if item is useful for the player
@@ -884,7 +887,7 @@ function Self.IsTradable(selfOrBag, slot)
             return false, true, false
         elseif not self.isOwner then
             local level = self:GetLevelForLocation(self.owner)
-            local isTradable = level == 0 or level + self:GetThresholdForLocation() >= self.level
+            local isTradable = level == 0 or level + self:GetThresholdForLocation(self.owner, true) >= self.level
 
             return isTradable, self.isSoulbound, self.isSoulbound and isTradable
         else

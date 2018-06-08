@@ -50,8 +50,8 @@ StaticPopupDialogs[Self.DIALOG_ROLL_RESTART] = {
 Self.DIALOG_MASTERLOOT_ASK = "PLR_MASTERLOOT_ASK"
 StaticPopupDialogs[Self.DIALOG_MASTERLOOT_ASK] = {
     text = L["DIALOG_MASTERLOOT_ASK"],
-    button1 = YES,
-    button2 = NO,
+    button1 = ACCEPT,
+    button2 = DECLINE,
     timeout = 30,
     whileDead = true,
     hideOnEscape = false,
@@ -226,7 +226,9 @@ function Rolls.Show()
                 .SetCallback("OnEnter", function (self)
                     local ml = Masterloot.GetMasterlooter()
                     if ml then
+                        -- Info
                         local s = Masterloot.session
+                        local timeoutBase, timeoutPerItem = s.timeoutBase or Roll.TIMEOUT, s.timeoutPerItem or Roll.TIMEOUT_PER_ITEM
                         local council = not s.council and "-" or Util(s.council).Keys().Map(function (unit)
                             return Unit.ColoredName(Unit.ShortenedName(unit), unit)
                         end).Concat(", ")()
@@ -235,16 +237,17 @@ function Rolls.Show()
 
                         GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOM")
                         GameTooltip:SetText(L["TIP_MASTERLOOT"] .. "\n")
-                        GameTooltip:AddLine(L["TIP_MASTERLOOT_INFO"]:format(Unit.ColoredName(ml), council, bids, votes), 1, 1, 1)
+                        GameTooltip:AddLine(L["TIP_MASTERLOOT_INFO"]:format(Unit.ColoredName(ml), timeoutBase, timeoutPerItem, council, bids, votes), 1, 1, 1)
 
-                        if Masterloot.IsMasterlooter() then
-                            GameTooltip:AddLine("\n" .. L["TIP_MASTERLOOTING"])
-                            local units = Unit.ColoredName(UnitName("player"))
-                            for unit,_ in pairs(Masterloot.masterlooting) do
+                        -- Players
+                        GameTooltip:AddLine("\n" .. L["TIP_MASTERLOOTING"])
+                        local units = Unit.ColoredName(UnitName("player"))
+                        for unit,unitMl in pairs(Masterloot.masterlooting) do
+                            if ml == unitMl then
                                 units = units .. ", " .. Unit.ColoredName(Unit.ShortenedName(unit), unit)
                             end
-                            GameTooltip:AddLine(units, 1, 1, 1, 1)
                         end
+                        GameTooltip:AddLine(units, 1, 1, 1, 1)
 
                         GameTooltip:Show()
                     end

@@ -270,7 +270,8 @@ end
 
 -- Calculate the optimal timeout
 function Self.GetTimeout()
-    local items = 0
+    local items, ml = 0, Masterloot.GetMasterlooter()
+    local base, perItem = ml and Masterloot.session.timeoutBase or Self.TIMEOUT, ml and Masterloot.session.timeoutPerItem or Self.TIMEOUT_PER_ITEM
 
     if select(4, GetInstanceInfo()) == DIFFICULTY_DUNGEON_CHALLENGE then
         -- In M+ we get 2 items at the end of the dungeon, +1 if in time, +0.4 per keystone level above 15
@@ -281,7 +282,7 @@ function Self.GetTimeout()
         items = math.ceil(GetNumGroupMembers() / 5)
     end
 
-    return Self.TIMEOUT + items * Self.TIMEOUT_PER_ITEM
+    return base + items * perItem
 end
 
 -------------------------------------------------------
@@ -924,7 +925,7 @@ end
 
 -- Check if the roll is handled by a masterlooter
 function Self:HasMasterlooter()
-    return self.owner ~= self.item.owner or Masterloot.IsMasterlooter(self.owner)
+    return self.owner ~= self.item.owner or self.owner == Masterloot.GetMasterlooter(self.item.owner)
 end
 
 -- Get the rolls id with PLR prefix

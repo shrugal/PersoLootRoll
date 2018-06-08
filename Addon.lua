@@ -4,6 +4,10 @@ TODO:
 - Transmog mode: Check appearance, don't cancel rolls for items that some ppl could wear but have a higher ilvl, prompt to answer only when someone asks for the item
 - Block all trades and whispers
 - Custom messages
+- Custom (lower) ilvl threshold
+- Masterloot
+  * Custom answers
+  * Custom timeout
 
 Internal
 - Roll.traded should be uncoupled from the rest of the roll lifecycle
@@ -13,7 +17,7 @@ local Name, Addon = ...
 local LDB = LibStub("LibDataBroker-1.1")
 local LDBIcon = LibStub("LibDBIcon-1.0")
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local GUI, Item, Roll, Trade, Util = Addon.GUI, Addon.Item, Addon.Roll, Addon.Trade, Addon.Util
+local GUI, Item, Masterloot, Roll, Trade, Util = Addon.GUI, Addon.Item, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Util
 
 -- Echo levels
 Addon.ECHO_NONE = 0
@@ -47,12 +51,15 @@ function Addon:OnInitialize()
                 target = {friend = false, guild = false, other = true}
             },
             awardSelf = false,
+            ilvlThreshold = 30,
             masterloot = {
                 allow = {friend = true, guild = true, guildgroup = true, raidleader = false, raidassistant = false},
                 accept = {friend = false, guildmaster = false, guildofficer = false},
                 whitelist = {},
                 allowAll = false,
                 bidPublic = false,
+                timeoutBase = Roll.TIMEOUT,
+                timeoutPerItem = Roll.TIMEOUT_PER_ITEM,
                 council = {guildmaster = false, guildofficer = false, raidleader = false, raidassistant = false},
                 councilWhitelist = {},
                 votePublic = false
@@ -158,15 +165,15 @@ function Addon:HandleChatCommand(msg)
             
             for i,item in pairs(items) do
                 item = Item.FromLink(item)
-                self.Roll.Add(item, owner or self.Masterloot.GetMasterlooter() or nil, timeout):Start()
+                self.Roll.Add(item, owner or Masterloot.GetMasterlooter() or nil, timeout):Start()
             end
         end
     -- Bid
     elseif cmd == "bid" then
         local owner, item, bid = select(2, unpack(args))
         
-        if Util.StrEmpty(owner) or Item.IsLink(owner)                            -- owner
-        or item and not Item.IsLink(item)                                        -- item
+        if Util.StrIsEmpty(owner) or Item.IsLink(owner)                   -- owner
+        or item and not Item.IsLink(item)                               -- item
         or bid and not Util.TblFind(self.Roll.BIDS, tonumber(bid)) then -- answer
             self:Print(L["USAGE_BID"])
         else
@@ -290,7 +297,7 @@ function Addon:RegisterOptions()
     local councilValues = {L["GUILD_MASTER"], L["GUILD_OFFICER"], L["RAID_LEADER"], L["RAID_ASSISTANT"]}
 
     -- Loot method
-    it = Util.Iter()
+    it(1, true)
     config:RegisterOptionsTable(Name .. "_lootmethod", {
         name = L["OPT_LOOT_METHOD"],
         type = "group",
@@ -305,14 +312,21 @@ function Addon:RegisterOptions()
                 get = function () return self.db.profile.awardSelf end,
                 width = "full"
             },
+            ilvlThreshold = {
+                name = L["OPT_ILVL_THRESHOLD"],
+                desc = L["OPT_ILVL_THRESHOLD_DESC"],
+                type = "range",
+                min = -2 * Item.ILVL_THRESHOLD,
+                max = 2 * Item.ILVL_THRESHOLD,
+                softMin = 0,
+                softMax = Item.ILVL_THRESHOLD,
+                step = 5,
+                order = it(),
+                set = function (_, val) self.db.profile.ilvlThreshold = val end,
+                get = function () return self.db.profile.ilvlThreshold end
+            },
             masterloot = {type = "header", order = it(), name = L["OPT_MASTERLOOT"]},
             masterlootDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOT_DESC"] .. "\n"},
-            masterlootStart = {
-                name = L["OPT_MASTERLOOT_START"],
-                type = "execute",
-                order = it(),
-                func = function () self.Masterloot.SetMasterlooter("player") end
-            },
             masterlootSearch = {
                 name = L["OPT_MASTERLOOT_SEARCH"],
                 type = "execute",
@@ -323,7 +337,7 @@ function Addon:RegisterOptions()
                 name = L["OPT_MASTERLOOT_STOP"],
                 type = "execute",
                 order = it(),
-                func = function () self.Masterloot.SetMasterlooter(nil) end
+                func = function () Masterloot.SetMasterlooter(nil) end
             },
             ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             masterlootAllow = {
@@ -366,9 +380,60 @@ function Addon:RegisterOptions()
                 values = acceptValues,
                 set = function (_, key, val) self.db.profile.masterloot.accept[acceptKeys[key]] = val end,
                 get = function (_, key) return self.db.profile.masterloot.accept[acceptKeys[key]] end
-            },
-            masterlooter = {type = "header", order = it(), name = L["OPT_MASTERLOOTER"]},
+            }
+        }
+    })
+    dialog:AddToBlizOptions(Name .. "_lootmethod", L["OPT_LOOT_METHOD"], Name)
+
+    -- Masterlooter
+    it(1, true)
+    config:RegisterOptionsTable(Name .. "_masterlooter", {
+        name = L["OPT_MASTERLOOTER"],
+        type = "group",
+        args = {
             masterlooterDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOTER_DESC"] .. "\n"},
+            masterlooterStart = {
+                name = L["OPT_MASTERLOOT_START"],
+                type = "execute",
+                order = it(),
+                func = function () Masterloot.SetMasterlooter("player") end
+            },
+            masterlooterStop = {
+                name = L["OPT_MASTERLOOT_STOP"],
+                type = "execute",
+                order = it(),
+                func = function () Masterloot.SetMasterlooter(nil) end
+            },
+            masterlooterTimeoutBase = {
+                name = L["OPT_MASTERLOOTER_TIMEOUT_BASE"],
+                desc = L["OPT_MASTERLOOTER_TIMEOUT_BASE_DESC"],
+                type = "range",
+                min = Roll.TIMEOUT,
+                max = 120,
+                step = 5,
+                order = it(),
+                set = function (_, val)
+                    self.db.profile.masterloot.timeoutBase = val
+                    Masterloot.RefreshSession()
+                end,
+                get = function () return self.db.profile.masterloot.timeoutBase end,
+                width = 1.75
+            },
+            masterlooterTimeoutPerItem = {
+                name = L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM"],
+                desc = L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM_DESC"],
+                type = "range",
+                min = Roll.TIMEOUT_PER_ITEM,
+                max = 60,
+                step = 1,
+                order = it(),
+                set = function (_, val)
+                    self.db.profile.masterloot.timeoutPerItem = val
+                    Masterloot.RefreshSession()
+                end,
+                get = function () return self.db.profile.masterloot.timeoutPerItem end,
+                width = 1.75
+            },
             masterlooterBidPublic = {
                 name = L["OPT_MASTERLOOTER_BID_PUBLIC"],
                 desc = L["OPT_MASTERLOOTER_BID_PUBLIC_DESC"],
@@ -377,21 +442,22 @@ function Addon:RegisterOptions()
                 order = it(),
                 set = function (_, val)
                     self.db.profile.masterloot.bidPublic = val
-                    if self.Masterloot.IsMasterlooter() then self.Masterloot.SetSession() end
+                    Masterloot.RefreshSession()
                 end,
                 get = function () return self.db.profile.masterloot.bidPublic end,
                 width = "full"
             },
-            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
-            masterlooterCouncil = {
-                name = L["OPT_MASTERLOOTER_COUNCIL"],
-                desc = L["OPT_MASTERLOOTER_COUNCIL_DESC"],
+            masterlooterCouncil = {type = "header", order = it(), name = L["OPT_MASTERLOOTER_COUNCIL"]},
+            masterlooterCouncilDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOTER_COUNCIL_DESC"] .. "\n"},
+            masterlooterCouncilAllow = {
+                name = L["OPT_MASTERLOOTER_COUNCIL_ALLOW"],
+                desc = L["OPT_MASTERLOOTER_COUNCIL_ALLOW_DESC"],
                 type = "multiselect",
                 order = it(),
                 values = councilValues,
                 set = function (_, key, val)
                     self.db.profile.masterloot.council[councilKeys[key]] = val
-                    if self.Masterloot.IsMasterlooter() then self.Masterloot.SetSession() end
+                    Masterloot.RefreshSession()
                 end,
                 get = function (_, key) return self.db.profile.masterloot.council[councilKeys[key]] end
             },
@@ -403,7 +469,7 @@ function Addon:RegisterOptions()
                 set = function (_, val)
                     local t = {} for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do t[v] = true end
                     self.db.profile.masterloot.councilWhitelist = t
-                    if self.Masterloot.IsMasterlooter() then self.Masterloot.SetSession() end
+                    Masterloot.RefreshSession()
                 end,
                 get = function () return Util(self.db.profile.masterloot.councilWhitelist).Keys().Sort().Concat(", ")() end,
                 width = "full"
@@ -416,17 +482,17 @@ function Addon:RegisterOptions()
                 order = it(),
                 set = function (_, val)
                     self.db.profile.masterloot.votePublic = val
-                    if self.Masterloot.IsMasterlooter() then self.Masterloot.SetSession() end
+                    Masterloot.RefreshSession()
                 end,
                 get = function () return self.db.profile.masterloot.votePublic end,
                 width = "full"
-            },
+            }
         }
     })
-    dialog:AddToBlizOptions(Name .. "_lootmethod", L["OPT_LOOT_METHOD"], Name)
+    dialog:AddToBlizOptions(Name .. "_masterlooter", L["OPT_MASTERLOOTER"], Name)
 
     -- Messages
-    it = Util.Iter()
+    it(1, true)
     config:RegisterOptionsTable(Name .. "_messages", {
         name = L["OPT_MESSAGES"],
         type = "group",

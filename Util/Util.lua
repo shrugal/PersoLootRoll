@@ -767,12 +767,12 @@ function Self.StrEndsWith(str, str2)
     return Self.IsStr(str) and str:sub(-str2:len()) == str2
 end
 
-function Self.StrEmpty(str)
-    return not Self.IsStr(str) or string == ""
+function Self.StrIsEmpty(str)
+    return not Self.IsStr(str) or str == ""
 end
 
 function Self.StrWrap(str, before, after)
-    if Self.StrEmpty(str) then
+    if Self.StrIsEmpty(str) then
         return ""
     end
 

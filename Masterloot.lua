@@ -15,19 +15,22 @@ Self.masterlooting = {}
 function Self.SetMasterlooter(unit, session, silent)
     unit = unit and Unit.Name(unit)
 
-    if Self.masterlooter then
-        if unit ~= Self.masterlooter then
-            wipe(Self.masterlooting)
-            wipe(Self.session)
-            if not silent then
-                Comm.Send(Comm.EVENT_MASTERLOOT_DEC, nil, UnitIsUnit(Self.masterlooter, "player") and Comm.TYPE_GROUP or Self.masterlooter)
-            end
+    -- Clear old masterlooter
+    if Self.masterlooter and Self.masterlooter ~= unit then
+        if Self.IsMasterlooter() then
+            Self.SendCancellation()
+            Self.ClearMasterlooting("player")
+        elseif not silent then
+            Self.SendCancellation("player")
         end
+        Self.masterlooter = nil
+        wipe(Self.session)
     end
     
     PLR_MASTERLOOTER = unit
     Self.masterlooter = unit
 
+    -- Let others know
     if unit then
         Self.SetSession(session)
 
@@ -37,7 +40,7 @@ function Self.SetMasterlooter(unit, session, silent)
         if isSelf then
             Self.SendOffer(nil, silent)
         elseif not silent then
-            Comm.Send(Comm.EVENT_MASTERLOOT_ACK, nil, unit)
+            Self.SendConfirmation()
         end
     end
 
@@ -45,13 +48,36 @@ function Self.SetMasterlooter(unit, session, silent)
 end
 
 -- Check if the unit (or the player) is our masterlooter
-function Self:GetMasterlooter(unit)
-    return Self.masterlooter
+function Self.GetMasterlooter(unit)
+    unit = Unit.Name(unit or "player")
+    if UnitIsUnit(unit, "player") then
+        return Self.masterlooter
+    else
+        return Self.masterlooting[unit]
+    end
 end
 
 -- Check if the unit (or the player) is our masterlooter
 function Self.IsMasterlooter(unit)
     return Self.masterlooter and UnitIsUnit(Self.masterlooter, unit or "player")
+end
+
+-- Set a unit's masterlooting status
+function Self.SetMasterlooting(unit, ml)
+    unit, ml = unit and Unit.Name(unit), ml and Unit.Name(ml)
+    Self.masterlooting[unit] = ml
+
+    if Self.IsMasterlooter() and Self.IsOnCouncil(unit) ~= Self.IsOnCouncil(unit, true) then
+        Self.SetSession()
+    end
+end
+
+-- Remove everyone from the masterlooting list who has the given unit as their masterlooter
+function Self.ClearMasterlooting(unit)
+    unit = Unit.Name(unit)
+    for i,ml in pairs(Self.masterlooting) do
+        if ml == unit then Self.masterlooting[i] = nil end
+    end
 end
 
 -------------------------------------------------------
@@ -125,7 +151,7 @@ function Self.Restore()
     if PLR_MASTERLOOTER then
         Self.SetMasterlooter(PLR_MASTERLOOTER, {}, true)
     end
-    Comm.Send(Comm.EVENT_MASTERLOOT_ASK, nil, PLR_MASTERLOOTER)
+    Self.SendRequest(PLR_MASTERLOOTER)
 end
 
 -- Set the masterloot session
@@ -135,28 +161,16 @@ function Self.SetSession(session, silent)
 
         -- Council
         local council = {}
-
-        for unit,_ in pairs(config.councilWhitelist) do
-            if Unit.InGroup(unit) then
-                council[Unit.FullName(unit)] = true
-            end
-        end
-
         Util.SearchGroup(function (i, unit, rank)
-            if config.council.raidleader and rank == 2 or config.council.raidassistant and rank == 1 then
+            if unit and not UnitIsUnit(unit, "player") and Self.IsOnCouncil(unit, true, rank) then
                 council[Unit.FullName(unit)] = true
-            else
-                local guildRank = Unit.GuildRank(unit)
-                if config.council.guildleader and rank == 0 or config.council.guildofficer and rank == 1 then
-                    council[Unit.FullName(unit)] = true
-                end
             end
         end)
 
-        council[Unit.FullName("player")] = nil
-
         Self.session = {
             bidPublic = config.bidPublic,
+            timeoutBase = Addon.db.profile.masterloot.timeoutBase or Roll.TIMEOUT,
+            timeoutPerItem = Addon.db.profile.masterloot.timeoutPerItem or Roll.TIMEOUT_PER_ITEM,
             council = Util.TblCount(council) > 0 and council or nil,
             votePublic = config.votePublic
         }
@@ -164,24 +178,69 @@ function Self.SetSession(session, silent)
         if not silent then
             Self.SendOffer(nil, true)
         end
+    elseif session then
+        Self.session = session
     else
-        Self.session = session or {}
+        wipe(Self.session)
     end
 
     return Self.session
 end
 
+-- Refresh the masterloot session
+function Self.RefreshSession()
+    if Self.IsMasterlooter() then Self.SetSession() end
+end
+
 -- Check if the unit is on the loot council
-function Self.IsOnCouncil(unit)
-    return Self.session.council and Self.session.council[Unit.FullName(unit or "player")]
+function Self.IsOnCouncil(unit, refresh, groupRank)
+    unit = Unit(unit or "player")
+    local fullName = Unit.FullName(unit)
+
+    if not refresh then
+        return Self.session.council and Self.session.council[fullName] or false
+    else
+        if not (Self.masterlooting[unit] == Self.masterlooter and Unit.InGroup(unit)) then
+            return false
+        end
+
+        local config, guildRank = Addon.db.profile.masterloot, Unit.GuildRank(unit)
+        groupRank = groupRank or Util.SearchGroup(function (i, unitGroup, rank) if unitGroup == unit then return rank end end)
+
+        if config.councilWhitelist[unit] or config.councilWhitelist[fullName] then
+            return true
+        elseif config.council.raidleader and groupRank == 2 or config.council.raidassistant and groupRank == 1 then
+            return true
+        elseif config.council.guildleader and guildRank == 0 or config.council.guildofficer and guildRank == 1 then
+            return true
+        else
+            return false
+        end
+    end
 end
 
 -------------------------------------------------------
 --                         Comm                      --
 -------------------------------------------------------
 
-function Self.SendOffer(unit, silent)
+-- Ask someone to be your masterlooter
+function Self.SendRequest(target)
+    Comm.Send(Comm.EVENT_MASTERLOOT_ASK, nil, target)
+end
+
+-- Send masterlooter offer to unit
+function Self.SendOffer(target, silent)
     if Self.IsMasterlooter() then
-        Comm.SendData(Comm.EVENT_MASTERLOOT_OFFER, {session = Self.session, silent = silent}, unit)
+        Comm.SendData(Comm.EVENT_MASTERLOOT_OFFER, {session = Self.session, silent = silent}, target)
     end
+end
+
+-- Confirm unit as your masterlooter
+function Self.SendConfirmation(target)
+    Comm.Send(Comm.EVENT_MASTERLOOT_ACK, Unit.FullName(Self.masterlooter), target)
+end
+
+-- Stop being a masterlooter (unit == nil) or clear the unit's masterlooter
+function Self.SendCancellation(unit, target)
+    Comm.Send(Comm.EVENT_MASTERLOOT_DEC, unit and Unit.FullName(unit) or nil, target)
 end
