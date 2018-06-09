@@ -290,7 +290,7 @@ function Addon:RegisterOptions()
     -- Loot method
     it(1, true)
     config:RegisterOptionsTable(Name .. "_lootmethod", {
-        name = L["OPT_LOOT_METHOD"],
+        name = L["OPT_LOOT_RULES"],
         type = "group",
         args = {
             awardSelf = {
@@ -303,6 +303,8 @@ function Addon:RegisterOptions()
                 get = function () return self.db.profile.awardSelf end,
                 width = "full"
             },
+            itemFilter = {type = "header", order = it(), name = L["OPT_ITEM_FILTER"]},
+            itemFilterDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_ITEM_FILTER_DESC"] .. "\n"},
             ilvlThreshold = {
                 name = L["OPT_ILVL_THRESHOLD"],
                 desc = L["OPT_ILVL_THRESHOLD_DESC"],
@@ -349,7 +351,7 @@ function Addon:RegisterOptions()
             }
         }
     })
-    dialog:AddToBlizOptions(Name .. "_lootmethod", L["OPT_LOOT_METHOD"], Name)
+    dialog:AddToBlizOptions(Name .. "_lootmethod", L["OPT_LOOT_RULES"], Name)
 
     local allowKeys = {"friend", "guild", "guildgroup", "raidleader", "raidassistant"}
     local allowValues = {FRIEND, LFG_LIST_GUILD_MEMBER, GUILD_GROUP, L["RAID_LEADER"], L["RAID_ASSISTANT"]}

@@ -125,7 +125,7 @@ L["TIP_MASTERLOOT_STOP"] = "Plündermeister entfernen"
 L["TIP_MASTERLOOT"] = "Plündermeister ist aktiv"
 L["TIP_MASTERLOOT_INFO"] = 
     "|cffffff00Plündermeister:|r %s\n"
- .. "|cffffff00Laufzeit:|r %ds (+ %ds pro Item)\n"
+ .. "|cffffff00Roll Zeit:|r %ds (+ %ds pro Item)\n"
  .. "|cffffff00Rat:|r %s\n"
  .. "|cffffff00Gebote:|r %s\n"
  .. "|cffffff00Stimmen:|r %s"
@@ -151,7 +151,7 @@ L["ERROR_ROLL_BID_UNKNOWN_OTHER"] = "%s hat ein ungültiges Gebot für %s gesend
 
 L["OPT_GENERAL"] = "Allgemein"
 L["OPT_MESSAGES"] = "Nachrichten"
-L["OPT_LOOT_METHOD"] = "Beute-Methode"
+L["OPT_LOOT_RULES"] = "Beute-Regeln"
 
 L["OPT_ENABLE"] = "Aktiviert"
 L["OPT_ENABLE_DESC"] = "Aktiviere oder deaktiviere das Addon"
@@ -198,12 +198,14 @@ L["OPT_WHISPER_TARGET_DESC"] = "Flüstere andere an, abhängig davon ob sie auf 
 
 L["OPT_AWARD_SELF"] = "Loot selbst verteilen"
 L["OPT_AWARD_SELF_DESC"] = "Wähle selbst wer deinen Loot bekommen soll, anstatt das Addon entscheiden zu lassen. Wenn du Plündermeister bist ist dies immer aktiv"
+L["OPT_ITEM_FILTER"] = "Item Filter"
+L["OPT_ITEM_FILTER_DESC"] = "Passe die Regeln an, nach denen ein Item als nützlich eingestuft wird. Du wirst nur fürs nützliche Items zum Rollen aufgefordert."
 L["OPT_ILVL_THRESHOLD"] = "Item-Level Schwelle"
 L["OPT_ILVL_THRESHOLD_DESC"] = "Das Level von Items darf maximal um so viel unter dem was du hast liegen, um als Hilfreich zu zählen, das doppelte für Trinkets."
 L["OPT_SPECS"] = "Spezialisierungen"
 L["OPT_SPECS_DESC"] = "Schlage nur Beute für diese Klassen-Spezialisierungen vor."
 L["OPT_TRANSMOG"] = "Prüfe Transmog-Aussehen"
-L["OPT_TRANSMOG_DESC"] = "Rolle auf Items deren Aussehen du noch nicht hast, selbst wenn sie ansonsten nicht nützlich für dich wären."
+L["OPT_TRANSMOG_DESC"] = "Rolle auf Items deren Aussehen du noch nicht hast."
 
 L["OPT_MASTERLOOT"] = "Plündermeister"
 L["OPT_MASTERLOOT_DESC"] = "Wenn du (oder jemand anderes) Plündermeister wird, dann wird jegliche Beute von diesem Spieler verteilt. Du wirst benachrichtigt wessen Items du gewinnst bzw. wer deine Items gewinnt, sodass du mit der entsprechenden Person handeln kannst."
