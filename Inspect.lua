@@ -70,30 +70,33 @@ function Self.Update(unit)
     -- Determine the min level of all unique relic types for the currently equipped artifact weapon
     local weapon = Item.GetEquippedArtifact(unit)
     if weapon then
-        local relics = Util.TblGroupKeys(weapon:GetUniqueRelicSlots())
-        for relicType,slots in pairs(relics) do
-            local slotMin = false
-            for i,slot in pairs(slots) do
-                local link = weapon:GetGem(slot)
-                if link then
-                    slotMin = min(slotMin or 1000, Item.GetInfo(link, "level") or 0)
-                else
-                    slotMin = false break
+        local relics = weapon:GetUniqueRelicSlots()
+        if relics then
+            relics = Util.TblGroupKeys(relics)
+            for relicType,slots in pairs(relics) do
+                local slotMin = false
+                for i,slot in pairs(slots) do
+                    local link = weapon:GetGem(slot)
+                    if link then
+                        slotMin = min(slotMin or 1000, Item.GetInfo(link, "level") or 0)
+                    else
+                        slotMin = false break
+                    end
                 end
-            end
 
-            -- Only set it if we got links for all slots
-            if slotMin then
-                info[relicType] = slotMin and max(0, info[relicType] or 0, slotMin)
-            elseif not info[relicType] then
-                info[relicType] = false
+                -- Only set it if we got links for all slots
+                if slotMin then
+                    info[relicType] = slotMin and max(0, info[relicType] or 0, slotMin)
+                elseif not info[relicType] then
+                    info[relicType] = false
+                end
             end
         end
     end
 
     -- Check if the inspect was successfull
     local n = Util.TblCount(info)
-    local failed = n == 0 or Util.TblCountVal(info, false) >= n/2
+    local failed = n == 0 or Util.TblCountOnly(info, false) >= n/2
     local inspectsLeft = Self.queue[unit] or Self.MAX_PER_CHAR
 
     -- Update cache and queue entries

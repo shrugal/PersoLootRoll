@@ -531,7 +531,7 @@ local updateFn = function (roll, children, it)
         -- Advertise
         Self(children[it()]).SetUserData("roll", roll).Toggle(roll:ShouldAdvertise(true))
         -- Award randomly
-        Self(children[it()]).SetUserData("roll", roll).Toggle(roll.status == roll.STATUS_DONE and canBeAwarded and Util.TblCountNot(roll.bids, Roll.BID_PASS) > 0)
+        Self(children[it()]).SetUserData("roll", roll).Toggle(roll.status == roll.STATUS_DONE and canBeAwarded and Util.TblCountExcept(roll.bids, Roll.BID_PASS) > 0)
         -- Trade
         Self(children[it()]).SetUserData("roll", roll).Toggle(
             not roll.traded and (
@@ -641,7 +641,7 @@ local createFn = function (details)
         .SetFontObject(GameFontNormal)
         .SetCallback("OnEnter", function (self)
             local roll, unit = self:GetUserData("roll"), self:GetUserData("unit")
-            if Util.TblCountVal(roll.votes, unit) > 0 then
+            if Util.TblCountOnly(roll.votes, unit) > 0 then
                 GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOM")
                 GameTooltip:SetText(L["TIP_VOTES"])
                 for toUnit,fromUnit in pairs(roll.votes) do
@@ -708,7 +708,7 @@ function Rolls.UpdateDetails(details, roll)
             unit = unit,
             ilvl = roll.item:GetLevelForLocation(unit),
             bid = type(val) == "number" and val or nil,
-            votes = Util.TblCountVal(roll.votes, unit)
+            votes = Util.TblCountOnly(roll.votes, unit)
         })
         return u
     end, {}, true).SortBy("bid", 99, false, "votes", 0, true, "ilvl", 0, false, "unit")()
