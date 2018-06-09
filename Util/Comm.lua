@@ -140,8 +140,11 @@ function Self.Send(event, txt, target, prio, callbackFn, callbackArg)
     -- Figure out the correct channel and target
     local channel, player = Self.GetDestination(target)
 
+    -- TODO: This fixes a beta bug that causes a dc when sending empty strings
+    txt = (not txt or txt == "") and " " or txt
+
     -- Send the message
-    Addon:SendCommMessage(event, txt or "", channel, player, prio, callbackFn, callbackArg)
+    Addon:SendCommMessage(event, txt, channel, player, prio, callbackFn, callbackArg)
 end
 
 -- Send structured addon data
@@ -152,6 +155,7 @@ end
 -- Listen for an addon message
 function Self.Listen(event, method, fromSelf, fromAll)
     Addon:RegisterComm(Self.GetPrefix(event), function (event, msg, channel, sender)
+        msg = msg ~= "" and msg ~= " " and msg or nil
         local unit = Unit(sender)
         if fromAll or Unit.InGroup(unit, not fromSelf) then
             method(event, msg, channel, sender, unit)
