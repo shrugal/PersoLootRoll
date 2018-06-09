@@ -228,7 +228,7 @@ function Self.TblMin(t, start) return Self.TblFoldL(t, math.min, start or select
 function Self.TblMax(t, start) return Self.TblFoldL(t, math.max, start or select(2, next(t))) end
 
 -- Count the # of occurences of given value(s)
-function Self.TblCountVal(t, ...)
+function Self.TblCountOnly(t, ...)
     local n = 0
     for i,v in pairs(t) do
         if Self.In(v, ...) then n = n + 1 end
@@ -237,7 +237,7 @@ function Self.TblCountVal(t, ...)
 end
 
 -- Count the # of occurences of everything except given value(s)
-function Self.TblCountNot(t, ...)
+function Self.TblCountExcept(t, ...)
     local n = 0
     for i,v in pairs(t) do
         if not Self.In(v, ...) then n = n + 1 end
@@ -598,7 +598,7 @@ end
 -- Make sure all table entries are unique 
 function Self.TblUnique(t, k)
     for i,v in pairs(t) do
-        if Self.TblCountVal(t, v) > 1 then
+        if Self.TblCountOnly(t, v) > 1 then
             if k then t[i] = nil else tremove(t, i) end
         end
     end

@@ -65,6 +65,9 @@ function Addon:OnInitialize()
                 votePublic = false
             },
             answer = true
+        },
+        char = {
+            specs = {true, true, true, true}
         }
     }, true)
     
@@ -219,10 +222,6 @@ function Addon:RegisterOptions()
     local config = LibStub("AceConfig-3.0")
     local dialog = LibStub("AceConfigDialog-3.0")
 
-    -- We need this to be able to define the order of these options
-    local groupKeys = {"party", "raid", "guild", "lfd", "lfr"}
-    local groupValues = {PARTY, RAID, GUILD_GROUP, LOOKING_FOR_DUNGEON_PVEFRAME, RAID_FINDER_PVEFRAME}
-
     -- General
     local it = Util.Iter()
     config:RegisterOptionsTable(Name, {
@@ -287,14 +286,13 @@ function Addon:RegisterOptions()
     })
     self.configFrame = dialog:AddToBlizOptions(Name)
 
+    local specs
+
     local allowKeys = {"friend", "guild", "guildgroup", "raidleader", "raidassistant"}
     local allowValues = {FRIEND, GUILD, GUILD_GROUP, L["RAID_LEADER"], L["RAID_ASSISTANT"]}
 
     local acceptKeys = {"friend", "guildmaster", "guildofficer"}
     local acceptValues = {FRIEND, L["GUILD_MASTER"], L["GUILD_OFFICER"]}
-    
-    local councilKeys = {"guildmaster", "guildofficer", "raidleader", "raidassistant"}
-    local councilValues = {L["GUILD_MASTER"], L["GUILD_OFFICER"], L["RAID_LEADER"], L["RAID_ASSISTANT"]}
 
     -- Loot method
     it(1, true)
@@ -304,7 +302,7 @@ function Addon:RegisterOptions()
         args = {
             awardSelf = {
                 name = L["OPT_AWARD_SELF"],
-                desc = L["OPT_AWARD_SELF_DESC"],
+                desc = L["OPT_AWARD_SELF_DESC"] .. "\n",
                 descStyle = "inline",
                 type = "toggle",
                 order = it(),
@@ -323,9 +321,42 @@ function Addon:RegisterOptions()
                 step = 5,
                 order = it(),
                 set = function (_, val) self.db.profile.ilvlThreshold = val end,
-                get = function () return self.db.profile.ilvlThreshold end
+                get = function () return self.db.profile.ilvlThreshold end,
+                width = "full"
             },
-            masterloot = {type = "header", order = it(), name = L["OPT_MASTERLOOT"]},
+            ilvlThresholdDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_ILVL_THRESHOLD_DESC"] .. "\n", cmdHidden = true, dropdownHidden = true},
+            specs = {
+                name = L["OPT_SPECS"],
+                desc = L["OPT_SPECS_DESC"],
+                type = "multiselect",
+                order = it(),
+                values = function ()
+                    if not specs then
+                        local classId = select(3, UnitClass("player"))
+                        specs = Util.TblCopy(Item.CLASS_INFO[classId].specs, function (_, i) return select(2, GetSpecializationInfo(i)) end, true)
+                    end
+                    return specs
+                end,
+                set = function (_, key, val)
+                    self.db.char.specs[key] = val
+                    wipe(Item.playerSlotLevels)
+                end,
+                get = function (_, key) return self.db.char.specs[key] end
+            },
+            specsDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_SPECS_DESC"], cmdHidden = true, dropdownHidden = true},
+        }
+    })
+    dialog:AddToBlizOptions(Name .. "_lootmethod", L["OPT_LOOT_METHOD"], Name)
+    
+    local councilKeys = {"guildmaster", "guildofficer", "raidleader", "raidassistant"}
+    local councilValues = {L["GUILD_MASTER"], L["GUILD_OFFICER"], L["RAID_LEADER"], L["RAID_ASSISTANT"]}
+    
+    -- Masterloot
+    it(1, true)
+    config:RegisterOptionsTable(Name .. "_masterloot", {
+        name = L["OPT_MASTERLOOT"],
+        type = "group",
+        args = {
             masterlootDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOT_DESC"] .. "\n"},
             masterlootSearch = {
                 name = L["OPT_MASTERLOOT_SEARCH"],
@@ -383,7 +414,7 @@ function Addon:RegisterOptions()
             }
         }
     })
-    dialog:AddToBlizOptions(Name .. "_lootmethod", L["OPT_LOOT_METHOD"], Name)
+    dialog:AddToBlizOptions(Name .. "_masterloot", L["OPT_MASTERLOOT"], Name)
 
     -- Masterlooter
     it(1, true)
@@ -490,6 +521,9 @@ function Addon:RegisterOptions()
         }
     })
     dialog:AddToBlizOptions(Name .. "_masterlooter", L["OPT_MASTERLOOTER"], Name)
+
+    local groupKeys = {"party", "raid", "guild", "lfd", "lfr"}
+    local groupValues = {PARTY, RAID, GUILD_GROUP, LOOKING_FOR_DUNGEON_PVEFRAME, RAID_FINDER_PVEFRAME}
 
     -- Messages
     it(1, true)

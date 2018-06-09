@@ -845,7 +845,7 @@ end
 function Self:DetermineWinner()
     for i,bid in pairs(Self.BIDS) do
         if bid ~= Self.BID_PASS then
-            local n = Util.TblCountVal(self.bids, bid)
+            local n = Util.TblCountOnly(self.bids, bid)
             if n > 0 then
                 n = math.random(n)
                 for unit,unitBid in pairs(self.bids) do

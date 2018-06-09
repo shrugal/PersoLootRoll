@@ -19,9 +19,9 @@ Self.PATTERN_LINK = "(|?c?f?f?%x*|?H?item:[^|]*|?h?[^|]*|?h?|?r?)"
 Self.PATTERN_ILVL = ITEM_LEVEL:gsub("%%d", "(%%d+)")
 Self.PATTERN_RELIC_TYPE = RELIC_TOOLTIP_TYPE:gsub("%%s", "(.+)")
 Self.PATTERN_CLASSES = ITEM_CLASSES_ALLOWED:gsub("%%s", "(.+)")
-Self.PATTERN_STRENGTH = ITEM_MOD_STRENGTH:gsub("%%c", "%%p"):gsub("%%s", "(%%d+)")
-Self.PATTERN_INTELLECT = ITEM_MOD_INTELLECT:gsub("%%c", "%%p"):gsub("%%s", "(%%d+)")
-Self.PATTERN_AGILITY = ITEM_MOD_AGILITY:gsub("%%c", "%%p"):gsub("%%s", "(%%d+)")
+Self.PATTERN_STRENGTH = ITEM_MOD_STRENGTH:gsub("%%c%%s", "^%%p(.+)")
+Self.PATTERN_INTELLECT = ITEM_MOD_INTELLECT:gsub("%%c%%s", "^%%p(.+)")
+Self.PATTERN_AGILITY = ITEM_MOD_AGILITY:gsub("%%c%%s", "^%%p(.+)")
 Self.PATTERN_SOULBOUND = ITEM_SOULBOUND
 Self.PATTERN_TRADE_TIME_REMAINING = BIND_TRADE_TIME_REMAINING:gsub("%%s", ".+")
 
@@ -32,130 +32,172 @@ Self.INFO_BASIC = 2
 Self.INFO_FULL = 3
 
 -- Primary stats
-Self.ATTRIBUTES = {ITEM_MOD_STRENGTH_SHORT, ITEM_MOD_INTELLECT_SHORT, ITEM_MOD_AGILITY_SHORT}
-
--- What primary attributes classes use
-Self.CLASS_ATTRIBUTES = {
-    [ITEM_MOD_STRENGTH_SHORT] = {Unit.DEATH_KNIGHT, Unit.PALADIN, Unit.WARRIOR},
-    [ITEM_MOD_INTELLECT_SHORT] = {Unit.DRUID, Unit.MAGE, Unit.MONK, Unit.PALADIN, Unit.PRIEST, Unit.SHAMAN, Unit.WARLOCK},
-    [ITEM_MOD_AGILITY_SHORT] = {Unit.DEMON_HUNTER, Unit.DRUID, Unit.HUNTER, Unit.MONK, Unit.ROGUE, Unit.SHAMAN}
+Self.ATTRIBUTES = {
+    LE_UNIT_STAT_STRENGTH, -- 1
+    LE_UNIT_STAT_AGILITY,  -- 2
+--  LE_UNIT_STAT_STAMINA,  -- 3
+    LE_UNIT_STAT_INTELLECT -- 4
 }
 
--- What gear classes can equip
-Self.CLASS_GEAR = {
-    [LE_ITEM_CLASS_ARMOR] = {
-        [LE_ITEM_ARMOR_GENERIC] = true,
-        [LE_ITEM_ARMOR_CLOTH] = {Unit.MAGE, Unit.PRIEST, Unit.WARLOCK},
-        [LE_ITEM_ARMOR_LEATHER] = {Unit.DEMON_HUNTER, Unit.DRUID, Unit.MONK, Unit.ROGUE},
-        [LE_ITEM_ARMOR_MAIL] = {Unit.HUNTER, Unit.SHAMAN},
-        [LE_ITEM_ARMOR_PLATE] = {Unit.DEATH_KNIGHT, Unit.PALADIN, Unit.WARRIOR},
-        [LE_ITEM_ARMOR_SHIELD] = {Unit.PALADIN, Unit.SHAMAN, Unit.WARRIOR}
-    },
-    [LE_ITEM_CLASS_WEAPON] = {
-        [LE_ITEM_WEAPON_AXE1H] = {Unit.DEATH_KNIGHT, Unit.DEMON_HUNTER, Unit.HUNTER, Unit.MONK, Unit.PALADIN, Unit.ROGUE, Unit.SHAMAN, Unit.WARRIOR},
-        [LE_ITEM_WEAPON_MACE1H] = {Unit.DEATH_KNIGHT, Unit.DRUID, Unit.MONK, Unit.PALADIN, Unit.PRIEST, Unit.ROGUE, Unit.SHAMAN, Unit.WARRIOR},
-        [LE_ITEM_WEAPON_SWORD1H] = {Unit.DEATH_KNIGHT, Unit.DEMON_HUNTER, Unit.HUNTER, Unit.MAGE, Unit.MONK, Unit.PALADIN, Unit.ROGUE, Unit.WARLOCK, Unit.WARRIOR},
-        [LE_ITEM_WEAPON_WARGLAIVE] = {Unit.DEMON_HUNTER},
-        [LE_ITEM_WEAPON_DAGGER] = {Unit.DEMON_HUNTER, Unit.DRUID, Unit.HUNTER, Unit.MAGE, Unit.PRIEST, Unit.ROGUE, Unit.SHAMAN, Unit.WARLOCK, Unit.WARRIOR},
-        [LE_ITEM_WEAPON_UNARMED] = {Unit.DEMON_HUNTER, Unit.DRUID, Unit.HUNTER, Unit.MONK, Unit.ROGUE, Unit.SHAMAN, Unit.WARRIOR},
-        [LE_ITEM_WEAPON_WAND] = {Unit.MAGE, Unit.PRIEST, Unit.WARLOCK},
-        [LE_ITEM_WEAPON_AXE2H] = {Unit.DEATH_KNIGHT, Unit.PALADIN, Unit.SHAMAN, Unit.WARRIOR},
-        [LE_ITEM_WEAPON_MACE2H] = {Unit.DEATH_KNIGHT, Unit.PALADIN, Unit.SHAMAN, Unit.WARRIOR},
-        [LE_ITEM_WEAPON_SWORD2H] = {Unit.DEATH_KNIGHT, Unit.PALADIN, Unit.WARRIOR},
-        [LE_ITEM_WEAPON_POLEARM] = {Unit.DEATH_KNIGHT, Unit.DRUID, Unit.HUNTER, Unit.MONK, Unit.PALADIN, Unit.WARRIOR},
-        [LE_ITEM_WEAPON_STAFF] = {Unit.DRUID, Unit.HUNTER, Unit.MAGE, Unit.MONK, Unit.PRIEST, Unit.SHAMAN, Unit.WARLOCK, Unit.WARRIOR},
-        [LE_ITEM_WEAPON_BOWS] = {Unit.HUNTER, Unit.WARRIOR},
-        [LE_ITEM_WEAPON_CROSSBOW] = {Unit.HUNTER, Unit.WARRIOR},
-        [LE_ITEM_WEAPON_GUNS] = {Unit.HUNTER, Unit.WARRIOR},
-        [LE_ITEM_WEAPON_THROWN] = {Unit.ROGUE, Unit.WARRIOR}
-    }
-}
-
--- Artifact relic slots
-Self.CLASS_RELICS = {
-    [Unit.DEATH_KNIGHT] = {
-        [128402] = {RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_IRON}, -- Blood
-        [128292] = {RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_FROST}, -- Frost
-        [128403] = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_BLOOD}, -- Unholy
-    },
-    [Unit.DEMON_HUNTER] = {
-        [127829] = {RELIC_SLOT_TYPE_FEL, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_FEL}, -- Havoc
-        [128832] = {RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_FEL}, -- Vengeance
-    },
-    [Unit.DRUID] = {
-        [128858] = {RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_ARCANE}, -- Balance
-        [128860] = {RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_LIFE}, -- Feral
-        [128821] = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_LIFE}, -- Guardian
-        [128306] = {RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_LIFE}, -- Restoration
-    },
-    [Unit.HUNTER] = {
-        [128861] = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_IRON}, -- Beast Mastery
-        [128826] = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_LIFE}, -- Marksmanship
-        [128808] = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_BLOOD}, -- Survival
-    },
-    [Unit.MAGE] = {
-        [127857] = {RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_ARCANE}, -- Arcane
-        [128820] = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_FIRE}, -- Fire
-        [128862] = {RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_FROST}, -- Frost
-    },
-    [Unit.MONK] = {
-        [128938] = {RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON}, -- Brewmaster
-        [128937] = {RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_WIND}, -- Mistweaver
-        [128940] = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_WIND}, -- Windwalker
-    },
-    [Unit.PALADIN] = {
-        [128823] = {RELIC_SLOT_TYPE_HOLY, RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_HOLY}, -- Holy
-        [128866] = {RELIC_SLOT_TYPE_HOLY, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_ARCANE}, -- Protection
-        [120978] = {RELIC_SLOT_TYPE_HOLY, RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_HOLY}, -- Retribution
-    },
-    [Unit.PRIEST] = {
-        [128868] = {RELIC_SLOT_TYPE_HOLY, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_HOLY}, -- Discipline
-        [128825] = {RELIC_SLOT_TYPE_HOLY, RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_HOLY}, -- Holy
-        [128827] = {RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_SHADOW}, -- Shadow
-    },
-    [Unit.ROGUE] = {
-        [128870] = {RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_BLOOD}, -- Assassination
-        [128872] = {RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_WIND}, -- Outlaw
-        [128476] = {RELIC_SLOT_TYPE_FEL, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_FEL}, -- Subtlety
-    },
-    [Unit.SHAMAN] = {
-        [128935] = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_WIND}, -- Elemental
-        [128819] = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_WIND}, -- Enhancement
-        [128911] = {RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_LIFE}, -- Restoration
-    },
-    [Unit.WARLOCK] = {
-        [128942] = {RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_SHADOW}, -- Affliction
-        [128943] = {RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_FEL}, -- Demonology
-        [128941] = {RELIC_SLOT_TYPE_FEL, RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_FEL}, -- Destruction
-    },
-    [Unit.WARRIOR] = {
-        [128910] = {RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_SHADOW}, -- Arms
-        [128908] = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON}, -- Fury
-        [128289] = {RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_FIRE}, -- Protection
-    }
-}
+-- Roles
+Self.ROLE_HEAL = 5
+Self.ROLE_TANK = 6
+Self.ROLE_MELEE = 7
+Self.ROLE_RANGED = 8
 
 -- Trinket types
-Self.TRINKET_AGI = 1
-Self.TRINKET_INT = 2
-Self.TRINKET_STR = 3
-Self.TRINKET_HEAL = 4
-Self.TRINKET_TANK = 5
+Self.TRINKET_STR = LE_UNIT_STAT_STRENGTH    -- 1
+Self.TRINKET_AGI = LE_UNIT_STAT_AGILITY     -- 2
+Self.TRINKET_INT = LE_UNIT_STAT_INTELLECT   -- 4
+Self.TRINKET_HEAL = Self.ROLE_HEAL          -- 5
+Self.TRINKET_TANK = Self.ROLE_TANK          -- 6
 
--- What trinkets classes use
-Self.CLASS_TRINKETS = {
-    [Unit.DEATH_KNIGHT] =   {Self.TRINKET_STR, Self.TRINKET_TANK},
-    [Unit.DEMON_HUNTER] =   {Self.TRINKET_AGI, Self.TRINKET_TANK},
-    [Unit.DRUID] =          {Self.TRINKET_AGI, Self.TRINKET_INT, Self.TRINKET_HEAL, Self.TRINKET_TANK},
-    [Unit.HUNTER] =         {Self.TRINKET_AGI},
-    [Unit.MAGE] =           {Self.TRINKET_INT},
-    [Unit.MONK] =           {Self.TRINKET_AGI, Self.TRINKET_HEAL, Self.TRINKET_TANK},
-    [Unit.PALADIN] =        {Self.TRINKET_STR, Self.TRINKET_HEAL, Self.TRINKET_TANK},
-    [Unit.PRIEST] =         {Self.TRINKET_INT, Self.TRINKET_HEAL},
-    [Unit.ROGUE] =          {Self.TRINKET_AGI},
-    [Unit.SHAMAN] =         {Self.TRINKET_AGI, Self.TRINKET_INT, Self.TRINKET_HEAL},
-    [Unit.WARLOCK] =        {Self.TRINKET_INT},
-    [Unit.WARRIOR] =        {Self.TRINKET_STR, Self.TRINKET_TANK}
+-- Which class/spec can equip what
+Self.CLASS_INFO = {
+    [Unit.DEATH_KNIGHT] = {
+        armor = {LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_PLATE},
+        weapons = {LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_AXE2H, LE_ITEM_WEAPON_MACE2H, LE_ITEM_WEAPON_SWORD2H, LE_ITEM_WEAPON_POLEARM},
+        specs = {
+            -- Blood
+            {role = Self.ROLE_TANK,     attribute = LE_UNIT_STAT_STRENGTH,  artifact = {id = 128402, relics = {RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_IRON}}},
+            -- Frost
+            {role = Self.ROLE_MELEE,    attribute = LE_UNIT_STAT_STRENGTH,  artifact = {id = 128292, relics = {RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_FROST}}},
+            -- Unholy
+            {role = Self.ROLE_MELEE,    attribute = LE_UNIT_STAT_STRENGTH,  artifact = {id = 128403, relics = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_BLOOD}}}
+        }
+    },
+    [Unit.DEMON_HUNTER] = {
+        armor = {LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_LEATHER},
+        weapons = {LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_WARGLAIVE, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_UNARMED},
+        specs = {
+            -- Havoc
+            {role = Self.ROLE_MELEE,    attribute = LE_UNIT_STAT_AGILITY,   artifact = {id = 127829, relics = {RELIC_SLOT_TYPE_FEL, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_FEL}}},
+            -- Vengeance
+            {role = Self.ROLE_TANK,     attribute = LE_UNIT_STAT_AGILITY,   artifact = {id = 128832, relics = {RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_FEL}}}
+        }
+    },
+    [Unit.DRUID] = {
+        armor = {LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_LEATHER},
+        weapons = {LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_UNARMED, LE_ITEM_WEAPON_POLEARM, LE_ITEM_WEAPON_STAFF},
+        specs = {
+            -- Balance
+            {role = Self.ROLE_RANGED,   attribute = LE_UNIT_STAT_INTELLECT, artifact = {id = 128858, relics = {RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_ARCANE}}},
+            -- Feral
+            {role = Self.ROLE_MELEE,    attribute = LE_UNIT_STAT_AGILITY,   artifact = {id = 128860, relics = {RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_LIFE}}},
+            -- Guardian
+            {role = Self.ROLE_TANK,     attribute = LE_UNIT_STAT_AGILITY,   artifact = {id = 128821, relics = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_LIFE}}},
+            -- Restoration
+            {role = Self.ROLE_HEAL,     attribute = LE_UNIT_STAT_INTELLECT, artifact = {id = 128306, relics = {RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_LIFE}}}
+        }
+    },
+    [Unit.HUNTER] = {
+        armor = {LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_MAIL},
+        weapons = {LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_UNARMED, LE_ITEM_WEAPON_POLEARM, LE_ITEM_WEAPON_STAFF, LE_ITEM_WEAPON_BOWS, LE_ITEM_WEAPON_CROSSBOW, LE_ITEM_WEAPON_GUNS},
+        specs = {
+            -- Beast Mastery
+            {role = Self.ROLE_RANGED,   attribute = LE_UNIT_STAT_AGILITY,   artifact = {id = 128861, relics = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_IRON}}},
+            -- Marksmanship
+            {role = Self.ROLE_RANGED,   attribute = LE_UNIT_STAT_AGILITY,   artifact = {id = 128826, relics = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_LIFE}}},
+            -- Survival
+            {role = Self.ROLE_RANGED,   attribute = LE_UNIT_STAT_AGILITY,   artifact = {id = 128808, relics = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_BLOOD}}}
+        }
+    },
+    [Unit.MAGE] = {
+        armor = {LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_CLOTH},
+        weapons = {LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_WAND, LE_ITEM_WEAPON_STAFF},
+        specs = {
+            -- Arcane
+            {role = Self.ROLE_RANGED,   attribute = LE_UNIT_STAT_INTELLECT, artifact = {id = 127857, relics = {RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_ARCANE}}},
+            -- Fire
+            {role = Self.ROLE_RANGED,   attribute = LE_UNIT_STAT_INTELLECT, artifact = {id = 128820, relics = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_FIRE}}},
+            -- Frost
+            {role = Self.ROLE_RANGED,   attribute = LE_UNIT_STAT_INTELLECT, artifact = {id = 128862, relics = {RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_FROST}}}
+        }
+    },
+    [Unit.MONK] = {
+        armor = {LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_LEATHER},
+        weapons = {LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_UNARMED, LE_ITEM_WEAPON_POLEARM, LE_ITEM_WEAPON_STAFF},
+        specs = {
+            -- Brewmaster
+            {role = Self.ROLE_TANK,     attribute = LE_UNIT_STAT_AGILITY,   artifact = {id = 128938, relics = {RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON}}},
+            -- Mistweaver
+            {role = Self.ROLE_HEAL,     attribute = LE_UNIT_STAT_INTELLECT, artifact = {id = 128937, relics = {RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_WIND}}},
+            -- Windwalker
+            {role = Self.ROLE_MELEE,    attribute = LE_UNIT_STAT_AGILITY,   artifact = {id = 128940, relics = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_WIND}}}
+        }
+    },
+    [Unit.PALADIN] = {
+        armor = {LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_PLATE, LE_ITEM_ARMOR_SHIELD},
+        weapons = {LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_AXE2H, LE_ITEM_WEAPON_MACE2H, LE_ITEM_WEAPON_SWORD2H, LE_ITEM_WEAPON_POLEARM},
+        specs = {
+            -- Holy
+            {role = Self.ROLE_HEAL,     attribute = LE_UNIT_STAT_INTELLECT, artifact = {id = 128823, relics = {RELIC_SLOT_TYPE_HOLY, RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_HOLY}}},
+            -- Protection
+            {role = Self.ROLE_TANK,     attribute = LE_UNIT_STAT_STRENGTH,  artifact = {id = 128866, relics = {RELIC_SLOT_TYPE_HOLY, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_ARCANE}}},
+            -- Retribution
+            {role = Self.ROLE_MELEE,    attribute = LE_UNIT_STAT_STRENGTH,  artifact = {id = 120978, relics = {RELIC_SLOT_TYPE_HOLY, RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_HOLY}}}
+        }
+    },
+    [Unit.PRIEST] = {
+        armor = {LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_CLOTH},
+        weapons = {LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_WAND, LE_ITEM_WEAPON_STAFF},
+        specs = {
+            -- Discipline
+            {role = Self.ROLE_HEAL,     attribute = LE_UNIT_STAT_INTELLECT, artifact = {id = 128868, relics = {RELIC_SLOT_TYPE_HOLY, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_HOLY}}},
+            -- Holy
+            {role = Self.ROLE_HEAL,     attribute = LE_UNIT_STAT_INTELLECT, artifact = {id = 128825, relics = {RELIC_SLOT_TYPE_HOLY, RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_HOLY}}},
+            -- Shadow
+            {role = Self.ROLE_RANGED,   attribute = LE_UNIT_STAT_INTELLECT, artifact = {id = 128827, relics = {RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_SHADOW}}}
+        }
+    },
+    [Unit.ROGUE] = {
+        armor = {LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_LEATHER},
+        weapons = {LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_UNARMED, LE_ITEM_WEAPON_THROWN},
+        specs = {
+            -- Assassination
+            {role = Self.ROLE_MELEE,    attribute = LE_UNIT_STAT_AGILITY,   artifact = {id = 128870, relics = {RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_BLOOD}}},
+            -- Outlaw
+            {role = Self.ROLE_MELEE,    attribute = LE_UNIT_STAT_AGILITY,   artifact = {id = 128872, relics = {RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_WIND}}},
+            -- Subtlety
+            {role = Self.ROLE_MELEE,    attribute = LE_UNIT_STAT_AGILITY,   artifact = {id = 128476, relics = {RELIC_SLOT_TYPE_FEL, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_FEL}}}
+        }
+    },
+    [Unit.SHAMAN] = {
+        armor = {LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_MAIL, LE_ITEM_ARMOR_SHIELD},
+        weapons = {LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_UNARMED, LE_ITEM_WEAPON_AXE2H, LE_ITEM_WEAPON_MACE2H, LE_ITEM_WEAPON_STAFF},
+        specs = {
+            -- Elemental
+            {role = Self.ROLE_RANGED,   attribute = LE_UNIT_STAT_INTELLECT, artifact = {id = 128935, relics = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_WIND}}},
+            -- Enhancement
+            {role = Self.ROLE_MELEE,    attribute = LE_UNIT_STAT_AGILITY,   artifact = {id = 128819, relics = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_WIND}}},
+            -- Restoration
+            {role = Self.ROLE_HEAL,     attribute = LE_UNIT_STAT_INTELLECT, artifact = {id = 128911, relics = {RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_LIFE}}}
+        }
+    },
+    [Unit.WARLOCK] = {
+        armor = {LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_CLOTH},
+        weapons = {LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_WAND, LE_ITEM_WEAPON_STAFF},
+        specs = {
+            -- Affliction
+            {role = Self.ROLE_RANGED,   attribute = LE_UNIT_STAT_INTELLECT, artifact = {id = 128942, relics = {RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_SHADOW}}},
+            -- Demonology
+            {role = Self.ROLE_RANGED,   attribute = LE_UNIT_STAT_INTELLECT, artifact = {id = 128943, relics = {RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_FEL}}},
+            -- Destruction
+            {role = Self.ROLE_RANGED,   attribute = LE_UNIT_STAT_INTELLECT, artifact = {id = 128941, relics = {RELIC_SLOT_TYPE_FEL, RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_FEL}}}
+        }
+    },
+    [Unit.WARRIOR] = {
+        armor = {LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_PLATE, LE_ITEM_ARMOR_SHIELD},
+        weapons = {LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_UNARMED, LE_ITEM_WEAPON_AXE2H, LE_ITEM_WEAPON_MACE2H, LE_ITEM_WEAPON_SWORD2H, LE_ITEM_WEAPON_POLEARM, LE_ITEM_WEAPON_STAFF, LE_ITEM_WEAPON_BOWS, LE_ITEM_WEAPON_CROSSBOW, LE_ITEM_WEAPON_GUNS, LE_ITEM_WEAPON_THROWN},
+        specs = {
+            -- Arms
+            {role = Self.ROLE_MELEE,    attribute = LE_UNIT_STAT_STRENGTH,  artifact = {id = 128910, relics = {RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_SHADOW}}},
+            -- Fury
+            {role = Self.ROLE_MELEE,    attribute = LE_UNIT_STAT_STRENGTH,  artifact = {id = 128908, relics = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON}}},
+            -- Protection
+            {role = Self.ROLE_TANK,     attribute = LE_UNIT_STAT_STRENGTH,  artifact = {id = 128289, relics = {RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_FIRE}}}
+        }
+    }
 }
 
 -- Armor locations
@@ -377,10 +419,14 @@ function Self.GetEquippedArtifact(unit)
     unit = unit or "player"
     local classId = select(3, UnitClass(unit))
 
-    for i,slot in pairs(Self.SLOTS[Self.TYPE_WEAPON]) do
+    for _,slot in pairs(Self.SLOTS[Self.TYPE_WEAPON]) do
         local id = GetInventoryItemID(unit, slot)
-        if id and Self.CLASS_RELICS[classId][id] then
-            return Self.FromSlot(slot, unit)
+        if id then
+            for i,spec in pairs(Self.CLASS_INFO[classId].specs) do
+                if id == spec.artifact.id then
+                    return Self.FromSlot(slot, unit)
+                end
+            end
         end
     end
 end
@@ -423,8 +469,7 @@ function Self:GetLinkInfo()
 end
 
 -- Get info from GetItemInfo()
-local mapFn = function (trinkets, i, id) return trinkets[id] and i end
-
+local mapFn = function (trinkets, i, id) return trinkets[id] and true or nil end
 function Self:GetBasicInfo()
     self:GetLinkInfo()
     
@@ -447,11 +492,6 @@ function Self:GetBasicInfo()
             self.isSoulbound = self.bindType == LE_ITEM_BIND_ON_ACQUIRE or self.isEquipped and self.bindType == LE_ITEM_BIND_ON_EQUIP
             self.isTradable = not self.isSoulbound or nil
             self.infoLevel = Self.INFO_BASIC
-
-            -- Trinket info
-            if self.equipLoc == Self.TYPE_TRINKET then
-                self.trinketTypes = Util.TblCopy(Self.TRINKETS, mapFn, self.id)
-            end
         end
     end
 
@@ -491,8 +531,12 @@ function Self:GetFullInfo()
                 self.attributes = self.attributes or {}
                 for i,attr in pairs(Self.ATTRIBUTES) do
                     if not self.attributes[attr] then
-                        self.attributes[attr] = line:match(Self["PATTERN_" .. attr:upper()]) -- TODO: Doesn't get the values correctly
-                        if self.attributes[attr] then return end
+                        local attrName = attr == LE_UNIT_STAT_STRENGTH and "STRENGTH" or attr == LE_UNIT_STAT_INTELLECT and "INTELLECT" or "AGILITY"
+                        local match = line:match(Self["PATTERN_" .. attrName])
+                        if match then
+                            self.attributes[attr] = tonumber((match:gsub(",", ""):gsub("\\.", "")))
+                            return
+                        end
                     end
                 end
             end
@@ -516,30 +560,9 @@ end
 -------------------------------------------------------
 
 -- Get a list of owned items by equipment location
-local searchFn = function (link, b, s, items, self, classId)
-    if Self.GetInfo(link, "isEquippable") then
-        if self.isRelic then
-            local id = Self.GetInfo(link, "id")
-            if Self.CLASS_RELICS[classId][id] then
-                for i=1,3 do
-                    if Self.CLASS_RELICS[classId][id][i] == self.relicType then
-                        tinsert(items, (select(2, GetItemGem(link, i))))
-                    end
-                end
-            elseif Self.GetInfo(link, "isRelic") and Self.GetInfo(link, "relicType") == self.relicType then
-                tinsert(items, link)
-            end
-        elseif Self.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY then
-            local subType, _, equipLoc = select(7, GetItemInfo(link))
-            if subType and subType ~= "Artifact Relic" and equipLoc and Util.TblEquals(Self.SLOTS[equipLoc], Self.SLOTS[self.equipLoc]) then
-                tinsert(items, link)
-            end
-        end
-    end
-end
-
 function Self:GetOwnedForLocation(equipped, bag)
     local items = {}
+    local classId = select(3, UnitClass("player"))
 
     -- No point in doing this if we don't have the info yet
     _, success = self:GetBasicInfo()
@@ -565,7 +588,39 @@ function Self:GetOwnedForLocation(equipped, bag)
 
     -- Get item(s) from bag
     if bag ~= false then
-        Util.SearchBags(searchFn, nil, nil, items, self, (select(3, UnitClass("player"))))
+        for bag=1,NUM_BAG_SLOTS do
+            for slot=1, GetContainerNumSlots(bag) do
+                local link = GetContainerItemLink(bag, slot)
+
+                if link and Self.GetInfo(link, "isEquippable") then
+                    if self.isRelic then
+                        if Self.GetInfo(link, "isRelic") then
+                            -- It's a relic
+                            if Self.GetInfo(link, "relicType") == self.relicType then
+                                tinsert(items, link)
+                            end
+                        elseif Self.GetInfo(link, "classId") == LE_ITEM_CLASS_WEAPON then
+                            -- It might be an artifact weapon
+                            local id = Self.GetInfo(link, "id")
+                            for i,spec in pairs(Self.CLASS_INFO[classId].specs) do
+                                if id == spec.artifact.id and Addon.db.char.specs[i] then
+                                    for slot,relicType in pairs(spec.artifact.relics) do
+                                        if relicType == self.relicType then
+                                            tinsert(items, (select(2, GetItemGem(link, slot))))
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    elseif Self.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY then
+                        local subType, _, equipLoc = select(7, GetItemInfo(link))
+                        if subType and subType ~= "Artifact Relic" and equipLoc and Util.TblEquals(Self.SLOTS[equipLoc], Self.SLOTS[self.equipLoc]) then
+                            tinsert(items, link)
+                        end
+                    end
+                end
+            end
+        end
     end
 
     return items
@@ -578,7 +633,15 @@ function Self:GetSlotCountForLocation()
     if not success then return 0 end
 
     if self.isRelic then
-        return Util.TblCountFn(Self.CLASS_RELICS[select(3, UnitClass("player"))], Util.TblCountVal, self:GetFullInfo().relicType)
+        self:GetFullInfo()
+        local n, classId = 0, select(3, UnitClass("player"))
+
+        for i,spec in pairs(Self.CLASS_INFO[classId].specs) do
+            if Addon.db.char.specs[i] then
+                n = n + Util.TblCountOnly(spec.artifact.relics, self.relicType)
+            end
+        end
+        return n
     else
         return #Self.SLOTS[self.equipLoc]
     end
@@ -631,44 +694,50 @@ end
 
 -- Get artifact relics in the item
 function Self:GetRelics(relicTypes)
-    _, success = self:GetBasicInfo()
-    if not success then return {} end
+    local id = self:GetBasicInfo().id
 
-    local weaponRelics = Util.TblFirstWhere(Self.CLASS_RELICS, self.id)[self.id]
-    relicTypes = relicTypes and Util.Tbl(relicTypes)
-
-    local relics = {}
-    for slot,relicType in pairs(weaponRelics) do
-        if not relicTypes or Util.TblFind(relicTypes, relicType) then
-            tinsert(relics, self:GetGem(slot))
+    for _,class in pairs(Self.CLASS_INFO) do
+        for i,spec in pairs(class.specs) do
+            if spec.artifact.id == id then
+                local relics = {}
+                for slot,relicType in pairs(spec.artifact.relics) do
+                    if not relicTypes or Util.In(relicType, relicTypes) then
+                        tinsert(relics, self:GetGem(slot))
+                    end
+                end
+                return relics
+            end
         end
     end
-
-    return relics
 end
 
 -- Get all relic slots with types that only occur in this weapon for the given class
 function Self:GetUniqueRelicSlots()
-    _, success = self:GetBasicInfo()
-    if not success then return {} end
+    local id = self:GetBasicInfo().id
 
-    local weapons = Util.TblFirstWhere(Self.CLASS_RELICS, self.id)
-    local selfRelics = Util.TblCopy(weapons[self.id])
+    for _,class in pairs(Self.CLASS_INFO) do
+        for i,spec in pairs(class.specs) do
+            if spec.artifact.id == id then
+                local relics = Util.TblCopy(spec.artifact.relics)
 
-    -- Remove all relicTypes that occur in other weapons
-    for id,relics in pairs(weapons) do
-        if id ~= self.id then
-            for _,relicType in pairs(relics) do
-                for slot,selfRelicType in pairs(selfRelics) do
-                    if relicType == selfRelicType then
-                        selfRelics[slot] = nil
+                -- Remove all relicTypes that occur in other weapons
+                for slot,relicType in pairs(relics) do
+                    for i,spec in pairs(class.specs) do
+                        if spec.artifact.id ~= id then
+                            for _,otherRelicType in pairs(spec.artifact.relics) do
+                                if otherRelicType == relicType then
+                                    relics[slot] = nil break
+                                end
+                            end
+                        end
+                        if not relics[slot] then break end
                     end
                 end
+
+                return relics
             end
         end
     end
-
-    return selfRelics
 end
 
 -------------------------------------------------------
@@ -689,7 +758,10 @@ function Self:CanBeEquipped(unit)
     end
     
     self:GetFullInfo()
-    local className, _, classId = UnitClass(unit or "player")
+
+    unit = unit or "player"
+    local className, _, classId = UnitClass(unit)
+    local isSelf = UnitIsUnit(unit, "player")
 
     -- Check if there are class restrictions
     if self.classes and not Util.In(className, self.classes) then
@@ -703,34 +775,47 @@ function Self:CanBeEquipped(unit)
 
     -- Check relic type
     if self.isRelic then
-        for itemId, types in pairs(Self.CLASS_RELICS[classId]) do
-            if Util.In(self.relicType, types) then
+        for i,spec in pairs(Self.CLASS_INFO[classId].specs) do
+            if (not isSelf or Addon.db.char.specs[i]) and Util.In(self.relicType, spec.artifact.relics) then
                 return true
             end
         end
+
         return false
     end
 
     -- Check if the armor/weapon type can be equipped
-    local list = Self.CLASS_GEAR[self.classId] and Self.CLASS_GEAR[self.classId][self.subClassId]
-    return list and (list == true or Util.TblFind(list, classId) ~= nil)
+    if Util.In(self.classId, LE_ITEM_CLASS_ARMOR, LE_ITEM_CLASS_WEAPON) then
+        return Util.In(self.subClassId, Self.CLASS_INFO[classId][self.classId == LE_ITEM_CLASS_ARMOR and "armor" or "weapons"])
+    else
+        return false
+    end
 end
 
 -- Check if item either has no or matching primary attributes
 function Self:HasMatchingAttributes(unit)
+    unit = unit or "player"
+    local isSelf, classId = UnitIsUnit(unit, "player"), select(3, UnitClass(unit))
+
     self:GetFullInfo()
 
     -- Item has no primary attributes
     if not self.attributes or not next(self.attributes) then
         return true
+    -- Check if item has a primary attribute that the class can use
+    else
+        for i,spec in pairs(Self.CLASS_INFO[classId].specs) do
+            if not isSelf or Addon.db.char.specs[i] then
+                for attr,_ in pairs(self.attributes) do
+                    if attr == spec.attribute then
+                        return true
+                    end
+                end
+            end
+        end
     end
     
-    -- Check if item has a primary attribute that the class can use
-    local classId = select(3, UnitClass(unit or "player"))
-
-    return Util.TblSearch(self.attributes, function (v, attr)
-        return Util.TblFind(Self.CLASS_ATTRIBUTES[attr], classId)
-    end) ~= nil
+    return false
 end
 
 -- Check against equipped ilvl
@@ -746,7 +831,19 @@ function Self:IsUseful(unit)
     if not (self:CanBeEquipped(unit) and self:HasMatchingAttributes(unit)) then
         return false
     elseif self:GetBasicInfo().equipLoc == Self.TYPE_TRINKET then
-        return not next(self.trinketTypes) or Util.TblIntersects(self.trinketTypes, Self.CLASS_TRINKETS[select(3, UnitClass(unit))])
+        if not Util.TblFindWhere(Self.TRINKETS, self.id) then
+            return true
+        else
+            local isSelf, classId = UnitIsUnit(unit, "player"), select(3, UnitClass(unit))
+            for i,spec in pairs(Self.CLASS_INFO[classId].specs) do
+                if (not isSelf or Addon.db.char.specs[i]) then
+                    if Self.TRINKETS[spec.attribute][self.id] or Self.TRINKETS[spec.role] and Self.TRINKETS[spec.role][self.id] then
+                        return true
+                    end
+                end
+            end
+            return false
+        end
     else
         return true
     end
