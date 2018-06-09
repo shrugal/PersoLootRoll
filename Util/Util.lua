@@ -32,6 +32,16 @@ function Self.IsGuildGroup(guild)
     return count / GetNumGroupMembers() >= 0.8
 end
 
+-- Get a list of guild ranks
+function Self.GetGuildRanks()
+    local t, i, name = {}, 1, GuildControlGetRankName(1)
+    while not Self.StrIsEmpty(name) do
+        t[i] = name
+        i, name = i + 1, GuildControlGetRankName(i + 1)
+    end
+    return t
+end
+
 -- Get hidden tooltip for scanning
 function Self.GetHiddenTooltip()
     if not Self.hiddenTooltip then
@@ -65,17 +75,6 @@ function Self.ScanTooltip(fn, linkOrbag, slot, ...)
     end
 end
 
--- Search through the group/raid with a function
-function Self.SearchGroup(fn)
-    fn = Self.Fn(fn)
-    for i=1, GetNumGroupMembers() do
-        local r = {fn(i, GetRaidRosterInfo(i))}
-        if r[1] ~= nil then
-            return unpack(r)
-        end
-    end
-end
-
 -- Get the correct bag position, if it exists (e.g. 1, 31 -> 2, 1)
 function Self.GetBagPosition(bag, slot)
     local numSlots = GetContainerNumSlots(bag)
@@ -85,26 +84,6 @@ function Self.GetBagPosition(bag, slot)
         return Self.GetBagPosition(bag + 1, slot - numSlots)
     else
         return bag, slot
-    end
-end
-
--- Search through the bags with a function. Providing startBag will only search that bag,
--- providing startSlot as well will search through all bags/slots after from that combination.
-function Self.SearchBags(fn, startBag, startSlot, ...)
-    local endBag = not startSlot and startBag or NUM_BAG_SLOTS
-    startBag = startBag or 0
-    startSlot = startSlot or 1
-
-    for bag = startBag, endBag do
-        for slot = bag == startBag and startSlot or 1, GetContainerNumSlots(bag) do
-            local link = GetContainerItemLink(bag, slot)
-            if link then
-                local a, b, c = fn(link, bag, slot, ...)
-                if a ~= nil then
-                    return a, b, c
-                end
-            end
-        end
     end
 end
 

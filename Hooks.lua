@@ -271,11 +271,11 @@ function Self.EnableUnitMenus()
     -- UnitPopup:OnClick()
     if not Addon:IsHooked("UnitPopup_OnClick") then
         Addon:SecureHook("UnitPopup_OnClick", function (self)
-            local dropdownMenu = UIDROPDOWNMENU_INIT_MENU
-            local unit = Unit.Name(dropdownMenu.unit or dropdownMenu.chatTarget)
-
             if self.value and Util.StrStartsWith(self.value, NAME) then
+                local dropdownMenu = UIDROPDOWNMENU_INIT_MENU
+                local unit = Unit.Name(dropdownMenu.unit or dropdownMenu.chatTarget)
                 local roll = Roll.Get(UnitPopupButtons[self.value].roll)
+                
                 if roll and roll:CanBeAwardedTo(unit, true) then
                     roll:Finish(unit)
                 end
@@ -287,7 +287,7 @@ function Self.EnableUnitMenus()
     local onEnter = function (self)
         if self.value and Util.StrStartsWith(self.value, NAME) then
             local roll = Roll.Get(UnitPopupButtons[self.value].roll)
-            if roll and roll:CanBeAwarded() then
+            if roll and roll:CanBeAwarded(true) then
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 GameTooltip:SetHyperlink(roll.item.link)
                 GameTooltip:Show()

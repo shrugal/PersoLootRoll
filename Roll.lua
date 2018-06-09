@@ -1,6 +1,6 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Comm, GUI, Item, Locale, Masterloot, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Item, Addon.Locale, Addon.Masterloot, Addon.Trade, Addon.Unit, Addon.Util
+local Comm, Events, GUI, Item, Locale, Masterloot, Trade, Unit, Util = Addon.Comm, Addon.Events, Addon.GUI, Addon.Item, Addon.Locale, Addon.Masterloot, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.Roll
 
 -- Default schedule delay
@@ -54,7 +54,7 @@ function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner)
     -- Search by owner and link/id
     if not id and owner and item then
         local t = type(item)
-        if t == "table" then
+        if t == "table" and not item.infoLevel then
             item = Item.FromLink(item.link, item.owner):GetBasicInfo()
         end
 
@@ -445,7 +445,7 @@ function Self:Bid(bid, fromUnit, rollOrImport)
                 elseif bid ~= Self.BID_PASS then
                     -- Roll on it in chat or whisper the owner
                     if self.posted then
-                        if Addon.db.profile.roll then
+                        if Addon.db.profile.roll and Events.lastPostedRoll == self then
                             RandomRoll("1", bid == Self.BID_GREED and "50" or "100")
                         end
                     else

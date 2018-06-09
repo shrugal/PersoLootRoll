@@ -1,13 +1,9 @@
 --[[
 TODO:
-- Only specific specs
-- Transmog mode: Check appearance, don't cancel rolls for items that some ppl could wear but have a higher ilvl, prompt to answer only when someone asks for the item
 - Block all trades and whispers
 - Custom messages
-- Custom (lower) ilvl threshold
 - Masterloot
   * Custom answers
-  * Custom timeout
 
 Internal
 - Roll.traded should be uncoupled from the rest of the roll lifecycle
@@ -52,22 +48,30 @@ function Addon:OnInitialize()
             },
             awardSelf = false,
             ilvlThreshold = 30,
+            transmog = false,
             masterloot = {
                 allow = {friend = true, guild = true, guildgroup = true, raidleader = false, raidassistant = false},
                 accept = {friend = false, guildmaster = false, guildofficer = false},
-                whitelist = {},
                 allowAll = false,
                 bidPublic = false,
                 timeoutBase = Roll.TIMEOUT,
                 timeoutPerItem = Roll.TIMEOUT_PER_ITEM,
                 council = {guildmaster = false, guildofficer = false, raidleader = false, raidassistant = false},
-                councilWhitelist = {},
                 votePublic = false
             },
             answer = true
         },
+        factionrealm = {
+            masterloot = {
+                whitelist = {},
+                councilWhitelist = {},
+            }
+        },
         char = {
-            specs = {true, true, true, true}
+            specs = {true, true, true, true},
+            masterloot = {
+                guildRank = 0
+            }
         }
     }, true)
     
@@ -167,8 +171,8 @@ function Addon:HandleChatCommand(msg)
             local timeout, owner = tonumber(args[i]), args[i+1]
             
             for i,item in pairs(items) do
-                item = Item.FromLink(item)
-                self.Roll.Add(item, owner or Masterloot.GetMasterlooter() or nil, timeout):Start()
+                item = Item.FromLink(item, owner or "player")
+                self.Roll.Add(item, owner or Masterloot.GetMasterlooter() or "player", timeout):Start()
             end
         end
     -- Bid
@@ -189,12 +193,7 @@ function Addon:HandleChatCommand(msg)
         end
     -- Trade
     elseif cmd == "trade" then
-        local target = args[2]
-        Trade.Initiate(target or "target")
-    -- Test TODO: DEBUG
-    elseif cmd == "test" then
-        local link = "|cffa335ee|Hitem:152412::::::::110:105::4:3:3613:1457:3528:::|h[Depraved Machinist's Footpads]|h|r"
-        local roll = Roll.Add(link):Start():Bid(Roll.BID_PASS):Bid(Roll.BID_NEED, "Zhael", true)
+        Trade.Initiate(args[2] or "target")
     -- Rolls/None
     elseif cmd == "rolls" or not cmd then
         self.GUI.Rolls.Show()
@@ -288,12 +287,6 @@ function Addon:RegisterOptions()
 
     local specs
 
-    local allowKeys = {"friend", "guild", "guildgroup", "raidleader", "raidassistant"}
-    local allowValues = {FRIEND, GUILD, GUILD_GROUP, L["RAID_LEADER"], L["RAID_ASSISTANT"]}
-
-    local acceptKeys = {"friend", "guildmaster", "guildofficer"}
-    local acceptValues = {FRIEND, L["GUILD_MASTER"], L["GUILD_OFFICER"]}
-
     -- Loot method
     it(1, true)
     config:RegisterOptionsTable(Name .. "_lootmethod", {
@@ -343,13 +336,26 @@ function Addon:RegisterOptions()
                 end,
                 get = function (_, key) return self.db.char.specs[key] end
             },
-            specsDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_SPECS_DESC"], cmdHidden = true, dropdownHidden = true},
+            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+            transmog = {
+                name = L["OPT_TRANSMOG"],
+                desc = L["OPT_TRANSMOG_DESC"],
+                descStyle = "inline",
+                type = "toggle",
+                order = it(),
+                set = function (_, val) self.db.profile.transmog = val end,
+                get = function () return self.db.profile.transmog end,
+                width = "full"
+            }
         }
     })
     dialog:AddToBlizOptions(Name .. "_lootmethod", L["OPT_LOOT_METHOD"], Name)
-    
-    local councilKeys = {"guildmaster", "guildofficer", "raidleader", "raidassistant"}
-    local councilValues = {L["GUILD_MASTER"], L["GUILD_OFFICER"], L["RAID_LEADER"], L["RAID_ASSISTANT"]}
+
+    local allowKeys = {"friend", "guild", "guildgroup", "raidleader", "raidassistant"}
+    local allowValues = {FRIEND, LFG_LIST_GUILD_MEMBER, GUILD_GROUP, L["RAID_LEADER"], L["RAID_ASSISTANT"]}
+
+    local acceptKeys = {"friend", "guildmaster", "guildofficer"}
+    local acceptValues = {FRIEND, L["GUILD_MASTER"], L["GUILD_OFFICER"]}
     
     -- Masterloot
     it(1, true)
@@ -387,9 +393,9 @@ function Addon:RegisterOptions()
                 order = it(),
                 set = function (_, val)
                     local t = {} for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do t[v] = true end
-                    self.db.profile.masterloot.whitelist = t
+                    self.db.factionrealm.masterloot.whitelist = t
                 end,
-                get = function () return Util(self.db.profile.masterloot.whitelist).Keys().Sort().Concat(", ")() end,
+                get = function () return Util(self.db.factionrealm.masterloot.whitelist).Keys().Sort().Concat(", ")() end,
                 width = "full"
             },
             masterlootAllowAll = {
@@ -415,6 +421,12 @@ function Addon:RegisterOptions()
         }
     })
     dialog:AddToBlizOptions(Name .. "_masterloot", L["OPT_MASTERLOOT"], Name)
+    
+    local councilKeys = {"guildmaster", "guildofficer", "raidleader", "raidassistant"}
+    local councilValues = {L["GUILD_MASTER"], L["GUILD_OFFICER"], L["RAID_LEADER"], L["RAID_ASSISTANT"]}
+
+    local guildRanks = Util.GetGuildRanks()
+    guildRanks[0], guildRanks[1], guildRanks[2] = "(" .. NONE .. ")", nil, nil
 
     -- Masterlooter
     it(1, true)
@@ -492,6 +504,15 @@ function Addon:RegisterOptions()
                 end,
                 get = function (_, key) return self.db.profile.masterloot.council[councilKeys[key]] end
             },
+            masterlooterCouncilGuildRank = {
+                name = L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK"],
+                desc = L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK_DESC"],
+                type = "select",
+                order = it(),
+                values = guildRanks,
+                set = function (_, val) self.db.char.masterloot.guildRank = val end,
+                get = function () return self.db.char.masterloot.guildRank end
+            },
             masterlooterCouncilWhitelist = {
                 name = L["OPT_MASTERLOOTER_COUNCIL_WHITELIST"],
                 desc = L["OPT_MASTERLOOTER_COUNCIL_WHITELIST_DESC"],
@@ -499,10 +520,10 @@ function Addon:RegisterOptions()
                 order = it(),
                 set = function (_, val)
                     local t = {} for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do t[v] = true end
-                    self.db.profile.masterloot.councilWhitelist = t
+                    self.db.factionrealm.masterloot.councilWhitelist = t
                     Masterloot.RefreshSession()
                 end,
-                get = function () return Util(self.db.profile.masterloot.councilWhitelist).Keys().Sort().Concat(", ")() end,
+                get = function () return Util(self.db.factionrealm.masterloot.councilWhitelist).Keys().Sort().Concat(", ")() end,
                 width = "full"
             },
             masterlooterVotePublic = {

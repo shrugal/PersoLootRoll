@@ -129,14 +129,19 @@ function Self.Queue(unit)
     else
         -- Queue all group members with missing or out-of-date cache entries
         local unitFound = false
-        Util.SearchGroup(function (i, unit)
-            unitFound = unitFound or unit and not UnitIsUnit(unit, "player")
-            if unit and not UnitIsUnit(unit, "player") and not Self.queue[unit] and not Self.IsValid(unit) then
-                Self.queue[unit] = Self.MAX_PER_CHAR
+        for i=1,GetNumGroupMembers() do
+            unit = GetRaidRosterInfo(i)
+            if unit and not UnitIsUnit(unit, "player") then
+                if not Self.queue[unit] and not Self.IsValid(unit) then
+                    Self.queue[unit] = Self.MAX_PER_CHAR
+                end
+                break
+            else
+                unit = nil
             end
-        end)
+        end
         
-        if unitFound then
+        if unit then
             Self.lastQueued = GetTime()
         end
     end

@@ -100,7 +100,7 @@ function Self.UnitAllow(unit)
     end
 
     -- Check whitelist
-    for i,v in pairs(config.whitelist) do
+    for i,v in pairs(Addon.db.factionrealm.masterloot.whitelist) do
         if UnitIsUnit(unit, i) then
             return true
         end
@@ -116,11 +116,12 @@ function Self.UnitAllow(unit)
     elseif config.allow.guildgroup and guild and Util.IsGuildGroup(guild) then
         return true
     elseif config.allow.raidleader or config.allow.raidassistant then
-        return Util.SearchGroup(function (i, name, rank)
+        for i=1,GetNumGroupMembers() do
+            local name, rank = GetRaidRosterInfo(i)
             if name == unit then
                 return config.allow.raidleader and rank == 2 or config.allow.raidassistant and rank == 1
             end
-        end) 
+        end
     end
 
     return false
@@ -161,11 +162,12 @@ function Self.SetSession(session, silent)
 
         -- Council
         local council = {}
-        Util.SearchGroup(function (i, unit, rank)
+        for i=1,GetNumGroupMembers() do
+            local unit, rank = GetRaidRosterInfo(i)
             if unit and not UnitIsUnit(unit, "player") and Self.IsOnCouncil(unit, true, rank) then
                 council[Unit.FullName(unit)] = true
             end
-        end)
+        end
 
         Self.session = {
             bidPublic = config.bidPublic,
@@ -200,21 +202,37 @@ function Self.IsOnCouncil(unit, refresh, groupRank)
     if not refresh then
         return Self.session.council and Self.session.council[fullName] or false
     else
+        -- Check if unit is part of our masterlooting group
         if not (Self.masterlooting[unit] == Self.masterlooter and Unit.InGroup(unit)) then
             return false
+        -- Check whitelist
+        elseif Addon.db.factionrealm.masterloot.councilWhitelist[unit] or Addon.db.factionrealm.masterloot.councilWhitelist[fullName] then
+            return true
         end
 
-        local config, guildRank = Addon.db.profile.masterloot, Unit.GuildRank(unit)
-        groupRank = groupRank or Util.SearchGroup(function (i, unitGroup, rank) if unitGroup == unit then return rank end end)
+        local config = Addon.db.profile.masterloot
 
-        if config.councilWhitelist[unit] or config.councilWhitelist[fullName] then
-            return true
-        elseif config.council.raidleader and groupRank == 2 or config.council.raidassistant and groupRank == 1 then
-            return true
-        elseif config.council.guildleader and guildRank == 0 or config.council.guildofficer and guildRank == 1 then
-            return true
-        else
-            return false
+        -- Check guild rank
+        if config.council.guildleader or config.council.guildofficer or Addon.db.char.masterloot.guildRank > 0 then
+            local guildRank = Unit.GuildRank(unit)
+            if config.council.guildleader and guildRank == 1 or config.council.guildofficer and guildRank == 2 then
+                return true
+            elseif guildRank == Addon.db.char.masterloot.guildRank then
+                return true
+            end
+        end
+
+        -- Check group rank
+        if config.council.raidleader or config.council.raidassistant then
+            if not groupRank then
+                for i=1,GetNumGroupMembers() do
+                    local unitGroup, rank = GetRaidRosterInfo(i)
+                    if unitGroup == unit then groupRank = rank break end
+                end
+            end
+            if config.council.raidleader and groupRank == 2 or config.council.raidassistant and groupRank == 1 then
+                return true
+            end
         end
     end
 end

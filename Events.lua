@@ -131,13 +131,14 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
 
             -- We don't get the full names for x-realm players
             if not UnitExists(unit) then
-                unit = Util.SearchGroup(function (i, unitGroup)
-                    if Util.StrStartsWith(unitGroup, unit) then
-                        return unitGroup
+                for i=1,GetNumGroupMembers() do
+                    local unitGroup = GetRaidRosterInfo(i)
+                    if unitGroup and Util.StrStartsWith(unitGroup, unit) then
+                        unit = unitGroup break
                     end
-                end)
+                end
 
-                if not unit then
+                if not UnitExists(unit) then
                     return
                 end
             end
@@ -258,7 +259,7 @@ function Self.CHAT_MSG_PARTY(event, msg, sender)
 
     local link = Item.GetLink(msg)
     if link then
-        local item = Item.FromLink(link):GetBasicInfo()
+        local item = Item.FromLink(link, unit):GetBasicInfo()
 
         local roll = Roll.Find(nil, unit, item:IsLoaded() and item.link or item.id)
         if roll then

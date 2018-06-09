@@ -24,6 +24,9 @@ Self.PATTERN_INTELLECT = ITEM_MOD_INTELLECT:gsub("%%c%%s", "^%%p(.+)")
 Self.PATTERN_AGILITY = ITEM_MOD_AGILITY:gsub("%%c%%s", "^%%p(.+)")
 Self.PATTERN_SOULBOUND = ITEM_SOULBOUND
 Self.PATTERN_TRADE_TIME_REMAINING = BIND_TRADE_TIME_REMAINING:gsub("%%s", ".+")
+Self.PATTERN_APPEARANCE_KNOWN = TRANSMOGRIFY_TOOLTIP_APPEARANCE_KNOWN
+Self.PATTERN_APPEARANCE_UNKNOWN = TRANSMOGRIFY_TOOLTIP_APPEARANCE_UNKNOWN
+Self.PATTERN_APPEARANCE_UNKNOWN_ITEM = TRANSMOGRIFY_TOOLTIP_ITEM_UNKNOWN_APPEARANCE_KNOWN
 
 -- Item loading status
 Self.INFO_NONE = 0
@@ -384,12 +387,13 @@ end
 -- Create an item instance from a link
 function Self.FromLink(item, owner, bagOrEquip, slot)
     if type(item) == "string" then
-        owner = Unit.Name(owner or "player")
+        owner = owner and Unit.Name(owner) or nil
         item = {
             link = item,
             owner = owner,
-            isOwner = UnitIsUnit(owner, "player"),
-            infoLevel = Self.INFO_NONE
+            isOwner = owner and UnitIsUnit(owner, "player"),
+            infoLevel = Self.INFO_NONE,
+            isTradable = not owner or nil
         }
         setmetatable(item, {__index = Self})
         item:SetPosition(bagOrEquip, slot)
@@ -400,7 +404,8 @@ end
 
 -- Create an item instance for the given equipment slot
 function Self.FromSlot(slot, unit)
-    local link = GetInventoryItemLink(unit or "player", slot)
+    unit = unit or "player"
+    local link = GetInventoryItemLink(unit, slot)
     if link then
         return Self.FromLink(link, unit, slot)
     end
@@ -410,7 +415,7 @@ end
 function Self.FromBagSlot(bag, slot)
     local link = GetContainerItemLink(bag, slot)
     if link then
-        return Self.FromLink(link, nil, bag, slot)
+        return Self.FromLink(link, "player", bag, slot)
     end
 end
 
@@ -469,7 +474,6 @@ function Self:GetLinkInfo()
 end
 
 -- Get info from GetItemInfo()
-local mapFn = function (trinkets, i, id) return trinkets[id] and true or nil end
 function Self:GetBasicInfo()
     self:GetLinkInfo()
     
@@ -537,6 +541,14 @@ function Self:GetFullInfo()
                             self.attributes[attr] = tonumber((match:gsub(",", ""):gsub("\\.", "")))
                             return
                         end
+                    end
+                end
+                -- Transmog appearance
+                if not self.isRelic and Addon.db.profile.transmog and self.isTransmogKnown == nil then
+                    if line:match(Self.PATTERN_APPEARANCE_KNOWN) or line:match(Self.PATTERN_APPEARANCE_UNKNOWN_ITEM) then
+                        self.isTransmogKnown = true
+                    elseif line:match(Self.PATTERN_APPEARANCE_UNKNOWN) then
+                        self.isTransmogKnown = false
                     end
                 end
             end
@@ -747,7 +759,7 @@ end
 -- Check the item quality
 function Self:HasSufficientQuality()
     local quality = type(self) == "table" and self:GetLinkInfo().quality or type(self) == "string" and Self.GetInfo(self, "quality")
-    return quality and quality >= (IsInRaid() and LE_ITEM_QUALITY_EPIC or LE_ITEM_QUALITY_RARE)
+    return quality and quality >= (IsInRaid() and not Addon.db.profile.transmog and LE_ITEM_QUALITY_EPIC or LE_ITEM_QUALITY_RARE)
 end
 
 -- Check if an item can be equipped
@@ -849,6 +861,11 @@ function Self:IsUseful(unit)
     end
 end
 
+-- Check if we need the transmog appearance
+function Self:IsTransmogNeeded(unit)
+    return (not unit or UnitIsUnit(unit, "player")) and Addon.db.profile.transmog and self:GetFullInfo().isTransmogKnown == false
+end
+
 -- Register an eligible unit's interest
 function Self:SetEligible(unit)
     self:GetEligible()
@@ -862,19 +879,22 @@ function Self:GetEligible(unit)
             if not self:CanBeEquipped(unit) then
                 return nil
             else
-                return self:IsUseful(unit) and self:HasSufficientLevel(unit)
+                return self:IsTransmogNeeded(unit) or self:IsUseful(unit) and self:HasSufficientLevel(unit)
             end
         else
-            self.eligible = {}
-            Util.SearchGroup(function (i, unit)
-                if unit and self:CanBeEquipped(unit) then
-                    self.eligible[unit] = self:IsUseful(unit) and self:HasSufficientLevel(unit)
+            local eligible = {}
+            for i=1,GetNumGroupMembers() do
+                local unit = GetRaidRosterInfo(i)
+                if unit then
+                    eligible[unit] = self:GetEligible(unit)
                 end
-            end)
-
-            if Addon.DEBUG and self.isOwner and self.eligible[UnitName("player")] == nil then
-                self.eligible[UnitName("player")] = self:IsUseful() and self:HasSufficientLevel()
             end
+
+            if Addon.DEBUG and self.isOwner and eligible[UnitName("player")] == nil then
+                eligible[UnitName("player")] = self:GetEligible("player")
+            end
+            
+            self.eligible = eligible
         end
     end
 
@@ -887,11 +907,7 @@ end
 
 -- Get the # of eligible players
 function Self:GetNumEligible(checkIlvl)
-    local n = 0
-    for unit,ilvl in pairs(self:GetEligible()) do
-        if not checkIlvl or ilvl then n = n + 1 end
-    end
-    return n
+    return checkIlvl and Util.TblCountOnly(self:GetEligible(), true) or Util.TblCount(self:GetEligible())
 end
 
 -------------------------------------------------------
@@ -982,6 +998,8 @@ function Self.IsTradable(selfOrBag, slot)
             return self.isTradable, self.isSoulbound, self.bindTimeout
         elseif self.isEquipped then
             return false, true, false
+        elseif not self.owner then
+            return true, false, false
         elseif not self.isOwner then
             local level = self:GetLevelForLocation(self.owner)
             local isTradable = level == 0 or level + self:GetThresholdForLocation(self.owner, true) >= self.level
@@ -1026,15 +1044,18 @@ function Self:GetPosition(refresh)
 
     -- Check bags
     local bag, slot, isTradable
-    Util.SearchBags(function (link, b, s)
-        if link == self.link then
-            isTradable = Self.IsTradable(b, s)
-            if isTradable or not (bag and slot) then
-                bag, slot = b, s
-                if isTradable then return true end
+    for b = self.slot == 0 and self.bagOrEquip or 0, self.slot == 0 and self.bagOrEquip or NUM_BAG_SLOTS do
+        for s=1,GetContainerNumSlots(b) do
+            local link = GetContainerItemLink(b, s)
+            if link == self.link then
+                isTradable = Self.IsTradable(b, s)
+                if isTradable or not (bag and slot) then
+                    bag, slot = b, s
+                    if isTradable then break end
+                end
             end
         end
-    end, self.slot == 0 and self.bagOrEquip or nil)
+    end
 
     if bag and slot then
         return bag, slot, isTradable
