@@ -2,8 +2,8 @@
 TODO:
 - Block all trades and whispers
 - Custom messages
-- Masterloot
-  * Custom answers
+- Show equipped items in addition to slot ilvl
+- Addon version overview for the group
 
 Internal
 - Roll.traded should be uncoupled from the rest of the roll lifecycle
@@ -52,10 +52,14 @@ function Addon:OnInitialize()
             masterloot = {
                 allow = {friend = true, guild = true, guildgroup = true, raidleader = false, raidassistant = false},
                 accept = {friend = false, guildmaster = false, guildofficer = false},
-                allowAll = false,
-                bidPublic = false,
+                allowAll = false
+            },
+            masterlooter = {
                 timeoutBase = Roll.TIMEOUT,
                 timeoutPerItem = Roll.TIMEOUT_PER_ITEM,
+                bidPublic = false,
+                answers1 = {}, -- Need
+                answers2 = {}, -- Greed
                 council = {guildmaster = false, guildofficer = false, raidleader = false, raidassistant = false},
                 votePublic = false
             },
@@ -63,7 +67,9 @@ function Addon:OnInitialize()
         },
         factionrealm = {
             masterloot = {
-                whitelist = {},
+                whitelist = {}
+            },
+            masterlooter = {
                 councilWhitelist = {},
             }
         },
@@ -75,7 +81,8 @@ function Addon:OnInitialize()
         }
     }, true)
     
-    -- Register options
+    -- Migrate and register options
+    self:MigrateOptions()
     self:RegisterOptions()
 
     -- Minimap icon
@@ -394,12 +401,15 @@ function Addon:RegisterOptions()
                 type = "input",
                 order = it(),
                 set = function (_, val)
-                    local t = {} for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do t[v] = true end
-                    self.db.factionrealm.masterloot.whitelist = t
+                    local t = self.db.factionrealm.masterloot.whitelist
+                    for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do
+                        t[v] = true
+                    end
                 end,
                 get = function () return Util(self.db.factionrealm.masterloot.whitelist).Keys().Sort().Concat(", ")() end,
                 width = "full"
             },
+            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             masterlootAllowAll = {
                 name = L["OPT_MASTERLOOT_ALLOW_ALL"],
                 desc = L["OPT_MASTERLOOT_ALLOW_ALL_DESC"],
@@ -427,8 +437,7 @@ function Addon:RegisterOptions()
     local councilKeys = {"guildmaster", "guildofficer", "raidleader", "raidassistant"}
     local councilValues = {L["GUILD_MASTER"], L["GUILD_OFFICER"], L["RAID_LEADER"], L["RAID_ASSISTANT"]}
 
-    local guildRanks = Util.GetGuildRanks()
-    guildRanks[0], guildRanks[1], guildRanks[2] = "(" .. NONE .. ")", nil, nil
+    local guildRanks
 
     -- Masterlooter
     it(1, true)
@@ -449,6 +458,7 @@ function Addon:RegisterOptions()
                 order = it(),
                 func = function () Masterloot.SetMasterlooter(nil) end
             },
+            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             masterlooterTimeoutBase = {
                 name = L["OPT_MASTERLOOTER_TIMEOUT_BASE"],
                 desc = L["OPT_MASTERLOOTER_TIMEOUT_BASE_DESC"],
@@ -458,11 +468,11 @@ function Addon:RegisterOptions()
                 step = 5,
                 order = it(),
                 set = function (_, val)
-                    self.db.profile.masterloot.timeoutBase = val
+                    self.db.profile.masterlooter.timeoutBase = val
                     Masterloot.RefreshSession()
                 end,
-                get = function () return self.db.profile.masterloot.timeoutBase end,
-                width = 1.75
+                get = function () return self.db.profile.masterlooter.timeoutBase end,
+                width = 1.7
             },
             masterlooterTimeoutPerItem = {
                 name = L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM"],
@@ -473,23 +483,57 @@ function Addon:RegisterOptions()
                 step = 1,
                 order = it(),
                 set = function (_, val)
-                    self.db.profile.masterloot.timeoutPerItem = val
+                    self.db.profile.masterlooter.timeoutPerItem = val
                     Masterloot.RefreshSession()
                 end,
-                get = function () return self.db.profile.masterloot.timeoutPerItem end,
-                width = 1.75
+                get = function () return self.db.profile.masterlooter.timeoutPerItem end,
+                width = 1.7
             },
+            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+            masterlooterNeedAnswers = {
+                name = L["OPT_MASTERLOOTER_NEED_ANSWERS"],
+                desc = L["OPT_MASTERLOOTER_NEED_ANSWERS_DESC"],
+                type = "input",
+                order = it(),
+                set = function (_, val)
+                    local t = wipe(self.db.profile.masterlooter.answers1)
+                    for v in val:gmatch("[^,]+") do
+                        v = v:gsub("^%s*(.*)%s*$", "%1")
+                        if #t < 9 and not Util.StrIsEmpty(v) then tinsert(t, v) end
+                    end
+                    Masterloot.RefreshSession()
+                end,
+                get = function () return Util.TblConcat(self.db.profile.masterlooter.answers1, ", ") end,
+                width = "full"
+            },
+            masterlooterGreedAnswers = {
+                name = L["OPT_MASTERLOOTER_GREED_ANSWERS"],
+                desc = L["OPT_MASTERLOOTER_GREED_ANSWERS_DESC"],
+                type = "input",
+                order = it(),
+                set = function (_, val)
+                    local t = wipe(self.db.profile.masterlooter.answers2)
+                    for v in val:gmatch("[^,]+") do
+                        v = v:gsub("^%s*(.*)%s*$", "%1")
+                        if #t < 9 and not Util.StrIsEmpty(v) then tinsert(t, v) end
+                    end
+                    Masterloot.RefreshSession()
+                end,
+                get = function () return Util.TblConcat(self.db.profile.masterlooter.answers2, ", ") end,
+                width = "full"
+            },
+            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             masterlooterBidPublic = {
                 name = L["OPT_MASTERLOOTER_BID_PUBLIC"],
-                desc = L["OPT_MASTERLOOTER_BID_PUBLIC_DESC"],
+                desc = L["OPT_MASTERLOOTER_BID_PUBLIC_DESC"] .. "\n",
                 descStyle = "inline",
                 type = "toggle",
                 order = it(),
                 set = function (_, val)
-                    self.db.profile.masterloot.bidPublic = val
+                    self.db.profile.masterlooter.bidPublic = val
                     Masterloot.RefreshSession()
                 end,
-                get = function () return self.db.profile.masterloot.bidPublic end,
+                get = function () return self.db.profile.masterlooter.bidPublic end,
                 width = "full"
             },
             masterlooterCouncil = {type = "header", order = it(), name = L["OPT_MASTERLOOTER_COUNCIL"]},
@@ -501,18 +545,27 @@ function Addon:RegisterOptions()
                 order = it(),
                 values = councilValues,
                 set = function (_, key, val)
-                    self.db.profile.masterloot.council[councilKeys[key]] = val
+                    self.db.profile.masterlooter.council[councilKeys[key]] = val
                     Masterloot.RefreshSession()
                 end,
-                get = function (_, key) return self.db.profile.masterloot.council[councilKeys[key]] end
+                get = function (_, key) return self.db.profile.masterlooter.council[councilKeys[key]] end
             },
             masterlooterCouncilGuildRank = {
                 name = L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK"],
                 desc = L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK_DESC"],
                 type = "select",
                 order = it(),
-                values = guildRanks,
-                set = function (_, val) self.db.char.masterloot.guildRank = val end,
+                values = function ()
+                    if not guildRanks then
+                        guildRanks = Util.GetGuildRanks()
+                        guildRanks[0], guildRanks[1], guildRanks[2] = "(" .. NONE .. ")", nil, nil
+                    end
+                    return guildRanks
+                end,
+                set = function (_, val)
+                    self.db.char.masterloot.guildRank = val
+                    Masterloot.RefreshSession()
+                end,
                 get = function () return self.db.char.masterloot.guildRank end
             },
             masterlooterCouncilWhitelist = {
@@ -521,13 +574,16 @@ function Addon:RegisterOptions()
                 type = "input",
                 order = it(),
                 set = function (_, val)
-                    local t = {} for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do t[v] = true end
-                    self.db.factionrealm.masterloot.councilWhitelist = t
+                    local t = wipe(self.db.factionrealm.masterlooter.councilWhitelist)
+                    for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do
+                        t[v] = true
+                    end
                     Masterloot.RefreshSession()
                 end,
-                get = function () return Util(self.db.factionrealm.masterloot.councilWhitelist).Keys().Sort().Concat(", ")() end,
+                get = function () return Util(self.db.factionrealm.masterlooter.councilWhitelist).Keys().Sort().Concat(", ")() end,
                 width = "full"
             },
+            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             masterlooterVotePublic = {
                 name = L["OPT_MASTERLOOTER_VOTE_PUBLIC"],
                 desc = L["OPT_MASTERLOOTER_VOTE_PUBLIC_DESC"],
@@ -535,10 +591,10 @@ function Addon:RegisterOptions()
                 type = "toggle",
                 order = it(),
                 set = function (_, val)
-                    self.db.profile.masterloot.votePublic = val
+                    self.db.profile.masterlooter.votePublic = val
                     Masterloot.RefreshSession()
                 end,
-                get = function () return self.db.profile.masterloot.votePublic end,
+                get = function () return self.db.profile.masterlooter.votePublic end,
                 width = "full"
             }
         }
@@ -632,7 +688,35 @@ function Addon:RegisterOptions()
     -- Profiles
     config:RegisterOptionsTable(Name .. "_profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db))
     dialog:AddToBlizOptions(Name .. "_profiles", "Profiles", Name)
+end
 
+-- Migrate options from an older version to the current one
+function Addon:MigrateOptions()
+    -- Profile
+    local c = Addon.db.profile
+    if not c.version or c.version < 3 then
+        c.masterlooter.timeoutBase = c.masterloot.timeoutBase
+        c.masterlooter.timeoutPerItem = c.masterloot.timeoutPerItem
+        c.masterlooter.bidPublic = c.masterloot.bidPublic
+        c.masterlooter.council = c.masterloot.council
+        c.masterlooter.votePublic = c.masterloot.votePublic
+        c.masterloot.timeoutBase, c.masterloot.timeoutPerItem, c.masterloot.bidPublic, c.masterloot.council, c.masterloot.votePublic, c.masterloot.whitelist, c.masterloot.councilWhitelist = nil
+        c.version = 3
+    end
+
+    -- Factionrealm
+    local c = Addon.db.factionrealm
+    if not c.version or c.version < 3 then
+        c.masterlooter.councilWhitelist = c.masterloot.councilWhitelist
+        c.masterloot.councilWhitelist = nil
+        c.version = 3
+    end
+
+    -- Char
+    local c = Addon.db.char
+    if not c.version or c.version < 3 then
+        c.version = 3
+    end
 end
 
 -------------------------------------------------------

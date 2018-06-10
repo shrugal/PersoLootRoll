@@ -392,6 +392,7 @@ function Self:Bid(bid, fromUnit, rollOrImport)
     bid = bid or Self.BID_NEED
     fromUnit = Unit.Name(fromUnit or "player")
     local fromSelf = UnitIsUnit(fromUnit, "player")
+    local answer, answers = 10*bid - 10*floor(bid), Masterloot.session["answers" .. floor(bid)]
 
     -- Hide the roll frame
     if fromSelf then
@@ -405,7 +406,7 @@ function Self:Bid(bid, fromUnit, rollOrImport)
     local valid, msg = self:Validate(not isImport and Self.STATUS_RUNNING or nil, fromUnit)
     if not valid then
         Addon:Err(msg)
-    elseif not Util.TblFind(Self.BIDS, bid) then
+    elseif not Util.TblFind(Self.BIDS, floor(bid)) or answer > 0 and not (answers and answers[answer]) then
         Comm.RollBidError(self, fromUnit)
     else
         -- Register the bid
@@ -431,7 +432,7 @@ function Self:Bid(bid, fromUnit, rollOrImport)
                 local data = {ownerId = self.ownerId, bid = bid, fromUnit = Unit.FullName(fromUnit)}
 
                 -- Send to all or the council
-                if Addon.db.profile.masterloot.bidPublic then
+                if Addon.db.profile.masterlooter.bidPublic then
                     Comm.SendData(Comm.EVENT_BID, data)
                 elseif Masterloot.IsMasterlooter() then
                     for target,_ in pairs(Masterloot.session.council or {}) do
@@ -446,7 +447,7 @@ function Self:Bid(bid, fromUnit, rollOrImport)
                     -- Roll on it in chat or whisper the owner
                     if self.posted then
                         if Addon.db.profile.roll and Events.lastPostedRoll == self then
-                            RandomRoll("1", bid == Self.BID_GREED and "50" or "100")
+                            RandomRoll("1", floor(bid) == Self.BID_GREED and "50" or "100")
                         end
                     else
                         Comm.RollBid(self.item.owner, self.item.link)
@@ -487,7 +488,7 @@ function Self:Vote(vote, fromUnit, isImport)
                 local data = {ownerId = self.ownerId, vote = Unit.FullName(vote), fromUnit = Unit.FullName(fromUnit)}
 
                 -- Send to all or the council
-                if Addon.db.profile.masterloot.votePublic then
+                if Addon.db.profile.masterlootert.votePublic then
                     Comm.SendData(Comm.EVENT_VOTE, data)
                 elseif Masterloot.IsMasterlooter() then
                     for target,_ in pairs(Masterloot.session.council or {}) do
@@ -512,7 +513,7 @@ function Self:ShouldEnd()
     end
 
     -- We voted need on our own item
-    if not Masterloot.GetMasterlooter() and self.item.isOwner and self.bid == Self.BID_NEED then
+    if not Masterloot.GetMasterlooter() and self.item.isOwner and self.bid and floor(self.bid) == Self.BID_NEED then
         return self.item.owner
     end
 
@@ -842,14 +843,15 @@ end
 -------------------------------------------------------
 
 -- Figure out a random winner
+local countFn = function (val, bid) return floor(val) == bid and 1 or 0 end
 function Self:DetermineWinner()
     for i,bid in pairs(Self.BIDS) do
         if bid ~= Self.BID_PASS then
-            local n = Util.TblCountOnly(self.bids, bid)
+            local n = Util.TblCountFn(self.bids, countFn, bid)
             if n > 0 then
                 n = math.random(n)
                 for unit,unitBid in pairs(self.bids) do
-                    if unitBid == bid then
+                    if floor(unitBid) == bid then
                         n = n - 1
                     end
                     if n == 0 then
@@ -859,7 +861,7 @@ function Self:DetermineWinner()
                         else
                             local winner, maxRoll = unit, self.rolls[unit]
                             for unitRoll,rollResult in pairs(self.rolls) do
-                                if rollResult > maxRoll and self.bids[unitRoll] == bid then
+                                if rollResult > maxRoll and floor(self.bids[unitRoll]) == bid then
                                     winner, maxRoll = unitRoll, rollResult
                                 end
                             end

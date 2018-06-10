@@ -4,6 +4,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 local Comm, Inspect, Masterloot, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.GUI
 
+-- Row highlight frame
 local frame = CreateFrame("Frame", nil, UIParent)
 frame:SetFrameStrata("BACKGROUND")
 frame:Hide()
@@ -86,6 +87,18 @@ UIDropDownMenu_SetInitializeFunction(dropDown, function (self, level, menuList)
 end)
 Self.DROPDOWN_UNIT = dropDown
 
+-- Custom bid answers
+local clickFn = function (self, roll, bid) roll:Bid(bid) end
+dropDown = CreateFrame("FRAME", "PlrCustomBidAnswers", UIParent, "UIDropDownMenuTemplate")
+UIDropDownMenu_SetInitializeFunction(dropDown, function (self, level, menuList)
+    for i,v in pairs(self.answers) do
+        local info = UIDropDownMenu_CreateInfo()
+        info.text, info.func, info.arg1, info.arg2 = v, clickFn, self.roll, self.bid + i/10
+        UIDropDownMenu_AddButton(info)
+    end
+end)
+Self.DROPDOWN_CUSTOM_BID_ANSWERS = dropDown
+
 -------------------------------------------------------
 --                 LootAlertSystem                   --
 -------------------------------------------------------
@@ -130,6 +143,7 @@ function Rolls.Show()
 
         Rolls.frames.window = Self("Window")
             .SetLayout(nil)
+            .SetFrameStrata("MEDIUM")
             .SetTitle("PersoLootRoll - " .. L["ROLLS"])
             .SetCallback("OnClose", function (self)
                 Rolls.status.width = self.frame:GetWidth()
@@ -162,13 +176,13 @@ function Rolls.Show()
                 .SetCallback("OnLeave", Self.TooltipHide)()
             f.OnRelease = function (self)
                 self.image:SetPoint("TOP", 0, -5)
-                self.frame:SetFrameStrata("FULLSCREEN_DIALOG")
+                self.frame:SetFrameStrata("MEDIUM")
                 self.OnRelease = nil
             end
             f.image:SetPoint("TOP", 0, -2)
             f.frame:SetParent(window.frame)
             f.frame:SetPoint("TOPRIGHT", window.closebutton, "TOPLEFT", -8, -8)
-            f.frame:SetFrameStrata("TOOLTIP")
+            f.frame:SetFrameStrata("HIGH")
             f.frame:Show()
 
             window.optionsbutton = f
@@ -363,15 +377,31 @@ local createFn = function (scroll)
     do
         local actions = f
 
+        local needGreedClick = function (self, _, button)
+            local roll, bid = self:GetUserData("roll"), self:GetUserData("bid")
+            if button == "LeftButton" then
+                roll:Bid(bid)
+            elseif button == "RightButton" and roll.owner == Masterloot.GetMasterlooter() then
+                local answers = Masterloot.session["answers" .. bid]
+                if answers and #answers > 0 then
+                    local dropDown = Self.DROPDOWN_CUSTOM_BID_ANSWERS
+                    dropDown.roll, dropDown.bid, dropDown.answers = roll, bid, answers
+                    ToggleDropDownMenu(1, nil, dropDown, "cursor", 3, -3)
+                end
+            end
+        end 
+
         -- Need
-        Self.CreateIconButton("UI-GroupLoot-Dice", actions, function (self)
-            self:GetUserData("roll"):Bid(Roll.BID_NEED)
-        end, NEED, 14, 14)
+        f = Self.CreateIconButton("UI-GroupLoot-Dice", actions, needGreedClick, NEED, 14, 14)
+        f:SetUserData("bid", Roll.BID_NEED)
+        f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        f.OnRelease = function (self) self.frame:RegisterForClicks("LeftButtonUp") end
 
         -- Greed
-        Self.CreateIconButton("UI-GroupLoot-Coin", actions, function (self)
-            self:GetUserData("roll"):Bid(Roll.BID_GREED)
-        end, GREED)
+        f = Self.CreateIconButton("UI-GroupLoot-Coin", actions, needGreedClick, GREED)
+        f:SetUserData("bid", Roll.BID_GREED)
+        f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        f.OnRelease = function (self) self.frame:RegisterForClicks("LeftButtonUp") end
 
         -- Pass
         Self.CreateIconButton("UI-GroupLoot-Pass", actions, function (self)
@@ -504,7 +534,10 @@ local updateFn = function (roll, children, it)
     Self(children[it()]).SetText(roll.traded and L["ROLL_TRADED"] or roll.winner and L["ROLL_AWARDED"] or L["ROLL_STATUS_" .. roll.status]).Show()
 
     -- Your Bid
-    Self(children[it()]).SetText(roll.bid and L["ROLL_BID_" .. roll.bid] or "-").Show()
+    Self(children[it()])
+        .SetText(Self.GetBidName(roll.bid))
+        .SetColor(Self.GetBidColor(roll.bid))
+        .Show()
 
     -- Winner
     Self(children[it()])
@@ -677,9 +710,14 @@ local updateFn = function (player, children, it, roll, canBeAwarded, canVote)
         .SetUserData("unit", player.unit)
         .Show()
 
-    -- Ilvl, Bid
+    -- Ilvl
     Self(children[it()]).SetText(player.ilvl).Show()
-    Self(children[it()]).SetText(player.bid and L["ROLL_BID_" .. player.bid] or "-").Show()
+
+    -- Bid
+    Self(children[it()])
+        .SetText(Self.GetBidName(player.bid))
+        .SetColor(Self.GetBidColor(player.bid))
+        .Show()
 
     -- Votes
     Self(children[it()])
@@ -837,9 +875,10 @@ function Self.UnitClick(self, event, button)
         if button == "LeftButton" then
             ChatFrame_SendSmartTell(unit)
         elseif button == "RightButton" then
-            Self.DROPDOWN_UNIT.which = UnitIsUnit(unit, "player") and "SELF" or UnitInRaid(unit) and "RAID_PLAYER" or UnitInParty(unit) and "PARTY" or "PLAYER"
-            Self.DROPDOWN_UNIT.unit = unit
-            ToggleDropDownMenu(1, nil, Self.DROPDOWN_UNIT, "cursor", 3, -3)
+            local dropDown = Self.DROPDOWN_UNIT
+            dropDown.which = UnitIsUnit(unit, "player") and "SELF" or UnitInRaid(unit) and "RAID_PLAYER" or UnitInParty(unit) and "PARTY" or "PLAYER"
+            dropDown.unit = unit
+            ToggleDropDownMenu(1, nil, dropDown, "cursor", 3, -3)
         end
     end
 end
@@ -896,6 +935,32 @@ function Self.TableRowHighlight(parent, skip)
         end
         isOver = true
     end)
+end
+
+-- Get the name for a bid
+function Self.GetBidName(bid)
+    if not bid then
+        return "-"
+    else
+        local bid, i, answers = floor(bid), 10*bid - 10*floor(bid), Masterloot.session["answers" .. floor(bid)]
+        return (i == 0 or not answers or not answers[i]) and L["ROLL_BID_" .. bid] or answers[i]
+    end
+end
+
+-- Get the color for a bid
+function Self.GetBidColor(bid)
+    if not bid then
+        return 1, 1, 1
+    elseif bid == Roll.BID_PASS then
+        return .5, .5, .5
+    else
+        local bid, i = floor(bid), 10*bid - 10*floor(bid)
+        if bid == Roll.BID_NEED then
+            return 0, max(.2, min(1, 1 - .2 * (i - 5))), max(0, min(1, .2 * i))
+        elseif bid == Roll.BID_GREED then
+            return 1, max(0, min(1, 1 - .1 * i)), 0
+        end
+    end
 end
 
 -------------------------------------------------------

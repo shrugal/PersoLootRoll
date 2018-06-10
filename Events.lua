@@ -271,8 +271,8 @@ function Self.CHAT_MSG_PARTY(event, msg, sender)
             
             if not fromSelf and not fromAddon then
                 -- Roll for the item in chat
-                if Addon.db.profile.roll and Util.In(roll.bid, Roll.BID_NEED, Roll.BID_GREED) then
-                    RandomRoll("1", roll.bid == Roll.BID_GREED and "50" or "100")
+                if Addon.db.profile.roll and roll.bid and Util.In(floor(roll.bid), Roll.BID_NEED, Roll.BID_GREED) then
+                    RandomRoll("1", floor(roll.bid) == Roll.BID_GREED and "50" or "100")
                 end
             end
         end
@@ -325,7 +325,7 @@ function Self.CHAT_MSG_WHISPER(event, msg, sender)
             -- The roll is scheduled or happening
             if roll:CanBeAwarded() then
                 -- He is eligible, so register the bid
-                if roll:UnitIsEligible(unit) and roll.bids[unit] ~= Roll.BID_NEED then
+                if roll:UnitIsEligible(unit) and not roll.bds[unit] or floor(roll.bids[unit]) ~= Roll.BID_NEED then
                     roll:Bid(Roll.BID_NEED, unit, true)
 
                     -- Answer only if his bid didn't end the roll

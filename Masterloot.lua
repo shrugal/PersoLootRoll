@@ -158,7 +158,7 @@ end
 -- Set the masterloot session
 function Self.SetSession(session, silent)
     if Self.IsMasterlooter() then
-        local config = Addon.db.profile.masterloot
+        local config = Addon.db.profile.masterlooter
 
         -- Council
         local council = {}
@@ -171,10 +171,12 @@ function Self.SetSession(session, silent)
 
         Self.session = {
             bidPublic = config.bidPublic,
-            timeoutBase = Addon.db.profile.masterloot.timeoutBase or Roll.TIMEOUT,
-            timeoutPerItem = Addon.db.profile.masterloot.timeoutPerItem or Roll.TIMEOUT_PER_ITEM,
+            timeoutBase = config.timeoutBase or Roll.TIMEOUT,
+            timeoutPerItem = config.timeoutPerItem or Roll.TIMEOUT_PER_ITEM,
             council = Util.TblCount(council) > 0 and council or nil,
-            votePublic = config.votePublic
+            votePublic = config.votePublic,
+            answers1 = config.answers1,
+            answers2 = config.answers2
         }
 
         if not silent then
@@ -206,11 +208,11 @@ function Self.IsOnCouncil(unit, refresh, groupRank)
         if not (Self.masterlooting[unit] == Self.masterlooter and Unit.InGroup(unit)) then
             return false
         -- Check whitelist
-        elseif Addon.db.factionrealm.masterloot.councilWhitelist[unit] or Addon.db.factionrealm.masterloot.councilWhitelist[fullName] then
+        elseif Addon.db.factionrealm.masterlooter.councilWhitelist[unit] or Addon.db.factionrealm.masterlooter.councilWhitelist[fullName] then
             return true
         end
 
-        local config = Addon.db.profile.masterloot
+        local config = Addon.db.profile.masterlooter
 
         -- Check guild rank
         if config.council.guildleader or config.council.guildofficer or Addon.db.char.masterloot.guildRank > 0 then
