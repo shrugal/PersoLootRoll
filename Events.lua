@@ -494,11 +494,10 @@ Comm.ListenData(Comm.EVENT_BID, function (event, data, channel, sender, unit)
     local owner = data.fromUnit and unit or nil
     local fromUnit = data.fromUnit or unit
 
-    if not UnitIsUnit(Unit(fromUnit), "player") and (not owner or Masterloot.IsMasterlooter(owner)) then
+    if not UnitIsUnit(Unit(fromUnit), "player") then
         local roll = Roll.Find(data.ownerId, owner)
-        
         if roll then
-            roll:Bid(data.bid, fromUnit, owner)
+            roll:Bid(data.bid, fromUnit, owner ~= nil)
         end
     end
 end)
@@ -508,11 +507,10 @@ Comm.ListenData(Comm.EVENT_VOTE, function (event, data, channel, sender, unit)
     local owner = data.fromUnit and unit or nil
     local fromUnit = data.fromUnit or unit
     
-    if not UnitIsUnit(Unit(fromUnit), "player") and (not owner or Masterloot.IsMasterlooter(owner)) then
+    if not UnitIsUnit(Unit(fromUnit), "player") then
         local roll = Roll.Find(data.ownerId, owner)
-        
         if roll then
-            roll:Vote(data.vote, fromUnit, owner)
+            roll:Vote(data.vote, fromUnit, owner ~= nil)
         end
     end
 end)

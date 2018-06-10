@@ -131,6 +131,7 @@ L["TIP_MASTERLOOT_INFO"] =
  .. "|cffffff00Stimmen:|r %s"
 L["TIP_MASTERLOOTING"] = "Plündermeister Gruppe:"
 L["TIP_VOTES"] = "Stimmen von:"
+L["TIP_ADDON_VERSIONS"] = "Addon Versionen in der Gruppe:"
 
 L["MENU_MASTERLOOT_START"] = "Werde Plündermeister"
 L["MENU_MASTERLOOT_SEARCH"] = "Suche Plündermeister in Gruppe"

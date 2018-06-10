@@ -131,6 +131,7 @@ L["TIP_MASTERLOOT_INFO"] =
  .. "|cffffff00Votes:|r %s"
 L["TIP_MASTERLOOTING"] = "Masterlooting group:"
 L["TIP_VOTES"] = "Votes from:"
+L["TIP_ADDON_VERSIONS"] = "Addon versions in the group:"
 
 L["MENU_MASTERLOOT_START"] = "Become masterlooter"
 L["MENU_MASTERLOOT_SEARCH"] = "Search group for a masterlooter"

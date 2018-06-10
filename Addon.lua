@@ -179,14 +179,19 @@ function Addon:HandleChatCommand(msg)
             
             for i,item in pairs(items) do
                 item = Item.FromLink(item, owner or "player")
-                self.Roll.Add(item, owner or Masterloot.GetMasterlooter() or "player", timeout):Start()
+                local roll = self.Roll.Add(item, owner or Masterloot.GetMasterlooter() or "player", timeout)
+                if roll.isOwner then
+                    roll:Start()
+                else
+                    roll:SendStatus(true)
+                end
             end
         end
     -- Bid
     elseif cmd == "bid" then
         local owner, item, bid = select(2, unpack(args))
         
-        if Util.StrIsEmpty(owner) or Item.IsLink(owner)                   -- owner
+        if Util.StrIsEmpty(owner) or Item.IsLink(owner)                 -- owner
         or item and not Item.IsLink(item)                               -- item
         or bid and not Util.TblFind(self.Roll.BIDS, tonumber(bid)) then -- answer
             self:Print(L["USAGE_BID"])

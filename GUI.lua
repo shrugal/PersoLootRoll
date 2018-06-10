@@ -184,8 +184,40 @@ function Rolls.Show()
             f.frame:SetPoint("TOPRIGHT", window.closebutton, "TOPLEFT", -8, -8)
             f.frame:SetFrameStrata("HIGH")
             f.frame:Show()
-
+            
             window.optionsbutton = f
+
+            -- Version label
+            f = Self("InteractiveLabel")
+                .SetText("v" .. Addon.VERSION)
+                .SetColor(1, 0.82, 0)
+                .SetCallback("OnEnter", function(self)
+                    if IsInGroup() then
+                        GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOMRIGHT")
+                        GameTooltip:SetText(L["TIP_ADDON_VERSIONS"])
+                        for i=1,GetNumGroupMembers() do
+                            local unit = GetRaidRosterInfo(i)
+                            if unit then
+                                local name = Unit.ColoredName(Unit.ShortenedName(unit), unit)
+                                local version = UnitIsUnit(unit, "player") and Addon.VERSION or Addon.versions[unit]
+                                local versionColor = not version or version == Addon.VERSION and "ffffff" or version < Addon.VERSION and "ff0000" or "00ffff"
+                                GameTooltip:AddLine(name .. ": |cff" .. versionColor .. (version or "-") .. "|r", 1, 1, 1, false)
+                            end
+                        end
+                        GameTooltip:Show()
+                    end
+                end)
+                .SetCallback("OnLeave", Self.TooltipHide)()
+            f.OnRelease = function (self)
+                self.frame:SetFrameStrata("MEDIUM")
+                self.OnRelease = nil
+            end
+            f.frame:SetParent(window.frame)
+            f.frame:SetPoint("RIGHT", window.optionsbutton.frame, "LEFT", -15, -1)
+            f.frame:SetFrameStrata("HIGH")
+            f.frame:Show()
+
+            window.versionbutton = f
         end
 
         -- FILTER
@@ -395,13 +427,19 @@ local createFn = function (scroll)
         f = Self.CreateIconButton("UI-GroupLoot-Dice", actions, needGreedClick, NEED, 14, 14)
         f:SetUserData("bid", Roll.BID_NEED)
         f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-        f.OnRelease = function (self) self.frame:RegisterForClicks("LeftButtonUp") end
+        f.OnRelease = function (self)
+            self.frame:RegisterForClicks("LeftButtonUp")
+            self.OnRelease = nil
+        end
 
         -- Greed
         f = Self.CreateIconButton("UI-GroupLoot-Coin", actions, needGreedClick, GREED)
         f:SetUserData("bid", Roll.BID_GREED)
         f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-        f.OnRelease = function (self) self.frame:RegisterForClicks("LeftButtonUp") end
+        f.OnRelease = function (self)
+            self.frame:RegisterForClicks("LeftButtonUp")
+            self.OnRelease = nil
+        end
 
         -- Pass
         Self.CreateIconButton("UI-GroupLoot-Pass", actions, function (self)
@@ -535,7 +573,7 @@ local updateFn = function (roll, children, it)
 
     -- Your Bid
     Self(children[it()])
-        .SetText(Self.GetBidName(roll.bid))
+        .SetText(Self.GetBidName(roll, roll.bid))
         .SetColor(Self.GetBidColor(roll.bid))
         .Show()
 
@@ -715,7 +753,7 @@ local updateFn = function (player, children, it, roll, canBeAwarded, canVote)
 
     -- Bid
     Self(children[it()])
-        .SetText(Self.GetBidName(player.bid))
+        .SetText(Self.GetBidName(roll, player.bid))
         .SetColor(Self.GetBidColor(player.bid))
         .Show()
 
@@ -741,7 +779,8 @@ function Rolls.UpdateDetails(details, roll)
     details.frame:Show()
     details:PauseLayout()
 
-    local players = Util({}).Merge(roll.item:GetEligible(), roll.bids).FoldL(function (u, val, unit)
+    local eligible = roll.item:GetEligible()
+    local players = Util({}).Merge(eligible, roll.bids).FoldL(function (u, val, unit)
         tinsert(u, {
             unit = unit,
             ilvl = roll.item:GetLevelForLocation(unit),
@@ -938,12 +977,12 @@ function Self.TableRowHighlight(parent, skip)
 end
 
 -- Get the name for a bid
-function Self.GetBidName(bid)
+function Self.GetBidName(roll, bid)
     if not bid then
         return "-"
     else
         local bid, i, answers = floor(bid), 10*bid - 10*floor(bid), Masterloot.session["answers" .. floor(bid)]
-        return (i == 0 or not answers or not answers[i]) and L["ROLL_BID_" .. bid] or answers[i]
+        return (i == 0 or not Masterloot.IsMasterlooter(roll.owner) or not answers or not answers[i]) and L["ROLL_BID_" .. bid] or answers[i]
     end
 end
 

@@ -406,7 +406,7 @@ function Self:Bid(bid, fromUnit, rollOrImport)
     local valid, msg = self:Validate(not isImport and Self.STATUS_RUNNING or nil, fromUnit)
     if not valid then
         Addon:Err(msg)
-    elseif not Util.TblFind(Self.BIDS, floor(bid)) or answer > 0 and not (answers and answers[answer]) then
+    elseif not Util.TblFind(Self.BIDS, floor(bid)) or self.owner == Masterloot.GetMasterlooter() and answer > 0 and not (answers and answers[answer]) then
         Comm.RollBidError(self, fromUnit)
     else
         -- Register the bid
