@@ -131,13 +131,14 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
 
             -- We don't get the full names for x-realm players
             if not UnitExists(unit) then
-                unit = Util.SearchGroup(function (i, unitGroup)
-                    if Util.StrStartsWith(unitGroup, unit) then
-                        return unitGroup
+                for i=1,GetNumGroupMembers() do
+                    local unitGroup = GetRaidRosterInfo(i)
+                    if unitGroup and Util.StrStartsWith(unitGroup, unit) then
+                        unit = unitGroup break
                     end
-                end)
+                end
 
-                if not unit then
+                if not UnitExists(unit) then
                     return
                 end
             end
@@ -258,7 +259,7 @@ function Self.CHAT_MSG_PARTY(event, msg, sender)
 
     local link = Item.GetLink(msg)
     if link then
-        local item = Item.FromLink(link):GetBasicInfo()
+        local item = Item.FromLink(link, unit):GetBasicInfo()
 
         local roll = Roll.Find(nil, unit, item:IsLoaded() and item.link or item.id)
         if roll then
@@ -270,8 +271,8 @@ function Self.CHAT_MSG_PARTY(event, msg, sender)
             
             if not fromSelf and not fromAddon then
                 -- Roll for the item in chat
-                if Addon.db.profile.roll and Util.In(roll.bid, Roll.BID_NEED, Roll.BID_GREED) then
-                    RandomRoll("1", roll.bid == Roll.BID_GREED and "50" or "100")
+                if Addon.db.profile.roll and roll.bid and Util.In(floor(roll.bid), Roll.BID_NEED, Roll.BID_GREED) then
+                    RandomRoll("1", floor(roll.bid) == Roll.BID_GREED and "50" or "100")
                 end
             end
         end
@@ -324,7 +325,7 @@ function Self.CHAT_MSG_WHISPER(event, msg, sender)
             -- The roll is scheduled or happening
             if roll:CanBeAwarded() then
                 -- He is eligible, so register the bid
-                if roll:UnitIsEligible(unit) and roll.bids[unit] ~= Roll.BID_NEED then
+                if roll:UnitIsEligible(unit) and not roll.bds[unit] or floor(roll.bids[unit]) ~= Roll.BID_NEED then
                     roll:Bid(Roll.BID_NEED, unit, true)
 
                     -- Answer only if his bid didn't end the roll
@@ -493,11 +494,10 @@ Comm.ListenData(Comm.EVENT_BID, function (event, data, channel, sender, unit)
     local owner = data.fromUnit and unit or nil
     local fromUnit = data.fromUnit or unit
 
-    if not UnitIsUnit(Unit(fromUnit), "player") and (not owner or Masterloot.IsMasterlooter(owner)) then
+    if not UnitIsUnit(Unit(fromUnit), "player") then
         local roll = Roll.Find(data.ownerId, owner)
-        
         if roll then
-            roll:Bid(data.bid, fromUnit, owner)
+            roll:Bid(data.bid, fromUnit, owner ~= nil)
         end
     end
 end)
@@ -507,11 +507,10 @@ Comm.ListenData(Comm.EVENT_VOTE, function (event, data, channel, sender, unit)
     local owner = data.fromUnit and unit or nil
     local fromUnit = data.fromUnit or unit
     
-    if not UnitIsUnit(Unit(fromUnit), "player") and (not owner or Masterloot.IsMasterlooter(owner)) then
+    if not UnitIsUnit(Unit(fromUnit), "player") then
         local roll = Roll.Find(data.ownerId, owner)
-        
         if roll then
-            roll:Vote(data.vote, fromUnit, owner)
+            roll:Vote(data.vote, fromUnit, owner ~= nil)
         end
     end
 end)

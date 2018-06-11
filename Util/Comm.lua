@@ -203,7 +203,7 @@ function Self.RollBidSelf(roll)
     if roll.bid == Roll.BID_PASS then
         Addon:Verbose(L["BID_PASS"]:format((roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner)))
     else
-        Addon:Verbose(L["BID_START"]:format(L["ROLL_BID_" .. roll.bid], (roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner)))
+        Addon:Verbose(L["BID_START"]:format(L["ROLL_BID_" .. floor(roll.bid)], (roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner)))
     end
 end
 
@@ -223,7 +223,7 @@ end
 function Self.RollEnd(roll, isWhisper)
     -- We won the item
     if roll.isWinner then
-        if not roll.isOwner or roll.bid ~= Roll.BID_NEED or Masterloot.GetMasterlooter() then
+        if not roll.isOwner or roll.bid and floor(roll.bid) ~= Roll.BID_NEED or Masterloot.GetMasterlooter() then
             if roll.item.isOwner then
                 Addon:Info(L["ROLL_WINNER_OWN"]:format(roll.item.link))
             else

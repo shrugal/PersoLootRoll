@@ -1,9 +1,10 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local AceGUI = LibStub("AceGUI-3.0")
-local Comm, Inspect, Masterloot, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+local Comm, Inspect, Item, Masterloot, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Item, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.GUI
 
+-- Row highlight frame
 local frame = CreateFrame("Frame", nil, UIParent)
 frame:SetFrameStrata("BACKGROUND")
 frame:Hide()
@@ -86,6 +87,18 @@ UIDropDownMenu_SetInitializeFunction(dropDown, function (self, level, menuList)
 end)
 Self.DROPDOWN_UNIT = dropDown
 
+-- Custom bid answers
+local clickFn = function (self, roll, bid) roll:Bid(bid) end
+dropDown = CreateFrame("FRAME", "PlrCustomBidAnswers", UIParent, "UIDropDownMenuTemplate")
+UIDropDownMenu_SetInitializeFunction(dropDown, function (self, level, menuList)
+    for i,v in pairs(self.answers) do
+        local info = UIDropDownMenu_CreateInfo()
+        info.text, info.func, info.arg1, info.arg2 = v, clickFn, self.roll, self.bid + i/10
+        UIDropDownMenu_AddButton(info)
+    end
+end)
+Self.DROPDOWN_CUSTOM_BID_ANSWERS = dropDown
+
 -------------------------------------------------------
 --                 LootAlertSystem                   --
 -------------------------------------------------------
@@ -130,6 +143,7 @@ function Rolls.Show()
 
         Rolls.frames.window = Self("Window")
             .SetLayout(nil)
+            .SetFrameStrata("MEDIUM")
             .SetTitle("PersoLootRoll - " .. L["ROLLS"])
             .SetCallback("OnClose", function (self)
                 Rolls.status.width = self.frame:GetWidth()
@@ -162,16 +176,48 @@ function Rolls.Show()
                 .SetCallback("OnLeave", Self.TooltipHide)()
             f.OnRelease = function (self)
                 self.image:SetPoint("TOP", 0, -5)
-                self.frame:SetFrameStrata("FULLSCREEN_DIALOG")
+                self.frame:SetFrameStrata("MEDIUM")
                 self.OnRelease = nil
             end
             f.image:SetPoint("TOP", 0, -2)
             f.frame:SetParent(window.frame)
             f.frame:SetPoint("TOPRIGHT", window.closebutton, "TOPLEFT", -8, -8)
-            f.frame:SetFrameStrata("TOOLTIP")
+            f.frame:SetFrameStrata("HIGH")
+            f.frame:Show()
+            
+            window.optionsbutton = f
+
+            -- Version label
+            f = Self("InteractiveLabel")
+                .SetText("v" .. Addon.VERSION)
+                .SetColor(1, 0.82, 0)
+                .SetCallback("OnEnter", function(self)
+                    if IsInGroup() then
+                        GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOMRIGHT")
+                        GameTooltip:SetText(L["TIP_ADDON_VERSIONS"])
+                        for i=1,GetNumGroupMembers() do
+                            local unit = GetRaidRosterInfo(i)
+                            if unit then
+                                local name = Unit.ColoredName(Unit.ShortenedName(unit), unit)
+                                local version = UnitIsUnit(unit, "player") and Addon.VERSION or Addon.versions[unit]
+                                local versionColor = not version or version == Addon.VERSION and "ffffff" or version < Addon.VERSION and "ff0000" or "00ffff"
+                                GameTooltip:AddLine(name .. ": |cff" .. versionColor .. (version or "-") .. "|r", 1, 1, 1, false)
+                            end
+                        end
+                        GameTooltip:Show()
+                    end
+                end)
+                .SetCallback("OnLeave", Self.TooltipHide)()
+            f.OnRelease = function (self)
+                self.frame:SetFrameStrata("MEDIUM")
+                self.OnRelease = nil
+            end
+            f.frame:SetParent(window.frame)
+            f.frame:SetPoint("RIGHT", window.optionsbutton.frame, "LEFT", -15, -1)
+            f.frame:SetFrameStrata("HIGH")
             f.frame:Show()
 
-            window.optionsbutton = f
+            window.versionbutton = f
         end
 
         -- FILTER
@@ -284,8 +330,7 @@ function Rolls.Show()
 
             local actions = Self("SimpleGroup")
                 .SetLayout(nil)
-                .SetHeight(16)
-                .SetWidth(17)
+                .SetHeight(16).SetWidth(17)
                 .SetUserData("cell", {alignH = "end"})
                 .AddTo(scroll)()
             local backdrop = {f.frame:GetBackdropColor()}
@@ -320,19 +365,9 @@ local createFn = function (scroll)
     -- Item
     Self("InteractiveLabel")
         .SetFontObject(GameFontNormal)
-        .SetCallback("OnEnter", function (self)
-            GameTooltip:SetOwner(self.frame, "ANCHOR_LEFT")
-            GameTooltip:SetHyperlink(self:GetUserData("link"))
-            GameTooltip:Show()
-        end)
+        .SetCallback("OnEnter", Self.TooltipItemLink)
         .SetCallback("OnLeave", Self.TooltipHide)
-        .SetCallback("OnClick", function (self)
-            if IsModifiedClick("DRESSUP") then
-                DressUpItemLink(self:GetUserData("link"))
-            elseif IsModifiedClick("CHATLINK") then
-                ChatEdit_InsertLink(self:GetUserData("link"))
-            end
-        end)
+        .SetCallback("OnClick", Self.ItemClick)
         .AddTo(scroll)
     
     -- Ilvl
@@ -363,15 +398,37 @@ local createFn = function (scroll)
     do
         local actions = f
 
+        local needGreedClick = function (self, _, button)
+            local roll, bid = self:GetUserData("roll"), self:GetUserData("bid")
+            if button == "LeftButton" then
+                roll:Bid(bid)
+            elseif button == "RightButton" and roll.owner == Masterloot.GetMasterlooter() then
+                local answers = Masterloot.session["answers" .. bid]
+                if answers and #answers > 0 then
+                    local dropDown = Self.DROPDOWN_CUSTOM_BID_ANSWERS
+                    dropDown.roll, dropDown.bid, dropDown.answers = roll, bid, answers
+                    ToggleDropDownMenu(1, nil, dropDown, "cursor", 3, -3)
+                end
+            end
+        end 
+
         -- Need
-        Self.CreateIconButton("UI-GroupLoot-Dice", actions, function (self)
-            self:GetUserData("roll"):Bid(Roll.BID_NEED)
-        end, NEED, 14, 14)
+        f = Self.CreateIconButton("UI-GroupLoot-Dice", actions, needGreedClick, NEED, 14, 14)
+        f:SetUserData("bid", Roll.BID_NEED)
+        f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        f.OnRelease = function (self)
+            self.frame:RegisterForClicks("LeftButtonUp")
+            self.OnRelease = nil
+        end
 
         -- Greed
-        Self.CreateIconButton("UI-GroupLoot-Coin", actions, function (self)
-            self:GetUserData("roll"):Bid(Roll.BID_GREED)
-        end, GREED)
+        f = Self.CreateIconButton("UI-GroupLoot-Coin", actions, needGreedClick, GREED)
+        f:SetUserData("bid", Roll.BID_GREED)
+        f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        f.OnRelease = function (self)
+            self.frame:RegisterForClicks("LeftButtonUp")
+            self.OnRelease = nil
+        end
 
         -- Pass
         Self.CreateIconButton("UI-GroupLoot-Pass", actions, function (self)
@@ -439,7 +496,7 @@ local createFn = function (scroll)
         .SetUserData("isDetails", true)
         .SetUserData("cell", {colspan = 99})
         .SetUserData("table", {
-            columns = {1, {25, 100}, {25, 100}, {25, 100}, 100},
+            columns = {1, {25, 100}, {34, 100}, {25, 100}, {25, 100}, 100},
             spaceH = 10,
             spaceV = 2
         })
@@ -461,7 +518,7 @@ local createFn = function (scroll)
             self.OnRelease = nil
         end
     
-        local header = {"PLAYER", "ITEM_LEVEL", "BID", "VOTES"}
+        local header = {"PLAYER", "ITEM_LEVEL", "ITEMS", "BID", "VOTES"}
         for i,v in pairs(header) do
             local f = Self("Label").SetFontObject(GameFontNormal).SetText(Util.StrUcFirst(L[v])).SetColor(1, 0.82, 0)()
             if i == #header then
@@ -471,7 +528,7 @@ local createFn = function (scroll)
         end
 
         details.frame:Hide()
-        Self.TableRowHighlight(details, 4)
+        Self.TableRowHighlight(details, #header)
     end
 end
 local updateFn = function (roll, children, it)
@@ -504,7 +561,10 @@ local updateFn = function (roll, children, it)
     Self(children[it()]).SetText(roll.traded and L["ROLL_TRADED"] or roll.winner and L["ROLL_AWARDED"] or L["ROLL_STATUS_" .. roll.status]).Show()
 
     -- Your Bid
-    Self(children[it()]).SetText(roll.bid and L["ROLL_BID_" .. roll.bid] or "-").Show()
+    Self(children[it()])
+        .SetText(Self.GetBidName(roll, roll.bid))
+        .SetColor(Self.GetBidColor(roll.bid))
+        .Show()
 
     -- Winner
     Self(children[it()])
@@ -631,9 +691,31 @@ end
 
 -- Update the details view of a row
 local createFn = function (details)
-    -- Unit, Ilvl, Bid
+    -- Unit, Ilvl
     Self.CreateUnitLabel(details)
     Self("Label").SetFontObject(GameFontNormal).AddTo(details)
+
+    -- Items
+    local grp = Self("SimpleGroup")
+        .SetLayout(nil)
+        .SetWidth(34).SetHeight(16)
+        .SetBackdropColor(0, 0, 0, 0)
+        .AddTo(details)()
+    for i=1,2 do
+        local f = Self("Icon")
+            .SetCallback("OnEnter", Self.TooltipItemLink)
+            .SetCallback("OnLeave", Self.TooltipHide)
+            .SetCallback("OnClick", Self.ItemClick)
+            .AddTo(grp)
+            .SetPoint(i == 1 and "LEFT" or "RIGHT")()
+        f.image:SetPoint("TOP")
+        f.OnRelease = function (self)
+            self.image:SetPoint("TOP", 0, -5)
+            self.OnRelease = nil
+        end
+    end
+
+    -- Bid
     Self("Label").SetFontObject(GameFontNormal).AddTo(details)
 
     -- Votes
@@ -677,9 +759,29 @@ local updateFn = function (player, children, it, roll, canBeAwarded, canVote)
         .SetUserData("unit", player.unit)
         .Show()
 
-    -- Ilvl, Bid
+    -- Ilvl
     Self(children[it()]).SetText(player.ilvl).Show()
-    Self(children[it()]).SetText(player.bid and L["ROLL_BID_" .. player.bid] or "-").Show()
+
+    -- Items
+    local f, isSelf, slots = children[it()], UnitIsUnit(player.unit, "player"), Item.SLOTS[roll.item.equipLoc]
+    for i,child in pairs(f.children) do
+        local link = slots[i] and (isSelf and GetInventoryItemLink("player", slots[i]) or Inspect.GetLink(player.unit, slots[i]))
+        if link then
+            Self(child)
+                .SetImage(Item.GetInfo(link, "texture"))
+                .SetImageSize(16, 16).SetWidth(16).SetHeight(16)
+                .SetUserData("link", link)
+                .Show()
+        else
+            child.frame:Hide()
+        end
+    end
+
+    -- Bid
+    Self(children[it()])
+        .SetText(Self.GetBidName(roll, player.bid))
+        .SetColor(Self.GetBidColor(player.bid))
+        .Show()
 
     -- Votes
     Self(children[it()])
@@ -703,7 +805,8 @@ function Rolls.UpdateDetails(details, roll)
     details.frame:Show()
     details:PauseLayout()
 
-    local players = Util({}).Merge(roll.item:GetEligible(), roll.bids).FoldL(function (u, val, unit)
+    local eligible = roll.item:GetEligible()
+    local players = Util({}).Merge(eligible, roll.bids).FoldL(function (u, val, unit)
         tinsert(u, {
             unit = unit,
             ilvl = roll.item:GetLevelForLocation(unit),
@@ -713,7 +816,7 @@ function Rolls.UpdateDetails(details, roll)
         return u
     end, {}, true).SortBy("bid", 99, false, "votes", 0, true, "ilvl", 0, false, "unit")()
 
-    Self.UpdateRows(details, players, createFn, updateFn, 4, roll, roll:CanBeAwarded(true), roll:UnitCanVote())
+    Self.UpdateRows(details, players, createFn, updateFn, 5, roll, roll:CanBeAwarded(true), roll:UnitCanVote())
 
     details:ResumeLayout()
 end
@@ -825,6 +928,16 @@ function Self.TooltipUnitFullName(self)
     end
 end
 
+-- Display a tooltip for an item link
+function Self.TooltipItemLink(self)
+    local link = self:GetUserData("link")
+    if link then
+        GameTooltip:SetOwner(self.frame, "ANCHOR_LEFT")
+        GameTooltip:SetHyperlink(link)
+        GameTooltip:Show()
+    end
+end
+
 -- Hide the tooltip
 function Self.TooltipHide()
     GameTooltip:Hide()
@@ -837,10 +950,20 @@ function Self.UnitClick(self, event, button)
         if button == "LeftButton" then
             ChatFrame_SendSmartTell(unit)
         elseif button == "RightButton" then
-            Self.DROPDOWN_UNIT.which = UnitIsUnit(unit, "player") and "SELF" or UnitInRaid(unit) and "RAID_PLAYER" or UnitInParty(unit) and "PARTY" or "PLAYER"
-            Self.DROPDOWN_UNIT.unit = unit
-            ToggleDropDownMenu(1, nil, Self.DROPDOWN_UNIT, "cursor", 3, -3)
+            local dropDown = Self.DROPDOWN_UNIT
+            dropDown.which = UnitIsUnit(unit, "player") and "SELF" or UnitInRaid(unit) and "RAID_PLAYER" or UnitInParty(unit) and "PARTY" or "PLAYER"
+            dropDown.unit = unit
+            ToggleDropDownMenu(1, nil, dropDown, "cursor", 3, -3)
         end
+    end
+end
+
+-- Handle clicks on item labels/icons
+function Self.ItemClick(self)
+    if IsModifiedClick("DRESSUP") then
+        DressUpItemLink(self:GetUserData("link"))
+    elseif IsModifiedClick("CHATLINK") then
+        ChatEdit_InsertLink(self:GetUserData("link"))
     end
 end
 
@@ -851,6 +974,7 @@ function Self.TableRowHighlight(parent, skip)
     local isOver = false
     local tblObj = parent:GetUserData("table")
     local spaceV = tblObj.spaceV or tblObj.space or 0
+    local cols = #tblObj.columns
 
     frame:SetScript("OnEnter", function (self)
         if not isOver then
@@ -864,20 +988,15 @@ function Self.TableRowHighlight(parent, skip)
                         Self.HighlightFrame:Hide()
                     end
                 else
-                    local scale = UIParent:GetEffectiveScale()
-                    local cY = select(2, GetCursorPosition()) / scale
+                    local cY = select(2, GetCursorPosition()) / UIParent:GetEffectiveScale()
                     local frameTop, frameBottom = parent.frame:GetTop(), parent.frame:GetBottom()
-                    local top, bottom
-                    
-                    for i,child in ipairs(parent.children) do
-                        if i > skip then
-                            local childTop, childBottom = child.frame:GetTop(), child.frame:GetBottom()
-                            if childTop and childBottom and childTop + spaceV >= cY and childBottom - spaceV <= cY then
-                                top =  min(frameTop, max(top or 0, childTop + spaceV/2))
-                                bottom = max(frameBottom, min(bottom or frameTop, childBottom - spaceV/2))
-                            elseif top then
-                                break
-                            end
+                    local row, top, bottom
+
+                    for i=skip+1,#parent.children do
+                        local childTop, childBottom = parent.children[i].frame:GetTop(), parent.children[i].frame:GetBottom()
+                        if childTop + spaceV/2 >= cY and childBottom - spaceV/2 <= cY then
+                            top =  min(frameTop, max(top or 0, childTop + spaceV/2))
+                            bottom = max(frameBottom, min(bottom or frameTop, childBottom - spaceV/2))
                         end
                     end
                     
@@ -896,6 +1015,32 @@ function Self.TableRowHighlight(parent, skip)
         end
         isOver = true
     end)
+end
+
+-- Get the name for a bid
+function Self.GetBidName(roll, bid)
+    if not bid then
+        return "-"
+    else
+        local bid, i, answers = floor(bid), 10*bid - 10*floor(bid), Masterloot.session["answers" .. floor(bid)]
+        return (i == 0 or not Masterloot.IsMasterlooter(roll.owner) or not answers or not answers[i]) and L["ROLL_BID_" .. bid] or answers[i]
+    end
+end
+
+-- Get the color for a bid
+function Self.GetBidColor(bid)
+    if not bid then
+        return 1, 1, 1
+    elseif bid == Roll.BID_PASS then
+        return .5, .5, .5
+    else
+        local bid, i = floor(bid), 10*bid - 10*floor(bid)
+        if bid == Roll.BID_NEED then
+            return 0, max(.2, min(1, 1 - .2 * (i - 5))), max(0, min(1, .2 * i))
+        elseif bid == Roll.BID_GREED then
+            return 1, max(0, min(1, 1 - .1 * i)), 0
+        end
+    end
 end
 
 -------------------------------------------------------

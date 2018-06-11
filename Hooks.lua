@@ -1,6 +1,6 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Roll, Trade, Unit, Util = Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+local GUI, Masterloot, Roll, Trade, Unit, Util = Addon.GUI, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.Hooks
 
 -------------------------------------------------------
@@ -101,6 +101,23 @@ function Self.EnableGroupLootRoll()
         end
     end
 
+    local onButtonClick = function (self, button)
+        if button == "RightButton" then
+            local rollId, bid = self:GetParent().rollID, self:GetID()
+            local roll = Roll.IsPlrId(rollId) and Roll.Get(rollId)
+            if roll and roll.owner == Masterloot.GetMasterlooter() then
+                local answers = Masterloot.session["answers" .. bid]
+                if answers and #answers > 0 then
+                    local dropDown = GUI.DROPDOWN_CUSTOM_BID_ANSWERS
+                    dropDown.roll, dropDown.bid, dropDown.answers = roll, bid, answers
+                    ToggleDropDownMenu(1, nil, GUI.DROPDOWN_CUSTOM_BID_ANSWERS, "cursor", 3, -3)
+                end
+            end
+        else
+            Addon.hooks[self].OnClick(self, button)
+        end
+    end
+
     for i=1, NUM_GROUP_LOOT_FRAMES do
         local frame = _G["GroupLootFrame" .. i]
 
@@ -112,6 +129,14 @@ function Self.EnableGroupLootRoll()
         -- OnHide
         if not Addon:IsHooked(frame, "OnHide") then
             Addon:HookScript(frame, "OnHide", onHide)
+        end
+
+        -- OnClick
+        if not Addon:IsHooked(frame.NeedButton, "OnClick") then
+            Addon:RawHookScript(frame.NeedButton, "OnClick", onButtonClick)
+            frame.NeedButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+            Addon:RawHookScript(frame.GreedButton, "OnClick", onButtonClick)
+            frame.GreedButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
         end
     end
 
@@ -149,6 +174,7 @@ function Self.DisableGroupLootRoll()
     for i=1, NUM_GROUP_LOOT_FRAMES do
         Addon:Unhook(_G["GroupLootFrame" .. i], "OnShow")
         Addon:Unhook(_G["GroupLootFrame" .. i], "OnHide")
+        Addon:Unhook(_G["GroupLootFrame" .. i], "OnClick")
     end
     Addon:Unhook("GroupLootContainer_RemoveFrame")
     Addon:Unhook(GameTooltip, "SetLootRollItem")
@@ -271,11 +297,11 @@ function Self.EnableUnitMenus()
     -- UnitPopup:OnClick()
     if not Addon:IsHooked("UnitPopup_OnClick") then
         Addon:SecureHook("UnitPopup_OnClick", function (self)
-            local dropdownMenu = UIDROPDOWNMENU_INIT_MENU
-            local unit = Unit.Name(dropdownMenu.unit or dropdownMenu.chatTarget)
-
             if self.value and Util.StrStartsWith(self.value, NAME) then
+                local dropdownMenu = UIDROPDOWNMENU_INIT_MENU
+                local unit = Unit.Name(dropdownMenu.unit or dropdownMenu.chatTarget)
                 local roll = Roll.Get(UnitPopupButtons[self.value].roll)
+                
                 if roll and roll:CanBeAwardedTo(unit, true) then
                     roll:Finish(unit)
                 end
@@ -287,7 +313,7 @@ function Self.EnableUnitMenus()
     local onEnter = function (self)
         if self.value and Util.StrStartsWith(self.value, NAME) then
             local roll = Roll.Get(UnitPopupButtons[self.value].roll)
-            if roll and roll:CanBeAwarded() then
+            if roll and roll:CanBeAwarded(true) then
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 GameTooltip:SetHyperlink(roll.item.link)
                 GameTooltip:Show()
