@@ -477,7 +477,7 @@ function Addon:RegisterOptions()
                     Masterloot.RefreshSession()
                 end,
                 get = function () return self.db.profile.masterlooter.timeoutBase end,
-                width = 1.7
+                -- width = 1.7 TODO: Can't use that yet
             },
             masterlooterTimeoutPerItem = {
                 name = L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM"],
@@ -492,7 +492,7 @@ function Addon:RegisterOptions()
                     Masterloot.RefreshSession()
                 end,
                 get = function () return self.db.profile.masterlooter.timeoutPerItem end,
-                width = 1.7
+                -- width = 1.7 TODO: Can't use that yet
             },
             ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             masterlooterNeedAnswers = {
