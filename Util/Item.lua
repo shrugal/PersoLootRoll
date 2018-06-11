@@ -572,7 +572,9 @@ end
 -------------------------------------------------------
 
 -- Get a list of owned items by equipment location
-function Self:GetOwnedForLocation(equipped, bag)
+function Self:GetOwnedForLocation(unit, equipped, bag)
+    unit = Unit.Name(unit or "player")
+    local isSelf = UnitIsUnit(unit, "player")
     local items = {}
     local classId = select(3, UnitClass("player"))
 
@@ -587,19 +589,28 @@ function Self:GetOwnedForLocation(equipped, bag)
 
     -- Get equipped item(s)
     if equipped ~= false then
-        if self.isRelic then
-            local weapon = Self.GetEquippedArtifact()
-            items = weapon and weapon:GetRelics(self.relicType) or items
-        else for i,slot in pairs(Self.SLOTS[self.equipLoc]) do
-            local link = GetInventoryItemLink("player", slot)
-            if link and Self.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY then
-                tinsert(items, link)
-            end
-        end end
+        if isSelf then
+            if self.isRelic then
+                local weapon = Self.GetEquippedArtifact()
+                items = weapon and weapon:GetRelics(self.relicType) or items
+            else for i,slot in pairs(Self.SLOTS[self.equipLoc]) do
+                local link = GetInventoryItemLink(unit, slot)
+                if link and Self.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY then
+                    tinsert(items, link)
+                end
+            end end
+        elseif Inspect.cache[unit] then
+            if self.isRelic then
+                Util.TblMerge(items, Inspect.cache[unit].links[self.relicType])
+            else for i,slot in pairs(Self.SLOTS[self.equipLoc]) do
+                local link = Inspect.GetLink(unit, slot)
+                if link then tinsert(items, link) end
+            end end
+        end
     end
 
     -- Get item(s) from bag
-    if bag ~= false then
+    if isSelf and  bag ~= false then
         for bag=1,NUM_BAG_SLOTS do
             for slot=1, GetContainerNumSlots(bag) do
                 local link = GetContainerItemLink(bag, slot)
@@ -691,7 +702,7 @@ function Self:GetLevelForLocation(unit)
         return cache.ilvl or 0
     else
         -- For other players
-        return Inspect.Get(unit, location)
+        return Inspect.GetLevel(unit, location)
     end
 end
 

@@ -22,9 +22,14 @@ Self.lastQueued = 0
 --                    Read cache                     --
 -------------------------------------------------------
 
--- Get cache entry for given unit and location
-function Self.Get(unit, location)
-    return Self.cache[unit] and Self.cache[unit][location] or 0
+-- Get ivl for given unit and location
+function Self.GetLevel(unit, location)
+    return Self.cache[unit] and Self.cache[unit].levels[location] or 0
+end
+
+-- Get link(s) for given unit and slot
+function Self.GetLink(unit, slot)
+    return Self.cache[unit] and Self.cache[unit].links[slot] or nil
 end
 
 -- Check if an entry exists and isn't out-of-date
@@ -40,7 +45,7 @@ end
 function Self.Update(unit)
     unit = Unit.Name(unit)
 
-    local info = Self.cache[unit] or {}
+    local info = Self.cache[unit] or {levels = {}, links = {}}
 
     -- Remember when we did this
     info.time = GetTime()
@@ -52,6 +57,7 @@ function Self.Update(unit)
             for i,slot in pairs(slots) do
                 local link = GetInventoryItemLink(unit, slot)
                 if link then
+                    info.links[slot] = link
                     slotMin = min(slotMin or 1000, Item.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY and Item.GetInfo(link, "level") or 0)
                 else
                     slotMin = false break
@@ -60,9 +66,9 @@ function Self.Update(unit)
 
             -- Only set it if we got links for all slots
             if slotMin then
-                info[equipLoc] = slotMin and max(0, info[equipLoc] or 0, slotMin)
-            elseif not info[equipLoc] then
-                info[equipLoc] = false
+                info.levels[equipLoc] = slotMin and max(0, info.levels[equipLoc] or 0, slotMin)
+            elseif not info.levels[equipLoc] then
+                info.levels[equipLoc] = false
             end
         end
     end
@@ -78,6 +84,10 @@ function Self.Update(unit)
                 for i,slot in pairs(slots) do
                     local link = weapon:GetGem(slot)
                     if link then
+                        if not info.links[relicType] then
+                            info.links[relicType] = {}
+                        end
+                        tinsert(info.links[relicType], link)
                         slotMin = min(slotMin or 1000, Item.GetInfo(link, "level") or 0)
                     else
                         slotMin = false break
@@ -86,17 +96,17 @@ function Self.Update(unit)
 
                 -- Only set it if we got links for all slots
                 if slotMin then
-                    info[relicType] = slotMin and max(0, info[relicType] or 0, slotMin)
-                elseif not info[relicType] then
-                    info[relicType] = false
+                    info.levels[relicType] = slotMin and max(0, info.levels[relicType] or 0, slotMin)
+                elseif not info.levels[relicType] then
+                    info.levels[relicType] = false
                 end
             end
         end
     end
 
     -- Check if the inspect was successfull
-    local n = Util.TblCount(info)
-    local failed = n == 0 or Util.TblCountOnly(info, false) >= n/2
+    local n = Util.TblCount(info.levels)
+    local failed = n == 0 or Util.TblCountOnly(info.levels, false) >= n/2
     local inspectsLeft = Self.queue[unit] or Self.MAX_PER_CHAR
 
     -- Update cache and queue entries

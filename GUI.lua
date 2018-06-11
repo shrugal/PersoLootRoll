@@ -1,7 +1,7 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local AceGUI = LibStub("AceGUI-3.0")
-local Comm, Inspect, Masterloot, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+local Comm, Inspect, Item, Masterloot, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Item, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.GUI
 
 -- Row highlight frame
@@ -330,8 +330,7 @@ function Rolls.Show()
 
             local actions = Self("SimpleGroup")
                 .SetLayout(nil)
-                .SetHeight(16)
-                .SetWidth(17)
+                .SetHeight(16).SetWidth(17)
                 .SetUserData("cell", {alignH = "end"})
                 .AddTo(scroll)()
             local backdrop = {f.frame:GetBackdropColor()}
@@ -366,19 +365,9 @@ local createFn = function (scroll)
     -- Item
     Self("InteractiveLabel")
         .SetFontObject(GameFontNormal)
-        .SetCallback("OnEnter", function (self)
-            GameTooltip:SetOwner(self.frame, "ANCHOR_LEFT")
-            GameTooltip:SetHyperlink(self:GetUserData("link"))
-            GameTooltip:Show()
-        end)
+        .SetCallback("OnEnter", Self.TooltipItemLink)
         .SetCallback("OnLeave", Self.TooltipHide)
-        .SetCallback("OnClick", function (self)
-            if IsModifiedClick("DRESSUP") then
-                DressUpItemLink(self:GetUserData("link"))
-            elseif IsModifiedClick("CHATLINK") then
-                ChatEdit_InsertLink(self:GetUserData("link"))
-            end
-        end)
+        .SetCallback("OnClick", Self.ItemClick)
         .AddTo(scroll)
     
     -- Ilvl
@@ -507,7 +496,7 @@ local createFn = function (scroll)
         .SetUserData("isDetails", true)
         .SetUserData("cell", {colspan = 99})
         .SetUserData("table", {
-            columns = {1, {25, 100}, {25, 100}, {25, 100}, 100},
+            columns = {1, {25, 100}, {34, 100}, {25, 100}, {25, 100}, 100},
             spaceH = 10,
             spaceV = 2
         })
@@ -529,7 +518,7 @@ local createFn = function (scroll)
             self.OnRelease = nil
         end
     
-        local header = {"PLAYER", "ITEM_LEVEL", "BID", "VOTES"}
+        local header = {"PLAYER", "ITEM_LEVEL", "ITEMS", "BID", "VOTES"}
         for i,v in pairs(header) do
             local f = Self("Label").SetFontObject(GameFontNormal).SetText(Util.StrUcFirst(L[v])).SetColor(1, 0.82, 0)()
             if i == #header then
@@ -539,7 +528,7 @@ local createFn = function (scroll)
         end
 
         details.frame:Hide()
-        Self.TableRowHighlight(details, 4)
+        Self.TableRowHighlight(details, #header)
     end
 end
 local updateFn = function (roll, children, it)
@@ -702,9 +691,31 @@ end
 
 -- Update the details view of a row
 local createFn = function (details)
-    -- Unit, Ilvl, Bid
+    -- Unit, Ilvl
     Self.CreateUnitLabel(details)
     Self("Label").SetFontObject(GameFontNormal).AddTo(details)
+
+    -- Items
+    local grp = Self("SimpleGroup")
+        .SetLayout(nil)
+        .SetWidth(34).SetHeight(16)
+        .SetBackdropColor(0, 0, 0, 0)
+        .AddTo(details)()
+    for i=1,2 do
+        local f = Self("Icon")
+            .SetCallback("OnEnter", Self.TooltipItemLink)
+            .SetCallback("OnLeave", Self.TooltipHide)
+            .SetCallback("OnClick", Self.ItemClick)
+            .AddTo(grp)
+            .SetPoint(i == 1 and "LEFT" or "RIGHT")()
+        f.image:SetPoint("TOP")
+        f.OnRelease = function (self)
+            self.image:SetPoint("TOP", 0, -5)
+            self.OnRelease = nil
+        end
+    end
+
+    -- Bid
     Self("Label").SetFontObject(GameFontNormal).AddTo(details)
 
     -- Votes
@@ -751,6 +762,21 @@ local updateFn = function (player, children, it, roll, canBeAwarded, canVote)
     -- Ilvl
     Self(children[it()]).SetText(player.ilvl).Show()
 
+    -- Items
+    local f, isSelf, slots = children[it()], UnitIsUnit(player.unit, "player"), Item.SLOTS[roll.item.equipLoc]
+    for i,child in pairs(f.children) do
+        local link = slots[i] and (isSelf and GetInventoryItemLink("player", slots[i]) or Inspect.GetLink(player.unit, slots[i]))
+        if link then
+            Self(child)
+                .SetImage(Item.GetInfo(link, "texture"))
+                .SetImageSize(16, 16).SetWidth(16).SetHeight(16)
+                .SetUserData("link", link)
+                .Show()
+        else
+            child.frame:Hide()
+        end
+    end
+
     -- Bid
     Self(children[it()])
         .SetText(Self.GetBidName(roll, player.bid))
@@ -790,7 +816,7 @@ function Rolls.UpdateDetails(details, roll)
         return u
     end, {}, true).SortBy("bid", 99, false, "votes", 0, true, "ilvl", 0, false, "unit")()
 
-    Self.UpdateRows(details, players, createFn, updateFn, 4, roll, roll:CanBeAwarded(true), roll:UnitCanVote())
+    Self.UpdateRows(details, players, createFn, updateFn, 5, roll, roll:CanBeAwarded(true), roll:UnitCanVote())
 
     details:ResumeLayout()
 end
@@ -902,6 +928,16 @@ function Self.TooltipUnitFullName(self)
     end
 end
 
+-- Display a tooltip for an item link
+function Self.TooltipItemLink(self)
+    local link = self:GetUserData("link")
+    if link then
+        GameTooltip:SetOwner(self.frame, "ANCHOR_LEFT")
+        GameTooltip:SetHyperlink(link)
+        GameTooltip:Show()
+    end
+end
+
 -- Hide the tooltip
 function Self.TooltipHide()
     GameTooltip:Hide()
@@ -922,6 +958,15 @@ function Self.UnitClick(self, event, button)
     end
 end
 
+-- Handle clicks on item labels/icons
+function Self.ItemClick(self)
+    if IsModifiedClick("DRESSUP") then
+        DressUpItemLink(self:GetUserData("link"))
+    elseif IsModifiedClick("CHATLINK") then
+        ChatEdit_InsertLink(self:GetUserData("link"))
+    end
+end
+
 -- Add row-highlighting to a table
 function Self.TableRowHighlight(parent, skip)
     skip = skip or 0
@@ -929,6 +974,7 @@ function Self.TableRowHighlight(parent, skip)
     local isOver = false
     local tblObj = parent:GetUserData("table")
     local spaceV = tblObj.spaceV or tblObj.space or 0
+    local cols = #tblObj.columns
 
     frame:SetScript("OnEnter", function (self)
         if not isOver then
@@ -942,20 +988,15 @@ function Self.TableRowHighlight(parent, skip)
                         Self.HighlightFrame:Hide()
                     end
                 else
-                    local scale = UIParent:GetEffectiveScale()
-                    local cY = select(2, GetCursorPosition()) / scale
+                    local cY = select(2, GetCursorPosition()) / UIParent:GetEffectiveScale()
                     local frameTop, frameBottom = parent.frame:GetTop(), parent.frame:GetBottom()
-                    local top, bottom
-                    
-                    for i,child in ipairs(parent.children) do
-                        if i > skip then
-                            local childTop, childBottom = child.frame:GetTop(), child.frame:GetBottom()
-                            if childTop and childBottom and childTop + spaceV >= cY and childBottom - spaceV <= cY then
-                                top =  min(frameTop, max(top or 0, childTop + spaceV/2))
-                                bottom = max(frameBottom, min(bottom or frameTop, childBottom - spaceV/2))
-                            elseif top then
-                                break
-                            end
+                    local row, top, bottom
+
+                    for i=skip+1,#parent.children do
+                        local childTop, childBottom = parent.children[i].frame:GetTop(), parent.children[i].frame:GetBottom()
+                        if childTop + spaceV/2 >= cY and childBottom - spaceV/2 <= cY then
+                            top =  min(frameTop, max(top or 0, childTop + spaceV/2))
+                            bottom = max(frameBottom, min(bottom or frameTop, childBottom - spaceV/2))
                         end
                     end
                     

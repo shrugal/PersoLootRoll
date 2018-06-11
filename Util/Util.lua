@@ -683,10 +683,12 @@ end
 function Self.TblMerge(t, ...)
     t = t or {}
     for i=1,select("#", ...) do
-        local j = 1
-        for k,v in pairs(select(i, ...)) do
-            if k == j then tinsert(t, v) else t[k] = v end
-            j = j + 1
+        local tbl, j = (select(i, ...)), 1
+        if tbl then
+            for k,v in pairs(tbl) do
+                if k == j then tinsert(t, v) else t[k] = v end
+                j = j + 1
+            end
         end
     end
     return t
