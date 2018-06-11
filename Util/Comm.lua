@@ -195,11 +195,11 @@ function Self.RollBidError(roll, sender)
 end
 
 -- Show a confirmation message for a bid by the player
-function Self.RollBidSelf(roll)
+function Self.RollBidSelf(roll, isImport)
     if roll.bid == Roll.BID_PASS then
-        Addon:Verbose(L["BID_PASS"]:format((roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner)))
+        Addon:Echo(isImport and Addon.ECHO_DEBUG or Addon.ECHO_VERBOSE, L["BID_PASS"]:format((roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner)))
     else
-        Addon:Verbose(L["BID_START"]:format(L["ROLL_BID_" .. floor(roll.bid)], (roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner)))
+        Addon:Echo(isImport and Addon.ECHO_DEBUG or Addon.ECHO_VERBOSE, L["BID_START"]:format(roll:GetBidName(roll.bid), (roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner)))
     end
 end
 

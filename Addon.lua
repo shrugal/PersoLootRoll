@@ -233,7 +233,8 @@ function Addon:RegisterOptions()
     local config = LibStub("AceConfig-3.0")
     local dialog = LibStub("AceConfigDialog-3.0")
 
-    -- General
+    -- GENERAL
+
     local it = Util.Iter()
     config:RegisterOptionsTable(Name, {
         type = "group",
@@ -297,9 +298,10 @@ function Addon:RegisterOptions()
     })
     self.configFrame = dialog:AddToBlizOptions(Name)
 
+    -- LOOT RULES
+
     local specs
 
-    -- Loot method
     it(1, true)
     config:RegisterOptionsTable(Name .. "_lootmethod", {
         name = L["OPT_LOOT_RULES"],
@@ -364,14 +366,15 @@ function Addon:RegisterOptions()
         }
     })
     dialog:AddToBlizOptions(Name .. "_lootmethod", L["OPT_LOOT_RULES"], Name)
+    
+    -- MASTERLOOT
 
     local allowKeys = {"friend", "guild", "guildgroup", "raidleader", "raidassistant"}
     local allowValues = {FRIEND, LFG_LIST_GUILD_MEMBER, GUILD_GROUP, L["RAID_LEADER"], L["RAID_ASSISTANT"]}
 
     local acceptKeys = {"friend", "guildmaster", "guildofficer"}
     local acceptValues = {FRIEND, L["GUILD_MASTER"], L["GUILD_OFFICER"]}
-    
-    -- Masterloot
+
     it(1, true)
     config:RegisterOptionsTable(Name .. "_masterloot", {
         name = L["OPT_MASTERLOOT"],
@@ -439,12 +442,13 @@ function Addon:RegisterOptions()
     })
     dialog:AddToBlizOptions(Name .. "_masterloot", L["OPT_MASTERLOOT"], Name)
     
+    -- MASTERLOOTER
+    
     local councilKeys = {"guildmaster", "guildofficer", "raidleader", "raidassistant"}
     local councilValues = {L["GUILD_MASTER"], L["GUILD_OFFICER"], L["RAID_LEADER"], L["RAID_ASSISTANT"]}
 
     local guildRanks
 
-    -- Masterlooter
     it(1, true)
     config:RegisterOptionsTable(Name .. "_masterlooter", {
         name = L["OPT_MASTERLOOTER"],
@@ -504,11 +508,19 @@ function Addon:RegisterOptions()
                     local t = wipe(self.db.profile.masterlooter.answers1)
                     for v in val:gmatch("[^,]+") do
                         v = v:gsub("^%s*(.*)%s*$", "%1")
-                        if #t < 9 and not Util.StrIsEmpty(v) then tinsert(t, v) end
+                        if #t < 9 and not Util.StrIsEmpty(v) then
+                            tinsert(t, v == NEED and Roll.ANSWER_NEED or v)
+                        end
                     end
                     Masterloot.RefreshSession()
                 end,
-                get = function () return Util.TblConcat(self.db.profile.masterlooter.answers1, ", ") end,
+                get = function ()
+                    local s = ""
+                    for i,v in pairs(self.db.profile.masterlooter.answers1) do
+                        s = s .. (i > 1 and ", " or "") .. (v == Roll.ANSWER_NEED and NEED or v)
+                    end
+                    return s
+                end,
                 width = "full"
             },
             masterlooterGreedAnswers = {
@@ -520,11 +532,19 @@ function Addon:RegisterOptions()
                     local t = wipe(self.db.profile.masterlooter.answers2)
                     for v in val:gmatch("[^,]+") do
                         v = v:gsub("^%s*(.*)%s*$", "%1")
-                        if #t < 9 and not Util.StrIsEmpty(v) then tinsert(t, v) end
+                        if #t < 9 and not Util.StrIsEmpty(v) then
+                            tinsert(t, v == GREED and Roll.ANSWER_GREED or v)
+                        end
                     end
                     Masterloot.RefreshSession()
                 end,
-                get = function () return Util.TblConcat(self.db.profile.masterlooter.answers2, ", ") end,
+                get = function ()
+                    local s = ""
+                    for i,v in pairs(self.db.profile.masterlooter.answers2) do
+                        s = s .. (i > 1 and ", " or "") .. (v == Roll.ANSWER_GREED and GREED or v)
+                    end
+                    return s
+                end,
                 width = "full"
             },
             ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
@@ -606,10 +626,11 @@ function Addon:RegisterOptions()
     })
     dialog:AddToBlizOptions(Name .. "_masterlooter", L["OPT_MASTERLOOTER"], Name)
 
+    -- MESSAGES
+
     local groupKeys = {"party", "raid", "guild", "lfd", "lfr"}
     local groupValues = {PARTY, RAID, GUILD_GROUP, LOOKING_FOR_DUNGEON_PVEFRAME, RAID_FINDER_PVEFRAME}
 
-    -- Messages
     it(1, true)
     config:RegisterOptionsTable(Name .. "_messages", {
         name = L["OPT_MESSAGES"],
@@ -690,7 +711,8 @@ function Addon:RegisterOptions()
     })
     dialog:AddToBlizOptions(Name .. "_messages", L["OPT_MESSAGES"], Name)
 
-    -- Profiles
+    -- PROFILES
+
     config:RegisterOptionsTable(Name .. "_profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db))
     dialog:AddToBlizOptions(Name .. "_profiles", "Profiles", Name)
 end

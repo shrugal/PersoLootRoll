@@ -19,12 +19,16 @@ Self.STATUS_RUNNING = 1
 Self.STATUS_DONE = 2
 Self.STATUS = {Self.STATUS_CANCELED, Self.STATUS_PENDING, Self.STATUS_RUNNING, Self.STATUS_DONE}
 
--- Answers
+-- Bids
 Self.BID_NEED = 1
 Self.BID_GREED = 2
 Self.BID_DISENCHANT = 3
 Self.BID_PASS = 4
 Self.BIDS = {Self.BID_NEED, Self.BID_GREED, Self.BID_DISENCHANT, Self.BID_PASS}
+
+-- Custom answers
+Self.ANSWER_NEED = "NEED"
+Self.ANSWER_GREED = "GREED"
 
 -- Get a roll by id or prefixed id
 function Self.Get(id)
@@ -127,8 +131,8 @@ function Self.Update(data, unit)
     -- Get or create the roll
     local roll = Self.Find(data.ownerId, data.owner, data.item, data.itemOwnerId, data.item.owner)
     if not roll then
-        -- Only the item owner can create rolls
-        if data.item.owner ~= unit then
+        -- Only the item owner or his/her masterlooter can create rolls
+        if not Util.In(unit, data.item.owner, Masterloot.masterlooting[data.item.owner]) then
             return
         end
 
@@ -165,8 +169,6 @@ function Self.Update(data, unit)
                 roll.item:SetEligible("player")
                 Comm.SendData(Comm.EVENT_INTEREST, {ownerId = roll.ownerId}, roll.owner)
             else
-                local bid, vote = roll.bid, roll.vote
-
                 -- Start (or restart) the roll if the owner has started it
                 if data.status >= Self.STATUS_RUNNING then
                     if roll.status < Self.STATUS_RUNNING then
@@ -204,14 +206,6 @@ function Self.Update(data, unit)
                 -- Register when the roll has been traded
                 if data.traded ~= roll.traded then
                     roll:OnTraded(data.traded)
-                end
-
-                -- Bid and vote again if our bid/vote is missing
-                if bid and not roll.bid and roll:CanBeBidOn() then
-                    roll:Bid(bid)
-                end
-                if vote and not roll.vote and roll:CanBeVotedOn() then
-                    roll:Vote(vote)
                 end
 
                 GUI.Rolls.Update()
@@ -283,6 +277,24 @@ function Self.GetTimeout()
     end
 
     return base + items * perItem
+end
+
+-- Get the name for a bid
+function Self.GetBidName(roll, bid)
+    if type(bid) == "string" then
+        bid = roll.bids[Unit.Name(bid)]
+    end
+
+    if not bid then
+        return "-"
+    else
+        local bid, i, answers = floor(bid), 10*bid - 10*floor(bid), Masterloot.session["answers" .. floor(bid)]
+        if i == 0 or not Masterloot.IsMasterlooter(roll.owner) or not answers or not answers[i] or Util.In(answers[i], Self.ANSWER_NEED, Self.ANSWER_GREED) then
+            return L["ROLL_BID_" .. bid]
+        else
+            return answers[i]
+        end
+    end
 end
 
 -------------------------------------------------------
@@ -392,21 +404,27 @@ function Self:Bid(bid, fromUnit, rollOrImport)
     bid = bid or Self.BID_NEED
     fromUnit = Unit.Name(fromUnit or "player")
     local fromSelf = UnitIsUnit(fromUnit, "player")
+
+    -- It might be a roll in chat or an import operation
+    local rollResult, isImport = type(rollOrImport) == "number" and rollOrImport, rollOrImport == true
+
+    -- Handle custom answers
     local answer, answers = 10*bid - 10*floor(bid), Masterloot.session["answers" .. floor(bid)]
+    if bid == floor(bid) and answers and Masterloot.IsMasterlooter(self.owner) then
+        local i = Util.TblFind(answers, bid == Self.BID_NEED and Self.ANSWER_NEED or Self.ANSWER_GREED)
+        if i then bid, answer = bid + (i / 10), i end
+    end
 
     -- Hide the roll frame
     if fromSelf then
         self:HideRollFrame()
     end
-
-    -- It might be a roll in chat or an import operation
-    local rollResult, isImport = type(rollOrImport) == "number" and rollOrImport, rollOrImport == true
     
     -- Check if we can bid
     local valid, msg = self:Validate(not isImport and Self.STATUS_RUNNING or nil, fromUnit)
     if not valid then
         Addon:Err(msg)
-    elseif not Util.TblFind(Self.BIDS, floor(bid)) or self.owner == Masterloot.GetMasterlooter() and answer > 0 and not (answers and answers[answer]) then
+    elseif not Util.TblFind(Self.BIDS, floor(bid)) or Masterloot.GetMasterlooter(self.owner) and answer > 0 and not (answers and answers[answer]) then
         Comm.RollBidError(self, fromUnit)
     else
         -- Register the bid
@@ -418,7 +436,7 @@ function Self:Bid(bid, fromUnit, rollOrImport)
 
         if fromSelf then
             self.bid = bid
-            Comm.RollBidSelf(self)
+            Comm.RollBidSelf(self, isImport)
         end
 
         -- Check if we should advertise to chat
@@ -540,7 +558,6 @@ end
 
 -- End a roll
 function Self:End(winner)
-    Addon:Verbose(L["ROLL_END"]:format(self.item.link, Comm.GetPlayerLink(self.item.owner)))
     if self.winner then return end
 
     local award = winner == true
@@ -552,6 +569,8 @@ function Self:End(winner)
     
     -- End it if it is running
     if self.status < Self.STATUS_DONE then
+        Addon:Verbose(L["ROLL_END"]:format(self.item.link, Comm.GetPlayerLink(self.item.owner)))
+
         -- Check if we can end the roll
         local valid, msg = self:Validate(Self.STATUS_RUNNING, winner)
         if not valid then
