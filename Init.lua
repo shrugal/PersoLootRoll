@@ -4,7 +4,7 @@ LibStub("AceAddon-3.0"):NewAddon(Addon, Name, "AceConsole-3.0", "AceComm-3.0", "
 -- Constants
 Addon.PREFIX = "PLR"
 Addon.PREFIX_CHAT = "[" .. Addon.PREFIX .. "]"
-Addon.VERSION = 2
+Addon.VERSION = 3
 Addon.DEBUG = false
 
 -- Modules
