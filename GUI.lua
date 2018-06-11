@@ -93,7 +93,7 @@ dropDown = CreateFrame("FRAME", "PlrCustomBidAnswers", UIParent, "UIDropDownMenu
 UIDropDownMenu_SetInitializeFunction(dropDown, function (self, level, menuList)
     for i,v in pairs(self.answers) do
         local info = UIDropDownMenu_CreateInfo()
-        info.text, info.func, info.arg1, info.arg2 = v, clickFn, self.roll, self.bid + i/10
+        info.text, info.func, info.arg1, info.arg2 = Util.In(v, Roll.ANSWER_NEED, Roll.ANSWER_GREED) and L["ROLL_BID_" .. self.bid] or v, clickFn, self.roll, self.bid + i/10
         UIDropDownMenu_AddButton(info)
     end
 end)
@@ -148,8 +148,7 @@ function Rolls.Show()
             .SetCallback("OnClose", function (self)
                 Rolls.status.width = self.frame:GetWidth()
                 Rolls.status.height = self.frame:GetHeight()
-                self.optionsbutton:Release()
-                self.optionsbutton = nil
+                self.optionsbutton, self.versionbutton = nil, nil
                 self:Release()
                 wipe(Rolls.frames)
                 wipe(Rolls.open)
@@ -173,7 +172,8 @@ function Rolls.Show()
                     GameTooltip:SetText(OPTIONS, 1, 1, 1, 1)
                     GameTooltip:Show()
                 end)
-                .SetCallback("OnLeave", Self.TooltipHide)()
+                .SetCallback("OnLeave", Self.TooltipHide)
+                .AddTo(window)()
             f.OnRelease = function (self)
                 self.image:SetPoint("TOP", 0, -5)
                 self.frame:SetFrameStrata("MEDIUM")
@@ -200,14 +200,15 @@ function Rolls.Show()
                             if unit then
                                 local name = Unit.ColoredName(Unit.ShortenedName(unit), unit)
                                 local version = UnitIsUnit(unit, "player") and Addon.VERSION or Addon.versions[unit]
-                                local versionColor = not version or version == Addon.VERSION and "ffffff" or version < Addon.VERSION and "ff0000" or "00ffff"
+                                local versionColor = (not version or version == Addon.VERSION) and "ffffff" or version < Addon.VERSION and "ff0000" or "00ff00"
                                 GameTooltip:AddLine(name .. ": |cff" .. versionColor .. (version or "-") .. "|r", 1, 1, 1, false)
                             end
                         end
                         GameTooltip:Show()
                     end
                 end)
-                .SetCallback("OnLeave", Self.TooltipHide)()
+                .SetCallback("OnLeave", Self.TooltipHide)
+                .AddTo(window)()
             f.OnRelease = function (self)
                 self.frame:SetFrameStrata("MEDIUM")
                 self.OnRelease = nil
@@ -562,7 +563,7 @@ local updateFn = function (roll, children, it)
 
     -- Your Bid
     Self(children[it()])
-        .SetText(Self.GetBidName(roll, roll.bid))
+        .SetText(roll:GetBidName(roll.bid))
         .SetColor(Self.GetBidColor(roll.bid))
         .Show()
 
@@ -779,7 +780,7 @@ local updateFn = function (player, children, it, roll, canBeAwarded, canVote)
 
     -- Bid
     Self(children[it()])
-        .SetText(Self.GetBidName(roll, player.bid))
+        .SetText(roll:GetBidName(player.bid))
         .SetColor(Self.GetBidColor(player.bid))
         .Show()
 
@@ -1015,16 +1016,6 @@ function Self.TableRowHighlight(parent, skip)
         end
         isOver = true
     end)
-end
-
--- Get the name for a bid
-function Self.GetBidName(roll, bid)
-    if not bid then
-        return "-"
-    else
-        local bid, i, answers = floor(bid), 10*bid - 10*floor(bid), Masterloot.session["answers" .. floor(bid)]
-        return (i == 0 or not Masterloot.IsMasterlooter(roll.owner) or not answers or not answers[i]) and L["ROLL_BID_" .. bid] or answers[i]
-    end
 end
 
 -- Get the color for a bid
