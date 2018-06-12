@@ -1,7 +1,7 @@
 ## Interface: 70100
 ## Title: PersoLootRoll
 ## Notes: A loot roll addon for personal loot.
-## Version: 3
+## Version: 4
 ## SavedVariables: PersoLootRollDB, PersoLootRollIconDB, PLR_MASTERLOOTER
 
 # Libs
