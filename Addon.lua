@@ -1,9 +1,7 @@
 --[[
 TODO:
-- Block all trades and whispers
 - Custom messages
-- Show equipped items in addition to slot ilvl
-- Addon version overview for the group
+- Better trade/disenchant tracking
 
 Internal
 - Roll.traded should be uncoupled from the rest of the roll lifecycle
@@ -722,11 +720,11 @@ function Addon:MigrateOptions()
     -- Profile
     local c = Addon.db.profile
     if not c.version or c.version < 3 then
-        c.masterlooter.timeoutBase = c.masterloot.timeoutBase
-        c.masterlooter.timeoutPerItem = c.masterloot.timeoutPerItem
-        c.masterlooter.bidPublic = c.masterloot.bidPublic
-        c.masterlooter.council = c.masterloot.council
-        c.masterlooter.votePublic = c.masterloot.votePublic
+        c.masterlooter.timeoutBase = c.masterloot.timeoutBase or c.masterlooter.timeoutBase
+        c.masterlooter.timeoutPerItem = c.masterloot.timeoutPerItem or c.masterlooter.timeoutPerItem
+        c.masterlooter.bidPublic = c.masterloot.bidPublic or c.masterlooter.bidPublic or false
+        c.masterlooter.council = not next(c.masterlooter.council) and c.masterloot.council or c.masterlooter.council
+        c.masterlooter.votePublic = c.masterloot.votePublic or c.masterlooter.votePublic or false
         c.masterloot.timeoutBase, c.masterloot.timeoutPerItem, c.masterloot.bidPublic, c.masterloot.council, c.masterloot.votePublic, c.masterloot.whitelist, c.masterloot.councilWhitelist = nil
         c.version = 3
     end
@@ -734,7 +732,7 @@ function Addon:MigrateOptions()
     -- Factionrealm
     local c = Addon.db.factionrealm
     if not c.version or c.version < 3 then
-        c.masterlooter.councilWhitelist = c.masterloot.councilWhitelist
+        c.masterlooter.councilWhitelist = not next(c.masterlooter.councilWhitelist) and c.masterloot.councilWhitelist or c.masterlooter.councilWhitelist
         c.masterloot.councilWhitelist = nil
         c.version = 3
     end
