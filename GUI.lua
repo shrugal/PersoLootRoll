@@ -350,6 +350,8 @@ function Rolls.Show()
             end)
             f.image:SetPoint("TOP", 0, 2)
             f.frame:SetPoint("TOPRIGHT")
+            
+            scroll:SetUserData("#header", #header + 1)
         end
 
         Rolls.Update()
@@ -376,10 +378,18 @@ local createFn = function (scroll)
         .SetFontObject(GameFontNormal)
         .AddTo(scroll)
 
-    -- Owner, ML, Status, Your bid, Winner
+    -- Owner, ML
     Self.CreateUnitLabel(scroll)
     Self.CreateUnitLabel(scroll)
-    Self("Label").SetFontObject(GameFontNormal).AddTo(scroll)
+
+    -- Status
+    local f = Self("Label").SetFontObject(GameFontNormal).AddTo(scroll)()
+    f.OnRelease = function (self)
+        self.frame:SetScript("OnUpdate", nil)
+        self.OnRelease = nil
+    end
+
+    -- Your bid, Winner
     Self("Label").SetFontObject(GameFontNormal).AddTo(scroll)
     Self.CreateUnitLabel(scroll)
 
@@ -497,7 +507,7 @@ local createFn = function (scroll)
         .SetUserData("isDetails", true)
         .SetUserData("cell", {colspan = 99})
         .SetUserData("table", {
-            columns = {1, {25, 100}, {34, 100}, {25, 100}, {25, 100}, 100},
+            columns = {1, {25, 100}, {34, 100}, {25, 100}, {25, 100}, {25, 100}, 100},
             spaceH = 10,
             spaceV = 2
         })
@@ -519,7 +529,7 @@ local createFn = function (scroll)
             self.OnRelease = nil
         end
     
-        local header = {"PLAYER", "ITEM_LEVEL", "ITEMS", "BID", "VOTES"}
+        local header = {"PLAYER", "ITEM_LEVEL", "ITEMS", "BID", "ROLL", "VOTES"}
         for i,v in pairs(header) do
             local f = Self("Label").SetFontObject(GameFontNormal).SetText(Util.StrUcFirst(L[v])).SetColor(1, 0.82, 0)()
             if i == #header then
@@ -528,6 +538,7 @@ local createFn = function (scroll)
             details:AddChild(f)
         end
 
+        details:SetUserData("#header", #header)
         details.frame:Hide()
         Self.TableRowHighlight(details, #header)
     end
@@ -559,7 +570,18 @@ local updateFn = function (roll, children, it)
         .Show()
 
     -- Status
-    Self(children[it()]).SetText(roll.traded and L["ROLL_TRADED"] or roll.winner and L["ROLL_AWARDED"] or L["ROLL_STATUS_" .. roll.status]).Show()
+    local f = Self(children[it()]).Show()
+    if roll.status == Roll.STATUS_RUNNING then
+        f.SetUserData("roll", roll)
+         .SetScript("OnUpdate", Self.OnStatusUpdate)
+         .SetColor(1, 1, 0)
+        Self.OnStatusUpdate(f().frame)
+    else
+        f.SetText(roll.traded and L["ROLL_TRADED"] or roll.winner and L["ROLL_AWARDED"] or L["ROLL_STATUS_" .. roll.status])
+         .SetUserData("roll", nil)
+         .SetScript("OnUpdate", nil)
+         .SetColor(1, 1, 1)
+    end
 
     -- Your Bid
     Self(children[it()])
@@ -650,7 +672,7 @@ function Rolls.Update()
     local scroll = Rolls.frames.scroll
     scroll:PauseLayout()
 
-    Self.UpdateRows(scroll, Util(Addon.rolls).CopyFilter(filterFn).SortBy("id")(), createFn, updateFn, 9)
+    Self.UpdateRows(scroll, Util(Addon.rolls).CopyFilter(filterFn).SortBy("id")(), createFn, updateFn, scroll:GetUserData("#header"))
 
     scroll:ResumeLayout()
     scroll:DoLayout()
@@ -716,7 +738,8 @@ local createFn = function (details)
         end
     end
 
-    -- Bid
+    -- Bid, Roll
+    Self("Label").SetFontObject(GameFontNormal).AddTo(details)
     Self("Label").SetFontObject(GameFontNormal).AddTo(details)
 
     -- Votes
@@ -784,6 +807,11 @@ local updateFn = function (player, children, it, roll, canBeAwarded, canVote)
         .SetColor(Self.GetBidColor(player.bid))
         .Show()
 
+    -- Roll
+    Self(children[it()])
+        .SetText(player.roll and Util.NumRound(player.roll) or "-")
+        .Show()
+
     -- Votes
     Self(children[it()])
         .SetText(player.votes > 0 and player.votes or "-")
@@ -812,12 +840,19 @@ function Rolls.UpdateDetails(details, roll)
             unit = unit,
             ilvl = roll.item:GetLevelForLocation(unit),
             bid = type(val) == "number" and val or nil,
-            votes = Util.TblCountOnly(roll.votes, unit)
+            votes = Util.TblCountOnly(roll.votes, unit),
+            roll = roll.rolls[unit]
         })
         return u
-    end, {}, true).SortBy("bid", 99, false, "votes", 0, true, "ilvl", 0, false, "unit")()
+    end, {}, true).SortBy(
+        "bid",   99,  false,
+        "votes", 0,   true,
+        "roll",  100, true,
+        "ilvl",  0,   false,
+        "unit"
+    )()
 
-    Self.UpdateRows(details, players, createFn, updateFn, 5, roll, roll:CanBeAwarded(true), roll:UnitCanVote())
+    Self.UpdateRows(details, players, createFn, updateFn, details:GetUserData("#header"), roll, roll:CanBeAwarded(true), roll:UnitCanVote())
 
     details:ResumeLayout()
 end
@@ -966,6 +1001,11 @@ function Self.ItemClick(self)
     elseif IsModifiedClick("CHATLINK") then
         ChatEdit_InsertLink(self:GetUserData("link"))
     end
+end
+
+-- Roll status OnUpdate callback
+function Self.OnStatusUpdate(frame)
+    Self(frame.obj).SetText(L["SECONDS"]:format(frame.obj:GetUserData("roll"):GetTimeLeft()))
 end
 
 -- Add row-highlighting to a table
