@@ -3,7 +3,7 @@ LibStub("AceAddon-3.0"):NewAddon(Addon, Name, "AceConsole-3.0", "AceComm-3.0", "
 
 -- Constants
 Addon.ABBR = "PLR"
-Addon.VERSION = 4
+Addon.VERSION = 5
 Addon.DEBUG = false
 
 -- Modules
