@@ -3,6 +3,8 @@ local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Locale, Masterloot, Roll, Unit, Util = Addon.Locale, Addon.Masterloot, Addon.Roll, Addon.Unit, Addon.Util
 local Self = Addon.Comm
 
+Self.PREFIX = "[" .. Addon.ABBR .. "] "
+
 -- Distribution types
 Self.TYPE_GROUP = "GROUP"
 Self.TYPE_PARTY = "PARTY"
@@ -43,8 +45,8 @@ Self.PATTERNS_LEFT = {Self.PATTERN_PARTY_LEFT, Self.PATTERN_INSTANCE_LEFT, Self.
 
 -- Get the complete message prefix for an event
 function Self.GetPrefix(event)
-    if not Util.StrStartsWith(event, Addon.PREFIX) then
-        event = Addon.PREFIX .. event
+    if not Util.StrStartsWith(event, Addon.ABBR) then
+        event = Addon.ABBR .. event
     end
 
     return event
@@ -118,6 +120,10 @@ end
 function Self.Chat(msg, target)
     local channel, player = Self.GetDestination(target)
 
+    if channel ~= Self.TYPE_WHISPER then
+        msg = Util.StrPrefix(msg, Self.PREFIX)
+    end
+
     if Addon.DEBUG then
         Addon:Print("@" .. (player or channel) .. ": " .. msg)
         do return end
@@ -127,10 +133,10 @@ function Self.Chat(msg, target)
 end
 
 function Self.ChatLine(line, target, ...)
-    local _, player = Self.GetDestination(target)
-    local L = Locale.GetCommLocale(player)
+    local L = Locale.GetCommLocale(select(2, Self.GetDestination(target)))
+    line = Addon.db.profile.messages[L.lang] and Addon.db.profile.messages[L.lang][line] or L[line]
 
-    Self.Chat(L(line, ...), target)
+    Self.Chat(line:format(...), target)
 end
 
 -- Send an addon message

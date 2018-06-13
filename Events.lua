@@ -255,7 +255,7 @@ function Self.CHAT_MSG_PARTY(event, msg, sender)
     if not Addon:IsTracking() then return end
 
     local fromSelf = UnitIsUnit(unit, "player")
-    local fromAddon = Util.StrStartsWith(msg, Addon.PREFIX_CHAT)
+    local fromAddon = Util.StrStartsWith(msg, Comm.PREFIX)
 
     local link = Item.GetLink(msg)
     if link then
