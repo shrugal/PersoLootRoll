@@ -1,6 +1,5 @@
 --[[
 TODO:
-- Custom messages
 - Better trade/disenchant tracking
 
 Internal
