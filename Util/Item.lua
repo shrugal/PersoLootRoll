@@ -672,11 +672,13 @@ end
 
 -- Get the threshold for the item's slot
 function Self:GetThresholdForLocation(unit, upper)
+    local applyCustomThresholds = not upper and UnitIsUnit(unit or "player", "player")
+
     -- Use DB option only for 
-    local threshold = UnitIsUnit(unit or "player", "player") and not upper and Addon.db.profile.ilvlThreshold or Self.ILVL_THRESHOLD
+    local threshold = applyCustomThresholds and Addon.db.profile.ilvlThreshold or Self.ILVL_THRESHOLD
 
     -- Trinkets have double the normal threshold
-    if self:GetBasicInfo().equipLoc == Self.TYPE_TRINKET then
+    if (not applyCustomThresholds or Addon.db.profile.ilvlThresholdTrinkets) and self:GetBasicInfo().equipLoc == Self.TYPE_TRINKET then
         threshold = threshold * 2
     end
 

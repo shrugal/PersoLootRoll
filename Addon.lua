@@ -11,7 +11,7 @@ local Name, Addon = ...
 local LDB = LibStub("LibDataBroker-1.1")
 local LDBIcon = LibStub("LibDBIcon-1.0")
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local GUI, Item, Masterloot, Roll, Trade, Util = Addon.GUI, Addon.Item, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Util
+local GUI, Item, Locale, Masterloot, Roll, Trade, Util = Addon.GUI, Addon.Item, Addon.Locale, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Util
 
 -- Echo levels
 Addon.ECHO_NONE = 0
@@ -44,8 +44,10 @@ function Addon:OnInitialize()
                 group = {lfd = true, party = true, lfr = true, raid = true, guild = false},
                 target = {friend = false, guild = false, other = true}
             },
+            messages = {},
             awardSelf = false,
             ilvlThreshold = 30,
+            ilvlThresholdTrinkets = true,
             transmog = false,
             masterloot = {
                 allow = {friend = true, guild = true, guildgroup = true, raidleader = false, raidassistant = false},
@@ -61,7 +63,8 @@ function Addon:OnInitialize()
                 council = {guildmaster = false, guildofficer = false, raidleader = false, raidassistant = false},
                 votePublic = false
             },
-            answer = true
+            answer = true,
+            version = 3
         },
         factionrealm = {
             masterloot = {
@@ -69,13 +72,15 @@ function Addon:OnInitialize()
             },
             masterlooter = {
                 councilWhitelist = {},
-            }
+            },
+            version = 3
         },
         char = {
             specs = {true, true, true, true},
             masterloot = {
                 guildRank = 0
-            }
+            },
+            version = 3
         }
     }, true)
     
@@ -321,17 +326,24 @@ function Addon:RegisterOptions()
                 name = L["OPT_ILVL_THRESHOLD"],
                 desc = L["OPT_ILVL_THRESHOLD_DESC"],
                 type = "range",
+                order = it(),
                 min = -2 * Item.ILVL_THRESHOLD,
                 max = 2 * Item.ILVL_THRESHOLD,
                 softMin = 0,
                 softMax = Item.ILVL_THRESHOLD,
                 step = 5,
-                order = it(),
                 set = function (_, val) self.db.profile.ilvlThreshold = val end,
                 get = function () return self.db.profile.ilvlThreshold end,
-                width = "full"
             },
-            ilvlThresholdDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_ILVL_THRESHOLD_DESC"] .. "\n", cmdHidden = true, dropdownHidden = true},
+            ilvlThresholdTrinkets = {
+                name = L["OPT_ILVL_THRESHOLD_TRINKETS"],
+                desc = L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) self.db.profile.ilvlThresholdTrinkets = val end,
+                get = function () return self.db.profile.ilvlThresholdTrinkets end,
+            },
+            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             specs = {
                 name = L["OPT_SPECS"],
                 desc = L["OPT_SPECS_DESC"],
@@ -372,75 +384,6 @@ function Addon:RegisterOptions()
 
     local acceptKeys = {"friend", "guildmaster", "guildofficer"}
     local acceptValues = {FRIEND, L["GUILD_MASTER"], L["GUILD_OFFICER"]}
-
-    it(1, true)
-    config:RegisterOptionsTable(Name .. "_masterloot", {
-        name = L["OPT_MASTERLOOT"],
-        type = "group",
-        args = {
-            masterlootDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOT_DESC"] .. "\n"},
-            masterlootSearch = {
-                name = L["OPT_MASTERLOOT_SEARCH"],
-                type = "execute",
-                order = it(),
-                func = function () self.Comm.Send(self.Comm.EVENT_MASTERLOOT_ASK) end
-            },
-            masterlootStop = {
-                name = L["OPT_MASTERLOOT_STOP"],
-                type = "execute",
-                order = it(),
-                func = function () Masterloot.SetMasterlooter(nil) end
-            },
-            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
-            masterlootAllow = {
-                name = L["OPT_MASTERLOOT_ALLOW"],
-                desc = L["OPT_MASTERLOOT_ALLOW_DESC"],
-                type = "multiselect",
-                order = it(),
-                values = allowValues,
-                set = function (_, key, val) self.db.profile.masterloot.allow[allowKeys[key]] = val end,
-                get = function (_, key) return self.db.profile.masterloot.allow[allowKeys[key]] end
-            },
-            masterlootWhitelist = {
-                name = L["OPT_MASTERLOOT_WHITELIST"],
-                desc = L["OPT_MASTERLOOT_WHITELIST_DESC"],
-                type = "input",
-                order = it(),
-                set = function (_, val)
-                    local t = self.db.factionrealm.masterloot.whitelist
-                    for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do
-                        t[v] = true
-                    end
-                end,
-                get = function () return Util(self.db.factionrealm.masterloot.whitelist).Keys().Sort().Concat(", ")() end,
-                width = "full"
-            },
-            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
-            masterlootAllowAll = {
-                name = L["OPT_MASTERLOOT_ALLOW_ALL"],
-                desc = L["OPT_MASTERLOOT_ALLOW_ALL_DESC"],
-                descStyle = "inline",
-                type = "toggle",
-                order = it(),
-                set = function (_, val) self.db.profile.masterloot.allowAll = val end,
-                get = function () return self.db.profile.masterloot.allowAll end,
-                width = "full"
-            },
-            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
-            masterlootAccept = {
-                name = L["OPT_MASTERLOOT_ACCEPT"],
-                desc = L["OPT_MASTERLOOT_ACCEPT_DESC"],
-                type = "multiselect",
-                order = it(),
-                values = acceptValues,
-                set = function (_, key, val) self.db.profile.masterloot.accept[acceptKeys[key]] = val end,
-                get = function (_, key) return self.db.profile.masterloot.accept[acceptKeys[key]] end
-            }
-        }
-    })
-    dialog:AddToBlizOptions(Name .. "_masterloot", L["OPT_MASTERLOOT"], Name)
-    
-    -- MASTERLOOTER
     
     local councilKeys = {"guildmaster", "guildofficer", "raidleader", "raidassistant"}
     local councilValues = {L["GUILD_MASTER"], L["GUILD_OFFICER"], L["RAID_LEADER"], L["RAID_ASSISTANT"]}
@@ -448,191 +391,260 @@ function Addon:RegisterOptions()
     local guildRanks
 
     it(1, true)
-    config:RegisterOptionsTable(Name .. "_masterlooter", {
-        name = L["OPT_MASTERLOOTER"],
+    config:RegisterOptionsTable(Name .. "_masterloot", {
+        name = L["OPT_MASTERLOOT"],
         type = "group",
+        childGroups = "tab",
         args = {
-            masterlooterDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOTER_DESC"] .. "\n"},
-            masterlooterStart = {
+            desc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOT_DESC"] .. "\n"},
+            search = {
+                name = L["OPT_MASTERLOOT_SEARCH"],
+                type = "execute",
+                order = it(),
+                func = function () self.Comm.Send(self.Comm.EVENT_MASTERLOOT_ASK) end
+            },
+            start = {
                 name = L["OPT_MASTERLOOT_START"],
                 type = "execute",
                 order = it(),
                 func = function () Masterloot.SetMasterlooter("player") end
             },
-            masterlooterStop = {
+            stop = {
                 name = L["OPT_MASTERLOOT_STOP"],
                 type = "execute",
                 order = it(),
                 func = function () Masterloot.SetMasterlooter(nil) end
             },
-            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
-            masterlooterTimeoutBase = {
-                name = L["OPT_MASTERLOOTER_TIMEOUT_BASE"],
-                desc = L["OPT_MASTERLOOTER_TIMEOUT_BASE_DESC"],
-                type = "range",
-                min = Roll.TIMEOUT,
-                max = 120,
-                step = 5,
+            approval = {
+                name = L["OPT_MASTERLOOT_APPROVAL"],
+                type = "group",
                 order = it(),
-                set = function (_, val)
-                    self.db.profile.masterlooter.timeoutBase = val
-                    Masterloot.RefreshSession()
-                end,
-                get = function () return self.db.profile.masterlooter.timeoutBase end,
-                -- width = 1.7 TODO: Can't use that yet
+                args = {
+                    desc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOT_APPROVAL_DESC"] .. "\n"},
+                    allow = {
+                        name = L["OPT_MASTERLOOT_ALLOW"],
+                        desc = L["OPT_MASTERLOOT_ALLOW_DESC"],
+                        type = "multiselect",
+                        order = it(),
+                        values = allowValues,
+                        set = function (_, key, val) self.db.profile.masterloot.allow[allowKeys[key]] = val end,
+                        get = function (_, key) return self.db.profile.masterloot.allow[allowKeys[key]] end
+                    },
+                    whitelist = {
+                        name = L["OPT_MASTERLOOT_WHITELIST"],
+                        desc = L["OPT_MASTERLOOT_WHITELIST_DESC"],
+                        type = "input",
+                        order = it(),
+                        set = function (_, val)
+                            local t = self.db.factionrealm.masterloot.whitelist
+                            for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do
+                                t[v] = true
+                            end
+                        end,
+                        get = function () return Util(self.db.factionrealm.masterloot.whitelist).Keys().Sort().Concat(", ")() end,
+                        width = "full"
+                    },
+                    ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+                    allowAll = {
+                        name = L["OPT_MASTERLOOT_ALLOW_ALL"],
+                        desc = L["OPT_MASTERLOOT_ALLOW_ALL_DESC"],
+                        descStyle = "inline",
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) self.db.profile.masterloot.allowAll = val end,
+                        get = function () return self.db.profile.masterloot.allowAll end,
+                        width = "full"
+                    },
+                    ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+                    accept = {
+                        name = L["OPT_MASTERLOOT_ACCEPT"],
+                        desc = L["OPT_MASTERLOOT_ACCEPT_DESC"],
+                        type = "multiselect",
+                        order = it(),
+                        values = acceptValues,
+                        set = function (_, key, val) self.db.profile.masterloot.accept[acceptKeys[key]] = val end,
+                        get = function (_, key) return self.db.profile.masterloot.accept[acceptKeys[key]] end
+                    }
+                }
             },
-            masterlooterTimeoutPerItem = {
-                name = L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM"],
-                desc = L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM_DESC"],
-                type = "range",
-                min = Roll.TIMEOUT_PER_ITEM,
-                max = 60,
-                step = 1,
+            masterlooter = {
+                name = L["OPT_MASTERLOOTER"],
+                type = "group",
                 order = it(),
-                set = function (_, val)
-                    self.db.profile.masterlooter.timeoutPerItem = val
-                    Masterloot.RefreshSession()
-                end,
-                get = function () return self.db.profile.masterlooter.timeoutPerItem end,
-                -- width = 1.7 TODO: Can't use that yet
-            },
-            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
-            masterlooterNeedAnswers = {
-                name = L["OPT_MASTERLOOTER_NEED_ANSWERS"],
-                desc = L["OPT_MASTERLOOTER_NEED_ANSWERS_DESC"],
-                type = "input",
-                order = it(),
-                set = function (_, val)
-                    local t = wipe(self.db.profile.masterlooter.answers1)
-                    for v in val:gmatch("[^,]+") do
-                        v = v:gsub("^%s*(.*)%s*$", "%1")
-                        if #t < 9 and not Util.StrIsEmpty(v) then
-                            tinsert(t, v == NEED and Roll.ANSWER_NEED or v)
-                        end
-                    end
-                    Masterloot.RefreshSession()
-                end,
-                get = function ()
-                    local s = ""
-                    for i,v in pairs(self.db.profile.masterlooter.answers1) do
-                        s = s .. (i > 1 and ", " or "") .. (v == Roll.ANSWER_NEED and NEED or v)
-                    end
-                    return s
-                end,
-                width = "full"
-            },
-            masterlooterGreedAnswers = {
-                name = L["OPT_MASTERLOOTER_GREED_ANSWERS"],
-                desc = L["OPT_MASTERLOOTER_GREED_ANSWERS_DESC"],
-                type = "input",
-                order = it(),
-                set = function (_, val)
-                    local t = wipe(self.db.profile.masterlooter.answers2)
-                    for v in val:gmatch("[^,]+") do
-                        v = v:gsub("^%s*(.*)%s*$", "%1")
-                        if #t < 9 and not Util.StrIsEmpty(v) then
-                            tinsert(t, v == GREED and Roll.ANSWER_GREED or v)
-                        end
-                    end
-                    Masterloot.RefreshSession()
-                end,
-                get = function ()
-                    local s = ""
-                    for i,v in pairs(self.db.profile.masterlooter.answers2) do
-                        s = s .. (i > 1 and ", " or "") .. (v == Roll.ANSWER_GREED and GREED or v)
-                    end
-                    return s
-                end,
-                width = "full"
-            },
-            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
-            masterlooterBidPublic = {
-                name = L["OPT_MASTERLOOTER_BID_PUBLIC"],
-                desc = L["OPT_MASTERLOOTER_BID_PUBLIC_DESC"] .. "\n",
-                descStyle = "inline",
-                type = "toggle",
-                order = it(),
-                set = function (_, val)
-                    self.db.profile.masterlooter.bidPublic = val
-                    Masterloot.RefreshSession()
-                end,
-                get = function () return self.db.profile.masterlooter.bidPublic end,
-                width = "full"
-            },
-            masterlooterCouncil = {type = "header", order = it(), name = L["OPT_MASTERLOOTER_COUNCIL"]},
-            masterlooterCouncilDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOTER_COUNCIL_DESC"] .. "\n"},
-            masterlooterCouncilAllow = {
-                name = L["OPT_MASTERLOOTER_COUNCIL_ALLOW"],
-                desc = L["OPT_MASTERLOOTER_COUNCIL_ALLOW_DESC"],
-                type = "multiselect",
-                order = it(),
-                values = councilValues,
-                set = function (_, key, val)
-                    self.db.profile.masterlooter.council[councilKeys[key]] = val
-                    Masterloot.RefreshSession()
-                end,
-                get = function (_, key) return self.db.profile.masterlooter.council[councilKeys[key]] end
-            },
-            masterlooterCouncilGuildRank = {
-                name = L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK"],
-                desc = L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK_DESC"],
-                type = "select",
-                order = it(),
-                values = function ()
-                    if not guildRanks then
-                        guildRanks = Util.GetGuildRanks()
-                        guildRanks[0], guildRanks[1], guildRanks[2] = "(" .. NONE .. ")", nil, nil
-                    end
-                    return guildRanks
-                end,
-                set = function (_, val)
-                    self.db.char.masterloot.guildRank = val
-                    Masterloot.RefreshSession()
-                end,
-                get = function () return self.db.char.masterloot.guildRank end
-            },
-            masterlooterCouncilWhitelist = {
-                name = L["OPT_MASTERLOOTER_COUNCIL_WHITELIST"],
-                desc = L["OPT_MASTERLOOTER_COUNCIL_WHITELIST_DESC"],
-                type = "input",
-                order = it(),
-                set = function (_, val)
-                    local t = wipe(self.db.factionrealm.masterlooter.councilWhitelist)
-                    for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do
-                        t[v] = true
-                    end
-                    Masterloot.RefreshSession()
-                end,
-                get = function () return Util(self.db.factionrealm.masterlooter.councilWhitelist).Keys().Sort().Concat(", ")() end,
-                width = "full"
-            },
-            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
-            masterlooterVotePublic = {
-                name = L["OPT_MASTERLOOTER_VOTE_PUBLIC"],
-                desc = L["OPT_MASTERLOOTER_VOTE_PUBLIC_DESC"],
-                descStyle = "inline",
-                type = "toggle",
-                order = it(),
-                set = function (_, val)
-                    self.db.profile.masterlooter.votePublic = val
-                    Masterloot.RefreshSession()
-                end,
-                get = function () return self.db.profile.masterlooter.votePublic end,
-                width = "full"
+                args = {
+                    desc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOTER_DESC"] .. "\n"},
+                    timeoutBase = {
+                        name = L["OPT_MASTERLOOTER_TIMEOUT_BASE"],
+                        desc = L["OPT_MASTERLOOTER_TIMEOUT_BASE_DESC"],
+                        type = "range",
+                        min = Roll.TIMEOUT,
+                        max = 120,
+                        step = 5,
+                        order = it(),
+                        set = function (_, val)
+                            self.db.profile.masterlooter.timeoutBase = val
+                            Masterloot.RefreshSession()
+                        end,
+                        get = function () return self.db.profile.masterlooter.timeoutBase end,
+                        -- width = 1.7 TODO: Can't use that yet
+                    },
+                    timeoutPerItem = {
+                        name = L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM"],
+                        desc = L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM_DESC"],
+                        type = "range",
+                        min = Roll.TIMEOUT_PER_ITEM,
+                        max = 60,
+                        step = 1,
+                        order = it(),
+                        set = function (_, val)
+                            self.db.profile.masterlooter.timeoutPerItem = val
+                            Masterloot.RefreshSession()
+                        end,
+                        get = function () return self.db.profile.masterlooter.timeoutPerItem end,
+                        -- width = 1.7 TODO: Can't use that yet
+                    },
+                    ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+                    needAnswers = {
+                        name = L["OPT_MASTERLOOTER_NEED_ANSWERS"],
+                        desc = L["OPT_MASTERLOOTER_NEED_ANSWERS_DESC"],
+                        type = "input",
+                        order = it(),
+                        set = function (_, val)
+                            local t = wipe(self.db.profile.masterlooter.answers1)
+                            for v in val:gmatch("[^,]+") do
+                                v = v:gsub("^%s*(.*)%s*$", "%1")
+                                if #t < 9 and not Util.StrIsEmpty(v) then
+                                    tinsert(t, v == NEED and Roll.ANSWER_NEED or v)
+                                end
+                            end
+                            Masterloot.RefreshSession()
+                        end,
+                        get = function ()
+                            local s = ""
+                            for i,v in pairs(self.db.profile.masterlooter.answers1) do
+                                s = s .. (i > 1 and ", " or "") .. (v == Roll.ANSWER_NEED and NEED or v)
+                            end
+                            return s
+                        end,
+                        width = "full"
+                    },
+                    greedAnswers = {
+                        name = L["OPT_MASTERLOOTER_GREED_ANSWERS"],
+                        desc = L["OPT_MASTERLOOTER_GREED_ANSWERS_DESC"],
+                        type = "input",
+                        order = it(),
+                        set = function (_, val)
+                            local t = wipe(self.db.profile.masterlooter.answers2)
+                            for v in val:gmatch("[^,]+") do
+                                v = v:gsub("^%s*(.*)%s*$", "%1")
+                                if #t < 9 and not Util.StrIsEmpty(v) then
+                                    tinsert(t, v == GREED and Roll.ANSWER_GREED or v)
+                                end
+                            end
+                            Masterloot.RefreshSession()
+                        end,
+                        get = function ()
+                            local s = ""
+                            for i,v in pairs(self.db.profile.masterlooter.answers2) do
+                                s = s .. (i > 1 and ", " or "") .. (v == Roll.ANSWER_GREED and GREED or v)
+                            end
+                            return s
+                        end,
+                        width = "full"
+                    },
+                    ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+                    bidPublic = {
+                        name = L["OPT_MASTERLOOTER_BID_PUBLIC"],
+                        desc = L["OPT_MASTERLOOTER_BID_PUBLIC_DESC"] .. "\n",
+                        descStyle = "inline",
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val)
+                            self.db.profile.masterlooter.bidPublic = val
+                            Masterloot.RefreshSession()
+                        end,
+                        get = function () return self.db.profile.masterlooter.bidPublic end,
+                        width = "full"
+                    },
+                    council = {type = "header", order = it(), name = L["OPT_MASTERLOOTER_COUNCIL"]},
+                    councilDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOTER_COUNCIL_DESC"] .. "\n"},
+                    councilAllow = {
+                        name = L["OPT_MASTERLOOTER_COUNCIL_ALLOW"],
+                        desc = L["OPT_MASTERLOOTER_COUNCIL_ALLOW_DESC"],
+                        type = "multiselect",
+                        order = it(),
+                        values = councilValues,
+                        set = function (_, key, val)
+                            self.db.profile.masterlooter.council[councilKeys[key]] = val
+                            Masterloot.RefreshSession()
+                        end,
+                        get = function (_, key) return self.db.profile.masterlooter.council[councilKeys[key]] end
+                    },
+                    councilGuildRank = {
+                        name = L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK"],
+                        desc = L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK_DESC"],
+                        type = "select",
+                        order = it(),
+                        values = function ()
+                            if not guildRanks then
+                                guildRanks = Util.GetGuildRanks()
+                                guildRanks[0], guildRanks[1], guildRanks[2] = "(" .. NONE .. ")", nil, nil
+                            end
+                            return guildRanks
+                        end,
+                        set = function (_, val)
+                            self.db.char.masterloot.guildRank = val
+                            Masterloot.RefreshSession()
+                        end,
+                        get = function () return self.db.char.masterloot.guildRank end
+                    },
+                    councilWhitelist = {
+                        name = L["OPT_MASTERLOOTER_COUNCIL_WHITELIST"],
+                        desc = L["OPT_MASTERLOOTER_COUNCIL_WHITELIST_DESC"],
+                        type = "input",
+                        order = it(),
+                        set = function (_, val)
+                            local t = wipe(self.db.factionrealm.masterlooter.councilWhitelist)
+                            for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do
+                                t[v] = true
+                            end
+                            Masterloot.RefreshSession()
+                        end,
+                        get = function () return Util(self.db.factionrealm.masterlooter.councilWhitelist).Keys().Sort().Concat(", ")() end,
+                        width = "full"
+                    },
+                    ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+                    votePublic = {
+                        name = L["OPT_MASTERLOOTER_VOTE_PUBLIC"],
+                        desc = L["OPT_MASTERLOOTER_VOTE_PUBLIC_DESC"],
+                        descStyle = "inline",
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val)
+                            self.db.profile.masterlooter.votePublic = val
+                            Masterloot.RefreshSession()
+                        end,
+                        get = function () return self.db.profile.masterlooter.votePublic end,
+                        width = "full"
+                    }
+                }
             }
         }
     })
-    dialog:AddToBlizOptions(Name .. "_masterlooter", L["OPT_MASTERLOOTER"], Name)
+    dialog:AddToBlizOptions(Name .. "_masterloot", L["OPT_MASTERLOOT"], Name)
 
     -- MESSAGES
 
     local groupKeys = {"party", "raid", "guild", "lfd", "lfr"}
     local groupValues = {PARTY, RAID, GUILD_GROUP, LOOKING_FOR_DUNGEON_PVEFRAME, RAID_FINDER_PVEFRAME}
 
+    local lang = Locale.GetLanguage()
+
     it(1, true)
     config:RegisterOptionsTable(Name .. "_messages", {
         name = L["OPT_MESSAGES"],
         type = "group",
+        childGroups = "tab",
         args = {
             -- Chat
             echo = {
@@ -650,60 +662,89 @@ function Addon:RegisterOptions()
                 set = function (info, val) self.db.profile.echo = val end,
                 get = function () return self.db.profile.echo end
             },
-            groupchat = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
-            groupchatDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_GROUPCHAT_DESC"] .. "\n"},
-            groupchatAnnounce = {
-                name = L["OPT_GROUPCHAT_ANNOUNCE"],
-                desc = L["OPT_GROUPCHAT_ANNOUNCE_DESC"],
-                type = "multiselect",
+            shouldChat = {
+                name = L["OPT_SHOULD_CHAT"],
+                type = "group",
                 order = it(),
-                values = groupValues,
-                set = function (_, key, val) self.db.profile.announce[groupKeys[key]] = val end,
-                get = function (_, key) return self.db.profile.announce[groupKeys[key]] end,
+                args = {
+                    groupchat = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
+                    groupchatDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_GROUPCHAT_DESC"] .. "\n"},
+                    groupchatAnnounce = {
+                        name = L["OPT_GROUPCHAT_ANNOUNCE"],
+                        desc = L["OPT_GROUPCHAT_ANNOUNCE_DESC"],
+                        type = "multiselect",
+                        order = it(),
+                        values = groupValues,
+                        set = function (_, key, val) self.db.profile.announce[groupKeys[key]] = val end,
+                        get = function (_, key) return self.db.profile.announce[groupKeys[key]] end,
+                    },
+                    groupchatRoll = {
+                        name = L["OPT_GROUPCHAT_ROLL"],
+                        desc = L["OPT_GROUPCHAT_ROLL_DESC"],
+                        descStyle = "inline",
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) self.db.profile.roll = val end,
+                        get = function () return self.db.profile.roll end,
+                        width = "full"
+                    },
+                    whisper = {type = "header", order = it(), name = L["OPT_WHISPER"]},
+                    whisperDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_WHISPER_DESC"] .. "\n"},
+                    whisperGroup = {
+                        name = L["OPT_WHISPER_GROUP"],
+                        desc = L["OPT_WHISPER_GROUP_DESC"],
+                        type = "multiselect",
+                        order = it(),
+                        values = groupValues,
+                        set = function (_, key, val) self.db.profile.whisper.group[groupKeys[key]] = val end,
+                        get = function (_, key) return self.db.profile.whisper.group[groupKeys[key]] end
+                    },
+                    whisperTarget = {
+                        name = L["OPT_WHISPER_TARGET"],
+                        desc = L["OPT_WHISPER_TARGET_DESC"],
+                        type = "multiselect",
+                        order = it(),
+                        values = {
+                            friend = FRIEND,
+                            guild = GUILD,
+                            other = OTHER
+                        },
+                        set = function (_, key, val) self.db.profile.whisper.target[key] = val end,
+                        get = function (_, key) return self.db.profile.whisper.target[key] end
+                    },
+                    whisperAnswer = {
+                        name = L["OPT_WHISPER_ANSWER"],
+                        desc = L["OPT_WHISPER_ANSWER_DESC"],
+                        descStyle = "inline",
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) self.db.profile.answer = val end,
+                        get = function () return self.db.profile.answer end,
+                        width = "full"
+                    }
+                }
             },
-            groupchatRoll = {
-                name = L["OPT_GROUPCHAT_ROLL"],
-                desc = L["OPT_GROUPCHAT_ROLL_DESC"],
-                descStyle = "inline",
-                type = "toggle",
+            customMessages = {
+                name = L["OPT_CUSTOM_MESSAGES"],
+                type = "group",
                 order = it(),
-                set = function (_, val) self.db.profile.roll = val end,
-                get = function () return self.db.profile.roll end,
-                width = "full"
-            },
-            whisper = {type = "header", order = it(), name = L["OPT_WHISPER"]},
-            whisperDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_WHISPER_DESC"] .. "\n"},
-            whisperGroup = {
-                name = L["OPT_WHISPER_GROUP"],
-                desc = L["OPT_WHISPER_GROUP_DESC"],
-                type = "multiselect",
-                order = it(),
-                values = groupValues,
-                set = function (_, key, val) self.db.profile.whisper.group[groupKeys[key]] = val end,
-                get = function (_, key) return self.db.profile.whisper.group[groupKeys[key]] end
-            },
-            whisperTarget = {
-                name = L["OPT_WHISPER_TARGET"],
-                desc = L["OPT_WHISPER_TARGET_DESC"],
-                type = "multiselect",
-                order = it(),
-                values = {
-                    friend = FRIEND,
-                    guild = GUILD,
-                    other = OTHER
-                },
-                set = function (_, key, val) self.db.profile.whisper.target[key] = val end,
-                get = function (_, key) return self.db.profile.whisper.target[key] end
-            },
-            whisperAnswer = {
-                name = L["OPT_WHISPER_ANSWER"],
-                desc = L["OPT_WHISPER_ANSWER_DESC"],
-                descStyle = "inline",
-                type = "toggle",
-                order = it(),
-                set = function (_, val) self.db.profile.answer = val end,
-                get = function () return self.db.profile.answer end,
-                width = "full"
+                childGroups = "select",
+                args = {
+                    desc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_CUSTOM_MESSAGES_DESC"] .. "\n"},
+                    localized = {
+                        name = L["OPT_CUSTOM_MESSAGES_LOCALIZED"]:format(lang),
+                        type = "group",
+                        order = it(),
+                        hidden = Locale.GetLanguage() == Locale.DEFAULT,
+                        args = Addon:GetCustomMessageOptions(false)
+                    },
+                    default = {
+                        name = L["OPT_CUSTOM_MESSAGES_DEFAULT"]:format(Locale.DEFAULT),
+                        type = "group",
+                        order = it(),
+                        args = Addon:GetCustomMessageOptions(true)
+                    }
+                }
             }
         }
     })
@@ -713,6 +754,55 @@ function Addon:RegisterOptions()
 
     config:RegisterOptionsTable(Name .. "_profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db))
     dialog:AddToBlizOptions(Name .. "_profiles", "Profiles", Name)
+end
+
+function Addon:GetCustomMessageOptions(isDefault)
+    local lang = isDefault and Locale.DEFAULT or Locale.GetLanguage()
+    local locale = Locale.GetLocale(lang)
+    local desc = L["OPT_CUSTOM_MESSAGES_" .. (isDefault and "DEFAULT" or "LOCALIZED") .. "_DESC"]
+    local it = Util.Iter()
+
+    local set = function (info, val)
+        local line, c = info[3], self.db.profile.messages
+        if not c[lang] then c[lang] = {} end
+        c[lang][line] = not (Util.StrIsEmpty(val) or val == locale[line]) and val or nil
+    end
+    local get = function (info)
+        local line, c = info[3], self.db.profile.messages
+        return c[lang] and c[lang][line] or locale[line]
+    end
+    local validate = function (info, val)
+        local line, pattern = info[3], ""
+        for v in locale[line]:gmatch("%%[sd]") do
+            pattern = pattern == "" and "%" .. v or pattern .. ".*%" .. v
+        end
+        return val == "" or val:match(pattern) ~= nil and select(2, val:gsub("%%[sd]", "")) == select(2, locale[line]:gsub("%%[sd]", ""))
+    end
+
+    local t = {
+        desc = {type = "description", fontSize = "medium", order = it(), name = desc:format(Locale.GetLanguage()) .. "\n"},
+        groupchat = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
+    }
+
+    for i,line in pairs({"ROLL_START", "ROLL_START_MASTERLOOT", "ROLL_WINNER", "ROLL_WINNER_MASTERLOOT", "whisper", "ROLL_WINNER_WHISPER", "ROLL_WINNER_WHISPER_MASTERLOOT", "ROLL_ANSWER_BID", "ROLL_ANSWER_YES", "ROLL_ANSWER_YES_MASTERLOOT", "ROLL_ANSWER_NO_SELF", "ROLL_ANSWER_NO_OTHER", "ROLL_ANSWER_NOT_TRADABLE", "ROLL_ANSWER_AMBIGUOUS"}) do
+        if line == "whisper" then
+            t[line] = {type = "header", order = it(), name = L["OPT_WHISPER"]}
+        else
+            desc = DEFAULT .. ": \"" .. locale[line] .. "\"" .. Util.StrPrefix(L["OPT_MSG_" .. line .. "_DESC"], "\n\n")
+            t[line] = {
+                name = L["OPT_MSG_" .. line],
+                desc = desc:gsub("(%%.)", "|cffffff00%1|r"),
+                type = "input",
+                order = it(),
+                validate = validate,
+                set = set,
+                get = get,
+                width = "full"
+            }
+        end
+    end
+
+    return t
 end
 
 -- Migrate options from an older version to the current one

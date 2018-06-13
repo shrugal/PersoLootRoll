@@ -251,15 +251,15 @@ end
 -- Check for and convert from/to PLR roll id
 
 function Self.IsPlrId(id)
-    return Util.StrStartsWith("" .. id, Addon.PREFIX)
+    return Util.StrStartsWith("" .. id, Addon.ABBR)
 end
 
 function Self.ToPlrId(id)
-    return Addon.PREFIX .. id
+    return Addon.ABBR .. id
 end
 
 function Self.FromPlrId(id)
-    return tonumber(("" .. id):sub(Addon.PREFIX:len() + 1))
+    return tonumber(("" .. id):sub(Addon.ABBR:len() + 1))
 end
 
 -- Calculate the optimal timeout
