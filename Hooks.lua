@@ -108,9 +108,9 @@ function Self.EnableGroupLootRoll()
             if roll and roll.owner == Masterloot.GetMasterlooter() then
                 local answers = Masterloot.session["answers" .. bid]
                 if answers and #answers > 0 then
-                    local dropDown = GUI.DROPDOWN_CUSTOM_BID_ANSWERS
+                    local dropDown = GUI.DROPDOWN_BID_ANSWERS
                     dropDown.roll, dropDown.bid, dropDown.answers = roll, bid, answers
-                    ToggleDropDownMenu(1, nil, GUI.DROPDOWN_CUSTOM_BID_ANSWERS, "cursor", 3, -3)
+                    ToggleDropDownMenu(1, nil, GUI.DROPDOWN_BID_ANSWERS, "cursor", 3, -3)
                 end
             end
         else
@@ -144,9 +144,7 @@ function Self.EnableGroupLootRoll()
     if not Addon:IsHooked("GroupLootContainer_RemoveFrame") then
         Addon:SecureHook("GroupLootContainer_RemoveFrame", function (self, frame)
             -- Find a running roll that hasn't been shown yet
-            local roll = Util.TblFirst(Addon.rolls, function (roll)
-                return not roll.shown and roll.status == Roll.STATUS_RUNNING and roll.item:ShouldBeBidOn()
-            end)
+            local roll = Util.TblFirstWhere(Addon.rolls, "shown", false, "status", Roll.STATUS_RUNNING)
             if roll then
                 roll:ShowRollFrame()
             end

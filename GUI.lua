@@ -19,7 +19,6 @@ Self.HighlightFrame.HighlightTexture = tex
 --                  Popup dialogs                    --
 -------------------------------------------------------
 
-
 Self.DIALOG_ROLL_CANCEL = "PLR_ROLL_CANCEL"
 StaticPopupDialogs[Self.DIALOG_ROLL_CANCEL] = {
     text = L["DIALOG_ROLL_CANCEL"],
@@ -67,17 +66,13 @@ local dropDown
 
 -- Masterloot
 dropDown = CreateFrame("FRAME", "PlrMasterlootDropDown", UIParent, "UIDropDownMenuTemplate")
-UIDropDownMenu_Initialize(dropDown, function (self, level, menuList)
+UIDropDownMenu_SetInitializeFunction(dropDown, function (self, level, menuList)
     local info = UIDropDownMenu_CreateInfo()
-    info.text, info.func = L["MENU_MASTERLOOT_START"], function ()
-        Masterloot.SetMasterlooter("player")
-    end
+    info.text, info.func = L["MENU_MASTERLOOT_START"], function () Masterloot.SetMasterlooter("player") end
     UIDropDownMenu_AddButton(info)
-    info.text, info.func = L["MENU_MASTERLOOT_SEARCH"], function ()
-        Comm.SendData(Comm.EVENT_MASTERLOOT_ASK)
-    end
+    info.text, info.func = L["MENU_MASTERLOOT_SEARCH"], function () Masterloot.SendRequest() end
     UIDropDownMenu_AddButton(info)
-end, "MENU")
+end)
 Self.DROPDOWN_MASTERLOOT = dropDown
 
 -- Unit
@@ -89,7 +84,7 @@ Self.DROPDOWN_UNIT = dropDown
 
 -- Custom bid answers
 local clickFn = function (self, roll, bid) roll:Bid(bid) end
-dropDown = CreateFrame("FRAME", "PlrCustomBidAnswers", UIParent, "UIDropDownMenuTemplate")
+dropDown = CreateFrame("FRAME", "PlrBidAnswersDropDown", UIParent, "UIDropDownMenuTemplate")
 UIDropDownMenu_SetInitializeFunction(dropDown, function (self, level, menuList)
     for i,v in pairs(self.answers) do
         local info = UIDropDownMenu_CreateInfo()
@@ -97,7 +92,7 @@ UIDropDownMenu_SetInitializeFunction(dropDown, function (self, level, menuList)
         UIDropDownMenu_AddButton(info)
     end
 end)
-Self.DROPDOWN_CUSTOM_BID_ANSWERS = dropDown
+Self.DROPDOWN_BID_ANSWERS = dropDown
 
 -------------------------------------------------------
 --                 LootAlertSystem                   --
@@ -194,15 +189,29 @@ function Rolls.Show()
                 .SetCallback("OnEnter", function(self)
                     if IsInGroup() then
                         GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOMRIGHT")
-                        GameTooltip:SetText(L["TIP_ADDON_VERSIONS"])
-                        for i=1,GetNumGroupMembers() do
-                            local unit = GetRaidRosterInfo(i)
-                            if unit then
+
+                        -- Addon versions
+                        local count = Util.TblCount(Addon.versions)
+                        if count > 0 then
+                            GameTooltip:SetText(L["TIP_ADDON_VERSIONS"])                        
+                            for unit,version in pairs(Addon.versions) do
                                 local name = Unit.ColoredName(Unit.ShortenedName(unit), unit)
-                                local version = UnitIsUnit(unit, "player") and Addon.VERSION or Addon.versions[unit]
                                 local versionColor = (not version or version == Addon.VERSION) and "ffffff" or version < Addon.VERSION and "ff0000" or "00ff00"
-                                GameTooltip:AddLine(name .. ": |cff" .. versionColor .. (version or "-") .. "|r", 1, 1, 1, false)
+                                GameTooltip:AddLine(("%s: |cff%s%s|r"):format(name, versionColor, version), 1, 1, 1, false)
                             end
+                        end
+
+                        -- Addon missing
+                        if count + 1 < GetNumGroupMembers() then
+                            GameTooltip:AddLine("\n" .. L["TIP_ADDON_MISSING"])
+                            local s = ""
+                            for i=1,GetNumGroupMembers() do
+                                local unit = GetRaidRosterInfo(i)
+                                if unit and not Addon.versions[unit] and not UnitIsUnit(unit, "player") then
+                                    s = Util.StrPostfix(s, ", ") .. Unit.ColoredName(Unit.ShortenedName(unit), unit)
+                                end
+                            end
+                            GameTooltip:AddLine(s, 1, 1, 1, true)
                         end
                         GameTooltip:Show()
                     end
@@ -416,7 +425,7 @@ local createFn = function (scroll)
             elseif button == "RightButton" and roll.owner == Masterloot.GetMasterlooter() then
                 local answers = Masterloot.session["answers" .. bid]
                 if answers and #answers > 0 then
-                    local dropDown = Self.DROPDOWN_CUSTOM_BID_ANSWERS
+                    local dropDown = Self.DROPDOWN_BID_ANSWERS
                     dropDown.roll, dropDown.bid, dropDown.answers = roll, bid, answers
                     ToggleDropDownMenu(1, nil, dropDown, "cursor", 3, -3)
                 end

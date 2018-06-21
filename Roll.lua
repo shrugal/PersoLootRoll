@@ -47,7 +47,7 @@ function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner)
     
     -- Search by owner id and owner
     if not id and ownerId and owner then
-        id = Util.TblFindWhere(Addon.rolls, {ownerId = ownerId, owner = owner})
+        id = Util.TblFindWhere(Addon.rolls, "ownerId", ownerId, "owner", owner)
     end
 
     -- Search by item owner id
@@ -104,9 +104,9 @@ function Self.Add(item, owner, timeout, ownerId, itemOwnerId)
         bids = {},
         rolls = {},
         votes = {},
-        shown = false,
-        posted = false,
-        traded = false
+        shown = nil,
+        posted = nil,
+        traded = nil
     }
     setmetatable(roll, {__index = Self})
 
@@ -227,7 +227,7 @@ function Self.Update(data, unit)
 end
 
 -- Clear old rolls
-local Fn = function (roll)
+local clearFn = function (roll)
     if roll.status  < Self.STATUS_DONE then
         roll:Cancel()
     end
@@ -236,11 +236,11 @@ local Fn = function (roll)
 end
 function Self.Clear(self)
     if self then
-        Fn(self)
+        clearFn(self)
     else
         for i, roll in pairs(Addon.rolls) do
             if roll.created + Self.CLEAR < time() then
-                Fn(roll)
+                clearFn(roll)
             end
         end
     end
@@ -380,9 +380,9 @@ function Self:Restart(started)
     self.vote = nil
     self.winner = nil
     self.isWinner = nil
-    self.shown = false
-    self.posted = false
-    self.traded = false
+    self.shown = nil
+    self.posted = nil
+    self.traded = nil
     self.status = Self.STATUS_PENDING
 
     wipe(self.bids)
@@ -706,6 +706,12 @@ function Self:ShowRollFrame()
         if Addon.db.profile.ui.showRollFrames then
             GroupLootFrame_OpenNewFrame(self:GetPlrId(), self:GetRunTime())
             self.shown = self:GetRollFrame() ~= nil
+
+            -- TODO: This is required to circumvent a bug in ElvUI
+            if self.shown then
+                Util.TblList(GroupLootContainer.rollFrames)
+                GroupLootContainer_Update(GroupLootContainer)
+            end
         else
             self.shown = true
         end
@@ -719,7 +725,7 @@ function Self:HideRollFrame()
         GroupLootContainer_RemoveFrame(GroupLootContainer, frame)
 
         -- TODO: This is required to circumvent a bug in ElvUI
-        GroupLootContainer.showRollFrames = Util.TblValues(GroupLootContainer.rollFrames)
+        Util.TblList(GroupLootContainer.rollFrames)
         GroupLootContainer_Update(GroupLootContainer)
     end
 end
