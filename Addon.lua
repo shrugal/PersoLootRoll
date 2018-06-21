@@ -435,7 +435,7 @@ function Addon:RegisterOptions()
                         type = "input",
                         order = it(),
                         set = function (_, val)
-                            local t = self.db.factionrealm.masterloot.whitelist
+                            local t = wipe(self.db.factionrealm.masterloot.whitelist)
                             for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do
                                 t[v] = true
                             end
