@@ -1,6 +1,9 @@
 local Name, Addon = ...
 local Self = Addon.Unit
 
+-- Search patterns
+Self.PATTERN_FOLLOW = AUTOFOLLOWSTART:gsub("%%s", "(.+)")
+
 -- Classes
 Self.DEATH_KNIGHT = 6
 Self.DEMON_HUNTER = 12

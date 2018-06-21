@@ -64,6 +64,7 @@ L["PUBLIC"] = "Öffentlich"
 L["PRIVATE"] = "Privat"
 L["RESTART"] = "Neu starten"
 L["ITEMS"] = ITEMS
+L["EQUIPPED"] = "Angezogen"
 L["SECONDS"] = "%ds"
 
 L["HELP"] = "Verrolle und biete auf items (/PersoLootRoll oder /plr).\n"

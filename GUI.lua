@@ -538,7 +538,7 @@ local createFn = function (scroll)
             self.OnRelease = nil
         end
     
-        local header = {"PLAYER", "ITEM_LEVEL", "ITEMS", "BID", "ROLL", "VOTES"}
+        local header = {"PLAYER", "ITEM_LEVEL", "EQUIPPED", "BID", "ROLL", "VOTES"}
         for i,v in pairs(header) do
             local f = Self("Label").SetFontObject(GameFontNormal).SetText(Util.StrUcFirst(L[v])).SetColor(1, 0.82, 0)()
             if i == #header then
@@ -681,8 +681,11 @@ function Rolls.Update()
     local scroll = Rolls.frames.scroll
     scroll:PauseLayout()
 
-    Self.UpdateRows(scroll, Util(Addon.rolls).CopyFilter(filterFn).SortBy("id")(), createFn, updateFn, scroll:GetUserData("#header"))
+    local rolls = Util(Addon.rolls).CopyFilter(filterFn).SortBy("id")()
 
+    Self.UpdateRows(scroll, rolls, createFn, updateFn, scroll:GetUserData("#header"))
+
+    Util.TblRelease(rolls)
     scroll:ResumeLayout()
     scroll:DoLayout()
 
@@ -796,19 +799,20 @@ local updateFn = function (player, children, it, roll, canBeAwarded, canVote)
     Self(children[it()]).SetText(player.ilvl).Show()
 
     -- Items
-    local f, isSelf, slots = children[it()], UnitIsUnit(player.unit, "player"), Item.SLOTS[roll.item.equipLoc]
+    local f, isSelf = children[it()], UnitIsUnit(player.unit, "player")
+    local links = roll.item:GetOwnedForLocation(player.unit, true, false)
     for i,child in pairs(f.children) do
-        local link = slots[i] and (isSelf and GetInventoryItemLink("player", slots[i]) or Inspect.GetLink(player.unit, slots[i]))
-        if link then
-            Self(child)
-                .SetImage(Item.GetInfo(link, "texture"))
+        if links[i] then
+            Self(f.children[i])
+                .SetImage(Item.GetInfo(links[i], "texture"))
                 .SetImageSize(16, 16).SetWidth(16).SetHeight(16)
-                .SetUserData("link", link)
+                .SetUserData("link", links[i])
                 .Show()
         else
             child.frame:Hide()
         end
     end
+    Util.TblRelease(links)
 
     -- Bid
     Self(children[it()])
@@ -843,17 +847,15 @@ function Rolls.UpdateDetails(details, roll)
     details.frame:Show()
     details:PauseLayout()
 
-    local eligible = roll.item:GetEligible()
-    local players = Util({}).Merge(eligible, roll.bids).FoldL(function (u, val, unit)
-        tinsert(u, {
-            unit = unit,
-            ilvl = roll.item:GetLevelForLocation(unit),
-            bid = type(val) == "number" and val or nil,
-            votes = Util.TblCountOnly(roll.votes, unit),
-            roll = roll.rolls[unit]
-        })
-        return u
-    end, {}, true).SortBy(
+    local players = Util(roll.item:GetEligible()).Copy().Merge(roll.bids).Map(function (val, unit)
+        local t = Util.Tbl()
+        t.unit = unit
+        t.ilvl = roll.item:GetLevelForLocation(unit)
+        t.bid = type(val) == "number" and val or nil
+        t.votes = Util.TblCountOnly(roll.votes, unit)
+        t.roll = roll.rolls[unit]
+        return t
+    end, true).List().SortBy(
         "bid",   99,  false,
         "votes", 0,   true,
         "roll",  100, true,
@@ -863,6 +865,7 @@ function Rolls.UpdateDetails(details, roll)
 
     Self.UpdateRows(details, players, createFn, updateFn, details:GetUserData("#header"), roll, roll:CanBeAwarded(true), roll:UnitCanVote())
 
+    Util.TblRelease(players, 1)
     details:ResumeLayout()
 end
 

@@ -12,8 +12,6 @@ Self.INTERACT_TRADE = 2   -- 11.11 yards
 Self.INTERACT_DUEL = 3    -- 9.9 yards
 Self.INTERACT_FOLLOW = 4  -- 28 yards
 
-Self.PATTERN_FOLLOW = AUTOFOLLOWSTART:gsub("%%s", "(.+)")
-
 -- Check if the current group is a guild group (>=80% guild members)
 function Self.IsGuildGroup(guild)
     guild = guild or Unit.GuildName("player")
@@ -34,7 +32,7 @@ end
 
 -- Get a list of guild ranks
 function Self.GetGuildRanks()
-    local t, i, name = {}, 1, GuildControlGetRankName(1)
+    local t, i, name = Self.Tbl(), 1, GuildControlGetRankName(1)
     while not Self.StrIsEmpty(name) do
         t[i] = name
         i, name = i + 1, GuildControlGetRankName(i + 1)
@@ -114,9 +112,30 @@ end
 --                       Table                       --
 -------------------------------------------------------
 
--- Make sure the given value is a table
-function Self.Tbl(v)
-    return type(v) ~= "table" and {v} or v
+-- A cache for temp tables
+Self.tblPool = {}
+
+function Self.Tbl()
+    return tremove(Self.tblPool) or {}
+end
+
+function Self.TblRelease(...)
+    local last = select(select("#", ...), ...)
+    local depth = type(last) ~= "table" and (type(last) == "number" and max(0, last) or last and 1) or 0
+
+    for i=1, select("#", ...) do
+        local t = select(i, ...)
+        if type(t) == "table" and #Self.tblPool < 10 then
+            tinsert(Self.tblPool, t)
+
+            if depth > 0 then for _,v in pairs(t) do
+                if type(v) == "table" then Self.TblRelease(v, depth - 1) end
+            end end
+
+            wipe(t)
+            setmetatable(t, nil)
+        end
+    end
 end
 
 -- Get a random key from the table
@@ -155,14 +174,14 @@ end
 
 -- Get table keys
 function Self.TblKeys(t)
-    local u = {}
+    local u = Self.Tbl()
     for i,v in pairs(t) do tinsert(u, i) end
     return u
 end
 
 -- Get table values as continuously indexed list
 function Self.TblValues(t)
-    local u = {}
+    local u = Self.Tbl()
     for i,v in pairs(t) do tinsert(u, v) end
     return u
 end
@@ -198,7 +217,7 @@ function Self.TblSplice(t, s, e, u) return Self.TblMerge(Self.TblHead(t, s), u o
 
 -- Good old FoldLeft
 function Self.TblFoldL(t, fn, u, index, ...)
-    fn = Self.Fn(fn)
+    fn, u = Self.Fn(fn), u or Self.Tbl()
     for i,v in pairs(t) do
         if index then
             u = fn(u, v, i, ...)
@@ -418,7 +437,7 @@ end
 
 -- Copy a table and optionally apply a function to every entry
 function Self.TblCopy(t, fn, index, ...)
-    local fn, u = Self.Fn(fn), {}
+    local fn, u = Self.Fn(fn), Self.Tbl()
     for i,v in pairs(t) do
         if fn then
             if index then
@@ -436,7 +455,7 @@ end
 -- Filter by a function
 function Self.TblCopyFilter(t, fn, k, ...)
     fn = Self.Fn(fn) or Self.FnId
-    local u = {}
+    local u = Self.Tbl()
     for i,v in pairs(t) do
         if fn(v, i, ...) then
             if k then u[i] = v else tinsert(u, v) end
@@ -447,7 +466,7 @@ end
 
 -- Pick specific keys from a table
 function Self.TblCopySelect(t, ...)
-    local u = {}
+    local u = Self.Tbl()
     if type(...) == "table" then
         for i,v in pairs(...) do u[v] = t[v] end
     else
@@ -461,7 +480,7 @@ end
 
 -- Omit specific keys from a table
 function Self.TblCopyUnselect(t, ...)
-    local u, isTbl = {}, type(...) == "table"
+    local u, isTbl = Self.Tbl(), type(...) == "table"
     for i,v in pairs(t) do
         if not Util.In(i, ...) then
             u[i] = v
@@ -472,7 +491,7 @@ end
 
 -- Filter by a value
 function Self.TblCopyOnly(t, val, k)
-    local u = {}
+    local u = Self.Tbl()
     for i,v in pairs(t) do
         if v == val then
             if k then u[i] = v else tinsert(u, v) end
@@ -483,7 +502,7 @@ end
 
 -- Filter by not being a value
 function Self.TblCopyExcept(t, val, k)
-    local u = {}
+    local u = Self.Tbl()
     for i,v in pairs(t) do
         if v ~= val then
             if k then u[i] = v else tinsert(u, v) end
@@ -494,7 +513,7 @@ end
 
 -- Filter by a set of key/value pairs in a table
 function Self.TblCopyWhere(t, k, ...)
-    local u = {}
+    local u = Self.Tbl()
     for i,v in pairs(t) do
         if Self.TblFindWhere(u, ...) then
             if k then u[i] = v else tinsert(u, v) end
@@ -505,7 +524,7 @@ end
 
 -- Filter by not having a set of key/value pairs in a table
 function Self.TblCopyExceptWhere(t, k, ...)
-    local u = {}
+    local u = Self.Tbl()
     for i,v in pairs(t) do
         if not Self.TblFindWhere(u, ...) then
             if k then u[i] = v else tinsert(u, v) end
@@ -532,7 +551,7 @@ end
 -- Change table keys by applying a function
 function Self.TblMapKeys(t, fn, value, ...)
     fn = Self.Fn(fn)
-    local u = {}
+    local u = Self.Tbl()
     for i,v in pairs(t) do
         if value then
             u[fn(i, v, ...)] = v
@@ -554,7 +573,7 @@ end
 -- Flip table keys and values
 function Self.TblFlip(t, fn, ...)
     fn = Self.Fn(fn)
-    local u = {}
+    local u = Self.Tbl()
     for i,v in pairs(t) do
         if fn then
             u[v] = fn(v, i, ...)
@@ -570,10 +589,10 @@ end
 -- Group table entries by funciton
 function Self.TblGroup(t, fn)
     fn = Self.Fn(fn) or Self.FnId
-    local u = {}
+    local u = Self.Tbl()
     for i,v in pairs(t) do
         i = fn(v, i)
-        u[i] = u[i] or {}
+        u[i] = u[i] or Self.Tbl()
         tinsert(u[i], v)
     end
     return u
@@ -582,10 +601,10 @@ end
 -- Group table entries by key
 function Self.TblGroupBy(t, k)
     fn = Self.Fn(fn) or Self.FnId
-    local u = {}
+    local u = Self.Tbl()
     for i,v in pairs(t) do
         i = v[k]
-        u[i] = u[i] or {}
+        u[i] = u[i] or Self.Tbl()
         tinsert(u[i], v)
     end
     return u
@@ -593,9 +612,9 @@ end
 
 -- Group the keys with the same values
 function Self.TblGroupKeys(t)
-    local u = {}
+    local u = Self.Tbl()
     for i,v in pairs(t) do
-        u[v] = u[v] or {}
+        u[v] = u[v] or Self.Tbl()
         tinsert(u[v], i)
     end
     return u
@@ -710,7 +729,7 @@ end
 
 -- Merge two or more tables
 function Self.TblMerge(t, ...)
-    t = t or {}
+    t = t or Self.Tbl()
     for i=1,select("#", ...) do
         local tbl, j = (select(i, ...)), 1
         if tbl then
@@ -727,10 +746,10 @@ end
 
 -- Convert the table into tuples of n
 function Self.TblTuple(t, n)
-    local u, n, r = {}, n or 2
+    local u, n, r = Self.Tbl(), n or 2
     for i,v in pairs(t) do
         if not r or #r == n then
-            r = {}
+            r = Self.Tbl()
             tinsert(u, r)
         end
         tinsert(r, v)
@@ -747,7 +766,7 @@ end
 -- Flatten a list of tables by one dimension
 local Fn = function (u, v) return Self.TblMerge(u, v) end
 function Self.TblFlatten(t)
-    return Self.TblFoldL(t, Fn, {})
+    return Self.TblFoldL(t, Fn, Self.Tbl())
 end
 
 -- Wipe multiple tables at once

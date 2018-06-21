@@ -575,7 +575,7 @@ end
 function Self:GetOwnedForLocation(unit, equipped, bag)
     unit = Unit.Name(unit or "player")
     local isSelf = UnitIsUnit(unit, "player")
-    local items = {}
+    local items = Util.Tbl()
     local classId = select(3, UnitClass("player"))
 
     -- No point in doing this if we don't have the info yet
@@ -588,7 +588,7 @@ function Self:GetOwnedForLocation(unit, equipped, bag)
     end
 
     -- Get equipped item(s)
-    if equipped ~= false then
+    if self.isEquippable and equipped ~= false then
         if isSelf then
             if self.isRelic then
                 local weapon = Self.GetEquippedArtifact()
@@ -610,7 +610,7 @@ function Self:GetOwnedForLocation(unit, equipped, bag)
     end
 
     -- Get item(s) from bag
-    if isSelf and  bag ~= false then
+    if isSelf and bag ~= false then
         for bag=1,NUM_BAG_SLOTS do
             for slot=1, GetContainerNumSlots(bag) do
                 local link = GetContainerItemLink(bag, slot)
@@ -665,8 +665,10 @@ function Self:GetSlotCountForLocation()
             end
         end
         return n
-    else
+    elseif self.isEquippable then
         return #Self.SLOTS[self.equipLoc]
+    else
+        return 0
     end
 end
 
@@ -736,26 +738,29 @@ function Self:GetRelics(relicTypes)
     end
 end
 
--- Get all relic slots with types that only occur in this weapon for the given class
-function Self:GetUniqueRelicSlots()
+-- Get all relic slots (optionally with types that only occur in this weapon for the given class)
+function Self:GetRelicSlots(unique)
     local id = self:GetBasicInfo().id
 
     for _,class in pairs(Self.CLASS_INFO) do
         for i,spec in pairs(class.specs) do
             if spec.artifact.id == id then
-                local relics = Util.TblCopy(spec.artifact.relics)
+                local relics = spec.artifact.relics
 
                 -- Remove all relicTypes that occur in other weapons
-                for slot,relicType in pairs(relics) do
-                    for i,spec in pairs(class.specs) do
-                        if spec.artifact.id ~= id then
-                            for _,otherRelicType in pairs(spec.artifact.relics) do
-                                if otherRelicType == relicType then
-                                    relics[slot] = nil break
+                if unique then
+                    relics = Util.TblCopy(relics)
+                    for slot,relicType in pairs(relics) do
+                        for i,spec in pairs(class.specs) do
+                            if spec.artifact.id ~= id then
+                                for _,otherRelicType in pairs(spec.artifact.relics) do
+                                    if otherRelicType == relicType then
+                                        relics[slot] = nil break
+                                    end
                                 end
                             end
+                            if not relics[slot] then break end
                         end
-                        if not relics[slot] then break end
                     end
                 end
 
@@ -1068,6 +1073,8 @@ function Self:GetPosition(refresh)
                 end
             end
         end
+
+        if bag and slot and isTradable then break end
     end
 
     if bag and slot then

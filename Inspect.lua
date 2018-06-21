@@ -52,21 +52,23 @@ function Self.Update(unit)
 
     -- Determine the level for all basic inventory locations
     for equipLoc,slots in pairs(Item.SLOTS) do
-        if not Util.TblFind(Self.IGNORE, equipLoc) then
-            local slotMin = false
+        if not Util.In(equipLoc, Self.IGNORE) then
+            local slotMin = 1000
             for i,slot in pairs(slots) do
                 local link = GetInventoryItemLink(unit, slot)
                 if link then
                     info.links[slot] = link
-                    slotMin = min(slotMin or 1000, Item.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY and Item.GetInfo(link, "level") or 0)
+                    if slotMin then
+                        slotMin = min(slotMin, Item.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY and Item.GetInfo(link, "level") or 0)
+                    end
                 else
-                    slotMin = false break
+                    slotMin = false
                 end
             end
 
             -- Only set it if we got links for all slots
-            if slotMin then
-                info.levels[equipLoc] = slotMin and max(0, info.levels[equipLoc] or 0, slotMin)
+            if slotMin and slotMin < 1000 then
+                info.levels[equipLoc] = max(0, info.levels[equipLoc] or 0, slotMin)
             elseif not info.levels[equipLoc] then
                 info.levels[equipLoc] = false
             end
@@ -76,32 +78,35 @@ function Self.Update(unit)
     -- Determine the min level of all unique relic types for the currently equipped artifact weapon
     local weapon = Item.GetEquippedArtifact(unit)
     if weapon then
-        local relics = weapon:GetUniqueRelicSlots()
-        if relics then
-            relics = Util.TblGroupKeys(relics)
-            for relicType,slots in pairs(relics) do
-                local slotMin = false
-                for i,slot in pairs(slots) do
-                    local link = weapon:GetGem(slot)
-                    if link then
-                        if not info.links[relicType] then
-                            info.links[relicType] = {}
-                        end
-                        tinsert(info.links[relicType], link)
-                        slotMin = min(slotMin or 1000, Item.GetInfo(link, "level") or 0)
-                    else
-                        slotMin = false break
-                    end
-                end
+        local relics = Util.TblGroupKeys(weapon:GetRelicSlots())
+        local relicsUnique = weapon:GetRelicSlots(true)
 
-                -- Only set it if we got links for all slots
-                if slotMin then
-                    info.levels[relicType] = slotMin and max(0, info.levels[relicType] or 0, slotMin)
-                elseif not info.levels[relicType] then
-                    info.levels[relicType] = false
+        for relicType,slots in pairs(relics) do
+            local slotMin = 1000
+            info.links[relicType] = info.links[relicType] or Util.Tbl()
+            wipe(info.links[relicType])
+
+            for i,slot in pairs(slots) do
+                local link = weapon:GetGem(slot)
+                if link then
+                    tinsert(info.links[relicType], link)
+                    if slotMin and relicsUnique[slot] then
+                        slotMin = min(slotMin, Item.GetInfo(link, "level") or 0)
+                    end
+                elseif relicsUnique[slot] then
+                    slotMin = false
                 end
             end
+
+            -- Only set it if we got links for all slots
+            if slotMin and slotMin < 1000 then
+                info.levels[relicType] = max(0, info.levels[relicType] or 0, slotMin)
+            elseif not info.levels[relicType] then
+                info.levels[relicType] = false
+            end
         end
+
+        Util.TblRelease(relics, relicsUnique, 1)
     end
 
     -- Check if the inspect was successfull

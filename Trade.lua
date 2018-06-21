@@ -54,9 +54,12 @@ function Self.Start()
 
     -- Find items the target has won and add them to the trade window
     for i,roll in pairs(Addon.rolls) do
-        if roll.item.isOwner and winner == Self.target and not traded then
-            PickupContainerItem(roll.item:GetPosition())
-            DropItemOnUnit(Self.target)
+        if roll.item.isOwner and roll.winner == Self.target and not roll.traded then
+            local bag, slot, isTradable = roll.item:GetPosition()
+            if bag and slot and isTradable then
+                PickupContainerItem(bag, slot)
+                DropItemOnUnit(Self.target)
+            end
         end
     end
 end
