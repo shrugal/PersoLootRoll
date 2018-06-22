@@ -45,7 +45,7 @@ end
 function Self.Update(unit)
     unit = Unit.Name(unit)
 
-    local info = Self.cache[unit] or {levels = {}, links = {}}
+    local info = Self.cache[unit] or Util.Tbl("levels", Util.Tbl(), "links", Util.Tbl())
 
     -- Remember when we did this
     info.time = GetTime()
@@ -106,7 +106,7 @@ function Self.Update(unit)
             end
         end
 
-        Util.TblRelease(relics, relicsUnique, 1)
+        Util.TblRelease(1, relics, relicsUnique)
     end
 
     -- Check if the inspect was successfull
@@ -122,11 +122,13 @@ end
 -- Clear everything and stop tracking for one or all players
 function Self.Clear(unit)
     if unit then
+        Util.TblRelease(true, Self.cache[unit])
         Self.cache[unit] = nil
         Self.queue[unit] = nil
     else
         Self.Stop()
         Self.lastQueued = 0
+        Util.TblRelease(true, unpack(Self.cache))
         wipe(Self.cache)
         wipe(Self.queue)
     end
@@ -135,9 +137,7 @@ end
 -- Queue a unit or the entire group for inspection
 function Self.Queue(unit)
     unit = Unit.Name(unit)
-    if not Addon:IsTracking() or unit and UnitIsUnit(unit, "player") then
-        return
-    end
+    if not Addon:IsTracking() then return end
 
     if unit then
         Self.queue[unit] = Self.queue[unit] or Self.MAX_PER_CHAR
@@ -146,7 +146,7 @@ function Self.Queue(unit)
         local unitFound = false
         for i=1,GetNumGroupMembers() do
             unit = GetRaidRosterInfo(i)
-            if unit and not UnitIsUnit(unit, "player") then
+            if unit then
                 if not Self.queue[unit] and not Self.IsValid(unit) then
                     Self.queue[unit] = Self.MAX_PER_CHAR
                 end
@@ -213,7 +213,7 @@ end
 function Self.OnInspectReady(unit)
     -- Inspect the unit
     if unit == Self.target then
-        if Self.queue[unit] and Unit.InGroup(unit, true) then
+        if Self.queue[unit] and Unit.InGroup(unit) then
             Self.Update(unit)
         end
 

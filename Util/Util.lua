@@ -114,26 +114,42 @@ end
 
 -- A cache for temp tables
 Self.tblPool = {}
+Self.tblPoolSize = 10
 
-function Self.Tbl()
-    return tremove(Self.tblPool) or {}
+-- Get a table (newly created or from the cache), and fill it with key/value pairs
+function Self.Tbl(...)
+    local t = tremove(Self.tblPool) or {}
+
+    Addon:Assert(Self.TblCount(t) == 0, "ERROR: Table from pool is not empty!", t)
+    
+    for i=1, select("#", ...), 2 do
+        local k, v = select(i, ...)
+        t[k] = v
+    end
+    return t
 end
 
+-- Add one or more tables to the cache, first paramter can define a recursive depth
 function Self.TblRelease(...)
-    local last = select(select("#", ...), ...)
-    local depth = type(last) ~= "table" and (type(last) == "number" and max(0, last) or last and 1) or 0
+    local depth = type(...) ~= "table" and (type(...) == "number" and max(0, (...)) or ... and Self.tblPoolSize) or 0
 
     for i=1, select("#", ...) do
         local t = select(i, ...)
-        if type(t) == "table" and #Self.tblPool < 10 then
-            tinsert(Self.tblPool, t)
+        if type(t) == "table" then
+            if #Self.tblPool < Self.tblPoolSize then
+                tinsert(Self.tblPool, t)
 
-            if depth > 0 then for _,v in pairs(t) do
-                if type(v) == "table" then Self.TblRelease(v, depth - 1) end
-            end end
+                if depth > 0 then
+                    for _,v in pairs(t) do
+                        if type(v) == "table" then Self.TblRelease(depth - 1, v) end
+                    end
+                end
 
-            wipe(t)
-            setmetatable(t, nil)
+                wipe(t)
+                setmetatable(t, nil)
+            else
+                break
+            end
         end
     end
 end
@@ -868,11 +884,6 @@ function Self.FnAdd(a, b) return a+b end
 function Self.FnSub(a, b) return a-b end
 function Self.FnMul(a, b) return a*b end
 function Self.FnDiv(a, b) return a/b end
-
--- Get a function that always compares to a given value
-function Self.FnEq(v)
-    return function (w) return w == v end
-end
 
 -- MODIFY
 

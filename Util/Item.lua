@@ -572,9 +572,7 @@ end
 -------------------------------------------------------
 
 -- Get a list of owned items by equipment location
-function Self:GetOwnedForLocation(unit, equipped, bag)
-    unit = Unit.Name(unit or "player")
-    local isSelf = UnitIsUnit(unit, "player")
+function Self:GetOwnedForLocation(equipped, bag)
     local items = Util.Tbl()
     local classId = select(3, UnitClass("player"))
 
@@ -589,28 +587,19 @@ function Self:GetOwnedForLocation(unit, equipped, bag)
 
     -- Get equipped item(s)
     if self.isEquippable and equipped ~= false then
-        if isSelf then
-            if self.isRelic then
-                local weapon = Self.GetEquippedArtifact()
-                items = weapon and weapon:GetRelics(self.relicType) or items
-            else for i,slot in pairs(Self.SLOTS[self.equipLoc]) do
-                local link = GetInventoryItemLink(unit, slot)
-                if link and Self.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY then
-                    tinsert(items, link)
-                end
-            end end
-        elseif Inspect.cache[unit] then
-            if self.isRelic then
-                Util.TblMerge(items, Inspect.cache[unit].links[self.relicType])
-            else for i,slot in pairs(Self.SLOTS[self.equipLoc]) do
-                local link = Inspect.GetLink(unit, slot)
-                if link then tinsert(items, link) end
-            end end
-        end
+        if self.isRelic then
+            local weapon = Self.GetEquippedArtifact()
+            items = weapon and weapon:GetRelics(self.relicType) or items
+        else for i,slot in pairs(Self.SLOTS[self.equipLoc]) do
+            local link = GetInventoryItemLink("player", slot)
+            if link and Self.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY then
+                tinsert(items, link)
+            end
+        end end
     end
 
     -- Get item(s) from bag
-    if isSelf and bag ~= false then
+    if bag ~= false then
         for bag=1,NUM_BAG_SLOTS do
             for slot=1, GetContainerNumSlots(bag) do
                 local link = GetContainerItemLink(bag, slot)

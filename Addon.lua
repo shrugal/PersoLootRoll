@@ -887,7 +887,15 @@ end
 
 function Addon:Echo(lvl, ...)
     if self.db.profile.echo >= lvl then
-        self:Print(...)
+        if lvl == self.ECHO_DEBUG then
+            local args = {...}
+            for i,v in pairs(args) do
+                if Util.In(type(v), "table", "function") then args[i] = Util.ToString(v) end
+            end
+            self:Print(unpack(args))
+        else
+            self:Print(...)
+        end
     end
 end
 
@@ -905,6 +913,16 @@ end
 
 function Addon:Debug(...)
     self:Echo(self.ECHO_DEBUG, ...)
+end
+
+function Addon:Assert(cond, ...)
+    if not cond and self.db.profile.echo >= self.ECHO_DEBUG then
+        if type(...) == "function" then
+            self:Echo(self.ECHO_DEBUG, (...)(select(2, ...)))
+        else
+            self:Echo(self.ECHO_DEBUG, ...)
+        end
+    end
 end
 
 -- Timer
