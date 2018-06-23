@@ -133,8 +133,8 @@ local Rolls = {
 -- Register for roll changes
 Roll:On(Roll.EVENT_CHANGE, function () Rolls.Update() end)
 Roll:On(Roll.EVENT_CLEAR, function (_, roll)
-    roll.open[roll.id] = nil
-    roll.hidden[roll.id] = nil
+    Rolls.open[roll.id] = nil
+    Rolls.hidden[roll.id] = nil
 end)
 
 -- Register for ML changes
@@ -683,7 +683,7 @@ function Rolls.Update()
             Self(children[it()])
                 .SetImage("Interface\\Buttons\\UI-CheckBox-Check" .. (hidden and "-Disabled" or ""), -.1, 1.1, -.1, 1.1)
                 .SetUserData("roll", roll)
-                .Toggle(hidden or roll.status ~= Roll.STATUS_RUNNING)
+                .Toggle(hidden or roll.status > Roll.STATUS_RUNNING)
             -- Toggle
             Self(children[it()])
                 .SetImage("Interface\\Buttons\\UI-" .. (Rolls.open[roll.id] and "Minus" or "Plus") .. "Button-Up")
@@ -1083,7 +1083,7 @@ function Self.TableRowHighlight(parent, skip)
 
                     for i=skip+1,#parent.children do
                         local childTop, childBottom = parent.children[i].frame:GetTop(), parent.children[i].frame:GetBottom()
-                        if childTop + spaceV/2 >= cY and childBottom - spaceV/2 <= cY then
+                        if childTop and childBottom and childTop + spaceV/2 >= cY and childBottom - spaceV/2 <= cY then
                             top =  min(frameTop, max(top or 0, childTop + spaceV/2))
                             bottom = max(frameBottom, min(bottom or frameTop, childBottom - spaceV/2))
                         end
