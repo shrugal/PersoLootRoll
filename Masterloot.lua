@@ -1,7 +1,21 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
+local CB = LibStub("CallbackHandler-1.0")
 local Comm, GUI, Unit, Util = Addon.Comm, Addon.GUI, Addon.Unit, Addon.Util
 local Self = Addon.Masterloot
+
+Self.EVENT_SET = "SET"
+Self.EVENT_CLEAR = "CLEAR"
+Self.EVENT_SESSION = "SESSION"
+Self.EVENT_CHANGE = "CHANGE"
+Self.EVENTS = {Self.EVENT_SET, Self.EVENT_CLEAR, Self.EVENT_SESSION}
+
+Self.events = CB:New(Self, "On", "Off")
+
+local changeFn = function (...) Self.events:Fire(Self.EVENT_CHANGE, ...) end
+for _,ev in pairs(Self.EVENTS) do
+    Self:On(ev, changeFn)
+end
 
 Self.masterlooter = nil
 Self.session = {}
@@ -44,7 +58,7 @@ function Self.SetMasterlooter(unit, session, silent)
         end
     end
 
-    GUI.Rolls.Update()
+    Self.events:Fire(unit and Self.EVENT_SET or Self.EVENT_CLEAR, unit, session, silent)
 end
 
 -- Check if the unit (or the player) is our masterlooter
@@ -187,6 +201,8 @@ function Self.SetSession(session, silent)
     else
         wipe(Self.session)
     end
+
+    Self.events:Fire(Self.EVENT_SESSION, Self.session, silent)
 
     return Self.session
 end

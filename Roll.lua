@@ -1,5 +1,6 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
+local CB = LibStub("CallbackHandler-1.0")
 local Comm, Events, GUI, Item, Locale, Masterloot, Trade, Unit, Util = Addon.Comm, Addon.Events, Addon.GUI, Addon.Item, Addon.Locale, Addon.Masterloot, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.Roll
 
@@ -29,6 +30,25 @@ Self.BIDS = {Self.BID_NEED, Self.BID_GREED, Self.BID_DISENCHANT, Self.BID_PASS}
 -- Custom answers
 Self.ANSWER_NEED = "NEED"
 Self.ANSWER_GREED = "GREED"
+
+-- Events
+Self.EVENT_ADD = "ADD"
+Self.EVENT_CLEAR = "CLEAR"
+Self.EVENT_START = "START"
+Self.EVENT_ADVERTISE = "ADVERTISE"
+Self.EVENT_BID = "BID"
+Self.EVENT_VOTE = "VOTE"
+Self.EVENT_END = "END"
+Self.EVENT_TRADE = "TRADE"
+Self.EVENT_CHANGE = "CHANGE"
+Self.EVENTS = {Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_TRADE}
+
+Self.events = CB:New(Self, "On", "Off")
+
+local changeFn = function (...) Self.events:Fire(Self.EVENT_CHANGE, ...) end
+for _,ev in pairs(Self.EVENTS) do
+    Self:On(ev, changeFn)
+end
 
 -- Get a roll by id or prefixed id
 function Self.Get(id)
@@ -121,7 +141,7 @@ function Self.Add(item, owner, timeout, ownerId, itemOwnerId)
         roll.itemOwnerId = roll.id
     end
 
-    GUI.Rolls.Update()
+    Self.events:Fire(Self.EVENT_ADD, roll)
 
     return roll
 end
@@ -207,8 +227,6 @@ function Self.Update(data, unit)
                 if data.traded ~= roll.traded then
                     roll:OnTraded(data.traded)
                 end
-
-                GUI.Rolls.Update()
             end
         end) end
     -- The winner can inform us that it has been traded, or the item owner if the winner doesn't have the addon or he traded it to someone else
@@ -221,8 +239,6 @@ function Self.Update(data, unit)
         end)
     end
 
-    GUI.Rolls.Update()
-
     return roll
 end
 
@@ -233,6 +249,8 @@ local clearFn = function (roll)
     end
 
     Addon.rolls[roll.id] = nil
+
+    Self.events:Fire(Self.EVENT_CLEAR, roll)
 end
 function Self.Clear(self)
     if self then
@@ -244,8 +262,6 @@ function Self.Clear(self)
             end
         end
     end
-
-    GUI.Rolls.Update()
 end
 
 -- Check for and convert from/to PLR roll id
@@ -338,7 +354,7 @@ function Self:Start(started)
             self:Advertise(false, true)
             self:SendStatus()
 
-            GUI.Rolls.Update()
+            Self.events:Fire(Self.EVENT_START, self)
         end
     end)
 
@@ -365,8 +381,6 @@ function Self:Schedule()
             else
                 self:Clear()
             end
-
-            GUI.Rolls.Update()
         end
     end, Self.DELAY)
 
@@ -474,7 +488,7 @@ function Self:Bid(bid, fromUnit, rollOrImport)
             end
         end
 
-        GUI.Rolls.Update()
+        Self.events:Fire(Self.EVENT_BID, self, bid, fromUnit, rollOrImport)
     end
 
     return self
@@ -519,7 +533,7 @@ function Self:Vote(vote, fromUnit, isImport)
             end
         end
 
-        GUI.Rolls.Update()
+        Self.events:Fire(Self.EVENT_VOTE, self, vote, fromUnit, isImport)
     end
 end
 
@@ -606,8 +620,9 @@ function Self:End(winner)
         Comm.RollEnd(self)
     end
 
-    GUI.Rolls.Update()
     self:SendStatus()
+    
+    Self.events:Fire(Self.EVENT_END, self)
 
     return self
 end
@@ -646,7 +661,7 @@ function Self:Cancel()
     -- Let everyone know
     self:SendStatus()
         
-    GUI.Rolls.Update()
+    Self.events:Fire(Self.EVENT_CANCEL, self)
     
     return self
 end
@@ -678,7 +693,7 @@ function Self:OnTraded(target)
 
     self:SendStatus(self.item.isOwner or self.isWinner)
         
-    GUI.Rolls.Update()
+    Self.events:Fire(Self.EVENT_TRADE, self, target)
 end
 
 -------------------------------------------------------
@@ -778,7 +793,7 @@ function Self:Advertise(manually, silent)
             self:SendStatus()
         end
 
-        GUI.Rolls.Update()
+        Self.events:Fire(Self.EVENT_ADVERTISE, self, manually, silent)
 
         return true
     else

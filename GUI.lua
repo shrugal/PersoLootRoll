@@ -124,10 +124,21 @@ Self.LootAlertSystem = AlertFrame:AddQueuedAlertFrameSubSystem("PLR_LootWonAlert
 
 local Rolls = {
     frames = {},
-    filter = {all = false, canceled = false, done = true, awarded = true, traded = false},
+    filter = {all = false, hidden = false, done = true, awarded = true, traded = false},
     status = {width = 700, height = 300},
-    open = {}
+    open = {},
+    hidden = {}
 }
+
+-- Register for roll changes
+Roll:On(Roll.EVENT_CHANGE, function () Rolls.Update() end)
+Roll:On(Roll.EVENT_CLEAR, function (_, roll)
+    roll.open[roll.id] = nil
+    roll.hidden[roll.id] = nil
+end)
+
+-- Register for ML changes
+Masterloot:On(Masterloot.EVENT_CHANGE, function () Rolls.Update() end)
 
 -- Show the rolls frame
 function Rolls.Show()
@@ -248,7 +259,7 @@ function Rolls.Show()
             f:SetWidth(f.label:GetStringWidth() + 30)
             f.label:SetPoint("TOPLEFT", 15, -6)
 
-            for _,key in ipairs({"all", "done", "awarded", "traded", "canceled"}) do
+            for _,key in ipairs({"all", "done", "awarded", "traded", "hidden"}) do
                 Self.CreateFilterCheckbox(key)
             end
 
@@ -331,6 +342,24 @@ function Rolls.Show()
     end
 end
 
+-- Hide the rolls frame
+function Rolls.Hide()
+    if Rolls.frames.window then
+        Rolls.frames.window.frame:Hide()
+    end
+end
+
+-- Toggle the rolls frame
+function Rolls.Toggle()
+    if Rolls.frames.window then
+        Rolls.Hide()
+    else
+        Rolls.Show()
+    end
+end
+
+----------------------- UPDATE ------------------------
+
 -- Update the rolls frame
 function Rolls.Update()
     if not Rolls.frames.window then return end
@@ -379,7 +408,7 @@ function Rolls.Update()
 
     local rolls = Util(Addon.rolls).CopyFilter(function (roll)
         return (Rolls.filter.all or roll.isOwner or roll.item.isOwner or roll.item:GetEligible("player"))
-           and (Rolls.filter.canceled or roll.status >= Roll.STATUS_RUNNING)
+           and (Rolls.filter.hidden or roll.status >= Roll.STATUS_RUNNING and not Rolls.hidden[roll.id])
            and (Rolls.filter.done or (roll.status ~= Roll.STATUS_DONE))
            and (Rolls.filter.awarded or not roll.winner)
            and (Rolls.filter.traded or not roll.traded)
@@ -509,6 +538,14 @@ function Rolls.Update()
                 end, CANCEL)
                 f.image:SetPoint("TOP", 0, 1)
                 f.image:SetTexCoord(0.2, 0.8, 0.2, 0.8)
+
+                -- Hide
+                f = Self.CreateIconButton("Interface\\Buttons\\UI-CheckBox-Check", actions, function (self)
+                    local roll = self:GetUserData("roll")
+                    Rolls.hidden[roll.id] = not Rolls.hidden[roll.id]
+                    Rolls.Update()
+                end, L["SHOW_HIDE"])
+                f.image:SetPoint("TOP", 0, 2)
         
                 -- Toggle
                 f = Self.CreateIconButton("UI-PlusButton", actions, function (self)
@@ -619,6 +656,7 @@ function Rolls.Update()
 
             local canBid = not roll.bid and roll:UnitCanBid("player")
             local canBeAwarded = roll:CanBeAwarded(true)
+            local hidden = Rolls.hidden[roll.id]
 
             -- Need
             Self(children[it()]).SetUserData("roll", roll).Toggle(canBid)
@@ -641,6 +679,11 @@ function Rolls.Update()
             Self(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeRestarted())
             -- Cancel
             Self(children[it()]).SetUserData("roll", roll).Toggle(canBeAwarded)
+            -- Hide
+            Self(children[it()])
+                .SetImage("Interface\\Buttons\\UI-CheckBox-Check" .. (hidden and "-Disabled" or ""), -.1, 1.1, -.1, 1.1)
+                .SetUserData("roll", roll)
+                .Toggle(hidden or roll.status ~= Roll.STATUS_RUNNING)
             -- Toggle
             Self(children[it()])
                 .SetImage("Interface\\Buttons\\UI-" .. (Rolls.open[roll.id] and "Minus" or "Plus") .. "Button-Up")
@@ -691,31 +734,17 @@ function Rolls.Update()
     filter.children[it()]:SetValue(Rolls.filter.done)
     filter.children[it()]:SetValue(Rolls.filter.awarded)
     filter.children[it()]:SetValue(Rolls.filter.traded)
-    filter.children[it()]:SetValue(Rolls.filter.canceled)
+    filter.children[it()]:SetValue(Rolls.filter.hidden)
 
     -- ML action
     local ml = Masterloot.GetMasterlooter()
     filter.children[it()]:SetImage(ml and "Interface\\Buttons\\UI-StopButton" or "Interface\\GossipFrame\\WorkOrderGossipIcon")
 
     -- ML
-    f = Self(filter.children[it()]).SetText(L["ML"] .. ": " .. (ml and Unit.ColoredName(Unit.ShortenedName(ml)) or ""))
+    Self(filter.children[it()]).SetText(L["ML"] .. ": " .. (ml and Unit.ColoredName(Unit.ShortenedName(ml)) or ""))
 end
 
--- Hide the rolls frame
-function Rolls.Hide()
-    if Rolls.frames.window then
-        Rolls.frames.window.frame:Hide()
-    end
-end
-
--- Toggle the rolls frame
-function Rolls.Toggle()
-    if Rolls.frames.window then
-        Rolls.Hide()
-    else
-        Rolls.Show()
-    end
-end
+------------------- UPDATE DETAILS --------------------
 
 -- Update the details view of a row
 function Rolls.UpdateDetails(details, roll)
