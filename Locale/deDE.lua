@@ -64,6 +64,7 @@ L["PUBLIC"] = "Öffentlich"
 L["PRIVATE"] = "Privat"
 L["RESTART"] = "Neu starten"
 L["ITEMS"] = ITEMS
+L["EQUIPPED"] = "Angezogen"
 L["SECONDS"] = "%ds"
 
 L["HELP"] = "Verrolle und biete auf items (/PersoLootRoll oder /plr).\n"
@@ -134,7 +135,8 @@ L["TIP_MASTERLOOT_INFO"] =
  .. "|cffffff00Stimmen:|r %s"
 L["TIP_MASTERLOOTING"] = "Plündermeister Gruppe:"
 L["TIP_VOTES"] = "Stimmen von:"
-L["TIP_ADDON_VERSIONS"] = "Addon Versionen in der Gruppe:"
+L["TIP_ADDON_VERSIONS"] = "Addon Versionen:"
+L["TIP_ADDON_MISSING"] = "Addon fehlt:"
 
 L["MENU_MASTERLOOT_START"] = "Werde Plündermeister"
 L["MENU_MASTERLOOT_SEARCH"] = "Suche Plündermeister in Gruppe"
@@ -241,7 +243,7 @@ L["OPT_AWARD_SELF_DESC"] = "Wähle selbst wer deinen Loot bekommen soll, anstatt
 L["OPT_ITEM_FILTER"] = "Item Filter"
 L["OPT_ITEM_FILTER_DESC"] = "Passe die Regeln an, nach denen ein Item als nützlich eingestuft wird. Du wirst nur fürs nützliche Items zum Rollen aufgefordert."
 L["OPT_ILVL_THRESHOLD"] = "Item-Level Schwelle"
-L["OPT_ILVL_THRESHOLD_DESC"] = "Das Level von Items darf maximal um so viel unter dem was du hast liegen, um als Hilfreich zu zählen, das doppelte für Trinkets."
+L["OPT_ILVL_THRESHOLD_DESC"] = "Items deren Item-Level mehr als diesen Wert unter deinen Items liegen werden ignoriert."
 L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Doppelte Schwelle für Trinkets"
 L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Trinkets sollten eine doppelt so hohe Schwelle haben, da ihr Wert durch Procc-Effekte start schwanken kann."
 L["OPT_SPECS"] = "Spezialisierungen"

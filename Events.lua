@@ -148,7 +148,7 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
             if i == 0 then
                 roll = Self.lastPostedRoll
             else
-                roll = Util.TblFirstWhere(Addon.rolls, {status = Roll.STATUS_RUNNING, posted = i})
+                roll = Util.TblFirstWhere(Addon.rolls, "status", Roll.STATUS_RUNNING, "posted", i)
             end
             
             -- Get the correct bid and scaled roll result
@@ -213,7 +213,7 @@ end
 -- Loot
 
 function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
-    unit = Unit(sender)
+    local unit = Unit(sender)
     if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
 
     local item = Item.GetLink(msg)
@@ -251,7 +251,7 @@ end
 -- Group/Raid/Instance
 
 function Self.CHAT_MSG_PARTY(event, msg, sender)
-    unit = Unit(sender)
+    local unit = Unit(sender)
     if not Addon:IsTracking() then return end
 
     local fromSelf = UnitIsUnit(unit, "player")
@@ -282,7 +282,7 @@ end
 -- Whisper
 
 function Self.CHAT_MSG_WHISPER(event, msg, sender)
-    unit = Unit(sender)
+    local unit = Unit(sender)
     if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
 
     local answer = Addon.db.profile.answer
