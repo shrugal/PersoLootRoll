@@ -564,10 +564,16 @@ function Addon:RegisterOptions()
                         end,
                         get = function () return self.db.profile.masterlooter.bidPublic end,
                         width = "full"
-                    },
-                    council = {type = "header", order = it(), name = L["OPT_MASTERLOOTER_COUNCIL"]},
-                    councilDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOTER_COUNCIL_DESC"] .. "\n"},
-                    councilAllow = {
+                    }
+                }
+            },
+            council = {
+                name = L["OPT_MASTERLOOTER_COUNCIL"],
+                type = "group",
+                order = it(),
+                args = {
+                    desc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOTER_COUNCIL_DESC"] .. "\n"},
+                    allow = {
                         name = L["OPT_MASTERLOOTER_COUNCIL_ALLOW"],
                         desc = L["OPT_MASTERLOOTER_COUNCIL_ALLOW_DESC"],
                         type = "multiselect",
@@ -579,7 +585,7 @@ function Addon:RegisterOptions()
                         end,
                         get = function (_, key) return self.db.profile.masterlooter.council[councilKeys[key]] end
                     },
-                    councilGuildRank = {
+                    guildRank = {
                         name = L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK"],
                         desc = L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK_DESC"],
                         type = "select",
@@ -597,7 +603,7 @@ function Addon:RegisterOptions()
                         end,
                         get = function () return self.db.char.masterloot.guildRank end
                     },
-                    councilWhitelist = {
+                    whitelist = {
                         name = L["OPT_MASTERLOOTER_COUNCIL_WHITELIST"],
                         desc = L["OPT_MASTERLOOTER_COUNCIL_WHITELIST_DESC"],
                         type = "input",
