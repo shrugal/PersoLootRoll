@@ -124,10 +124,21 @@ Self.LootAlertSystem = AlertFrame:AddQueuedAlertFrameSubSystem("PLR_LootWonAlert
 
 local Rolls = {
     frames = {},
-    filter = {all = false, canceled = false, done = true, awarded = true, traded = false},
+    filter = {all = false, hidden = false, done = true, awarded = true, traded = false},
     status = {width = 700, height = 300},
-    open = {}
+    open = {},
+    hidden = {}
 }
+
+-- Register for roll changes
+Roll:On(Roll.EVENT_CHANGE, function () Rolls.Update() end)
+Roll:On(Roll.EVENT_CLEAR, function (_, roll)
+    Rolls.open[roll.id] = nil
+    Rolls.hidden[roll.id] = nil
+end)
+
+-- Register for ML changes
+Masterloot:On(Masterloot.EVENT_CHANGE, function () Rolls.Update() end)
 
 -- Show the rolls frame
 function Rolls.Show()
@@ -248,7 +259,7 @@ function Rolls.Show()
             f:SetWidth(f.label:GetStringWidth() + 30)
             f.label:SetPoint("TOPLEFT", 15, -6)
 
-            for _,key in ipairs({"all", "done", "awarded", "traded", "canceled"}) do
+            for _,key in ipairs({"all", "done", "awarded", "traded", "hidden"}) do
                 Self.CreateFilterCheckbox(key)
             end
 
@@ -331,6 +342,24 @@ function Rolls.Show()
     end
 end
 
+-- Hide the rolls frame
+function Rolls.Hide()
+    if Rolls.frames.window then
+        Rolls.frames.window.frame:Hide()
+    end
+end
+
+-- Toggle the rolls frame
+function Rolls.Toggle()
+    if Rolls.frames.window then
+        Rolls.Hide()
+    else
+        Rolls.Show()
+    end
+end
+
+----------------------- UPDATE ------------------------
+
 -- Update the rolls frame
 function Rolls.Update()
     if not Rolls.frames.window then return end
@@ -379,7 +408,7 @@ function Rolls.Update()
 
     local rolls = Util(Addon.rolls).CopyFilter(function (roll)
         return (Rolls.filter.all or roll.isOwner or roll.item.isOwner or roll.item:GetEligible("player"))
-           and (Rolls.filter.canceled or roll.status >= Roll.STATUS_RUNNING)
+           and (Rolls.filter.hidden or roll.status >= Roll.STATUS_RUNNING and not Rolls.hidden[roll.id])
            and (Rolls.filter.done or (roll.status ~= Roll.STATUS_DONE))
            and (Rolls.filter.awarded or not roll.winner)
            and (Rolls.filter.traded or not roll.traded)
@@ -509,6 +538,14 @@ function Rolls.Update()
                 end, CANCEL)
                 f.image:SetPoint("TOP", 0, 1)
                 f.image:SetTexCoord(0.2, 0.8, 0.2, 0.8)
+
+                -- Hide
+                f = Self.CreateIconButton("Interface\\Buttons\\UI-CheckBox-Check", actions, function (self)
+                    local roll = self:GetUserData("roll")
+                    Rolls.hidden[roll.id] = not Rolls.hidden[roll.id]
+                    Rolls.Update()
+                end, L["SHOW_HIDE"])
+                f.image:SetPoint("TOP", 0, 2)
         
                 -- Toggle
                 f = Self.CreateIconButton("UI-PlusButton", actions, function (self)
@@ -619,6 +656,7 @@ function Rolls.Update()
 
             local canBid = not roll.bid and roll:UnitCanBid("player")
             local canBeAwarded = roll:CanBeAwarded(true)
+            local hidden = Rolls.hidden[roll.id]
 
             -- Need
             Self(children[it()]).SetUserData("roll", roll).Toggle(canBid)
@@ -641,6 +679,11 @@ function Rolls.Update()
             Self(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeRestarted())
             -- Cancel
             Self(children[it()]).SetUserData("roll", roll).Toggle(canBeAwarded)
+            -- Hide
+            Self(children[it()])
+                .SetImage("Interface\\Buttons\\UI-CheckBox-Check" .. (hidden and "-Disabled" or ""), -.1, 1.1, -.1, 1.1)
+                .SetUserData("roll", roll)
+                .Toggle(hidden or roll.status > Roll.STATUS_RUNNING)
             -- Toggle
             Self(children[it()])
                 .SetImage("Interface\\Buttons\\UI-" .. (Rolls.open[roll.id] and "Minus" or "Plus") .. "Button-Up")
@@ -691,31 +734,17 @@ function Rolls.Update()
     filter.children[it()]:SetValue(Rolls.filter.done)
     filter.children[it()]:SetValue(Rolls.filter.awarded)
     filter.children[it()]:SetValue(Rolls.filter.traded)
-    filter.children[it()]:SetValue(Rolls.filter.canceled)
+    filter.children[it()]:SetValue(Rolls.filter.hidden)
 
     -- ML action
     local ml = Masterloot.GetMasterlooter()
     filter.children[it()]:SetImage(ml and "Interface\\Buttons\\UI-StopButton" or "Interface\\GossipFrame\\WorkOrderGossipIcon")
 
     -- ML
-    f = Self(filter.children[it()]).SetText(L["ML"] .. ": " .. (ml and Unit.ColoredName(Unit.ShortenedName(ml)) or ""))
+    Self(filter.children[it()]).SetText(L["ML"] .. ": " .. (ml and Unit.ColoredName(Unit.ShortenedName(ml)) or ""))
 end
 
--- Hide the rolls frame
-function Rolls.Hide()
-    if Rolls.frames.window then
-        Rolls.frames.window.frame:Hide()
-    end
-end
-
--- Toggle the rolls frame
-function Rolls.Toggle()
-    if Rolls.frames.window then
-        Rolls.Hide()
-    else
-        Rolls.Show()
-    end
-end
+------------------- UPDATE DETAILS --------------------
 
 -- Update the details view of a row
 function Rolls.UpdateDetails(details, roll)
@@ -1054,7 +1083,7 @@ function Self.TableRowHighlight(parent, skip)
 
                     for i=skip+1,#parent.children do
                         local childTop, childBottom = parent.children[i].frame:GetTop(), parent.children[i].frame:GetBottom()
-                        if childTop + spaceV/2 >= cY and childBottom - spaceV/2 <= cY then
+                        if childTop and childBottom and childTop + spaceV/2 >= cY and childBottom - spaceV/2 <= cY then
                             top =  min(frameTop, max(top or 0, childTop + spaceV/2))
                             bottom = max(frameBottom, min(bottom or frameTop, childBottom - spaceV/2))
                         end
@@ -1098,7 +1127,7 @@ end
 -------------------------------------------------------
 
 -- Get alignment method and value. Possible alignment methods are a callback, a number, "start", "middle", "end", "fill" or "TOPLEFT", "BOTTOMRIGHT" etc.
-local GetAlign = function (dir, tableObj, colObj, cellObj, cell, child)
+local GetCellAlign = function (dir, tableObj, colObj, cellObj, cell, child)
     local fn = cellObj and (cellObj["align" .. dir] or cellObj.align)
             or colObj and (colObj["align" .. dir] or colObj.align)
             or tableObj["align" .. dir] or tableObj.align
@@ -1121,10 +1150,10 @@ local GetAlign = function (dir, tableObj, colObj, cellObj, cell, child)
 end
 
 -- Get width or height for multiple cells combined
-local GetDimension = function (dir, laneDim, from, to, space)
+local GetCellDimension = function (dir, laneDim, from, to, space)
     local dim = 0
-    for i=from,to do
-        dim = dim + (laneDim[i] or 0)
+    for cell=from,to do
+        dim = dim + (laneDim[cell] or 0)
     end
     return dim + max(0, to - from) * (space or 0)
 end
@@ -1134,7 +1163,7 @@ end
 Container:
  - columns ({col, col, ...}): Column settings. "col" can be a number (<= 0: content width, <1: rel. width, <10: weight, >=10: abs. width) or a table with column setting.
  - space, spaceH, spaceV: Overall, horizontal and vertical spacing between cells.
- - align, alignH, alignV: Overall, horizontal and vertical cell alignment. See GetAlign() for possible values.
+ - align, alignH, alignV: Overall, horizontal and vertical cell alignment. See GetCellAlign() for possible values.
 Columns:
  - width: Fixed column width (nil or <=0: content width, <1: rel. width, >=1: abs. width).
  - min or 1: Min width for content based width
@@ -1229,7 +1258,7 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
                         f:ClearAllPoints()
                         local childH = f:GetWidth() or 0
     
-                        laneH[col] = max(laneH[col], childH - GetDimension("H", laneH, colStart[child], col - 1, spaceH))
+                        laneH[col] = max(laneH[col], childH - GetCellDimension("H", laneH, colStart[child], col - 1, spaceH))
                     end
                 end
 
@@ -1261,14 +1290,14 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
                 local colObj = cols[colStart[child]]
                 if not child.GetUserData then Util.Dump(row, col, (row - 1) * #cols + col, child) end
                 local cellObj = child:GetUserData("cell")
-                local offsetH = GetDimension("H", laneH, 1, colStart[child] - 1, spaceH) + (colStart[child] == 1 and 0 or spaceH)
-                local cellH = GetDimension("H", laneH, colStart[child], col, spaceH)
+                local offsetH = GetCellDimension("H", laneH, 1, colStart[child] - 1, spaceH) + (colStart[child] == 1 and 0 or spaceH)
+                local cellH = GetCellDimension("H", laneH, colStart[child], col, spaceH)
                 
                 local f = child.frame
                 f:ClearAllPoints()
                 local childH = f:GetWidth() or 0
 
-                local alignFn, align = GetAlign("H", tableObj, colObj, cellObj, cellH, childH)
+                local alignFn, align = GetCellAlign("H", tableObj, colObj, cellObj, cellH, childH)
                 f:SetPoint("LEFT", content, offsetH + align, 0)
                 if child:IsFullWidth() or alignFn == "fill" or childH > cellH then
                     f:SetPoint("RIGHT", content, "LEFT", offsetH + align + cellH, 0)
@@ -1278,7 +1307,7 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
                     child:DoLayout()
                 end
 
-                rowV = max(rowV, (f:GetHeight() or 0) - GetDimension("V", laneV, rowStart[child], row - 1, spaceV))
+                rowV = max(rowV, (f:GetHeight() or 0) - GetCellDimension("V", laneV, rowStart[child], row - 1, spaceV))
             end
         end
 
@@ -1290,13 +1319,13 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
             if child then
                 local colObj = cols[colStart[child]]
                 local cellObj = child:GetUserData("cell")
-                local offsetV = GetDimension("V", laneV, 1, rowStart[child] - 1, spaceV) + (rowStart[child] == 1 and 0 or spaceV)
-                local cellV = GetDimension("V", laneV, rowStart[child], row, spaceV)
+                local offsetV = GetCellDimension("V", laneV, 1, rowStart[child] - 1, spaceV) + (rowStart[child] == 1 and 0 or spaceV)
+                local cellV = GetCellDimension("V", laneV, rowStart[child], row, spaceV)
                     
                 local f = child.frame
                 local childV = f:GetHeight() or 0
 
-                local alignFn, align = GetAlign("V", tableObj, colObj, cellObj, cellV, childV)
+                local alignFn, align = GetCellAlign("V", tableObj, colObj, cellObj, cellV, childV)
                 if child:IsFullHeight() or alignFn == "fill" then
                     f:SetHeight(cellV)
                 end
@@ -1306,7 +1335,7 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
     end
 
     -- Calculate total height
-    local totalV = GetDimension("V", laneV, 1, #laneV, spaceV)
+    local totalV = GetCellDimension("V", laneV, 1, #laneV, spaceV)
     
     -- Cleanup
     for _,v in pairs(layoutCache) do wipe(v) end
