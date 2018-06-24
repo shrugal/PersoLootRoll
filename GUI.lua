@@ -1127,7 +1127,7 @@ end
 -------------------------------------------------------
 
 -- Get alignment method and value. Possible alignment methods are a callback, a number, "start", "middle", "end", "fill" or "TOPLEFT", "BOTTOMRIGHT" etc.
-local GetAlign = function (dir, tableObj, colObj, cellObj, cell, child)
+local GetCellAlign = function (dir, tableObj, colObj, cellObj, cell, child)
     local fn = cellObj and (cellObj["align" .. dir] or cellObj.align)
             or colObj and (colObj["align" .. dir] or colObj.align)
             or tableObj["align" .. dir] or tableObj.align
@@ -1150,10 +1150,10 @@ local GetAlign = function (dir, tableObj, colObj, cellObj, cell, child)
 end
 
 -- Get width or height for multiple cells combined
-local GetDimension = function (dir, laneDim, from, to, space)
+local GetCellDimension = function (dir, laneDim, from, to, space)
     local dim = 0
-    for i=from,to do
-        dim = dim + (laneDim[i] or 0)
+    for cell=from,to do
+        dim = dim + (laneDim[cell] or 0)
     end
     return dim + max(0, to - from) * (space or 0)
 end
@@ -1163,7 +1163,7 @@ end
 Container:
  - columns ({col, col, ...}): Column settings. "col" can be a number (<= 0: content width, <1: rel. width, <10: weight, >=10: abs. width) or a table with column setting.
  - space, spaceH, spaceV: Overall, horizontal and vertical spacing between cells.
- - align, alignH, alignV: Overall, horizontal and vertical cell alignment. See GetAlign() for possible values.
+ - align, alignH, alignV: Overall, horizontal and vertical cell alignment. See GetCellAlign() for possible values.
 Columns:
  - width: Fixed column width (nil or <=0: content width, <1: rel. width, >=1: abs. width).
  - min or 1: Min width for content based width
@@ -1258,7 +1258,7 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
                         f:ClearAllPoints()
                         local childH = f:GetWidth() or 0
     
-                        laneH[col] = max(laneH[col], childH - GetDimension("H", laneH, colStart[child], col - 1, spaceH))
+                        laneH[col] = max(laneH[col], childH - GetCellDimension("H", laneH, colStart[child], col - 1, spaceH))
                     end
                 end
 
@@ -1290,14 +1290,14 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
                 local colObj = cols[colStart[child]]
                 if not child.GetUserData then Util.Dump(row, col, (row - 1) * #cols + col, child) end
                 local cellObj = child:GetUserData("cell")
-                local offsetH = GetDimension("H", laneH, 1, colStart[child] - 1, spaceH) + (colStart[child] == 1 and 0 or spaceH)
-                local cellH = GetDimension("H", laneH, colStart[child], col, spaceH)
+                local offsetH = GetCellDimension("H", laneH, 1, colStart[child] - 1, spaceH) + (colStart[child] == 1 and 0 or spaceH)
+                local cellH = GetCellDimension("H", laneH, colStart[child], col, spaceH)
                 
                 local f = child.frame
                 f:ClearAllPoints()
                 local childH = f:GetWidth() or 0
 
-                local alignFn, align = GetAlign("H", tableObj, colObj, cellObj, cellH, childH)
+                local alignFn, align = GetCellAlign("H", tableObj, colObj, cellObj, cellH, childH)
                 f:SetPoint("LEFT", content, offsetH + align, 0)
                 if child:IsFullWidth() or alignFn == "fill" or childH > cellH then
                     f:SetPoint("RIGHT", content, "LEFT", offsetH + align + cellH, 0)
@@ -1307,7 +1307,7 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
                     child:DoLayout()
                 end
 
-                rowV = max(rowV, (f:GetHeight() or 0) - GetDimension("V", laneV, rowStart[child], row - 1, spaceV))
+                rowV = max(rowV, (f:GetHeight() or 0) - GetCellDimension("V", laneV, rowStart[child], row - 1, spaceV))
             end
         end
 
@@ -1319,13 +1319,13 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
             if child then
                 local colObj = cols[colStart[child]]
                 local cellObj = child:GetUserData("cell")
-                local offsetV = GetDimension("V", laneV, 1, rowStart[child] - 1, spaceV) + (rowStart[child] == 1 and 0 or spaceV)
-                local cellV = GetDimension("V", laneV, rowStart[child], row, spaceV)
+                local offsetV = GetCellDimension("V", laneV, 1, rowStart[child] - 1, spaceV) + (rowStart[child] == 1 and 0 or spaceV)
+                local cellV = GetCellDimension("V", laneV, rowStart[child], row, spaceV)
                     
                 local f = child.frame
                 local childV = f:GetHeight() or 0
 
-                local alignFn, align = GetAlign("V", tableObj, colObj, cellObj, cellV, childV)
+                local alignFn, align = GetCellAlign("V", tableObj, colObj, cellObj, cellV, childV)
                 if child:IsFullHeight() or alignFn == "fill" then
                     f:SetHeight(cellV)
                 end
@@ -1335,7 +1335,7 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
     end
 
     -- Calculate total height
-    local totalV = GetDimension("V", laneV, 1, #laneV, spaceV)
+    local totalV = GetCellDimension("V", laneV, 1, #laneV, spaceV)
     
     -- Cleanup
     for _,v in pairs(layoutCache) do wipe(v) end
