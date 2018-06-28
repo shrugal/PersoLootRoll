@@ -876,8 +876,7 @@ end
 
 -- Check if we should currently track loot etc.
 function Addon:IsTracking()
-    local methods = {freeforall = true, roundrobin = true, personalloot = true}
-    return self.db.profile.enabled and IsInGroup() and methods[GetLootMethod()]
+    return self.db.profile.enabled and IsInGroup() and Util.In(GetLootMethod(), "freeforall", "roundrobin", "personalloot", "group")
 end
 
 function Addon:SetVersion(unit, version)

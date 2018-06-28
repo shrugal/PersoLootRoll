@@ -325,7 +325,7 @@ function Self.CHAT_MSG_WHISPER(event, msg, sender)
             -- The roll is scheduled or happening
             if roll:CanBeAwarded() then
                 -- He is eligible, so register the bid
-                if roll:UnitIsEligible(unit) and not roll.bds[unit] or floor(roll.bids[unit]) ~= Roll.BID_NEED then
+                if roll:UnitIsEligible(unit) and not roll.bids[unit] or floor(roll.bids[unit]) ~= Roll.BID_NEED then
                     roll:Bid(Roll.BID_NEED, unit, true)
 
                     -- Answer only if his bid didn't end the roll
