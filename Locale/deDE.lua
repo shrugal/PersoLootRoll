@@ -101,6 +101,7 @@ L["ROLL_STATUS_1"] = "Läuft"
 L["ROLL_STATUS_2"] = "Fertig"
 L["ROLL_AWARDED"] = "Zugewiesen"
 L["ROLL_TRADED"] = "Gehandelt"
+L["ROLL_LIST_EMPTY"] = "Aktive Verlosungen werden hier angezeigt"
 
 L["BID_START"] = "Biete auf %s von %s."
 L["BID_PASS"] = "Passe auf %s von %s."

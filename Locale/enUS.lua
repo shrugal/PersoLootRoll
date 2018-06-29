@@ -101,6 +101,7 @@ L["ROLL_STATUS_1"] = "Running"
 L["ROLL_STATUS_2"] = "Done"
 L["ROLL_AWARDED"] = "Awarded"
 L["ROLL_TRADED"] = "Traded"
+L["ROLL_LIST_EMPTY"] = "Active rolls will be shown here"
 
 L["BID_START"] = "Bidding with %q for %s from %s."
 L["BID_PASS"] = "Passing on %s from %s."

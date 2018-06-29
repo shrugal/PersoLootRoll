@@ -338,6 +338,15 @@ function Rolls.Show()
             .SetPoint("TOPRIGHT")
             .SetPoint("BOTTOMLEFT", Rolls.frames.filter.frame, "TOPLEFT", 0, 8)()
 
+        -- EMPTY MESSAGE
+
+        Rolls.frames.empty = Self("Label")
+            .SetFont(GameFontNormal:GetFont(), 14)
+            .SetColor(0.5, 0.5, 0.5)
+            .SetText("- " .. L["ROLL_LIST_EMPTY"] .. " -")
+            .AddTo(Rolls.frames.window)
+            .SetPoint("CENTER")()
+
         Rolls.Update()
     end
 end
@@ -413,6 +422,8 @@ function Rolls.Update()
            and (Rolls.filter.awarded or not roll.winner)
            and (Rolls.filter.traded or not roll.traded)
     end).SortBy("id")()
+
+    Self(Rolls.frames.empty).Toggle(Util.TblCount(rolls) == 0)
 
     local it = Util.Iter(#header + 1)
     for _,roll in pairs(rolls) do
