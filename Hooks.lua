@@ -183,7 +183,9 @@ end
 -------------------------------------------------------
 
 function Self.EnableChatLinks()
-    -- Suppress messages starting with [PLR]
+
+    -- CLICK
+
     if not Addon:IsHooked("SetItemRef") then
         Addon:RawHook("SetItemRef", function (link, text, button, frame)
             local linkType, args = link:match("^([^:]+):(.*)$")
@@ -200,6 +202,31 @@ function Self.EnableChatLinks()
                 return Addon.hooks.SetItemRef(link, text, button, frame)
             end
         end, true)
+    end
+
+    -- HOVER
+
+    local onHyperlinkEnter = function (self, link)
+        local linkType, args = link:match("^([^:]+):(.*)$")
+        if linkType == "plrtooltip" then
+            local title, text = string.split(":", args)
+            GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+            GameTooltip:ClearLines()
+            if not Util.StrIsEmpty(title) then
+                GameTooltip:AddLine(title:gsub("@colon@", ":"), 1, .82, 0)
+            end
+            GameTooltip:AddLine(text:gsub("@colon@", ":"), 1, 1, 1, true)
+            GameTooltip:Show()
+        end
+    end
+    local onHyperlinkLeave = function () GameTooltip:Hide() end
+
+    for i=1,NUM_CHAT_WINDOWS do
+        local frame = _G["ChatFrame" .. i]
+        if frame and not Addon:IsHooked(frame, "OnHyperlinkEnter") then
+            Addon:SecureHookScript(frame, "OnHyperlinkEnter", onHyperlinkEnter)
+            Addon:SecureHookScript(frame, "OnHyperlinkLeave", onHyperlinkLeave)
+        end
     end
 end
 

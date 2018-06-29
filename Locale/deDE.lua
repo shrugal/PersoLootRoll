@@ -90,6 +90,7 @@ L["ROLL_WINNER_OTHER"] = "%s hat %s von dir gewonnen -> %s."
 L["ROLL_WINNER_MASTERLOOT"] = "%s hat %s von %s gewonnen."
 L["ROLL_CANCEL"] = "Breche Verlosung für %s von %s ab."
 L["ROLL_IGNORING_BID"] = "Ignoriere Gebot von %s für %s, weil ihr zuvor gechattet habt -> Gebot: %s oder %s."
+L["ROLL_WHISPER_SUPPRESSED"] = "Gebot von %s für %s -> %s."
 L["ROLL_BID_1"] = NEED
 L["ROLL_BID_2"] = GREED
 L["ROLL_BID_3"] = ROLL_DISENCHANT

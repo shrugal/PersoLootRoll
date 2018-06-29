@@ -292,3 +292,10 @@ end
 function Self.GetBidLink(roll, player, bid)
     return ("|cff4D85E6|Hplrbid:%d:%s:%d|h[%s]|h|r"):format(roll.id, player, bid, L["ROLL_BID_" .. bid])
 end
+
+function Self.GetTooltipLink(text, title, abbr)
+    text = text:gsub(":", "@colon@")
+    title = title and title:gsub(":", "@colon@") or ""
+    abbr = abbr or Util.StrAbbr(text, 15)
+    return ("|cff4D85E6|Hplrtooltip:%s:%s|h[%s]|h|r"):format(title, text, abbr)
+end
