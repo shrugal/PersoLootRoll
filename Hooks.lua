@@ -108,9 +108,7 @@ function Self.EnableGroupLootRoll()
             if roll and roll.owner == Masterloot.GetMasterlooter() then
                 local answers = Masterloot.session["answers" .. bid]
                 if answers and #answers > 0 then
-                    local dropDown = GUI.DROPDOWN_BID_ANSWERS
-                    dropDown.roll, dropDown.bid, dropDown.answers = roll, bid, answers
-                    ToggleDropDownMenu(1, nil, GUI.DROPDOWN_BID_ANSWERS, "cursor", 3, -3)
+                    GUI.ToggleAnswersDropdown(roll, bid, answers, "TOPLEFT", self, "CENTER")
                 end
             end
         else
