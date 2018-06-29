@@ -12,6 +12,8 @@ Self.CLEAR = 600
 Self.TIMEOUT = 15
 -- Timeout increase per item
 Self.TIMEOUT_PER_ITEM = 5
+-- Max # of whispers per item for all addons in the group
+Self.MAX_WHISPERS = 2
 
 -- Status
 Self.STATUS_CANCELED = -1
@@ -125,6 +127,7 @@ function Self.Add(item, owner, timeout, ownerId, itemOwnerId)
         bids = {},
         rolls = {},
         votes = {},
+        whispers = 0,
         shown = nil,
         posted = nil,
         traded = nil
@@ -482,8 +485,9 @@ function Self:Bid(bid, fromUnit, rollOrImport)
                         if Addon.db.profile.roll and Events.lastPostedRoll == self then
                             RandomRoll("1", floor(bid) == Self.BID_GREED and "50" or "100")
                         end
-                    else
-                        Comm.RollBid(self.item.owner, self.item.link)
+                    elseif self.whispers < Self.MAX_WHISPERS and Comm.RollBid(self.item.owner, self.item.link) then
+                        self.whispers = self.whispers + 1
+                        Comm.SendData(Comm.EVENT_BID_WHISPER, {owner = Util.FullName(roll.item.owner), link = roll.item.link})
                     end
                 end
             end

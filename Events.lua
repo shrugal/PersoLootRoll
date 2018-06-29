@@ -517,6 +517,12 @@ Comm.ListenData(Comm.EVENT_BID, function (event, data, channel, sender, unit)
         roll:Bid(data.bid, fromUnit, owner ~= nil)
     end
 end)
+Comm.ListenData(Comm.EVENT_BID_WHISPER, function (event, item)
+    local roll = Roll.Find(nil, nil, item)
+    if roll then
+        roll.whispers = roll.whispers + 1
+    end
+end)
 
 -- Votes
 Comm.ListenData(Comm.EVENT_VOTE, function (event, data, channel, sender, unit)

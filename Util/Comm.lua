@@ -19,6 +19,7 @@ Self.TYPES = {Self.TYPE_GROUP, Self.TYPE_PARTY, Self.TYPE_RAID, Self.TYPE_GUILD,
 -- Addon events
 Self.EVENT_ROLL_STATUS = "STATUS"
 Self.EVENT_BID = "BID"
+Self.EVENT_BID_WHISPER = "WHISPER"
 Self.EVENT_VOTE = "VOTE"
 Self.EVENT_INTEREST = "INTEREST"
 Self.EVENT_SYNC = "SYNC"
@@ -182,12 +183,14 @@ end
 -- BID
 
 -- Send a bid to another player
-function Self.RollBid(owner, link, manually)
+function Self.RollBid(rollOrOwner, link, manually)
     if manually or Self.ShouldChat(owner) then
         Self.ChatLine("BID", owner, link or Locale.GetSelfLine('ITEM', owner))
         Addon:Info(L["BID_CHAT"]:format(Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner)))
+        return true
     else
         Addon:Info(L["BID_NO_CHAT"]:format(Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner)))
+        return false
     end
 end
 
