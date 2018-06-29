@@ -281,14 +281,13 @@ end
 
 -- Whisper
 
-function Self.CHAT_MSG_WHISPER(event, msg, sender)
+function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender)
     local unit = Unit(sender)
     if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
 
-    local answer = Addon.db.profile.answer
-    local link = Item.GetLink(msg)
-    link = link and select(2, GetItemInfo(link))
+    local answer, suppress = Addon.db.profile.answer, Addon.db.profile.suppress or nil
     local roll
+    local link = select(2, GetItemInfo(Item.GetLink(msg) or ""))
 
     if link then
         -- Get the roll by link
@@ -307,20 +306,34 @@ function Self.CHAT_MSG_WHISPER(event, msg, sender)
 
 
     if roll then
-        -- We chatted with this player after starting the roll, so it might be about something else
-        if not link and Self.lastChatted[unit] and roll.started and Self.lastChatted[unit] > roll.started then
-            if roll:CanBeAwardedTo(unit) and not roll.bids[unit] then
-                Addon:Info(L["ROLL_IGNORING_BID"]:format(Comm.GetPlayerLink(unit), roll.item.link, Comm.GetBidLink(roll, unit, Roll.BID_NEED), Comm.GetBidLink(roll, unit, Roll.BID_GREED)))
+        -- Check if we chatted since the last of our previous rolls ended (or the current one started), because then it might be about something else
+        if not link and Self.lastChatted[unit] then
+            local lastEnded = nil
+            for i,roll in pairs(Addon.rolls) do
+                if roll.status ~= roll.STATUS_RUNNING and (roll.isOwner or roll.owner == unit) then lastEnded = max(lastEnded or 0, roll.started + roll.timeout) end
             end
+            lastEnded = lastEnded or roll.started
+
+            if Self.lastChatted > lastEnded then
+                if roll:CanBeAwardedTo(unit) and not roll.bids[unit] then
+                    Addon:Info(L["ROLL_IGNORING_BID"]:format(Comm.GetPlayerLink(unit), roll.item.link, Comm.GetBidLink(roll, unit, Roll.BID_NEED), Comm.GetBidLink(roll, unit, Roll.BID_GREED)))
+                end
+                return suppress
+            end
+        end
+        
         -- The item is not tradable
-        elseif not roll.item.isTradable then
+        if not roll.item.isTradable then
             if answer then Comm.ChatLine("ROLL_ANSWER_NOT_TRADABLE", unit) end
+            return suppress
         -- I need it for myself
         elseif roll.status == Roll.STATUS_CANCELED or roll.isWinner then
             if answer then Comm.ChatLine("ROLL_ANSWER_NO_SELF", unit) end
+            return suppress
         -- Someone else won or got it
         elseif roll.winner and roll.winner ~= unit or roll.traded and roll.traded ~= unit then
             if answer then Comm.ChatLine("ROLL_ANSWER_NO_OTHER", unit) end
+            return suppress
         else
             -- The roll is scheduled or happening
             if roll:CanBeAwarded() then
@@ -332,10 +345,13 @@ function Self.CHAT_MSG_WHISPER(event, msg, sender)
                     if answer and roll:CanBeAwarded() then
                         Comm.ChatLine("ROLL_ANSWER_BID", unit, roll.item.link)
                     end
+                    
+                    return suppress
                 end
             -- He can have it
             elseif (not roll.winner or roll.winner == unit) and not roll.traded then
                 roll.winner = unit
+
                 if answer then
                     if roll.item.isOwner then
                         Comm.ChatLine("ROLL_ANSWER_YES", unit)
@@ -343,6 +359,8 @@ function Self.CHAT_MSG_WHISPER(event, msg, sender)
                         Comm.ChatLine("ROLL_ANSWER_YES_MASTERLOOT", unit, roll.item.owner)
                     end
                 end
+                
+                return suppress
             end
         end
     end
@@ -384,7 +402,7 @@ function Self.RegisterEvents()
     Addon:RegisterEvent("CHAT_MSG_PARTY_LEADER", Self.CHAT_MSG_PARTY)
     Addon:RegisterEvent("CHAT_MSG_RAID", Self.CHAT_MSG_PARTY)
     Addon:RegisterEvent("CHAT_MSG_RAID_LEADER", Self.CHAT_MSG_PARTY)
-    Addon:RegisterEvent("CHAT_MSG_WHISPER", Self.CHAT_MSG_WHISPER)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER", Self.CHAT_MSG_WHISPER_FILTER)
     Addon:RegisterEvent("CHAT_MSG_WHISPER_INFORM", Self.CHAT_MSG_WHISPER_INFORM)
 end
 
@@ -416,7 +434,7 @@ function Self.UnregisterEvents()
     Addon:UnregisterEvent("CHAT_MSG_PARTY_LEADER")
     Addon:UnregisterEvent("CHAT_MSG_RAID")
     Addon:UnregisterEvent("CHAT_MSG_RAID_LEADER")
-    Addon:UnregisterEvent("CHAT_MSG_WHISPER")
+    ChatFrame_RemoveMessageEventFilter("CHAT_MSG_WHISPER", Self.CHAT_MSG_WHISPER_FILTER)
     Addon:UnregisterEvent("CHAT_MSG_WHISPER_INFORM")
 end
 

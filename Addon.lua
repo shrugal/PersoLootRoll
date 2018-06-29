@@ -34,8 +34,15 @@ Addon.versionNoticeShown = false
 function Addon:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New(Name .. "DB", {
         profile = {
+            -- General
             enabled = true,
             ui = {showRollFrames = true, showRollsWindow = false},
+            awardSelf = false,
+            ilvlThreshold = 30,
+            ilvlThresholdTrinkets = true,
+            transmog = false,
+
+            -- Messages
             echo = Addon.ECHO_INFO,
             announce = {lfd = true, party = true, lfr = true, raid = true, guild = true},
             roll = true,
@@ -43,11 +50,11 @@ function Addon:OnInitialize()
                 group = {lfd = true, party = true, lfr = true, raid = true, guild = false},
                 target = {friend = false, guild = false, other = true}
             },
+            answer = true,
+            suppress = false,
             messages = {},
-            awardSelf = false,
-            ilvlThreshold = 30,
-            ilvlThresholdTrinkets = true,
-            transmog = false,
+
+            -- Masterloot
             masterloot = {
                 allow = {friend = true, guild = true, guildgroup = true, raidleader = false, raidassistant = false},
                 accept = {friend = false, guildmaster = false, guildofficer = false},
@@ -62,7 +69,6 @@ function Addon:OnInitialize()
                 council = {guildmaster = false, guildofficer = false, raidleader = false, raidassistant = false},
                 votePublic = false
             },
-            answer = true,
             version = 3
         },
         factionrealm = {
@@ -444,6 +450,15 @@ function Addon:RegisterOptions()
                         order = it(),
                         set = function (_, val) self.db.profile.answer = val end,
                         get = function () return self.db.profile.answer end,
+                        width = "full"
+                    },
+                    whisperSuppress = {
+                        name = L["OPT_WHISPER_SUPPRESS"],
+                        desc = L["OPT_WHISPER_SUPPRESS_DESC"],
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) self.db.profile.suppress = val end,
+                        get = function () return self.db.profile.suppress end,
                         width = "full"
                     }
                 }

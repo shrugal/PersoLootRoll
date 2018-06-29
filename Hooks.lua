@@ -208,25 +208,6 @@ function Self.DisableChatLinks()
 end
 
 -------------------------------------------------------
---             Chat message suppression              --
--------------------------------------------------------
-
-function Self.EnableChatSuppression()
-    -- Suppress messages starting with [PLR]
-    if not Addon:IsHooked("ChatFrame_OnEvent") then
-        Addon:RawHook("ChatFrame_OnEvent", function (...)
-            if not Util.StrStartsWith(arg2, Comm.PREFIX) then
-                return Addon.hooks.ChatFrame_OnEvent(...)
-            end
-        end)
-    end
-end
-
-function Self.DisableChatSuppression()
-    Addon:Unhook("ChatFrameOnEvent")
-end
-
--------------------------------------------------------
 --                    Unit menus                     --
 -------------------------------------------------------
 
