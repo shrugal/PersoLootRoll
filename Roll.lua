@@ -487,7 +487,7 @@ function Self:Bid(bid, fromUnit, rollOrImport)
                         end
                     elseif self.whispers < Self.MAX_WHISPERS and Comm.RollBid(self.item.owner, self.item.link) then
                         self.whispers = self.whispers + 1
-                        Comm.SendData(Comm.EVENT_BID_WHISPER, {owner = Util.FullName(roll.item.owner), link = roll.item.link})
+                        Comm.SendData(Comm.EVENT_BID_WHISPER, {owner = Unit.FullName(self.item.owner), link = self.item.link})
                     end
                 end
             end

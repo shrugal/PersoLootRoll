@@ -183,7 +183,7 @@ end
 -- BID
 
 -- Send a bid to another player
-function Self.RollBid(rollOrOwner, link, manually)
+function Self.RollBid(owner, link, manually)
     if manually or Self.ShouldChat(owner) then
         Self.ChatLine("BID", owner, link or Locale.GetSelfLine('ITEM', owner))
         Addon:Info(L["BID_CHAT"]:format(Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner)))
