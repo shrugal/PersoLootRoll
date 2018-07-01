@@ -102,7 +102,7 @@ function Addon:OnEnable()
     -- Enable hooks
     self.Hooks.EnableGroupLootRoll()
     self.Hooks.EnableChatLinks()
-    self.Hooks.EnableUnitMenus()
+    -- self.Hooks.EnableUnitMenus()
 
     -- Register events
     self.Events.RegisterEvents()
@@ -131,7 +131,7 @@ function Addon:OnDisable()
     -- Disable hooks
     self.Hooks.DisableGroupLootRoll()
     self.Hooks.DisableChatLinks()
-    self.Hooks.DisableUnitMenus()
+    -- self.Hooks.DisableUnitMenus()
 
     -- Unregister events
     self.Events.UnregisterEvents()
