@@ -72,6 +72,11 @@ function Self.EnableGroupLootRoll()
     -- GroupLootFrame
     local onShow = function (self)
         if Roll.IsPlrId(self.rollID) then
+            local roll = Roll.Get(self.rollID)
+            local owner = roll.item.owner
+            local color = Unit.Color(owner)
+
+            -- Player name
             self.Name:SetMaxLines(1)
             self.Name:SetHeight(15)
 
@@ -85,11 +90,23 @@ function Self.EnableGroupLootRoll()
                 self.Player = f
             end
             
-            local owner = Roll.Get(self.rollID).item.owner
-            local color = Unit.Color(owner)
             self.Player:SetText(owner)
             self.Player:SetTextColor(color.r, color.g, color.b)
             self.Player:Show()
+
+            -- Highlight
+            if not self.Highlight then
+                local f = self:CreateTexture(nil, "BACKGROUND")
+                f:SetTexture("Interface\\LootFrame\\LootToast")
+                f:SetTexCoord(0, 0.2813, 0, 0.4375)
+                f:SetPoint("TOPLEFT", -24, 23)
+                f:SetPoint("BOTTOMRIGHT", 20, -23)
+                f:SetBlendMode("ADD")
+                self.Highlight = f
+            end
+            if roll.item.isOwner then
+                self.Highlight:Show()
+            end
         end
     end
 
@@ -98,6 +115,7 @@ function Self.EnableGroupLootRoll()
             self.Name:SetMaxLines(0)
             self.Name:SetHeight(30)
             self.Player:Hide()
+            self.Highlight:Hide()
         end
     end
 
