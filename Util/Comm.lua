@@ -280,17 +280,17 @@ end
 --                       Helper                      --
 -------------------------------------------------------
 
-function Self.GetPlayerLink(player)
-    local color = Unit.Color(player)
-    return ("|c%s|Hplayer:%s|h[%s]|h|r"):format(color.colorStr, player, player)
+function Self.GetPlayerLink(unit)
+    local color = Unit.Color(unit)
+    return ("|c%s|Hplayer:%s|h[%s]|h|r"):format(color.colorStr, unit, unit)
 end
 
-function Self.GetTradeLink(player)
-    return ("|cff4D85E6|Hplrtrade:%s|h[%s]|h|r"):format(player, TRADE)
+function Self.GetTradeLink(unit)
+    return ("|cff4D85E6|Hplrtrade:%s|h[%s]|h|r"):format(unit, TRADE)
 end
 
-function Self.GetBidLink(roll, player, bid)
-    return ("|cff4D85E6|Hplrbid:%d:%s:%d|h[%s]|h|r"):format(roll.id, player, bid, L["ROLL_BID_" .. bid])
+function Self.GetBidLink(roll, unit, bid)
+    return ("|cff4D85E6|Hplrbid:%d:%s:%d|h[%s]|h|r"):format(roll.id, unit, bid, L["ROLL_BID_" .. bid])
 end
 
 function Self.GetTooltipLink(text, title, abbr)
