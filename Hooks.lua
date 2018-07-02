@@ -102,6 +102,8 @@ function Self.EnableGroupLootRoll()
                 f:SetPoint("TOPLEFT", -24, 23)
                 f:SetPoint("BOTTOMRIGHT", 20, -23)
                 f:SetBlendMode("ADD")
+                f:SetAlpha(0.7)
+                f:Hide()
                 self.Highlight = f
             end
             if roll.item.isOwner then
@@ -209,7 +211,7 @@ function Self.EnableChatLinks()
             if linkType == "plrtrade" then
                 Trade.Initiate(args)
             elseif linkType == "plrbid" then
-                local id, unit, bid = args:match("(%d+):(%a+):(%d)")
+                local id, unit, bid = args:match("(%d+):([^:]+):(%d)")
                 local roll = id and Roll.Get(tonumber(id))
                 if roll and unit and bid and roll:CanBeAwardedTo(unit) then
                     roll:Bid(tonumber(bid), unit)
