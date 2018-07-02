@@ -394,6 +394,7 @@ end
 -- Restart a roll
 function Self:Restart(started)
     self.started = nil
+    self.ended = nil
     self.bid = nil
     self.vote = nil
     self.winner = nil
@@ -604,6 +605,7 @@ function Self:End(winner)
 
         -- Update status
         self.status = Self.STATUS_DONE
+        self.ended = time()
     end
 
     -- Determine a winner
