@@ -16,5 +16,5 @@
 	<!--<Include file="AceTab-3.0\AceTab-3.0.xml"/>-->
 	<Include file="AceSerializer-3.0\AceSerializer-3.0.xml"/>
 	<Include file="LibDataBroker-1.1\LibDataBroker-1.1.lua"/>
-	<Include file="LibDBIcon-1.0\libs.xml"/>
+	<Include file="LibDBIcon-1.0\lib.xml"/>
 </Ui>

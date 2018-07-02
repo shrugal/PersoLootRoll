@@ -1,7 +1,7 @@
 ## Interface: 80000
 ## Title: PersoLootRoll
 ## Notes: A loot roll addon for personal loot.
-## Version: 7
+## Version: 8
 ## SavedVariables: PersoLootRollDB, PersoLootRollIconDB, PLR_MASTERLOOTER
 
 # Libs

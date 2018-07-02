@@ -373,7 +373,7 @@ function Self.GetInfo(link, attr)
         end
     -- From GetItemInfo()
     elseif Self.INFO.basic[attr] then
-        return select(Self.INFO.basic[attr], GetItemInfo(link))
+        return (select(Self.INFO.basic[attr], GetItemInfo(link)))
     -- From Tooltip scanning
     elseif Self.INFO.full[attr] then
         return Util.ScanTooltip(scanFn, link, nil, nil, attr)

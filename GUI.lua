@@ -5,15 +5,19 @@ local Comm, Inspect, Item, Masterloot, Roll, Trade, Unit, Util = Addon.Comm, Add
 local Self = Addon.GUI
 
 -- Row highlight frame
-local frame = CreateFrame("Frame", nil, UIParent)
-frame:SetFrameStrata("BACKGROUND")
-frame:Hide()
-local tex = frame:CreateTexture(nil, "BACKGROUND")
+Self.HIGHLIGHT = CreateFrame("Frame", nil, UIParent)
+Self.HIGHLIGHT:SetFrameStrata("BACKGROUND")
+Self.HIGHLIGHT:Hide()
+local tex = Self.HIGHLIGHT:CreateTexture(nil, "BACKGROUND")
 tex:SetTexture("Interface\\Buttons\\UI-Listbox-Highlight")
 tex:SetVertexColor(1, 1, 1, .5)
-tex:SetAllPoints(frame)
-Self.HighlightFrame = frame
-Self.HighlightFrame.HighlightTexture = tex
+tex:SetAllPoints(Self.HIGHLIGHT)
+
+-- Unit dropdown
+-- Self.DROPDOWN_UNIT = CreateFrame("FRAME", "PlrUnitDropDown", UIParent, "UIDropDownMenuTemplate")
+-- UIDropDownMenu_SetInitializeFunction(Self.DROPDOWN_UNIT, function (self, level, menuList)
+--     UnitPopup_ShowMenu(self, self.which, self.unit)
+-- end)
 
 -------------------------------------------------------
 --                  Popup dialogs                    --
@@ -57,42 +61,6 @@ StaticPopupDialogs[Self.DIALOG_MASTERLOOT_ASK] = {
     hideOnEscape = false,
     preferredIndex = 3
 }
-
--------------------------------------------------------
---                     Dropdowns                     --
--------------------------------------------------------
-
-local dropDown
-
--- Masterloot
-dropDown = CreateFrame("FRAME", "PlrMasterlootDropDown", UIParent, "UIDropDownMenuTemplate")
-UIDropDownMenu_SetInitializeFunction(dropDown, function (self, level, menuList)
-    local info = UIDropDownMenu_CreateInfo()
-    info.text, info.func = L["MENU_MASTERLOOT_START"], function () Masterloot.SetMasterlooter("player") end
-    UIDropDownMenu_AddButton(info)
-    info.text, info.func = L["MENU_MASTERLOOT_SEARCH"], function () Masterloot.SendRequest() end
-    UIDropDownMenu_AddButton(info)
-end)
-Self.DROPDOWN_MASTERLOOT = dropDown
-
--- Unit
-dropDown = CreateFrame("FRAME", "PlrUnitDropDown", UIParent, "UIDropDownMenuTemplate")
-UIDropDownMenu_SetInitializeFunction(dropDown, function (self, level, menuList)
-    UnitPopup_ShowMenu(self, self.which, self.unit)
-end)
-Self.DROPDOWN_UNIT = dropDown
-
--- Custom bid answers
-local clickFn = function (self, roll, bid) roll:Bid(bid) end
-dropDown = CreateFrame("FRAME", "PlrBidAnswersDropDown", UIParent, "UIDropDownMenuTemplate")
-UIDropDownMenu_SetInitializeFunction(dropDown, function (self, level, menuList)
-    for i,v in pairs(self.answers) do
-        local info = UIDropDownMenu_CreateInfo()
-        info.text, info.func, info.arg1, info.arg2 = Util.In(v, Roll.ANSWER_NEED, Roll.ANSWER_GREED) and L["ROLL_BID_" .. self.bid] or v, clickFn, self.roll, self.bid + i/10
-        UIDropDownMenu_AddButton(info)
-    end
-end)
-Self.DROPDOWN_BID_ANSWERS = dropDown
 
 -------------------------------------------------------
 --                 LootAlertSystem                   --
@@ -276,8 +244,8 @@ function Rolls.Show()
                     local ml = Masterloot.GetMasterlooter()
                     if ml then
                         Masterloot.SetMasterlooter(nil)
-                    else
-                        ToggleDropDownMenu(1, nil, Self.DROPDOWN_MASTERLOOT, "cursor", 3, -3)
+                    else 
+                        Self.ToggleMasterlootDropdown("TOPLEFT", self.frame, "CENTER")
                     end
                 end)
                 .SetImageSize(16, 16).SetHeight(16).SetWidth(16)
@@ -337,6 +305,15 @@ function Rolls.Show()
             .AddTo(Rolls.frames.window)
             .SetPoint("TOPRIGHT")
             .SetPoint("BOTTOMLEFT", Rolls.frames.filter.frame, "TOPLEFT", 0, 8)()
+
+        -- EMPTY MESSAGE
+
+        Rolls.frames.empty = Self("Label")
+            .SetFont(GameFontNormal:GetFont(), 14)
+            .SetColor(0.5, 0.5, 0.5)
+            .SetText("- " .. L["ROLL_LIST_EMPTY"] .. " -")
+            .AddTo(Rolls.frames.window)
+            .SetPoint("CENTER")()
 
         Rolls.Update()
     end
@@ -414,6 +391,8 @@ function Rolls.Update()
            and (Rolls.filter.traded or not roll.traded)
     end).SortBy("id")()
 
+    Self(Rolls.frames.empty).Toggle(Util.TblCount(rolls) == 0)
+
     local it = Util.Iter(#header + 1)
     for _,roll in pairs(rolls) do
         -- Create the row
@@ -474,9 +453,7 @@ function Rolls.Update()
                     elseif button == "RightButton" and roll.owner == Masterloot.GetMasterlooter() then
                         local answers = Masterloot.session["answers" .. bid]
                         if answers and #answers > 0 then
-                            local dropDown = Self.DROPDOWN_BID_ANSWERS
-                            dropDown.roll, dropDown.bid, dropDown.answers = roll, bid, answers
-                            ToggleDropDownMenu(1, nil, dropDown, "cursor", 3, -3)
+                            Self.ToggleAnswersDropdown(roll, bid, answers, "TOPLEFT", self.frame, "CENTER")
                         end
                     end
                 end 
@@ -935,6 +912,63 @@ end
 Self.Rolls = Rolls
 
 -------------------------------------------------------
+--                     Dropdowns                     --
+-------------------------------------------------------
+
+-- Masterloot
+function Self.ToggleMasterlootDropdown(...)
+    local dropdown = Self.dropdownMasterloot
+    if not dropdown then
+        dropdown = Self("Dropdown-Pullout").Hide()()
+        Self("Dropdown-Item-Execute")
+            .SetText(L["MENU_MASTERLOOT_START"])
+            .SetCallback("OnClick", function () Masterloot.SetMasterlooter("player") end)
+            .AddTo(dropdown)
+        Self("Dropdown-Item-Execute")
+            .SetText(L["MENU_MASTERLOOT_SEARCH"])
+            .SetCallback("OnClick", function () Masterloot.SendRequest() end)
+            .AddTo(dropdown)
+        Self.dropdownMasterloot = dropdown
+    end
+
+    if not dropdown:IsShown() then
+        dropdown:Open(...)
+    else
+        dropdown:Close()
+    end
+end
+
+-- Custom bid answers
+function Self.ToggleAnswersDropdown(roll, bid, answers, ...)
+    local dropdown = Self.dropdownAnswers
+    if not dropdown then
+        dropdown = AceGUI:Create("Dropdown-Pullout")
+        Self.dropdownAnswers = dropdown
+    end
+
+    if roll ~= dropdown:GetUserData("roll") or bid ~= dropdown:GetUserData("bid") then
+        Self(dropdown)
+            .Clear()
+            .SetUserData("roll", roll)
+            .SetUserData("bid", bid)
+            .Hide()
+
+        for i,v in pairs(answers) do
+            Self("Dropdown-Item-Execute")
+                .SetText(Util.In(v, Roll.ANSWER_NEED, Roll.ANSWER_GREED) and L["ROLL_BID_" .. self.bid] or v)
+                .SetCallback("OnClick", function () roll:Bid(bid + i/10) end)
+                .AddTo(dropdown)
+        end
+    end
+
+    if not dropdown:IsShown() then
+        dropdown:Open(...)
+    else
+        dropdown:Close()
+    end
+end
+
+-------------------------------------------------------
 --                      Helper                       --
 -------------------------------------------------------
 
@@ -1035,10 +1069,10 @@ function Self.UnitClick(self, event, button)
         if button == "LeftButton" then
             ChatFrame_SendSmartTell(unit)
         elseif button == "RightButton" then
-            local dropDown = Self.DROPDOWN_UNIT
-            dropDown.which = UnitIsUnit(unit, "player") and "SELF" or UnitInRaid(unit) and "RAID_PLAYER" or UnitInParty(unit) and "PARTY" or "PLAYER"
-            dropDown.unit = unit
-            ToggleDropDownMenu(1, nil, dropDown, "cursor", 3, -3)
+            -- local dropDown = Self.DROPDOWN_UNIT
+            -- dropDown.which = UnitIsUnit(unit, "player") and "SELF" or UnitInRaid(unit) and "RAID_PLAYER" or UnitInParty(unit) and "PARTY" or "PLAYER"
+            -- dropDown.unit = unit
+            -- ToggleDropDownMenu(1, nil, dropDown, "cursor", 3, -3)
         end
     end
 end
@@ -1072,9 +1106,9 @@ function Self.TableRowHighlight(parent, skip)
                     isOver = false
                     self:SetScript("OnUpdate", nil)
                     
-                    if Self.HighlightFrame:GetParent() == self then
-                        Self.HighlightFrame:SetParent(UIParent)
-                        Self.HighlightFrame:Hide()
+                    if Self.HIGHLIGHT:GetParent() == self then
+                        Self.HIGHLIGHT:SetParent(UIParent)
+                        Self.HIGHLIGHT:Hide()
                     end
                 else
                     local cY = select(2, GetCursorPosition()) / UIParent:GetEffectiveScale()
@@ -1090,14 +1124,14 @@ function Self.TableRowHighlight(parent, skip)
                     end
                     
                     if top and bottom then
-                        Self(Self.HighlightFrame)
+                        Self(Self.HIGHLIGHT)
                             .SetParent(self)
                             .SetPoint("LEFT").SetPoint("RIGHT")
                             .SetPoint("TOP", 0, top - frameTop)
                             .SetHeight(top - bottom)
                             .Show()
                     else
-                        Self.HighlightFrame:Hide()
+                        Self.HIGHLIGHT:Hide()
                     end
                 end
             end)
@@ -1350,7 +1384,11 @@ local Fn = function (...)
     local c, k, f = Self.C, rawget(Self.C, "k"), rawget(Self.C, "f")
     if k == "AddTo" then
         local parent, beforeWidget = ...
-        parent:AddChild(f, beforeWidget)
+        if parent.type == "Dropdown-Pullout" then
+            parent:AddItem(f)
+        else
+            parent:AddChild(f, beforeWidget)
+        end
     else
         if k == "Toggle" then
             k = (...) and "Show" or "Hide"

@@ -858,6 +858,10 @@ function Self.StrIsNumber(str, leadingZero)
     return tonumber(str) and (leadingZero or not Self.StrStartsWith(str, "0"))
 end
 
+function Self.StrAbbr(str, length)
+    return str:len() <= length and str or str:sub(1, length) .. "..."
+end
+
 -------------------------------------------------------
 --                       Number                      --
 -------------------------------------------------------

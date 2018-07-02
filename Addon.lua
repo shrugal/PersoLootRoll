@@ -34,8 +34,15 @@ Addon.versionNoticeShown = false
 function Addon:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New(Name .. "DB", {
         profile = {
+            -- General
             enabled = true,
             ui = {showRollFrames = true, showRollsWindow = false},
+            awardSelf = false,
+            ilvlThreshold = 30,
+            ilvlThresholdTrinkets = true,
+            transmog = false,
+
+            -- Messages
             echo = Addon.ECHO_INFO,
             announce = {lfd = true, party = true, lfr = true, raid = true, guild = true},
             roll = true,
@@ -43,11 +50,11 @@ function Addon:OnInitialize()
                 group = {lfd = true, party = true, lfr = true, raid = true, guild = false},
                 target = {friend = false, guild = false, other = true}
             },
+            answer = true,
+            suppress = false,
             messages = {},
-            awardSelf = false,
-            ilvlThreshold = 30,
-            ilvlThresholdTrinkets = true,
-            transmog = false,
+
+            -- Masterloot
             masterloot = {
                 allow = {friend = true, guild = true, guildgroup = true, raidleader = false, raidassistant = false},
                 accept = {friend = false, guildmaster = false, guildofficer = false},
@@ -62,7 +69,6 @@ function Addon:OnInitialize()
                 council = {guildmaster = false, guildofficer = false, raidleader = false, raidassistant = false},
                 votePublic = false
             },
-            answer = true,
             version = 3
         },
         factionrealm = {
@@ -96,7 +102,7 @@ function Addon:OnEnable()
     -- Enable hooks
     self.Hooks.EnableGroupLootRoll()
     self.Hooks.EnableChatLinks()
-    self.Hooks.EnableUnitMenus()
+    -- self.Hooks.EnableUnitMenus()
 
     -- Register events
     self.Events.RegisterEvents()
@@ -125,7 +131,7 @@ function Addon:OnDisable()
     -- Disable hooks
     self.Hooks.DisableGroupLootRoll()
     self.Hooks.DisableChatLinks()
-    self.Hooks.DisableUnitMenus()
+    -- self.Hooks.DisableUnitMenus()
 
     -- Unregister events
     self.Events.UnregisterEvents()
@@ -234,10 +240,12 @@ end
 function Addon:RegisterOptions()
     local config = LibStub("AceConfig-3.0")
     local dialog = LibStub("AceConfigDialog-3.0")
+    local it = Util.Iter()
 
     -- GENERAL
 
-    local it = Util.Iter()
+    local specs
+
     config:RegisterOptionsTable(Name, {
         type = "group",
         args = {
@@ -247,7 +255,6 @@ function Addon:RegisterOptions()
             enable = {
                 name = L["OPT_ENABLE"],
                 desc = L["OPT_ENABLE_DESC"],
-                descStyle = "inline",
                 type = "toggle",
                 order = it(),
                 set = function (_, val)
@@ -262,7 +269,6 @@ function Addon:RegisterOptions()
             minimapIcon = {
                 name = L["OPT_MINIMAP_ICON"],
                 desc = L["OPT_MINIMAP_ICON_DESC"],
-                descStyle = "inline",
                 type = "toggle",
                 order = it(),
                 set = function (_, val)
@@ -279,7 +285,6 @@ function Addon:RegisterOptions()
             showRollFrames = {
                 name = L["OPT_ROLL_FRAMES"],
                 desc = L["OPT_ROLL_FRAMES_DESC"],
-                descStyle = "inline",
                 type = "toggle",
                 order = it(),
                 set = function (_, val) self.db.profile.ui.showRollFrames = val end,
@@ -289,36 +294,22 @@ function Addon:RegisterOptions()
             showRollsWindow = {
                 name = L["OPT_ROLLS_WINDOW"],
                 desc = L["OPT_ROLLS_WINDOW_DESC"],
-                descStyle = "inline",
                 type = "toggle",
                 order = it(),
                 set = function (_, val) self.db.profile.ui.showRollsWindow = val end,
                 get = function (_) return self.db.profile.ui.showRollsWindow end,
                 width = "full"
             },
-        }
-    })
-    self.configFrame = dialog:AddToBlizOptions(Name)
-
-    -- LOOT RULES
-
-    local specs
-
-    it(1, true)
-    config:RegisterOptionsTable(Name .. "_lootmethod", {
-        name = L["OPT_LOOT_RULES"],
-        type = "group",
-        args = {
             awardSelf = {
                 name = L["OPT_AWARD_SELF"],
                 desc = L["OPT_AWARD_SELF_DESC"] .. "\n",
-                descStyle = "inline",
                 type = "toggle",
                 order = it(),
                 set = function (_, val) self.db.profile.awardSelf = val end,
                 get = function () return self.db.profile.awardSelf end,
                 width = "full"
             },
+            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             itemFilter = {type = "header", order = it(), name = L["OPT_ITEM_FILTER"]},
             itemFilterDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_ITEM_FILTER_DESC"] .. "\n"},
             ilvlThreshold = {
@@ -365,7 +356,6 @@ function Addon:RegisterOptions()
             transmog = {
                 name = L["OPT_TRANSMOG"],
                 desc = L["OPT_TRANSMOG_DESC"],
-                descStyle = "inline",
                 type = "toggle",
                 order = it(),
                 set = function (_, val) self.db.profile.transmog = val end,
@@ -374,7 +364,130 @@ function Addon:RegisterOptions()
             }
         }
     })
-    dialog:AddToBlizOptions(Name .. "_lootmethod", L["OPT_LOOT_RULES"], Name)
+    self.configFrame = dialog:AddToBlizOptions(Name)
+
+    -- MESSAGES
+
+    local groupKeys = {"party", "raid", "guild", "lfd", "lfr"}
+    local groupValues = {PARTY, RAID, GUILD_GROUP, LOOKING_FOR_DUNGEON_PVEFRAME, RAID_FINDER_PVEFRAME}
+
+    local lang = Locale.GetLanguage()
+
+    it(1, true)
+    config:RegisterOptionsTable(Name .. "_messages", {
+        name = L["OPT_MESSAGES"],
+        type = "group",
+        childGroups = "tab",
+        args = {
+            -- Chat
+            echo = {
+                name = L["OPT_ECHO"],
+                desc = L["OPT_ECHO_DESC"],
+                type = "select",
+                order = it(),
+                values = {
+                    [Addon.ECHO_NONE] = L["OPT_ECHO_NONE"],
+                    [Addon.ECHO_ERROR] = L["OPT_ECHO_ERROR"],
+                    [Addon.ECHO_INFO] = L["OPT_ECHO_INFO"],
+                    [Addon.ECHO_VERBOSE] = L["OPT_ECHO_VERBOSE"],
+                    [Addon.ECHO_DEBUG] = L["OPT_ECHO_DEBUG"]
+                },
+                set = function (info, val) self.db.profile.echo = val end,
+                get = function () return self.db.profile.echo end
+            },
+            shouldChat = {
+                name = L["OPT_SHOULD_CHAT"],
+                type = "group",
+                order = it(),
+                args = {
+                    ShouldChatDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_SHOULD_CHAT_DESC"] .. "\n"},
+                    groupchat = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
+                    groupchatAnnounce = {
+                        name = L["OPT_GROUPCHAT_ANNOUNCE"],
+                        desc = L["OPT_GROUPCHAT_ANNOUNCE_DESC"],
+                        type = "multiselect",
+                        order = it(),
+                        values = groupValues,
+                        set = function (_, key, val) self.db.profile.announce[groupKeys[key]] = val end,
+                        get = function (_, key) return self.db.profile.announce[groupKeys[key]] end,
+                    },
+                    groupchatRoll = {
+                        name = L["OPT_GROUPCHAT_ROLL"],
+                        desc = L["OPT_GROUPCHAT_ROLL_DESC"],
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) self.db.profile.roll = val end,
+                        get = function () return self.db.profile.roll end,
+                        width = "full"
+                    },
+                    whisper = {type = "header", order = it(), name = L["OPT_WHISPER"]},
+                    whisperGroup = {
+                        name = L["OPT_WHISPER_GROUP"],
+                        desc = L["OPT_WHISPER_GROUP_DESC"],
+                        type = "multiselect",
+                        order = it(),
+                        values = groupValues,
+                        set = function (_, key, val) self.db.profile.whisper.group[groupKeys[key]] = val end,
+                        get = function (_, key) return self.db.profile.whisper.group[groupKeys[key]] end
+                    },
+                    whisperTarget = {
+                        name = L["OPT_WHISPER_TARGET"],
+                        desc = L["OPT_WHISPER_TARGET_DESC"],
+                        type = "multiselect",
+                        order = it(),
+                        values = {
+                            friend = FRIEND,
+                            guild = GUILD,
+                            other = OTHER
+                        },
+                        set = function (_, key, val) self.db.profile.whisper.target[key] = val end,
+                        get = function (_, key) return self.db.profile.whisper.target[key] end
+                    },
+                    whisperAnswer = {
+                        name = L["OPT_WHISPER_ANSWER"],
+                        desc = L["OPT_WHISPER_ANSWER_DESC"],
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) self.db.profile.answer = val end,
+                        get = function () return self.db.profile.answer end,
+                        width = "full"
+                    },
+                    whisperSuppress = {
+                        name = L["OPT_WHISPER_SUPPRESS"],
+                        desc = L["OPT_WHISPER_SUPPRESS_DESC"],
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) self.db.profile.suppress = val end,
+                        get = function () return self.db.profile.suppress end,
+                        width = "full"
+                    }
+                }
+            },
+            customMessages = {
+                name = L["OPT_CUSTOM_MESSAGES"],
+                type = "group",
+                order = it(),
+                childGroups = "select",
+                args = {
+                    desc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_CUSTOM_MESSAGES_DESC"] .. "\n"},
+                    localized = {
+                        name = L["OPT_CUSTOM_MESSAGES_LOCALIZED"]:format(lang),
+                        type = "group",
+                        order = it(),
+                        hidden = Locale.GetLanguage() == Locale.DEFAULT,
+                        args = Addon:GetCustomMessageOptions(false)
+                    },
+                    default = {
+                        name = L["OPT_CUSTOM_MESSAGES_DEFAULT"]:format(Locale.DEFAULT),
+                        type = "group",
+                        order = it(),
+                        args = Addon:GetCustomMessageOptions(true)
+                    }
+                }
+            }
+        }
+    })
+    dialog:AddToBlizOptions(Name .. "_messages", L["OPT_MESSAGES"], Name)
     
     -- MASTERLOOT
 
@@ -638,123 +751,6 @@ function Addon:RegisterOptions()
     })
     dialog:AddToBlizOptions(Name .. "_masterloot", L["OPT_MASTERLOOT"], Name)
 
-    -- MESSAGES
-
-    local groupKeys = {"party", "raid", "guild", "lfd", "lfr"}
-    local groupValues = {PARTY, RAID, GUILD_GROUP, LOOKING_FOR_DUNGEON_PVEFRAME, RAID_FINDER_PVEFRAME}
-
-    local lang = Locale.GetLanguage()
-
-    it(1, true)
-    config:RegisterOptionsTable(Name .. "_messages", {
-        name = L["OPT_MESSAGES"],
-        type = "group",
-        childGroups = "tab",
-        args = {
-            -- Chat
-            echo = {
-                name = L["OPT_ECHO"],
-                desc = L["OPT_ECHO_DESC"],
-                type = "select",
-                order = it(),
-                values = {
-                    [Addon.ECHO_NONE] = L["OPT_ECHO_NONE"],
-                    [Addon.ECHO_ERROR] = L["OPT_ECHO_ERROR"],
-                    [Addon.ECHO_INFO] = L["OPT_ECHO_INFO"],
-                    [Addon.ECHO_VERBOSE] = L["OPT_ECHO_VERBOSE"],
-                    [Addon.ECHO_DEBUG] = L["OPT_ECHO_DEBUG"]
-                },
-                set = function (info, val) self.db.profile.echo = val end,
-                get = function () return self.db.profile.echo end
-            },
-            shouldChat = {
-                name = L["OPT_SHOULD_CHAT"],
-                type = "group",
-                order = it(),
-                args = {
-                    groupchat = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
-                    groupchatDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_GROUPCHAT_DESC"] .. "\n"},
-                    groupchatAnnounce = {
-                        name = L["OPT_GROUPCHAT_ANNOUNCE"],
-                        desc = L["OPT_GROUPCHAT_ANNOUNCE_DESC"],
-                        type = "multiselect",
-                        order = it(),
-                        values = groupValues,
-                        set = function (_, key, val) self.db.profile.announce[groupKeys[key]] = val end,
-                        get = function (_, key) return self.db.profile.announce[groupKeys[key]] end,
-                    },
-                    groupchatRoll = {
-                        name = L["OPT_GROUPCHAT_ROLL"],
-                        desc = L["OPT_GROUPCHAT_ROLL_DESC"],
-                        descStyle = "inline",
-                        type = "toggle",
-                        order = it(),
-                        set = function (_, val) self.db.profile.roll = val end,
-                        get = function () return self.db.profile.roll end,
-                        width = "full"
-                    },
-                    whisper = {type = "header", order = it(), name = L["OPT_WHISPER"]},
-                    whisperDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_WHISPER_DESC"] .. "\n"},
-                    whisperGroup = {
-                        name = L["OPT_WHISPER_GROUP"],
-                        desc = L["OPT_WHISPER_GROUP_DESC"],
-                        type = "multiselect",
-                        order = it(),
-                        values = groupValues,
-                        set = function (_, key, val) self.db.profile.whisper.group[groupKeys[key]] = val end,
-                        get = function (_, key) return self.db.profile.whisper.group[groupKeys[key]] end
-                    },
-                    whisperTarget = {
-                        name = L["OPT_WHISPER_TARGET"],
-                        desc = L["OPT_WHISPER_TARGET_DESC"],
-                        type = "multiselect",
-                        order = it(),
-                        values = {
-                            friend = FRIEND,
-                            guild = GUILD,
-                            other = OTHER
-                        },
-                        set = function (_, key, val) self.db.profile.whisper.target[key] = val end,
-                        get = function (_, key) return self.db.profile.whisper.target[key] end
-                    },
-                    whisperAnswer = {
-                        name = L["OPT_WHISPER_ANSWER"],
-                        desc = L["OPT_WHISPER_ANSWER_DESC"],
-                        descStyle = "inline",
-                        type = "toggle",
-                        order = it(),
-                        set = function (_, val) self.db.profile.answer = val end,
-                        get = function () return self.db.profile.answer end,
-                        width = "full"
-                    }
-                }
-            },
-            customMessages = {
-                name = L["OPT_CUSTOM_MESSAGES"],
-                type = "group",
-                order = it(),
-                childGroups = "select",
-                args = {
-                    desc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_CUSTOM_MESSAGES_DESC"] .. "\n"},
-                    localized = {
-                        name = L["OPT_CUSTOM_MESSAGES_LOCALIZED"]:format(lang),
-                        type = "group",
-                        order = it(),
-                        hidden = Locale.GetLanguage() == Locale.DEFAULT,
-                        args = Addon:GetCustomMessageOptions(false)
-                    },
-                    default = {
-                        name = L["OPT_CUSTOM_MESSAGES_DEFAULT"]:format(Locale.DEFAULT),
-                        type = "group",
-                        order = it(),
-                        args = Addon:GetCustomMessageOptions(true)
-                    }
-                }
-            }
-        }
-    })
-    dialog:AddToBlizOptions(Name .. "_messages", L["OPT_MESSAGES"], Name)
-
     -- PROFILES
 
     config:RegisterOptionsTable(Name .. "_profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db))
@@ -789,7 +785,7 @@ function Addon:GetCustomMessageOptions(isDefault)
         groupchat = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
     }
 
-    for i,line in pairs({"ROLL_START", "ROLL_START_MASTERLOOT", "ROLL_WINNER", "ROLL_WINNER_MASTERLOOT", "whisper", "ROLL_WINNER_WHISPER", "ROLL_WINNER_WHISPER_MASTERLOOT", "ROLL_ANSWER_BID", "ROLL_ANSWER_YES", "ROLL_ANSWER_YES_MASTERLOOT", "ROLL_ANSWER_NO_SELF", "ROLL_ANSWER_NO_OTHER", "ROLL_ANSWER_NOT_TRADABLE", "ROLL_ANSWER_AMBIGUOUS"}) do
+    for i,line in pairs({"ROLL_START", "ROLL_START_MASTERLOOT", "ROLL_WINNER", "ROLL_WINNER_MASTERLOOT", "whisper", "BID", "ROLL_WINNER_WHISPER", "ROLL_WINNER_WHISPER_MASTERLOOT", "ROLL_ANSWER_BID", "ROLL_ANSWER_YES", "ROLL_ANSWER_YES_MASTERLOOT", "ROLL_ANSWER_NO_SELF", "ROLL_ANSWER_NO_OTHER", "ROLL_ANSWER_NOT_TRADABLE", "ROLL_ANSWER_AMBIGUOUS"}) do
         if line == "whisper" then
             t[line] = {type = "header", order = it(), name = L["OPT_WHISPER"]}
         else
@@ -876,8 +872,7 @@ end
 
 -- Check if we should currently track loot etc.
 function Addon:IsTracking()
-    local methods = {freeforall = true, roundrobin = true, personalloot = true}
-    return self.db.profile.enabled and IsInGroup() and methods[GetLootMethod()]
+    return self.db.profile.enabled and IsInGroup() and Util.In(GetLootMethod(), "freeforall", "roundrobin", "personalloot", "group")
 end
 
 function Addon:SetVersion(unit, version)

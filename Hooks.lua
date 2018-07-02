@@ -72,6 +72,11 @@ function Self.EnableGroupLootRoll()
     -- GroupLootFrame
     local onShow = function (self)
         if Roll.IsPlrId(self.rollID) then
+            local roll = Roll.Get(self.rollID)
+            local owner = roll.item.owner
+            local color = Unit.Color(owner)
+
+            -- Player name
             self.Name:SetMaxLines(1)
             self.Name:SetHeight(15)
 
@@ -85,11 +90,25 @@ function Self.EnableGroupLootRoll()
                 self.Player = f
             end
             
-            local owner = Roll.Get(self.rollID).item.owner
-            local color = Unit.Color(owner)
             self.Player:SetText(owner)
             self.Player:SetTextColor(color.r, color.g, color.b)
             self.Player:Show()
+
+            -- Highlight
+            if not self.Highlight then
+                local f = self:CreateTexture(nil, "BACKGROUND")
+                f:SetTexture("Interface\\LootFrame\\LootToast")
+                f:SetTexCoord(0, 0.2813, 0, 0.4375)
+                f:SetPoint("TOPLEFT", -24, 23)
+                f:SetPoint("BOTTOMRIGHT", 20, -23)
+                f:SetBlendMode("ADD")
+                f:SetAlpha(0.7)
+                f:Hide()
+                self.Highlight = f
+            end
+            if roll.item.isOwner then
+                self.Highlight:Show()
+            end
         end
     end
 
@@ -98,6 +117,7 @@ function Self.EnableGroupLootRoll()
             self.Name:SetMaxLines(0)
             self.Name:SetHeight(30)
             self.Player:Hide()
+            self.Highlight:Hide()
         end
     end
 
@@ -108,9 +128,7 @@ function Self.EnableGroupLootRoll()
             if roll and roll.owner == Masterloot.GetMasterlooter() then
                 local answers = Masterloot.session["answers" .. bid]
                 if answers and #answers > 0 then
-                    local dropDown = GUI.DROPDOWN_BID_ANSWERS
-                    dropDown.roll, dropDown.bid, dropDown.answers = roll, bid, answers
-                    ToggleDropDownMenu(1, nil, GUI.DROPDOWN_BID_ANSWERS, "cursor", 3, -3)
+                    GUI.ToggleAnswersDropdown(roll, bid, answers, "TOPLEFT", self, "CENTER")
                 end
             end
         else
@@ -183,7 +201,9 @@ end
 -------------------------------------------------------
 
 function Self.EnableChatLinks()
-    -- Suppress messages starting with [PLR]
+
+    -- CLICK
+
     if not Addon:IsHooked("SetItemRef") then
         Addon:RawHook("SetItemRef", function (link, text, button, frame)
             local linkType, args = link:match("^([^:]+):(.*)$")
@@ -191,7 +211,7 @@ function Self.EnableChatLinks()
             if linkType == "plrtrade" then
                 Trade.Initiate(args)
             elseif linkType == "plrbid" then
-                local id, unit, bid = args:match("(%d+):(%a+):(%d)")
+                local id, unit, bid = args:match("(%d+):([^:]+):(%d)")
                 local roll = id and Roll.Get(tonumber(id))
                 if roll and unit and bid and roll:CanBeAwardedTo(unit) then
                     roll:Bid(tonumber(bid), unit)
@@ -201,29 +221,35 @@ function Self.EnableChatLinks()
             end
         end, true)
     end
+
+    -- HOVER
+
+    local onHyperlinkEnter = function (self, link)
+        local linkType, args = link:match("^([^:]+):(.*)$")
+        if linkType == "plrtooltip" then
+            local title, text = string.split(":", args)
+            GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+            GameTooltip:ClearLines()
+            if not Util.StrIsEmpty(title) then
+                GameTooltip:AddLine(title:gsub("@colon@", ":"), 1, .82, 0)
+            end
+            GameTooltip:AddLine(text:gsub("@colon@", ":"), 1, 1, 1, true)
+            GameTooltip:Show()
+        end
+    end
+    local onHyperlinkLeave = function () GameTooltip:Hide() end
+
+    for i=1,NUM_CHAT_WINDOWS do
+        local frame = _G["ChatFrame" .. i]
+        if frame and not Addon:IsHooked(frame, "OnHyperlinkEnter") then
+            Addon:SecureHookScript(frame, "OnHyperlinkEnter", onHyperlinkEnter)
+            Addon:SecureHookScript(frame, "OnHyperlinkLeave", onHyperlinkLeave)
+        end
+    end
 end
 
 function Self.DisableChatLinks()
     Addon:Unhook("SetItemRef")
-end
-
--------------------------------------------------------
---             Chat message suppression              --
--------------------------------------------------------
-
-function Self.EnableChatSuppression()
-    -- Suppress messages starting with [PLR]
-    if not Addon:IsHooked("ChatFrame_OnEvent") then
-        Addon:RawHook("ChatFrame_OnEvent", function (...)
-            if not Util.StrStartsWith(arg2, Comm.PREFIX) then
-                return Addon.hooks.ChatFrame_OnEvent(...)
-            end
-        end)
-    end
-end
-
-function Self.DisableChatSuppression()
-    Addon:Unhook("ChatFrameOnEvent")
 end
 
 -------------------------------------------------------

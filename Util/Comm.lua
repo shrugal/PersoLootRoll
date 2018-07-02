@@ -19,6 +19,7 @@ Self.TYPES = {Self.TYPE_GROUP, Self.TYPE_PARTY, Self.TYPE_RAID, Self.TYPE_GUILD,
 -- Addon events
 Self.EVENT_ROLL_STATUS = "STATUS"
 Self.EVENT_BID = "BID"
+Self.EVENT_BID_WHISPER = "WHISPER"
 Self.EVENT_VOTE = "VOTE"
 Self.EVENT_INTEREST = "INTEREST"
 Self.EVENT_SYNC = "SYNC"
@@ -190,8 +191,10 @@ function Self.RollBid(owner, link, manually)
     if manually or Self.ShouldChat(owner) then
         Self.ChatLine("BID", owner, link or Locale.GetSelfLine('ITEM', owner))
         Addon:Info(L["BID_CHAT"]:format(Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner)))
+        return true
     else
         Addon:Info(L["BID_NO_CHAT"]:format(Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner)))
+        return false
     end
 end
 
@@ -281,15 +284,22 @@ end
 --                       Helper                      --
 -------------------------------------------------------
 
-function Self.GetPlayerLink(player)
-    local color = Unit.Color(player)
-    return ("|c%s|Hplayer:%s|h[%s]|h|r"):format(color.colorStr, player, player)
+function Self.GetPlayerLink(unit)
+    local color = Unit.Color(unit)
+    return ("|c%s|Hplayer:%s|h[%s]|h|r"):format(color.colorStr, unit, unit)
 end
 
-function Self.GetTradeLink(player)
-    return ("|cff4D85E6|Hplrtrade:%s|h[%s]|h|r"):format(player, TRADE)
+function Self.GetTradeLink(unit)
+    return ("|cff4D85E6|Hplrtrade:%s|h[%s]|h|r"):format(unit, TRADE)
 end
 
-function Self.GetBidLink(roll, player, bid)
-    return ("|cff4D85E6|Hplrbid:%d:%s:%d|h[%s]|h|r"):format(roll.id, player, bid, L["ROLL_BID_" .. bid])
+function Self.GetBidLink(roll, unit, bid)
+    return ("|cff4D85E6|Hplrbid:%d:%s:%d|h[%s]|h|r"):format(roll.id, unit, bid, L["ROLL_BID_" .. bid])
+end
+
+function Self.GetTooltipLink(text, title, abbr)
+    text = text:gsub(":", "@colon@")
+    title = title and title:gsub(":", "@colon@") or ""
+    abbr = abbr or Util.StrAbbr(text, 15)
+    return ("|cff4D85E6|Hplrtooltip:%s:%s|h[%s]|h|r"):format(title, text, abbr)
 end
