@@ -227,11 +227,11 @@ Self[Item.TRINKET_TANK] = {
     [140806] = true, -- Convergence of Fates
     [140790] = true, -- Claw of the Crystalline Scorpid
     [142508] = true, -- Chains of the Valorous
-    [139329] = true, -- Bloodthirsty Instinct
     [142159] = true, -- Bloodstained Handkerchief
     [140794] = true, -- Arcanogolem Digit
     [154173] = true, -- Aggramar's Conviction
     [142169] = true, -- Raven Eidolon
+    [151978] = true, -- Smoldering Titanguard
 }
 
 Addon.Item.TRINKETS = Self
