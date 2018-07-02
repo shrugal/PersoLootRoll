@@ -14,10 +14,10 @@ tex:SetVertexColor(1, 1, 1, .5)
 tex:SetAllPoints(Self.HIGHLIGHT)
 
 -- Unit dropdown
-Self.DROPDOWN_UNIT = CreateFrame("FRAME", "PlrUnitDropDown", UIParent, "UIDropDownMenuTemplate")
-UIDropDownMenu_SetInitializeFunction(Self.DROPDOWN_UNIT, function (self, level, menuList)
-    UnitPopup_ShowMenu(self, self.which, self.unit)
-end)
+-- Self.DROPDOWN_UNIT = CreateFrame("FRAME", "PlrUnitDropDown", UIParent, "UIDropDownMenuTemplate")
+-- UIDropDownMenu_SetInitializeFunction(Self.DROPDOWN_UNIT, function (self, level, menuList)
+--     UnitPopup_ShowMenu(self, self.which, self.unit)
+-- end)
 
 -------------------------------------------------------
 --                  Popup dialogs                    --
@@ -1069,10 +1069,10 @@ function Self.UnitClick(self, event, button)
         if button == "LeftButton" then
             ChatFrame_SendSmartTell(unit)
         elseif button == "RightButton" then
-            local dropDown = Self.DROPDOWN_UNIT
-            dropDown.which = UnitIsUnit(unit, "player") and "SELF" or UnitInRaid(unit) and "RAID_PLAYER" or UnitInParty(unit) and "PARTY" or "PLAYER"
-            dropDown.unit = unit
-            ToggleDropDownMenu(1, nil, dropDown, "cursor", 3, -3)
+            -- local dropDown = Self.DROPDOWN_UNIT
+            -- dropDown.which = UnitIsUnit(unit, "player") and "SELF" or UnitInRaid(unit) and "RAID_PLAYER" or UnitInParty(unit) and "PARTY" or "PLAYER"
+            -- dropDown.unit = unit
+            -- ToggleDropDownMenu(1, nil, dropDown, "cursor", 3, -3)
         end
     end
 end
