@@ -5,6 +5,7 @@ local Comm, Inspect, Item, Masterloot, Roll, Trade, Unit, Util = Addon.Comm, Add
 local Self = Addon.GUI
 
 Self.Rolls = {}
+Self.Actions = {}
 
 -- Row highlight frame
 Self.HIGHLIGHT = CreateFrame("Frame", nil, UIParent)
@@ -149,6 +150,51 @@ end
 --                      Helper                       --
 -------------------------------------------------------
 
+function Self.CreateItemLabel(parent)
+    local f = Self("InteractiveLabel")
+        .SetFontObject(GameFontNormal)
+        .SetCallback("OnEnter", Self.TooltipItemLink)
+        .SetCallback("OnLeave", Self.TooltipHide)
+        .SetCallback("OnClick", Self.ItemClick)
+        .AddTo(parent)()
+
+    -- Fix the stupid label anchors
+    local methods = Util.TblFlip(Util.Tbl(1, "OnWidthSet", 2, "SetText", 3, "SetImage", 4, "SetImageSize"), function (v) return f[v] end)
+    for name,fn in pairs(methods) do
+        f[name] = function (self, ...)
+            fn(self, ...)
+
+            if self.imageshown then
+                local width, imagewidth = self.frame.width or self.frame:GetWidth() or 0, self.image:GetWidth()
+                
+                self.label:ClearAllPoints()
+                self.image:ClearAllPoints()
+                
+                self.image:SetPoint("TOPLEFT")
+                if self.image:GetHeight() > self.label:GetHeight() then
+                    self.label:SetPoint("LEFT", self.image, "RIGHT", 4, 0)
+                else
+                    self.label:SetPoint("TOPLEFT", self.image, "TOPRIGHT", 4, 0)
+                end
+                self.label:SetWidth(width - imagewidth - 4)
+                
+                local height = max(self.image:GetHeight(), self.label:GetHeight())
+                self.resizing = true
+                self.frame:SetHeight(height)
+                self.frame.height = height
+                self.resizing = nil
+            end
+        end
+    end
+    f.OnRelease = function (self)
+        for name,fn in pairs(methods) do f[name] = fn end
+        f.OnRelease = nil
+        Util.TblRelease(methods)
+    end
+
+    return f
+end
+
 -- Create an icon button
 function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
     f = Self("Icon")
@@ -237,6 +283,22 @@ function Self.ItemClick(self)
     end
 end
 
+-- Get the color for a bid
+function Self.GetBidColor(bid)
+    if not bid then
+        return 1, 1, 1
+    elseif bid == Roll.BID_PASS then
+        return .5, .5, .5
+    else
+        local bid, i = floor(bid), 10*bid - 10*floor(bid)
+        if bid == Roll.BID_NEED then
+            return 0, max(.2, min(1, 1 - .2 * (i - 5))), max(0, min(1, .2 * i))
+        elseif bid == Roll.BID_GREED then
+            return 1, max(0, min(1, 1 - .1 * i)), 0
+        end
+    end
+end
+
 -- Add row-highlighting to a table
 function Self.TableRowHighlight(parent, skip)
     skip = skip or 0
@@ -284,22 +346,6 @@ function Self.TableRowHighlight(parent, skip)
         end
         isOver = true
     end)
-end
-
--- Get the color for a bid
-function Self.GetBidColor(bid)
-    if not bid then
-        return 1, 1, 1
-    elseif bid == Roll.BID_PASS then
-        return .5, .5, .5
-    else
-        local bid, i = floor(bid), 10*bid - 10*floor(bid)
-        if bid == Roll.BID_NEED then
-            return 0, max(.2, min(1, 1 - .2 * (i - 5))), max(0, min(1, .2 * i))
-        elseif bid == Roll.BID_GREED then
-            return 1, max(0, min(1, 1 - .1 * i)), 0
-        end
-    end
 end
 
 -------------------------------------------------------
@@ -514,13 +560,14 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
         end
     end
 
-    -- Calculate total height
+    -- Calculate total width and height
+    local totalH = GetCellDimension("H", laneH, 1, #laneH, spaceH)
     local totalV = GetCellDimension("V", laneV, 1, #laneV, spaceV)
     
     -- Cleanup
     for _,v in pairs(layoutCache) do wipe(v) end
 
-    Util.Safecall(obj.LayoutFinished, obj, nil, totalV)
+    Util.Safecall(obj.LayoutFinished, obj, totalH, totalV)
     obj:ResumeLayout()
 end)
 
@@ -532,6 +579,8 @@ local Fn = function (...)
         local parent, beforeWidget = ...
         if parent.type == "Dropdown-Pullout" then
             parent:AddItem(f)
+        elseif not parent.children or beforeWidget == false then
+            (f.frame or f):SetParent(parent.frame or parent)
         else
             parent:AddChild(f, beforeWidget)
         end
@@ -548,7 +597,8 @@ local Fn = function (...)
 
         -- Fix Label's stupid image anchoring
         if (k == "SetText" or k == "SetFontObject" or k == "SetImage") and (obj.type == "Label" or obj.type == "InteractiveLabel") then
-            obj:SetWidth(max(obj.imageshown and (201 + obj.image:GetWidth()) or 0, obj.label:GetStringWidth() + (obj.imageshown and obj.image:GetWidth() + 4 or 0)))
+            local strWidth, imgWidth = obj.label:GetStringWidth(), obj.imageshown and obj.image:GetWidth() or 0
+            obj:SetWidth(strWidth + imgWidth + (min(strWidth, imgWidth) > 0 and 4 or 0))
         end
     end
     return c

@@ -872,6 +872,20 @@ function Self.NumRound(num)
 end
 
 -------------------------------------------------------
+--                      Boolean                      --
+-------------------------------------------------------
+
+function Self.BoolXor(...)
+    local v = false
+    for i=1, select("#", ...) do
+        if select(i, ...) then
+            if v then return false else v = true end
+        end
+    end
+    return v
+end
+
+-------------------------------------------------------
 --                      Function                     --
 -------------------------------------------------------
 
@@ -1026,7 +1040,7 @@ local Fn = function (...)
     local c, k, v = Self.C, rawget(Self.C, "k"), rawget(Self.C, "v")
 
     local t = type(v)
-    local pre = t == "table" and "Tbl" or t == "string" and "Str" or t == "number" and "num" or t == "function" and "Fn" or ""
+    local pre = t == "table" and "Tbl" or t == "string" and "Str" or t == "number" and "Num" or t == "boolean" and "Bool" or t == "function" and "Fn" or ""
 
     c.v = (Self[pre .. k] or Self[k])(v, ...)
     return c

@@ -2,6 +2,7 @@
 ..\FrameXML\UI.xsd">
     <Script file="GUI.lua"/>
     <Script file="Rolls.lua"/>
+    <Script file="Actions.lua"/>
 
     <Button name="PLR_LootWonAlertFrameTemplate" parent="UIParent" virtual="true" inherits="LootWonAlertFrameTemplate">
         <Scripts>

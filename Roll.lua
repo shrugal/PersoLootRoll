@@ -42,9 +42,11 @@ Self.EVENT_ADVERTISE = "ADVERTISE"
 Self.EVENT_BID = "BID"
 Self.EVENT_VOTE = "VOTE"
 Self.EVENT_END = "END"
+Self.EVENT_AWARD = "AWARD"
 Self.EVENT_TRADE = "TRADE"
+Self.EVENT_VISIBILITY = "VISIBILITY"
 Self.EVENT_CHANGE = "CHANGE"
-Self.EVENTS = {Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_CANCEL, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_TRADE}
+Self.EVENTS = {Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_CANCEL, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_AWARD, Self.EVENT_TRADE, Self.EVENT_VISIBILITY}
 
 Self.events = CB:New(Self, "On", "Off")
 
@@ -129,6 +131,7 @@ function Self.Add(item, owner, timeout, ownerId, itemOwnerId)
         votes = {},
         whispers = 0,
         shown = nil,
+        hidden = nil,
         posted = nil,
         traded = nil
     }
@@ -355,10 +358,9 @@ function Self:Start(started)
             self.timer = Addon:ScheduleTimer(Self.Finish, self:GetTimeLeft(), self)
 
             -- Let the others know
+            Self.events:Fire(Self.EVENT_START, self)
             self:Advertise(false, true)
             self:SendStatus()
-
-            Self.events:Fire(Self.EVENT_START, self)
         end
     end)
 
@@ -400,6 +402,7 @@ function Self:Restart(started)
     self.winner = nil
     self.isWinner = nil
     self.shown = nil
+    self.hidden = nil
     self.posted = nil
     self.traded = nil
     self.status = Self.STATUS_PENDING
@@ -456,10 +459,12 @@ function Self:Bid(bid, fromUnit, rollOrImport)
         if fromSelf then
             self.bid = bid
             Comm.RollBidSelf(self, isImport)
-        end
+        end        
 
-        -- Check if we should advertise to chat
-        if self.isOwner and not (self.status == Self.STATUS_DONE or self:CheckEnd()) then
+        Self.events:Fire(Self.EVENT_BID, self, bid, fromUnit, rollOrImport)
+
+        -- Check if we should end the roll or advertise to chat
+        if self.status == Self.STATUS_RUNNING and not self:CheckEnd() and self.isOwner then
             self:Advertise()
         end
 
@@ -493,8 +498,6 @@ function Self:Bid(bid, fromUnit, rollOrImport)
                 end
             end
         end
-
-        Self.events:Fire(Self.EVENT_BID, self, bid, fromUnit, rollOrImport)
     end
 
     return self
@@ -520,6 +523,8 @@ function Self:Vote(vote, fromUnit, isImport)
             self.vote = vote
         end
 
+        Self.events:Fire(Self.EVENT_VOTE, self, vote, fromUnit, isImport)
+
         -- Inform others
         if not isImport then
             if self.isOwner then
@@ -538,15 +543,14 @@ function Self:Vote(vote, fromUnit, isImport)
                 Comm.SendData(Comm.EVENT_VOTE, {ownerId = self.ownerId, vote = Unit.FullName(vote)}, Masterloot.GetMasterlooter())
             end
         end
-
-        Self.events:Fire(Self.EVENT_VOTE, self, vote, fromUnit, isImport)
     end
 end
 
 -- Check if we should end the roll prematurely
 function Self:ShouldEnd()
-    -- Only end running rolls that we own and that we answered already
-    if not self.isOwner or self.status ~= Self.STATUS_RUNNING or not self.bid then
+    if not self.ownerId and self.bid then
+        return true
+    elseif not self.isOwner or self.status ~= Self.STATUS_RUNNING or not self.bid then
         return false
     end
 
@@ -606,6 +610,8 @@ function Self:End(winner)
         -- Update status
         self.status = Self.STATUS_DONE
         self.ended = time()
+
+        Self.events:Fire(Self.EVENT_END, self)
     end
 
     -- Determine a winner
@@ -616,6 +622,9 @@ function Self:End(winner)
     -- Set winner
     self.winner = winner
     self.isWinner = self.winner and UnitIsUnit(self.winner, "player")
+    
+    Self.events:Fire(Self.EVENT_AWARD, self)
+    self:SendStatus()
 
     if self.winner then
         -- It has already been traded
@@ -626,10 +635,6 @@ function Self:End(winner)
         -- Let the player know, announce to chat and the winner
         Comm.RollEnd(self)
     end
-
-    self:SendStatus()
-    
-    Self.events:Fire(Self.EVENT_END, self)
 
     return self
 end
@@ -666,9 +671,8 @@ function Self:Cancel()
     self:HideRollFrame(id)
 
     -- Let everyone know
-    self:SendStatus()
-        
     Self.events:Fire(Self.EVENT_CANCEL, self)
+    self:SendStatus()
     
     return self
 end
@@ -698,13 +702,12 @@ function Self:OnTraded(target)
         end
     end
 
-    self:SendStatus(self.item.isOwner or self.isWinner)
-        
     Self.events:Fire(Self.EVENT_TRADE, self, target)
+    self:SendStatus(self.item.isOwner or self.isWinner)
 end
 
 -------------------------------------------------------
---                      Frames                       --
+--                      GUI                       --
 -------------------------------------------------------
 
 -- Get the loot frame for a loot id
@@ -756,6 +759,12 @@ end
 function Self:ShowAlertFrame()
     -- itemLink, quantity, rollType, roll, specID, isCurrency, showFactionBG, lootSource, lessAwesome, isUpgraded, wonRoll, showRatedBG, plrId
     GUI.LootAlertSystem:AddAlert(self.item.link, 1, nil, nil, nil, false, false, nil, false, false, true, false, self.id)
+end
+
+-- Toggle the rolls visiblity in GUIs
+function Self:ToggleVisibility(show)
+    if show == nil then self.hidden = not self.hidden else self.hidden = not show end
+    Self.events:Fire(Self.EVENT_VISIBILITY, self)
 end
 
 -------------------------------------------------------
@@ -975,6 +984,11 @@ end
 -- Check if the roll is handled by a masterlooter
 function Self:HasMasterlooter()
     return self.owner ~= self.item.owner or self.owner == Masterloot.GetMasterlooter(self.item.owner)
+end
+
+-- Check if the player has to take an action to complete the roll (e.g. trade)
+function Self:IsActionNeeded()
+    return self.winner and Util.BoolXor(self.item.isOwner, self.isWinner) and not self.traded or not self.ownerId and Util.In(self.bid, Self.BID_NEED, Self.BID_GREED)
 end
 
 -- Get the rolls id with PLR prefix

@@ -36,7 +36,7 @@ function Addon:OnInitialize()
         profile = {
             -- General
             enabled = true,
-            ui = {showRollFrames = true, showRollsWindow = false},
+            ui = {showRollFrames = true, showRollsWindow = false, showActionsWindow = false},
             awardSelf = false,
             ilvlThreshold = 30,
             ilvlThresholdTrinkets = true,
@@ -69,6 +69,12 @@ function Addon:OnInitialize()
                 council = {guildmaster = false, guildofficer = false, raidleader = false, raidassistant = false},
                 votePublic = false
             },
+
+            -- GUI status
+            gui = {
+                actions = {anchor = "TOPLEFT", v = 10, h = -(GetScreenHeight() / 2)}
+            },
+
             version = 3
         },
         factionrealm = {
@@ -299,6 +305,25 @@ function Addon:RegisterOptions()
                 set = function (_, val) self.db.profile.ui.showRollsWindow = val end,
                 get = function (_) return self.db.profile.ui.showRollsWindow end,
                 width = "full"
+            },
+            showActionsWindow = {
+                name = L["OPT_ACTIONS_WINDOW"],
+                desc = L["OPT_ACTIONS_WINDOW_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) self.db.profile.ui.showActionsWindow = val end,
+                get = function (_) return self.db.profile.ui.showActionsWindow end
+            },
+            moveActionsWindow = {
+                name = L["OPT_ACTIONS_WINDOW_MOVE"],
+                desc = L["OPT_ACTIONS_WINDOW_MOVE_DESC"],
+                type = "execute",
+                order = it(),
+                func = function ()
+                    InterfaceOptionsFrame:Hide()
+                    GameMenuFrame:Hide()
+                    Addon.GUI.Actions.Show(true)
+                end
             },
             awardSelf = {
                 name = L["OPT_AWARD_SELF"],

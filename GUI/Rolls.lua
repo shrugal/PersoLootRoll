@@ -8,23 +8,26 @@ Self.frames = {}
 Self.filter = {all = false, hidden = false, done = true, awarded = true, traded = false}
 Self.status = {width = 700, height = 300}
 Self.open = {}
-Self.hidden = {}
 
 -- Register for roll changes
-Roll:On(Roll.EVENT_CHANGE, function () Self.Update() end)
-Roll:On(Roll.EVENT_CLEAR, function (_, roll)
+Roll.On(Self, Roll.EVENT_CHANGE, function () Self.Update() end)
+Roll.On(Self, Roll.EVENT_CLEAR, function (_, roll)
     Self.open[roll.id] = nil
-    Self.hidden[roll.id] = nil
 end)
 
 -- Register for ML changes
-Masterloot:On(Masterloot.EVENT_CHANGE, function () Self.Update() end)
+Masterloot.On(Self, Masterloot.EVENT_CHANGE, function () Self.Update() end)
 
--- Show the rolls frame
+-------------------------------------------------------
+--                     Show/Hide                     --
+-------------------------------------------------------
+
+-- Show the frame
 function Self.Show()
     if Self.frames.window then
         Self.frames.window.frame:Show()
     else
+
         -- WINDOW
 
         Self.frames.window = GUI("Window")
@@ -34,7 +37,7 @@ function Self.Show()
             .SetCallback("OnClose", function (self)
                 Self.status.width = self.frame:GetWidth()
                 Self.status.height = self.frame:GetHeight()
-                self.optionsbutton, self.versionbutton = nil, nil
+                self.optionsBtn, self.versionBtn = nil, nil
                 self:Release()
                 wipe(Self.frames)
                 wipe(Self.open)
@@ -71,7 +74,7 @@ function Self.Show()
             f.frame:SetFrameStrata("HIGH")
             f.frame:Show()
             
-            window.optionsbutton = f
+            window.optionsBtn = f
 
             -- Version label
             f = GUI("InteractiveLabel")
@@ -114,11 +117,11 @@ function Self.Show()
                 self.OnRelease = nil
             end
             f.frame:SetParent(window.frame)
-            f.frame:SetPoint("RIGHT", window.optionsbutton.frame, "LEFT", -15, -1)
+            f.frame:SetPoint("RIGHT", window.optionsBtn.frame, "LEFT", -15, -1)
             f.frame:SetFrameStrata("HIGH")
             f.frame:Show()
 
-            window.versionbutton = f
+            window.versionBtn = f
         end
 
         -- FILTER
@@ -231,25 +234,26 @@ function Self.Show()
     end
 end
 
--- Hide the rolls frame
+-- Check if the frame is currently being shown
+function Self.IsShown()
+    return Self.frames.window and Self.frames.window.frame:IsShown()
+end
+
+-- Hide the frame
 function Self.Hide()
-    if Self.frames.window then
-        Self.frames.window.frame:Hide()
-    end
+    if Self:IsShown() then Self.frames.window.frame:Hide() end
 end
 
--- Toggle the rolls frame
+-- Toggle the frame
 function Self.Toggle()
-    if Self.frames.window then
-        Self.Hide()
-    else
-        Self.Show()
-    end
+    if Self:IsShown() then Self.Hide() else Self.Show() end
 end
 
------------------------ UPDATE ------------------------
+-------------------------------------------------------
+--                      Update                       --
+-------------------------------------------------------
 
--- Update the rolls frame
+-- Update the frame
 function Self.Update()
     if not Self.frames.window then return end
     local f
@@ -293,11 +297,11 @@ function Self.Update()
         f.frame:SetPoint("TOPRIGHT")
     end
 
-    -- Self
+    -- Rolls
 
     local rolls = Util(Addon.rolls).CopyFilter(function (roll)
         return (Self.filter.all or roll.isOwner or roll.item.isOwner or roll.item:GetEligible("player"))
-           and (Self.filter.hidden or roll.status >= Roll.STATUS_RUNNING and not Self.hidden[roll.id])
+           and (Self.filter.hidden or roll.status >= Roll.STATUS_RUNNING and not roll.hidden)
            and (Self.filter.done or (roll.status ~= Roll.STATUS_DONE))
            and (Self.filter.awarded or not roll.winner)
            and (Self.filter.traded or not roll.traded)
@@ -315,12 +319,7 @@ function Self.Update()
                 .AddTo(scroll)
         
             -- Item
-            GUI("InteractiveLabel")
-                .SetFontObject(GameFontNormal)
-                .SetCallback("OnEnter", GUI.TooltipItemLink)
-                .SetCallback("OnLeave", GUI.TooltipHide)
-                .SetCallback("OnClick", GUI.ItemClick)
-                .AddTo(scroll)
+            GUI.CreateItemLabel(scroll)
             
             -- Ilvl
             GUI("Label")
@@ -430,11 +429,9 @@ function Self.Update()
 
                 -- Hide
                 f = GUI.CreateIconButton("Interface\\Buttons\\UI-CheckBox-Check", actions, function (self)
-                    local roll = self:GetUserData("roll")
-                    Self.hidden[roll.id] = not Self.hidden[roll.id]
-                    Self.Update()
+                    self:GetUserData("roll"):ToggleVisibility()
                 end, L["SHOW_HIDE"])
-                f.image:SetPoint("TOP", 0, 2)
+                f.image:SetPoint("TOP", 0, 1)
         
                 -- Toggle
                 f = GUI.CreateIconButton("UI-PlusButton", actions, function (self)
@@ -481,7 +478,6 @@ function Self.Update()
                 end
 
                 details.frame:Hide()
-                GUI.TableRowHighlight(details, #header)
             end
         end
 
@@ -545,7 +541,6 @@ function Self.Update()
 
             local canBid = not roll.bid and roll:UnitCanBid("player")
             local canBeAwarded = roll:CanBeAwarded(true)
-            local hidden = Self.hidden[roll.id]
 
             -- Need
             GUI(children[it()]).SetUserData("roll", roll).Toggle(canBid)
@@ -570,9 +565,9 @@ function Self.Update()
             GUI(children[it()]).SetUserData("roll", roll).Toggle(canBeAwarded)
             -- Hide
             GUI(children[it()])
-                .SetImage("Interface\\Buttons\\UI-CheckBox-Check" .. (hidden and "-Disabled" or ""), -.1, 1.1, -.1, 1.1)
+                .SetImage("Interface\\Buttons\\UI-CheckBox-Check" .. (roll.hidden and "-Disabled" or ""), -.1, 1.1, -.1, 1.1)
                 .SetUserData("roll", roll)
-                .Toggle(hidden or roll.status > Roll.STATUS_RUNNING)
+                .Toggle(roll.hidden or roll.status > Roll.STATUS_RUNNING)
             -- Toggle
             GUI(children[it()])
                 .SetImage("Interface\\Buttons\\UI-" .. (Self.open[roll.id] and "Minus" or "Plus") .. "Button-Up")
@@ -633,7 +628,9 @@ function Self.Update()
     GUI(filter.children[it()]).SetText(L["ML"] .. ": " .. (ml and Unit.ColoredName(Unit.ShortenedName(ml)) or ""))
 end
 
-------------------- UPDATE DETAILS --------------------
+-------------------------------------------------------
+--                   Update Details                  --
+-------------------------------------------------------
 
 -- Update the details view of a row
 function Self.UpdateDetails(details, roll)
@@ -655,6 +652,8 @@ function Self.UpdateDetails(details, roll)
             end
             details:AddChild(f)
         end
+
+        GUI.TableRowHighlight(details, #header)
     end
 
     -- Players

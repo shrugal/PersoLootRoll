@@ -2,7 +2,7 @@
 ## Title: PersoLootRoll
 ## Notes: A loot roll addon for personal loot.
 ## Version: 8
-## SavedVariables: PersoLootRollDB, PersoLootRollIconDB, PLR_MASTERLOOTER
+## SavedVariables: PersoLootRollDB, PersoLootRollIconDB, PersoLootRollML
 
 # Libs
 Libs\libs.xml

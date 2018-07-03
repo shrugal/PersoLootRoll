@@ -41,7 +41,7 @@ function Self.SetMasterlooter(unit, session, silent)
         wipe(Self.session)
     end
     
-    PLR_MASTERLOOTER = unit
+    PersoLootRollML = unit
     Self.masterlooter = unit
 
     -- Let others know
@@ -163,10 +163,10 @@ end
 
 -- Restore a session
 function Self.Restore()
-    if PLR_MASTERLOOTER then
-        Self.SetMasterlooter(PLR_MASTERLOOTER, {}, true)
+    if PersoLootRollML then
+        Self.SetMasterlooter(PersoLootRollML, {}, true)
     end
-    Self.SendRequest(PLR_MASTERLOOTER)
+    Self.SendRequest(PersoLootRollML)
 end
 
 -- Set the masterloot session
