@@ -30,6 +30,6 @@ Masterloot.lua
 Roll.lua
 Trade.lua
 Inspect.lua
-GUI.xml
+GUI\GUI.xml
 Events.lua
 Hooks.lua
