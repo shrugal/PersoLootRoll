@@ -566,6 +566,7 @@ function Self.Update()
             -- Hide
             GUI(children[it()])
                 .SetImage("Interface\\Buttons\\UI-CheckBox-Check" .. (roll.hidden and "-Disabled" or ""), -.1, 1.1, -.1, 1.1)
+                .SetText(L[roll.hidden and "HIDE" or "SHOW"])
                 .SetUserData("roll", roll)
                 .Toggle(roll.hidden or roll.status > Roll.STATUS_RUNNING)
             -- Toggle

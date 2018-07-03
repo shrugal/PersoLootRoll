@@ -168,7 +168,7 @@ function Self.Update()
                 -- Hide
                 f = GUI.CreateIconButton("Interface\\Buttons\\UI-CheckBox-Check", actions, function (self)
                     self:GetUserData("roll"):ToggleVisibility(false)
-                end, L["SHOW_HIDE"])
+                end, L["HIDE"])
                 f.image:SetPoint("TOP", 0, 1)
                 f.frame:SetPoint("TOPRIGHT")
             end
