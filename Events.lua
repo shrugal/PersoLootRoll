@@ -284,7 +284,7 @@ end
 
 function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender)
     local unit = Unit(sender)
-    if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
+    if not Addon:IsTracking() or not Unit.InGroup(unit) or Addon.versions[unit] then return end
 
     local answer, suppress, handled = Addon.db.profile.answer, false, false
     local roll
