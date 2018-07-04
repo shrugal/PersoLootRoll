@@ -6,7 +6,7 @@ local Self = GUI.Actions
 
 Self.frames = {}
 Self.moving = nil
-Self.anchors = {TOPLEFT = false, TOPRIGHT = false, BOTTOMLEFT = false, BOTTOMRIGHT = false}
+Self.anchors = Util.TblFlip({"TOPLEFT", "TOP", "TOPRIGHT", "RIGHT", "BOTTOMRIGHT", "BOTTOM", "BOTTOMLEFT", "LEFT", "CENTER"}, false)
 
 -- Register for roll changes
 Roll.On(Self, Roll.EVENT_CHANGE, function (_, e, roll)
@@ -258,8 +258,8 @@ function Self.SavePosition(anchor)
     anchor = anchor or status.anchor or "TOPLEFT"
 
     status.anchor = anchor
-    status.h = anchor:sub(-4) == "LEFT" and f:GetLeft() or f:GetRight() - GetScreenWidth()
-    status.v = anchor:sub(1,3) == "TOP" and f:GetTop() - GetScreenHeight() or f:GetBottom()
+    status.h = anchor:sub(-4) == "LEFT" and f:GetLeft() or anchor:sub(-5) == "RIGHT" and f:GetRight() - GetScreenWidth() or f:GetLeft() + f:GetWidth()/2 - GetScreenWidth()/2
+    status.v = anchor:sub(1, 6) == "BOTTOM" and f:GetBottom() or anchor:sub(1, 3) == "TOP" and f:GetTop() - GetScreenHeight() or f:GetTop() - f:GetHeight()/2 - GetScreenHeight()/2
 
     Self.frames.window.frame:ClearAllPoints()
     Self.frames.window.frame:SetPoint(status.anchor, status.h, status.v)
@@ -273,16 +273,19 @@ function Self.UpdateAnchorButtons()
     for name,btn in pairs(Self.anchors) do
         if not btn then
             btn = GUI("Icon")
-                .SetFrameStrata("HIGH")
+                .SetFrameStrata("TOOLTIP")
                 .SetCallback("OnClick", function () Self.SavePosition(name) end)
                 .SetCallback("OnEnter", function (self)
                     GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
-                    GameTooltip:SetText(L["SET_ANCHOR"])
+                    GameTooltip:SetText(L["SET_ANCHOR"]:format(
+                        name:sub(-4) == "LEFT" and L["RIGHT"] or name:sub(-5) == "RIGHT" and L["LEFT"] or L["LEFT"] .. "/" .. L["RIGHT"],
+                        name:sub(1, 6) == "BOTTOM" and L["UP"] or name:sub(1, 3) == "TOP" and L["DOWN"] or L["UP"] .. "/" .. L["DOWN"]
+                    ))
                     GameTooltip:Show()
                 end)
                 .SetCallback("OnLeave", GUI.TooltipHide)
                 .AddTo(Self.frames.window.frame)
-                .SetPoint(name, name:sub(-4) == "LEFT" and -5 or 5, name:sub(1, 3) == "TOP" and 5 or -5)()
+                .SetPoint(name, name:sub(-5) == "RIGHT" and 5 or name:sub(-4) == "LEFT" and -5 or 0, name:sub(1, 3) == "TOP" and 5 or name:sub(1, 6) == "BOTTOM" and -5 or 0)()
             btn.image:SetPoint("TOP")
             btn.OnRelease = function (self)
                 self.image:SetPoint("TOP", 0, -5)
@@ -294,8 +297,9 @@ function Self.UpdateAnchorButtons()
 
         GUI(btn)
             .SetColorTexture(name == anchor and 0 or 1, name == anchor and 1 or 0, 0, name == anchor and 1 or 0.7)
+            .SetFrameStrata("TOOLTIP")
             .SetImageSize(10, 10).SetWidth(10).SetHeight(10)
+            .SetAlpha(name == anchor and 1 or 0.3)
             .Show()
-        btn.frame:SetAlpha(name == anchor and 1 or 0.3)
     end
 end

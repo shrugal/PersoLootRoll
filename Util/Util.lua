@@ -587,12 +587,13 @@ function Self.TblPluck(t, k)
 end
 
 -- Flip table keys and values
-function Self.TblFlip(t, fn, ...)
-    fn = Self.Fn(fn)
+function Self.TblFlip(t, val, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
-        if fn then
+        if type(val) == "function" then
             u[v] = fn(v, i, ...)
+        elseif val ~= nil then
+            u[v] = val
         else
             u[v] = i
         end
