@@ -591,7 +591,7 @@ function Self.TblFlip(t, val, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if type(val) == "function" then
-            u[v] = fn(v, i, ...)
+            u[v] = val(v, i, ...)
         elseif val ~= nil then
             u[v] = val
         else
