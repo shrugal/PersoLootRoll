@@ -140,7 +140,7 @@ function Self.GetChatLine(line, target, ...)
 end
 
 function Self.ChatLine(line, target, ...)
-    Self.Chat(Self.GetChatLine(line, target), target)
+    Self.Chat(Self.GetChatLine(line, target, ...), target)
 end
 
 -- Send an addon message

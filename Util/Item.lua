@@ -1043,9 +1043,7 @@ end
 
 -- Get the item's position
 function Self:GetPosition(refresh)
-    if not self.isOwner then
-        return
-    elseif not refresh and self.bagOrEquip and self.slot ~= 0 then
+    if not self.isOwner or not refresh and self.bagOrEquip and self.slot ~= 0 then
         return self.bagOrEquip, self.slot, self.isTradable
     end
 

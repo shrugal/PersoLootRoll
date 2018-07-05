@@ -11,6 +11,7 @@ Self.PATTERN_ROLL_RESULT = RANDOM_ROLL_RESULT:gsub("%(", "%%("):gsub("%)", "%%)"
 Self.VERSION_CHECK_DELAY = 5
 -- Bids via whisper are ignored if we chatted after this many seconds BEFORE the roll started or AFTER the last one ended (max of the two)
 Self.CHAT_MARGIN_BEFORE = 300
+Self.CHAT_MARGIN_AFTER = 30
 
 -- Remember the last locked item slot
 Self.lastLocked = {}
@@ -307,7 +308,7 @@ function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender, _, _, _, _, _, _
     else
         -- Find running or recent rolls and determine firstStarted and lastEnded
         for i,roll in pairs(Addon.rolls) do
-            if roll:CanBeAwardedTo(unit, true) and (roll.status == Roll.STATUS_RUNNING or roll:IsRecent()) then
+            if roll:CanBeAwardedTo(unit, true) and (roll.status == Roll.STATUS_RUNNING or roll:IsRecent(Self.CHAT_MARGIN_AFTER)) then
                 firstStarted = min(firstStarted or time(), roll.started)
 
                 if roll.status == Roll.STATUS_RUNNING then
@@ -318,7 +319,7 @@ function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender, _, _, _, _, _, _
             end
                 
             if roll.status == Roll.STATUS_DONE and (roll.isOwner and roll.item:GetEligible(unit) or roll.owner == unit) then
-                lastEnded = max(lastEnded, roll.ended + Roll.TIMEOUT_RECENT)
+                lastEnded = max(lastEnded, roll.ended + Self.CHAT_MARGIN_AFTER)
             end
         end
 

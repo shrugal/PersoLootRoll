@@ -13,7 +13,7 @@ Self.TIMEOUT = 15
 -- Timeout increase per item
 Self.TIMEOUT_PER_ITEM = 5
 -- Seconds after a roll ended when it's still considered "recently" ended
-Self.TIMEOUT_RECENT = 90
+Self.TIMEOUT_RECENT = 120
 -- Max # of whispers per item for all addons in the group
 Self.MAX_WHISPERS = 2
 
@@ -999,7 +999,7 @@ end
 
 -- Check if the player has to take an action to complete the roll (e.g. trade)
 function Self:IsActionNeeded()
-    return not self.traded and ((self.item.isOwner and self.winner or self.isWinner) or (not self.ownerId and self.bid and self.bid ~= Roll.BID_PASS))
+    return not self.traded and ((self.item.isOwner and self.winner or self.isWinner) or (not self.ownerId and self.bid and self.bid ~= Self.BID_PASS))
 end
 
 -- Get the target for actions (e.g. trade, whisper)
@@ -1008,8 +1008,8 @@ function Self:GetActionTarget()
 end
 
 -- Check if the roll is running or recently ended
-function Self:IsRecent(includeDone)
-    return self.status == Self.STATUS_RUNNING or includeDone ~= false and self.status == Self.STATUS_DONE and self.ended + Self.TIMEOUT_RECENT >= time()
+function Self:IsRecent(timeout)
+    return self.status == Self.STATUS_RUNNING or timeout ~= false and self.status == Self.STATUS_DONE and self.ended + (timeout or Self.TIMEOUT_RECENT) >= time()
 end
 
 -- Get the rolls id with PLR prefix
