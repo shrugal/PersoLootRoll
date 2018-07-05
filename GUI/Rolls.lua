@@ -56,12 +56,9 @@ function Self.Show()
                     Addon:ShowOptions()
                     GameTooltip:Hide()
                 end)
-                .SetCallback("OnEnter", function (self)
-                    GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
-                    GameTooltip:SetText(OPTIONS, 1, 1, 1, 1)
-                    GameTooltip:Show()
-                end)
+                .SetCallback("OnEnter", GUI.TooltipText)
                 .SetCallback("OnLeave", GUI.TooltipHide)
+                .SetUserData("text", OPTIONS)
                 .AddTo(window)()
             f.OnRelease = function (self)
                 self.image:SetPoint("TOP", 0, -5)
@@ -97,7 +94,7 @@ function Self.Show()
 
                         -- Addon missing
                         if count + 1 < GetNumGroupMembers() then
-                            GameTooltip:AddLine("\n" .. L["TIP_ADDON_MISSING"])
+                            GameTooltip:AddLine((count > 0 and "\n" or "") .. L["TIP_ADDON_MISSING"])
                             local s = ""
                             for i=1,GetNumGroupMembers() do
                                 local unit = GetRaidRosterInfo(i)
@@ -301,10 +298,10 @@ function Self.Update()
 
     local rolls = Util(Addon.rolls).CopyFilter(function (roll)
         return (Self.filter.all or roll.isOwner or roll.item.isOwner or roll.item:GetEligible("player"))
-           and (Self.filter.hidden or roll.status >= Roll.STATUS_RUNNING and not roll.hidden)
            and (Self.filter.done or (roll.status ~= Roll.STATUS_DONE))
            and (Self.filter.awarded or not roll.winner)
            and (Self.filter.traded or not roll.traded)
+           and (Self.filter.hidden or roll.status >= Roll.STATUS_RUNNING and (roll.isWinner or roll.isOwner or roll.item.isOwner or roll.bid ~= Roll.BID_PASS) and not roll.hidden)
     end).SortBy("id")()
 
     GUI(Self.frames.empty).Toggle(Util.TblCount(rolls) == 0)
@@ -401,6 +398,12 @@ function Self.Update()
                 GUI.CreateIconButton("Interface\\GossipFrame\\BankerGossipIcon", actions, function (self)
                     self:GetUserData("roll"):End(true)
                 end, L["AWARD_RANDOMLY"], 11, 11)
+
+                -- Chat
+                f = GUI.CreateIconButton("Interface\\GossipFrame\\GossipGossipIcon", actions, GUI.UnitClick, nil, 13, 13)
+                f:SetCallback("OnEnter", GUI.TooltipChat)
+                f:SetCallback("OnLeave", GUI.TooltipHide)
+
         
                 -- Trade
                 GUI.CreateIconButton("Interface\\GossipFrame\\VendorGossipIcon", actions, function (self)
@@ -430,7 +433,13 @@ function Self.Update()
                 -- Hide
                 f = GUI.CreateIconButton("Interface\\Buttons\\UI-CheckBox-Check", actions, function (self)
                     self:GetUserData("roll"):ToggleVisibility()
-                end, L["SHOW_HIDE"])
+                end)
+                f:SetCallback("OnEnter", function (self)
+                    GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
+                    GameTooltip:SetText(self:GetUserData("roll").hidden and L["SHOW"] or L["HIDE"])
+                    GameTooltip:Show()
+                end)
+                f:SetCallback("OnLeave", Self.TooltipHide)
                 f.image:SetPoint("TOP", 0, 1)
         
                 -- Toggle
@@ -541,6 +550,7 @@ function Self.Update()
 
             local canBid = not roll.bid and roll:UnitCanBid("player")
             local canBeAwarded = roll:CanBeAwarded(true)
+            local isActionNeeded = roll:IsActionNeeded()
 
             -- Need
             GUI(children[it()]).SetUserData("roll", roll).Toggle(canBid)
@@ -551,14 +561,16 @@ function Self.Update()
             -- Advertise
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:ShouldAdvertise(true))
             -- Award randomly
-            GUI(children[it()]).SetUserData("roll", roll).Toggle(roll.status == roll.STATUS_DONE and canBeAwarded and Util.TblCountExcept(roll.bids, Roll.BID_PASS) > 0)
+            GUI(children[it()]).SetUserData("roll", roll).Toggle(roll.status == Roll.STATUS_DONE and canBeAwarded and Util.TblCountExcept(roll.bids, Roll.BID_PASS) > 0)
+            -- Chat
+            GUI(children[it()])
+                .SetImage("Interface\\GossipFrame\\" .. (roll.chat and "Petition" or "Gossip") .. "GossipIcon")
+                .SetImageSize(13, 13).SetWidth(16).SetHeight(16)
+                .SetUserData("roll", roll)
+                .SetUserData("unit", roll:GetActionTarget())
+                .Toggle(isActionNeeded)
             -- Trade
-            GUI(children[it()]).SetUserData("roll", roll).Toggle(
-                not roll.traded and (
-                    (roll.winner and roll.item.isOwner or roll.isWinner) or
-                    (roll.bid and roll.bid ~= Roll.BID_PASS and not roll.ownerId)
-                )
-            )
+            GUI(children[it()]).SetUserData("roll", roll).Toggle(isActionNeeded)
             -- Restart
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeRestarted())
             -- Cancel
@@ -566,7 +578,6 @@ function Self.Update()
             -- Hide
             GUI(children[it()])
                 .SetImage("Interface\\Buttons\\UI-CheckBox-Check" .. (roll.hidden and "-Disabled" or ""), -.1, 1.1, -.1, 1.1)
-                .SetText(L[roll.hidden and "HIDE" or "SHOW"])
                 .SetUserData("roll", roll)
                 .Toggle(roll.hidden or roll.status > Roll.STATUS_RUNNING)
             -- Toggle

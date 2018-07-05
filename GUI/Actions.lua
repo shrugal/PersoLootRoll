@@ -29,12 +29,13 @@ function Self.Show(move)
 
         Self.frames.window = GUI("InlineGroup")
             .SetLayout("PLR_Table")
+            .SetClampedToScreen(true)
+            .SetFrameStrata("MEDIUM")
             .SetUserData("table", {
-                columns = {20, {25, 300}, {25, 100}, {25, 100}, 36},
+                columns = {20, {25, 300}, {25, 100}, {25, 100}, 3 * 20 - 4},
                 space = 10
             })
             .SetTitle("PersoLootRoll - " .. L["ACTIONS"])
-            .SetClampedToScreen(true)
             .SetPoint(status.anchor, status.h, status.v)
             .Show()()
 
@@ -44,43 +45,35 @@ function Self.Show(move)
             self:SetWidth((width or 0) + 20)
         end
         Self.frames.window.OnRelease = function (self)
-            self.LayoutFinished = fn
-            Self.frames.closeBtn:Release()
+            Self.frames.window = nil
+            Util.TblCall(Self.frames, "Release", true)
             wipe(Self.frames)
+            self.frame:SetFrameStrata("FULLSCREEN_DIALOG")
+            self.LayoutFinished = fn
             self.OnRelease = nil
         end
 
-        -- Close button
-        local f = GUI("Icon")
-            .SetImage("Interface\\Buttons\\UI-StopButton")
-            .SetImageSize(12, 12).SetWidth(12).SetHeight(12)
-            .SetFrameStrata("HIGH")
-            .SetCallback("OnClick", Self.Hide)
-            .AddTo(Self.frames.window.frame)
-            .SetPoint("TOPRIGHT", -3, -2)
-            .Show()()
-        f.image:SetPoint("TOP")
-        f.OnRelease = function (self)
-            self.image:SetPoint("TOP", 0, -5)
-            self.OnRelease = nil
-        end
-        Self.frames.closeBtn = f
+        -- Buttons
+        do
+            local it = Util.Iter()
 
-        -- Lock button
-        f = GUI("Icon")
-            .SetImage("Interface\\Buttons\\LockButton-Locked-Up", 0.2, 0.8, 0.2, 0.8)
-            .SetImageSize(12, 12).SetWidth(12).SetHeight(12)
-            .SetFrameStrata("HIGH")
-            .SetCallback("OnClick", Self.StopMoving)
-            .AddTo(Self.frames.window.frame)
-            .SetPoint("RIGHT", Self.frames.closeBtn.frame, "LEFT", -5, 0)
-            .Toggle(move)()
-        f.image:SetPoint("TOP")
-        f.OnRelease = function (self)
-            self.image:SetPoint("TOP", 0, -5)
-            self.OnRelease = nil
+            -- Close
+            Self.frames.closeBtn = Self.CreateHeaderIconButton(CLOSE, it(), Self.Hide, "UI-StopButton")
+
+            -- Hide all
+            Self.frames.hideAllBtn = Self.CreateHeaderIconButton(L["HIDE_ALL"], it(), function (self)
+                for i,roll in pairs(Addon.rolls) do
+                    if roll:IsActionNeeded() and not roll.hidden then
+                        roll:ToggleVisibility(false)
+                    end
+                end
+            end, "UI-CheckBox-Check")
+
+            -- Lock button
+            Self.frames.lockBtn = Self.CreateHeaderIconButton(UNLOCK, it(), function ()
+                if Self.moving then Self.StopMoving() else Self.StartMoving() end
+            end, "LockButton-Unlocked-Up", 0.2, 0.8, 0.2, 0.8)
         end
-        Self.frames.lockBtn = f
 
         GUI.TableRowHighlight(Self.frames.window)
     end
@@ -125,7 +118,7 @@ function Self.Update()
     -- Rolls
 
     local rolls = Util(Addon.rolls).CopyFilter(function (roll)
-        return not roll.hidden and roll.status == Roll.STATUS_DONE and roll:IsActionNeeded()
+        return roll:IsActionNeeded() and not roll.hidden
     end).SortBy("id")()
 
     local it = Util.Iter()
@@ -141,7 +134,7 @@ function Self.Update()
             GUI.CreateItemLabel(parent)
         
             -- Status
-            local f = GUI("Label").SetFontObject(GameFontNormal).AddTo(parent)()
+            f = GUI("Label").SetFontObject(GameFontNormal).AddTo(parent)()
             
             -- Target
             GUI.CreateUnitLabel(parent)
@@ -159,18 +152,25 @@ function Self.Update()
                 self.OnRelease = nil
             end
             do
+                -- Chat
+                f = GUI.CreateIconButton("Interface\\GossipFrame\\GossipGossipIcon", actions, GUI.UnitClick, nil, 13, 13)
+                f:SetCallback("OnEnter", GUI.TooltipChat)
+                f:SetCallback("OnLeave", GUI.TooltipHide)
+
                 -- Trade
                 f = GUI.CreateIconButton("Interface\\GossipFrame\\VendorGossipIcon", actions, function (self)
                     self:GetUserData("roll"):Trade()
                 end, TRADE, 13, 13)
-                f.frame:SetPoint("TOPLEFT")
 
                 -- Hide
                 f = GUI.CreateIconButton("Interface\\Buttons\\UI-CheckBox-Check", actions, function (self)
                     self:GetUserData("roll"):ToggleVisibility(false)
                 end, L["HIDE"])
                 f.image:SetPoint("TOP", 0, 1)
-                f.frame:SetPoint("TOPRIGHT")
+
+                for i,child in ipairs(actions.children) do
+                    child.frame:SetPoint("TOPLEFT", (i-1) * 20, 0)
+                end
             end
         end
 
@@ -195,8 +195,22 @@ function Self.Update()
             .Show()
 
         -- Actions
-        for i,child in pairs(children[it()].children) do
-            child:SetUserData("roll", roll)
+        do 
+            local children = children[it()].children
+            local it = Util.Iter()
+
+            -- Chat
+            local anchor = GUI.ReverseAnchor(Addon.db.profile.gui.actions.anchor):gsub("CENTER", "TOP")
+            GUI(children[it()])
+                .SetUserData("roll", roll)
+                .SetUserData("unit", roll.isWinner and roll.item.owner or roll.item.isOwner and roll.winner)
+                .SetUserData("anchor", anchor == "TOPLEFT" and "TOPRIGHT" or anchor == "TOPRIGHT" and "TOPLEFT" or anchor)
+                .SetImage("Interface\\GossipFrame\\" .. (roll.chat and "Petition" or "Gossip") .. "GossipIcon")
+                .SetImageSize(13, 13).SetWidth(13).SetHeight(13)
+            -- Trade
+            GUI(children[it()]).SetUserData("roll", roll)
+            -- Hide
+            GUI(children[it()]).SetUserData("roll", roll)
         end
     end
 
@@ -224,7 +238,6 @@ function Self.StartMoving()
     Self.moving = true
 
     local f = Self.frames.window.frame
-    f:EnableMouse(true)
     f:SetMovable(true)
     f:SetScript("OnMouseDown", f.StartMoving)
     f:SetScript("OnMouseUp", function (self)
@@ -232,23 +245,18 @@ function Self.StartMoving()
         Self.SavePosition()
     end)
 
-    Self.frames.lockBtn.frame:Show()
-
-    Self.UpdateAnchorButtons()
+    Self.UpdateButtons()
 end
 
 function Self.StopMoving()
     local f = Self.frames.window.frame
     Self.moving = nil
 
-    f:EnableMouse(false)
     f:SetMovable(false)
     f:SetScript("OnMouseDown", nil)
     f:SetScript("OnMouseUp", nil)
 
-    Self.frames.lockBtn.frame:Hide()
-    for name,btn in pairs(Self.anchors) do if btn then btn.frame:Hide() end end
-
+    Self.UpdateButtons()
     Self.Update()
 end
 
@@ -264,42 +272,73 @@ function Self.SavePosition(anchor)
     Self.frames.window.frame:ClearAllPoints()
     Self.frames.window.frame:SetPoint(status.anchor, status.h, status.v)
 
-    Self.UpdateAnchorButtons()
+    Self.UpdateButtons()
+    Self.Update()
 end
 
-function Self.UpdateAnchorButtons()
+function Self.UpdateButtons()
     local anchor = Addon.db.profile.gui.actions.anchor or "TOPLEFT"
+
+    -- Lock button
+    GUI(Self.frames.lockBtn)
+        .SetImage("Interface\\Buttons\\LockButton-" .. (Self.moving and "L" or "Unl") .. "ocked-Up", 0.2, 0.8, 0.2, 0.8)
+        .SetImageSize(12, 12).SetWidth(12).SetHeight(12)
+        .SetUserData("text", Self.moving and LOCK or UNLOCK)
     
+    -- Anchor buttons
     for name,btn in pairs(Self.anchors) do
-        if not btn then
-            btn = GUI("Icon")
-                .SetFrameStrata("TOOLTIP")
-                .SetCallback("OnClick", function () Self.SavePosition(name) end)
-                .SetCallback("OnEnter", function (self)
-                    GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
-                    GameTooltip:SetText(L["SET_ANCHOR"]:format(
+        if not Self.moving then
+            if btn then btn.frame:Hide() end
+        else
+            if not btn then
+                btn = GUI("Icon")
+                    .SetCallback("OnClick", function () Self.SavePosition(name) end)
+                    .SetCallback("OnEnter", GUI.TooltipText)
+                    .SetCallback("OnLeave", GUI.TooltipHide)
+                    .SetUserData("text", L["SET_ANCHOR"]:format(
                         name:sub(-4) == "LEFT" and L["RIGHT"] or name:sub(-5) == "RIGHT" and L["LEFT"] or L["LEFT"] .. "/" .. L["RIGHT"],
                         name:sub(1, 6) == "BOTTOM" and L["UP"] or name:sub(1, 3) == "TOP" and L["DOWN"] or L["UP"] .. "/" .. L["DOWN"]
                     ))
-                    GameTooltip:Show()
-                end)
-                .SetCallback("OnLeave", GUI.TooltipHide)
-                .AddTo(Self.frames.window.frame)
-                .SetPoint(name, name:sub(-5) == "RIGHT" and 5 or name:sub(-4) == "LEFT" and -5 or 0, name:sub(1, 3) == "TOP" and 5 or name:sub(1, 6) == "BOTTOM" and -5 or 0)()
-            btn.image:SetPoint("TOP")
-            btn.OnRelease = function (self)
-                self.image:SetPoint("TOP", 0, -5)
-                self.frame:SetFrameStrata("MEDIUM")
-                self.OnRelease = nil
+                    .AddTo(Self.frames.window.frame)
+                    .SetPoint(name, name:sub(-5) == "RIGHT" and 5 or name:sub(-4) == "LEFT" and -5 or 0, name:sub(1, 3) == "TOP" and 5 or name:sub(1, 6) == "BOTTOM" and -5 or 0)()
+                btn.image:SetPoint("TOP")
+                btn.OnRelease = function (self)
+                    self.image:SetPoint("TOP", 0, -5)
+                    self.frame:SetFrameStrata("MEDIUM")
+                    self.OnRelease = nil
+                end
+                Self.anchors[name] = btn
             end
-            Self.anchors[name] = btn
-        end
 
-        GUI(btn)
-            .SetColorTexture(name == anchor and 0 or 1, name == anchor and 1 or 0, 0, name == anchor and 1 or 0.7)
-            .SetFrameStrata("TOOLTIP")
-            .SetImageSize(10, 10).SetWidth(10).SetHeight(10)
-            .SetAlpha(name == anchor and 1 or 0.3)
-            .Show()
+            GUI(btn)
+                .SetColorTexture(name == anchor and 0 or 1, name == anchor and 1 or 0, 0, name == anchor and 1 or 0.7)
+                .SetFrameStrata("HIGH")
+                .SetImageSize(10, 10).SetWidth(10).SetHeight(10)
+                .Show()
+        end
     end
+end
+
+-------------------------------------------------------
+--                      Helpers                      --
+-------------------------------------------------------
+
+function Self.CreateHeaderIconButton(text, n, onClick, icon, ...)
+    f = GUI("Icon")
+        .SetImage(icon:sub(1, 9) == "Interface" and icon or "Interface\\Buttons\\" .. icon, ...)
+        .SetImageSize(12, 12).SetWidth(12).SetHeight(12)
+        .SetCallback("OnClick", onClick)
+        .SetCallback("OnEnter", GUI.TooltipText)
+        .SetCallback("OnLeave", GUI.TooltipHide)
+        .SetUserData("text", text)
+        .AddTo(Self.frames.window.frame)
+        .SetPoint("TOPRIGHT", -(n-1)*17 - 3, -2)
+        .Show()()
+    f.image:SetPoint("TOP")
+    f.OnRelease = function (self)
+        self.image:SetPoint("TOP", 0, -5)
+        self.OnRelease = nil
+    end
+
+    return f
 end

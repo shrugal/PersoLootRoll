@@ -36,7 +36,7 @@ function Addon:OnInitialize()
         profile = {
             -- General
             enabled = true,
-            ui = {showRollFrames = true, showRollsWindow = false, showActionsWindow = false},
+            ui = {showRollFrames = true, showActionsWindow = true, showRollsWindow = false},
             awardSelf = false,
             ilvlThreshold = 30,
             ilvlThresholdTrinkets = true,
@@ -72,7 +72,7 @@ function Addon:OnInitialize()
 
             -- GUI status
             gui = {
-                actions = {anchor = "TOPLEFT", v = 10, h = -(GetScreenHeight() / 2)}
+                actions = {anchor = "LEFT", v = 10, h = 0}
             },
 
             version = 3
@@ -297,6 +297,14 @@ function Addon:RegisterOptions()
                 get = function (_) return self.db.profile.ui.showRollFrames end,
                 width = "full"
             },
+            showActionsWindow = {
+                name = L["OPT_ACTIONS_WINDOW"],
+                desc = L["OPT_ACTIONS_WINDOW_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) self.db.profile.ui.showActionsWindow = val end,
+                get = function (_) return self.db.profile.ui.showActionsWindow end
+            },
             showRollsWindow = {
                 name = L["OPT_ROLLS_WINDOW"],
                 desc = L["OPT_ROLLS_WINDOW_DESC"],
@@ -305,14 +313,6 @@ function Addon:RegisterOptions()
                 set = function (_, val) self.db.profile.ui.showRollsWindow = val end,
                 get = function (_) return self.db.profile.ui.showRollsWindow end,
                 width = "full"
-            },
-            showActionsWindow = {
-                name = L["OPT_ACTIONS_WINDOW"],
-                desc = L["OPT_ACTIONS_WINDOW_DESC"],
-                type = "toggle",
-                order = it(),
-                set = function (_, val) self.db.profile.ui.showActionsWindow = val end,
-                get = function (_) return self.db.profile.ui.showActionsWindow end
             },
             moveActionsWindow = {
                 name = L["OPT_ACTIONS_WINDOW_MOVE"],

@@ -1,4 +1,5 @@
 local Name, Addon = ...
+local Util = Addon.Util
 local Self = Addon.Unit
 
 -- Search patterns
@@ -67,7 +68,7 @@ function Self.ShortenedName(unit)
     unit = Self(unit)
     local name, realm = UnitFullName(unit)
 
-    return name and name ~= "" and name .. (realm and realm ~= "" and " (*)" or "")
+    return name and name ~= "" and name .. (realm and not Util.In(realm, "", GetRealmName()) and " (*)" or "")
         or unit and unit ~= "" and not unit:find("^[a-z]") and unit:gsub("-.+", " (*)")
         or nil
 end

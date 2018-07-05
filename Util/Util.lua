@@ -253,6 +253,18 @@ function Self.TblIter(t, fn, ...)
     return t
 end
 
+-- Call a function on every table entry
+function Self.TblCall(t, fn, val, index, ...)
+    for i,v in pairs(t) do
+        local f = Self.Fn(fn, v)
+        if val then
+            if index then f(val, index, ...) else f(val, ...) end
+        else
+            if index then f(index, ...) else f(...) end
+        end
+    end
+end
+
 -- COUNT, SUM, MULTIPLY, MIN, MAX
 
 function Self.TblCount(t) return Self.TblFoldL(t, Self.FnInc, 0) end
@@ -890,7 +902,7 @@ end
 --                      Function                     --
 -------------------------------------------------------
 
-function Self.Fn(fn) return type(fn) == "string" and _G[fn] or fn end
+function Self.Fn(fn, obj) return type(fn) == "string" and (obj and obj[fn] or _G[fn]) or fn end
 function Self.FnId(...) return ... end
 function Self.FnTrue() return true end
 function Self.FnFalse() return false end

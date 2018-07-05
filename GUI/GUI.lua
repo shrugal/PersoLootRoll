@@ -150,6 +150,10 @@ end
 --                      Helper                       --
 -------------------------------------------------------
 
+function Self.ReverseAnchor(anchor)
+    return anchor:gsub("TOP", "B-OTTOM"):gsub("BOTTOM", "T-OP"):gsub("LEFT", "R-IGHT"):gsub("RIGHT", "L-EFT"):gsub("-", "")
+end
+
 function Self.CreateItemLabel(parent)
     local f = Self("InteractiveLabel")
         .SetFontObject(GameFontNormal)
@@ -201,13 +205,14 @@ function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
         .SetImage(icon:sub(1, 9) == "Interface" and icon or "Interface\\Buttons\\" .. icon .. "-Up")
         .SetImageSize(width or 16, height or 16).SetHeight(16).SetWidth(16)
         .SetCallback("OnClick", function (...) onClick(...) GameTooltip:Hide() end)
-        .AddTo(parent)()
+        .AddTo(parent)
+        .Show()()
     f.image:SetPoint("TOP")
 
     if desc then
         f:SetCallback("OnEnter", function (self)
             GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
-            GameTooltip:SetText(desc, 1, 1, 1, 1)
+            GameTooltip:SetText(desc)
             GameTooltip:Show()
         end)
         f:SetCallback("OnLeave", Self.TooltipHide)
@@ -224,6 +229,16 @@ function Self.CreateUnitLabel(parent, baseTooltip)
         .SetCallback("OnLeave", Self.TooltipHide)
         .SetCallback("OnClick", Self.UnitClick)
         .AddTo(parent)
+end
+
+-- Display the given text as tooltip
+function Self.TooltipText(self)
+    local text = self:GetUserData("text")
+    if text then
+        GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
+        GameTooltip:SetText(text)
+        GameTooltip:Show()
+    end
 end
 
 -- Display a regular unit tooltip
@@ -252,6 +267,18 @@ function Self.TooltipItemLink(self)
         GameTooltip:SetHyperlink(link)
         GameTooltip:Show()
     end
+end
+
+function Self.TooltipChat(self)
+    local chat = self:GetUserData("roll").chat
+    local anchor = chat and self:GetUserData("anchor") or "TOP"
+
+    GameTooltip:SetOwner(self.frame, "ANCHOR_" .. anchor)
+    GameTooltip:SetText(WHISPER)
+    if chat then for i,line in ipairs(chat) do
+        GameTooltip:AddLine(line, 1, 1, 1, true)
+    end end
+    GameTooltip:Show()
 end
 
 -- Hide the tooltip

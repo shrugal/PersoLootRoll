@@ -133,11 +133,14 @@ function Self.Chat(msg, target)
     SendChatMessage(msg, channel, nil, player)
 end
 
-function Self.ChatLine(line, target, ...)
+function Self.GetChatLine(line, target, ...)
     local L = Locale.GetCommLocale(select(2, Self.GetDestination(target)))
     line = Addon.db.profile.messages[L.lang] and Addon.db.profile.messages[L.lang][line] or L[line]
+    return select("#", ...) > 0 and line:format(...) or line
+end
 
-    Self.Chat(line:format(...), target)
+function Self.ChatLine(line, target, ...)
+    Self.Chat(Self.GetChatLine(line, target), target)
 end
 
 -- Send an addon message

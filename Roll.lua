@@ -12,6 +12,8 @@ Self.CLEAR = 600
 Self.TIMEOUT = 15
 -- Timeout increase per item
 Self.TIMEOUT_PER_ITEM = 5
+-- Seconds after a roll ended when it's still considered "recently" ended
+Self.TIMEOUT_RECENT = 90
 -- Max # of whispers per item for all addons in the group
 Self.MAX_WHISPERS = 2
 
@@ -45,8 +47,9 @@ Self.EVENT_END = "END"
 Self.EVENT_AWARD = "AWARD"
 Self.EVENT_TRADE = "TRADE"
 Self.EVENT_VISIBILITY = "VISIBILITY"
+Self.EVENT_CHAT = "CHAT"
 Self.EVENT_CHANGE = "CHANGE"
-Self.EVENTS = {Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_CANCEL, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_AWARD, Self.EVENT_TRADE, Self.EVENT_VISIBILITY}
+Self.EVENTS = {Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_CANCEL, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_AWARD, Self.EVENT_TRADE, Self.EVENT_VISIBILITY, Self.EVENT_CHAT}
 
 Self.events = CB:New(Self, "On", "Off")
 
@@ -679,7 +682,7 @@ end
 
 -- Trade with the owner or the winner of the roll
 function Self:Trade()
-    local target = self.item.isOwner and self.winner or self.isWinner and self.item.owner
+    local target = self:GetActionTarget()
     if target then
         Trade.Initiate(target)
     end
@@ -765,6 +768,14 @@ end
 function Self:ToggleVisibility(show)
     if show == nil then self.hidden = not self.hidden else self.hidden = not show end
     Self.events:Fire(Self.EVENT_VISIBILITY, self)
+end
+
+-- Log a chat message about the roll
+function Self:AddChat(msg, unit)
+    unit = unit or "player"
+    self.chat = self.chat or Util.Tbl()
+    tinsert(self.chat, "[" .. Unit.ColoredName(Unit.ShortenedName(unit), unit) .. "]: " .. msg)    
+    Self.events:Fire(Self.EVENT_CHAT, self)
 end
 
 -------------------------------------------------------
@@ -988,7 +999,17 @@ end
 
 -- Check if the player has to take an action to complete the roll (e.g. trade)
 function Self:IsActionNeeded()
-    return self.winner and Util.BoolXor(self.item.isOwner, self.isWinner) and not self.traded or not self.ownerId and Util.In(self.bid, Self.BID_NEED, Self.BID_GREED)
+    return not self.traded and ((self.item.isOwner and self.winner or self.isWinner) or (not self.ownerId and self.bid and self.bid ~= Roll.BID_PASS))
+end
+
+-- Get the target for actions (e.g. trade, whisper)
+function Self:GetActionTarget()
+    return self.item.isOwner and self.winner or not self.item.isOwner and self.item.owner
+end
+
+-- Check if the roll is running or recently ended
+function Self:IsRecent(includeDone)
+    return self.status == Self.STATUS_RUNNING or includeDone ~= false and self.status == Self.STATUS_DONE and self.ended + Self.TIMEOUT_RECENT >= time()
 end
 
 -- Get the rolls id with PLR prefix
