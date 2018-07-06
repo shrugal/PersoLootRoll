@@ -1,6 +1,6 @@
 local Name, Addon = ...
 local Locale = Addon.Locale
-local lang = "zhTW"
+local lang = "enUS"
 
 -- Chat messages
 local L = {lang = lang}
