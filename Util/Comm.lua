@@ -188,7 +188,7 @@ end
 -- Send a bid to another player
 function Self.RollBid(owner, link, manually)
     if manually or Self.ShouldChat(owner) then
-        Self.ChatLine("BID", owner, link or Locale.GetSelfLine('ITEM', owner))
+        Self.ChatLine("MSG_BID", owner, link or Locale.GetChatLine('MSG_ITEM', owner))
         Addon:Info(L["BID_CHAT"]:format(Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner)))
         return true
     else
@@ -253,9 +253,9 @@ function Self.RollEnd(roll, isWhisper)
             -- Announce to chat
             if roll.posted and Self.ShouldChat() then
                 if roll.item.isOwner then
-                    Self.ChatLine("ROLL_WINNER", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link)
+                    Self.ChatLine("MSG_ROLL_WINNER", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link)
                 else
-                    Self.ChatLine("ROLL_WINNER_MASTERLOOT", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "HER", "HIM"))
+                    Self.ChatLine("MSG_ROLL_WINNER_MASTERLOOT", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
                 end
             end
             
@@ -263,15 +263,15 @@ function Self.RollEnd(roll, isWhisper)
             if Addon.db.profile.answer and not Addon.versions[roll.winner] then
                 if roll.item:GetNumEligible(true) == 1 then
                     if roll.item.isOwner then
-                        Self.ChatLine("ROLL_ANSWER_YES", roll.winner)
+                        Self.ChatLine("MSG_ROLL_ANSWER_YES", roll.winner)
                     else
-                        Self.ChatLine("ROLL_ANSWER_YES_MASTERLOOT", roll.winner, roll.item.owner)
+                        Self.ChatLine("MSG_ROLL_ANSWER_YES_MASTERLOOT", roll.winner, roll.item.owner)
                     end
                 else
                     if roll.item.isOwner then
-                        Self.ChatLine("ROLL_WINNER_WHISPER", roll.winner, roll.item.link)
+                        Self.ChatLine("MSG_ROLL_WINNER_WHISPER", roll.winner, roll.item.link)
                     else
-                        Self.ChatLine("ROLL_WINNER_WHISPER_MASTERLOOT", roll.winner, roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "HER", "HIM"))
+                        Self.ChatLine("MSG_ROLL_WINNER_WHISPER_MASTERLOOT", roll.winner, roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
                     end
                 end
             end

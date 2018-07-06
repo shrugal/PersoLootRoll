@@ -335,16 +335,16 @@ function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender, _, _, _, _, _, _
         else
             -- Ask for the item link if there is more than one roll right now
             if roll == true then
-                answer = Comm.GetChatLine("ROLL_ANSWER_AMBIGUOUS", unit)
+                answer = Comm.GetChatLine("MSG_ROLL_ANSWER_AMBIGUOUS", unit)
             -- The item is not tradable
             elseif not roll.item.isTradable then
-                answer = Comm.GetChatLine("ROLL_ANSWER_NOT_TRADABLE", unit)
+                answer = Comm.GetChatLine("MSG_ROLL_ANSWER_NOT_TRADABLE", unit)
             -- I need it for myself
             elseif roll.status == Roll.STATUS_CANCELED or roll.isWinner then
-                answer = Comm.GetChatLine("ROLL_ANSWER_NO_SELF", unit)
+                answer = Comm.GetChatLine("MSG_ROLL_ANSWER_NO_SELF", unit)
             -- Someone else won or got it
             elseif roll.winner and roll.winner ~= unit or roll.traded and roll.traded ~= unit then
-                answer = Comm.GetChatLine("ROLL_ANSWER_NO_OTHER", unit)
+                answer = Comm.GetChatLine("MSG_ROLL_ANSWER_NO_OTHER", unit)
             else
                 -- The roll is scheduled or happening
                 if roll:CanBeAwarded() then
@@ -353,12 +353,12 @@ function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender, _, _, _, _, _, _
                         roll:Bid(Roll.BID_NEED, unit, true)
 
                         -- Answer only if his bid didn't end the roll
-                        answer = roll:CanBeAwarded() and Comm.GetChatLine("ROLL_ANSWER_BID", unit, roll.item.link) or false
+                        answer = roll:CanBeAwarded() and Comm.GetChatLine("MSG_ROLL_ANSWER_BID", unit, roll.item.link) or false
                     end
                 -- He can have it
                 elseif (not roll.winner or roll.winner == unit) and not roll.traded then
                     roll.winner = unit
-                    answer = roll.item.isOwner and Comm.GetChatLine("ROLL_ANSWER_YES", unit) or Comm.GetChatLine("ROLL_ANSWER_YES_MASTERLOOT", unit, roll.item.owner)
+                    answer = roll.item.isOwner and Comm.GetChatLine("MSG_ROLL_ANSWER_YES", unit) or Comm.GetChatLine("MSG_ROLL_ANSWER_YES_MASTERLOOT", unit, roll.item.owner)
                 end
             end
             
