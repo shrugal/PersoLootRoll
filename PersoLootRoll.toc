@@ -22,7 +22,6 @@ Util\Comm.lua
 Util\Item.lua
 
 # Data
-Data\Realms.lua
 Data\Trinkets.lua
 
 # Application logic

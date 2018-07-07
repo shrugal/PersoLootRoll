@@ -1,4 +1,5 @@
 local Name, Addon = ...
+local RealmInfo = LibStub("LibRealmInfo")
 local Unit, Util = Addon.Unit, Addon.Util
 local Self = Addon.Locale
 
@@ -6,19 +7,12 @@ Self.DEFAULT = "enUS"
 
 -- Get the current region
 function Self.GetRegion()
-    return ({"US", "KO", "EU", "TW", "CN"})[GetCurrentRegion()]
+    return (select(7, RealmInfo:GetRealmInfoByUnit("player")))
 end
 
 -- Get language for realm
-function Self.GetLanguage(realm)
-    local region = Self.GetRegion()
-
-    if Self.REALMS[region] then
-        realm = realm or GetRealmName()
-        return Self.REALMS[region][realm] or Self.DEFAULT
-    else
-        return region:lower() .. region
-    end
+function Self.GetLanguage(unit)
+    return (select(5, RealmInfo:GetRealmInfoByUnit(unit or "player")))
 end
 
 -- Get locale
@@ -37,19 +31,19 @@ end
 -------------------------------------------------------
 
 -- Get language for communication with another player or group/raid
-function Self.GetCommLanguage(player)
+function Self.GetCommLanguage(unit)
     local lang = Self.GetLanguage()
 
-    -- Check single player
-    if player then
-        if lang ~= Self.GetLanguage(Unit.RealmName(player)) then
+    -- Check single unit
+    if unit then
+        if lang ~= Self.GetLanguage(unit) then
             return Self.DEFAULT
         end
     -- Check group/raid
     elseif IsInGroup() then
         for i=1, GetNumGroupMembers() do
-            player = GetRaidRosterInfo(i)
-            if lang ~= Self.GetLanguage(Unit.RealmName(player)) then
+            unit = GetRaidRosterInfo(i)
+            if lang ~= Self.GetLanguage(unit) then
                 return Self.DEFAULT
             end
         end
@@ -59,13 +53,13 @@ function Self.GetCommLanguage(player)
 end
 
 -- Get locale for communication with another player or group/raid
-function Self.GetCommLocale(player)
-    return Self.GetLocale(Self.GetCommLanguage(player))
+function Self.GetCommLocale(unit)
+    return Self.GetLocale(Self.GetCommLanguage(unit))
 end
 
 -- Get a single line for communication with another player or group/raid
-function Self.GetCommLine(line, player, ...)
-    return Self.GetLine(line, Self.GetCommLanguage(player), ...)
+function Self.GetCommLine(line, unit, ...)
+    return Self.GetLine(line, Self.GetCommLanguage(unit), ...)
 end
 
 -------------------------------------------------------
