@@ -416,11 +416,11 @@ function Self.RegisterEvents()
     -- Inspect
     Addon:RegisterEvent("INSPECT_READY", Self.INSPECT_READY)
     -- Trade
-    Addon:RegisterEvent("TRADE_SHOW", Trade.OnOpen)
+    Addon:RegisterEvent("TRADE_SHOW", Trade.Start)
     Addon:RegisterEvent("TRADE_PLAYER_ITEM_CHANGED", Trade.OnPlayerItem)
     Addon:RegisterEvent("TRADE_TARGET_ITEM_CHANGED", Trade.OnTargetItem)
     Addon:RegisterEvent("TRADE_CLOSED", Trade.OnClose)
-    Addon:RegisterEvent("TRADE_REQUEST_CANCEL", Trade.OnCancel)
+    Addon:RegisterEvent("TRADE_REQUEST_CANCEL", Trade.Clear)
     -- Item
     Addon:RegisterEvent("ITEM_PUSH", Self.ITEM_PUSH)
     Addon:RegisterEvent("ITEM_LOCKED", Self.ITEM_LOCKED)

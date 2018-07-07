@@ -40,9 +40,6 @@ function Self.Initiate(target)
                 end, 0.5)
             end
         end, 0.5)
-    else
-        -- This just causes a nice error message
-        InitiateTrade(target)
     end
 
     return true
@@ -50,15 +47,19 @@ end
 
 -- Start a trade
 function Self.Start()
-    if not Self.target then return end
+    Self.Clear()
+    Self.target = UnitName("NPC")
 
-    -- Find items the target has won and add them to the trade window
-    for i,roll in pairs(Addon.rolls) do
-        if roll.item.isOwner and roll.winner == Self.target and not roll.traded then
-            local bag, slot, isTradable = roll.item:GetPosition()
-            if bag and slot and isTradable then
-                PickupContainerItem(bag, slot)
-                DropItemOnUnit(Self.target)
+    if Self.target then
+        -- Find items the target has won and add them to the trade window
+        for i,roll in pairs(Addon.rolls) do
+            if roll.item.isOwner and roll.winner == Self.target and not roll.traded then
+                local bag, slot, isTradable = roll.item:GetPosition()
+                print(roll.item.link, bag, slot, isTradable) -- TODO: DEBUG
+                if bag and slot and isTradable then
+                    PickupContainerItem(bag, slot)
+                    DropItemOnUnit(Self.target)
+                end
             end
         end
     end
@@ -66,25 +67,25 @@ end
 
 -- Finalize a trade
 function Self.End()
-    if not Self.target then return end
-
-    -- Mark the player's rolls as traded
-    for _, link in pairs(Self.items.player) do
-        local roll = Roll.Find(nil, nil, link)
-        if roll and not roll.traded then
-            roll:OnTraded(Self.target)
+    if Self.target then
+        -- Mark the player's rolls as traded
+        for _, link in pairs(Self.items.player) do
+            local roll = Roll.Find(nil, nil, link)
+            if roll and not roll.traded then
+                roll:OnTraded(Self.target)
+            end
         end
-    end
 
-    -- Mark the target's rolls as traded
-    for _, link in pairs(Self.items.target) do
-        local roll = Roll.Find(nil, Self.target, link)
-        if roll and not roll.traded then
-            roll:OnTraded(UnitName("player"))
+        -- Mark the target's rolls as traded
+        for _, link in pairs(Self.items.target) do
+            local roll = Roll.Find(nil, Self.target, link)
+            if roll and not roll.traded then
+                roll:OnTraded(UnitName("player"))
+            end
         end
-    end
 
-    Self.Clear()
+        Self.Clear()
+    end
 end
 
 -- Cancel current and planed trades
@@ -120,15 +121,6 @@ end
 --                       Events                      --
 -------------------------------------------------------
 
--- Called when a trade is started
-function Self.OnOpen()
-    Self.Clear()
-
-    Self.target = UnitName("NPC")
-
-    Self.Start()
-end
-
 -- Save (or clear) item links for later reference
 function Self.OnPlayerItem(_, slot)
     Self.items.player[slot] = GetTradePlayerItemLink(slot)
@@ -149,8 +141,4 @@ function Self.OnClose()
     if Self.target then
         Self.timers.onClose = Addon:ScheduleTimer(Self.End, 1)
     end
-end
-
-function Self.OnCancel()
-    Self.Clear()
 end

@@ -305,15 +305,6 @@ function Addon:RegisterOptions()
                 set = function (_, val) self.db.profile.ui.showActionsWindow = val end,
                 get = function (_) return self.db.profile.ui.showActionsWindow end
             },
-            showRollsWindow = {
-                name = L["OPT_ROLLS_WINDOW"],
-                desc = L["OPT_ROLLS_WINDOW_DESC"],
-                type = "toggle",
-                order = it(),
-                set = function (_, val) self.db.profile.ui.showRollsWindow = val end,
-                get = function (_) return self.db.profile.ui.showRollsWindow end,
-                width = "full"
-            },
             moveActionsWindow = {
                 name = L["OPT_ACTIONS_WINDOW_MOVE"],
                 desc = L["OPT_ACTIONS_WINDOW_MOVE_DESC"],
@@ -324,6 +315,15 @@ function Addon:RegisterOptions()
                     GameMenuFrame:Hide()
                     self.GUI.Actions.Show(true)
                 end
+            },
+            showRollsWindow = {
+                name = L["OPT_ROLLS_WINDOW"],
+                desc = L["OPT_ROLLS_WINDOW_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) self.db.profile.ui.showRollsWindow = val end,
+                get = function (_) return self.db.profile.ui.showRollsWindow end,
+                width = "full"
             },
             awardSelf = {
                 name = L["OPT_AWARD_SELF"],
