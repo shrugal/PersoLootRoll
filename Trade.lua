@@ -55,7 +55,7 @@ function Self.Start()
         for i,roll in pairs(Addon.rolls) do
             if roll.item.isOwner and roll.winner == Self.target and not roll.traded then
                 local bag, slot, isTradable = roll.item:GetPosition()
-                print(roll.item.link, bag, slot, isTradable) -- TODO: DEBUG
+                -- print(roll.item.link, bag, slot, isTradable) -- TODO: DEBUG
                 if bag and slot and isTradable then
                     PickupContainerItem(bag, slot)
                     DropItemOnUnit(Self.target)
