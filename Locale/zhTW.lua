@@ -1,6 +1,6 @@
 local Name, Addon = ...
 local Locale = Addon.Locale
-local lang = "enUS" -- TODO: DEBUG "zhTW"
+local lang = "zhTW"
 
 -- Chat messages
 local L = {lang = lang}
@@ -180,7 +180,7 @@ L["OPT_ENABLE_DESC"] = "啟用或停用此插件"
 L["OPT_INFO"] = "資訊"
 L["OPT_INFO_DESC"] = "關於此插件的一些資訊。"
 L["OPT_VERSION"] = "|cffffff00版本:|r %s"
-L["OPT_AUTHOR"] = "|cffffff00作者:|r Shrugal-Mal'Ganis (EU)"
+L["OPT_AUTHOR"] = "|cffffff00作者:|r Shrugal (EU-Mal'Ganis)"
 L["OPT_TRANSLATION"] = "|cffffff00翻譯:|r 三皈依 (TW-暗影之月)"
 L["OPT_UI"] = "使用者介面"
 L["OPT_UI_DESC"] = "根據自己的喜好自訂%s的外觀。"

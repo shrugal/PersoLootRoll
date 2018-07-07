@@ -95,9 +95,8 @@ function Addon:OnInitialize()
         }
     }, true)
     
-    -- Migrate and register options
+    -- Migrate options
     self:MigrateOptions()
-    self:RegisterOptions()
 
     -- Minimap icon
     self:RegisterMinimapIcon()
@@ -105,6 +104,9 @@ end
 
 -- Called when the addon is enabled
 function Addon:OnEnable()
+    -- Register options table
+    self:RegisterOptions()
+
     -- Enable hooks
     self.Hooks.EnableGroupLootRoll()
     self.Hooks.EnableChatLinks()

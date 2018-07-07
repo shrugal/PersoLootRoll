@@ -1,6 +1,6 @@
 local Name, Addon = ...
 local Locale = Addon.Locale
-local lang = "zhTW" -- TODO: DEBUG "enUS"
+local lang = "enUS"
 
 -- Chat messages
 local L = {lang = lang}
@@ -180,8 +180,8 @@ L["OPT_ENABLE_DESC"] = "Enable or disable the addon"
 L["OPT_INFO"] = "Information"
 L["OPT_INFO_DESC"] = "Some information about this addon."
 L["OPT_VERSION"] = "|cffffff00Version:|r %s"
-L["OPT_AUTHOR"] = "|cffffff00Author:|r Shrugal-Mal'Ganis (EU)"
-L["OPT_TRANSLATION"] = "|cffffff00Translation:|r Shrugal-Mal'Ganis (EU)"
+L["OPT_AUTHOR"] = "|cffffff00Author:|r Shrugal (EU-Mal'Ganis)"
+L["OPT_TRANSLATION"] = "|cffffff00Translation:|r Shrugal (EU-Mal'Ganis)"
 L["OPT_UI"] = "User interface"
 L["OPT_UI_DESC"] = "Customize %s's look and feel to your liking."
 L["OPT_MINIMAP_ICON"] = "Show minimap icon"
