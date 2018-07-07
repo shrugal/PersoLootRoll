@@ -623,7 +623,7 @@ local Fn = function (...)
         obj[k](obj, ...)
 
         -- Fix Label's stupid image anchoring
-        if (k == "SetText" or k == "SetFontObject" or k == "SetImage") and (obj.type == "Label" or obj.type == "InteractiveLabel") then
+        if Util.In(obj.type, "Label", "InteractiveLabel") and Util.In(k, "SetText", "SetFont", "SetFontObject", "SetImage") then
             local strWidth, imgWidth = obj.label:GetStringWidth(), obj.imageshown and obj.image:GetWidth() or 0
             obj:SetWidth(strWidth + imgWidth + (min(strWidth, imgWidth) > 0 and 4 or 0))
         end

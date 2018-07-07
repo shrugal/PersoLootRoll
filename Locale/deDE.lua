@@ -59,8 +59,8 @@ L["LEVEL"] = LEVEL
 L["MASTERLOOTER"] = "Plündermeister"
 L["MESSAGE"] = "Nachricht"
 L["ML"] = "PM"
-L["MSG_BID"] = "Gebot"
-L["MSG_ITEM"] = "Item"
+L["BID"] = "Gebot"
+L["ITEM"] = "Item"
 L["OWNER"] = "Besitzer"
 L["PLAYER"] = "Spieler"
 L["PRIVATE"] = "Privat"
@@ -100,8 +100,8 @@ L["USAGE_BID"] = "Benutzung: /plr bid <Spieler> ([Item])"
 
 L["VERSION_NOTICE"] = "Es gibt eine neue Version dieses Addons. Bitte mache ein Update um kompatibel zu allen anderen zu bleiben und keine Beute zu verpassen!"
 
-L["MSG_ROLL_START"] = "Verolle Item %s."
-L["MSG_ROLL_WINNER_MASTERLOOT"] = "%s hat %s von %s gewonnen."
+L["ROLL_START"] = "Verolle Item %s."
+L["ROLL_WINNER_MASTERLOOT"] = "%s hat %s von %s gewonnen."
 L["ROLL_AWARDED"] = "Zugewiesen"
 L["ROLL_BID_1"] = NEED
 L["ROLL_BID_2"] = GREED

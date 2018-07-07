@@ -268,7 +268,7 @@ function Self.Update()
         scroll.userdata.table.columns = {20, 1, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, 6 * 20 - 4}
 
         for i,v in pairs(header) do
-            GUI("Label").SetFontObject(GameFontNormal).SetText(Util.StrUcFirst(L[v])).SetColor(1, 0.82, 0).AddTo(scroll)
+            GUI("Label").SetFontObject(GameFontNormal).SetText(L[v]).SetColor(1, 0.82, 0).AddTo(scroll)
         end
 
         local actions = GUI("SimpleGroup")
@@ -658,7 +658,7 @@ function Self.UpdateDetails(details, roll)
         details.userdata.table.columns = {1, {25, 100}, {34, 100}, {25, 100}, {25, 100}, {25, 100}, 100}
         
         for i,v in pairs(header) do
-            local f = GUI("Label").SetFontObject(GameFontNormal).SetText(Util.StrUcFirst(L[v])).SetColor(1, 0.82, 0)()
+            local f = GUI("Label").SetFontObject(GameFontNormal).SetText(L[v]).SetColor(1, 0.82, 0)()
             if i == #header then
                 f:SetUserData("cell", {colspan = 2})
             end
