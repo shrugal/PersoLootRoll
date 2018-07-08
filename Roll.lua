@@ -275,18 +275,9 @@ function Self.Clear(self)
 end
 
 -- Check for and convert from/to PLR roll id
-
-function Self.IsPlrId(id)
-    return Util.StrStartsWith("" .. id, Addon.ABBR)
-end
-
-function Self.ToPlrId(id)
-    return Addon.ABBR .. id
-end
-
-function Self.FromPlrId(id)
-    return tonumber(("" .. id):sub(Addon.ABBR:len() + 1))
-end
+function Self.IsPlrId(id) return id < 0 end
+function Self.ToPlrId(id) return -id end
+function Self.FromPlrId(id) return -id end
 
 -- Calculate the optimal timeout
 function Self.GetTimeout()
