@@ -12,6 +12,9 @@ Self.INTERACT_TRADE = 2   -- 11.11 yards
 Self.INTERACT_DUEL = 3    -- 9.9 yards
 Self.INTERACT_FOLLOW = 4  -- 28 yards
 
+-- Dungeon difficulty ids (https://wow.gamepedia.com/DifficultyID)
+Self.DIFFICULTY_TIMEWALKING = 33
+
 -- Check if the current group is a guild group (>=80% guild members)
 function Self.IsGuildGroup(guild)
     guild = guild or Unit.GuildName("player")
@@ -38,6 +41,11 @@ function Self.GetGuildRanks()
         i, name = i + 1, GuildControlGetRankName(i + 1)
     end
     return t
+end
+
+-- Check if currently in a timewalking dungeon
+function Self.IsTimewalking()
+    return select(3, GetInstanceInfo()) == Self.DIFFICULTY_TIMEWALKING
 end
 
 -- Get hidden tooltip for scanning
@@ -117,19 +125,22 @@ Self.tblPool = {}
 Self.tblPoolSize = 10
 
 -- Get a table (newly created or from the cache), and fill it with key/value pairs
-function Self.Tbl(...)
+function Self.Tbl(isMap, ...)
     local t = tremove(Self.tblPool) or {}
 
     Addon:Assert(Self.TblCount(t) == 0, "ERROR: Table from pool is not empty!", t)
     
-    for i=1, select("#", ...), 2 do
-        local k, v = select(i, ...)
-        t[k] = v
+    for i=1, select("#", ...), isMap and 2 or 1 do
+        if isMap then
+            t[select(i, ...)] = select(i+1, ...)
+        else
+            t[i] = select(i, ...)
+        end
     end
     return t
 end
 
--- Add one or more tables to the cache, first paramter can define a recursive depth
+-- Add one or more tables to the cache, first parameter can define a recursive depth
 function Self.TblRelease(...)
     local depth = type(...) ~= "table" and (type(...) == "number" and max(0, (...)) or ... and Self.tblPoolSize) or 0
 
@@ -871,8 +882,24 @@ function Self.StrIsNumber(str, leadingZero)
     return tonumber(str) and (leadingZero or not Self.StrStartsWith(str, "0"))
 end
 
+-- Get abbreviation of given length
 function Self.StrAbbr(str, length)
     return str:len() <= length and str or str:sub(1, length) .. "..."
+end
+
+-- String format with argument reordering support (%#$x)
+function Self.StrFormat(str, ...)
+    local p = "%%(%d+)%$"
+    
+    if str:match(p) then
+        local args, order = Self.Tbl(false, ...), Self.Tbl()
+        str = str:gsub(p, function(i) tinsert(order, args[tonumber(i)]) return "%" end):format(unpack(order))
+        Self.TblRelease(args, order)
+    else
+        str = str:format(...)
+    end
+
+    return str
 end
 
 -------------------------------------------------------
@@ -880,8 +907,11 @@ end
 -------------------------------------------------------
 
 -- Rounds a number
-function Self.NumRound(num)
-    return floor(num + .5)
+function Self.NumRound(num) return floor(num + .5) end
+
+-- Check if num is in interval (exclusive or inclusive)
+function Self.NumIn(num, a, b, incl)
+    if incl then return num >= a and num <= b else return num > a and num < b end
 end
 
 -------------------------------------------------------

@@ -163,7 +163,7 @@ function Self.CreateItemLabel(parent)
         .AddTo(parent)()
 
     -- Fix the stupid label anchors
-    local methods = Util.TblFlip(Util.Tbl(1, "OnWidthSet", 2, "SetText", 3, "SetImage", 4, "SetImageSize"), function (v) return f[v] end)
+    local methods = Util.TblFlip(Util.Tbl(false, "OnWidthSet", "SetText", "SetImage", "SetImageSize"), function (v) return f[v] end)
     for name,fn in pairs(methods) do
         f[name] = function (self, ...)
             fn(self, ...)

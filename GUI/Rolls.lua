@@ -184,7 +184,7 @@ function Self.Show()
 
                         GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOM")
                         GameTooltip:SetText(L["TIP_MASTERLOOT"] .. "\n")
-                        GameTooltip:AddLine(L["TIP_MASTERLOOT_INFO"]:format(Unit.ColoredName(ml), timeoutBase, timeoutPerItem, council, bids, votes), 1, 1, 1)
+                        GameTooltip:AddLine(Util.StrFormat(L["TIP_MASTERLOOT_INFO"], Unit.ColoredName(ml), timeoutBase, timeoutPerItem, council, bids, votes), 1, 1, 1)
 
                         -- Players
                         GameTooltip:AddLine("\n" .. L["TIP_MASTERLOOTING"])
@@ -501,7 +501,7 @@ function Self.Update()
             .Show()
 
         -- Ilvl
-        GUI(children[it()]).SetText(roll.item:GetBasicInfo().level or "-").Show()
+        GUI(children[it()]).SetText(roll.item:GetFullInfo().effectiveLevel or "-").Show()
 
         -- Owner
         GUI(children[it()])
@@ -864,5 +864,5 @@ end
 
 -- Roll status OnUpdate callback
 function Self.OnStatusUpdate(frame)
-    GUI(frame.obj).SetText(L["SECONDS"]:format(frame.obj:GetUserData("roll"):GetTimeLeft()))
+    GUI(frame.obj).SetText(Util.StrFormat(L["SECONDS"], frame.obj:GetUserData("roll"):GetTimeLeft()))
 end

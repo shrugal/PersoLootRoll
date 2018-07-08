@@ -17,6 +17,7 @@ Self.ILVL_THRESHOLD = 30
 Self.PATTERN_LINK_DATA = "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*):?(%d*):?(%-?%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*)[^|]*|?h?%[?([^%[%]]*)%]?|?h?|?r?"
 Self.PATTERN_LINK = "(|?c?f?f?%x*|?H?item:[^|]*|?h?[^|]*|?h?|?r?)"
 Self.PATTERN_ILVL = ITEM_LEVEL:gsub("%%d", "(%%d+)")
+Self.PATTERN_ILVL_SCALED = ITEM_LEVEL_ALT:gsub("%(%%d%)", "%%%(%%%d%%%)"):gsub("%%d", "(%%d+)")
 Self.PATTERN_RELIC_TYPE = RELIC_TOOLTIP_TYPE:gsub("%%s", "(.+)")
 Self.PATTERN_CLASSES = ITEM_CLASSES_ALLOWED:gsub("%%s", "(.+)")
 Self.PATTERN_STRENGTH = ITEM_MOD_STRENGTH:gsub("%%c%%s", "^%%p(.+)")
@@ -262,7 +263,7 @@ Self.INFO = {
         -- gemIds = {5, 6, 7, 8},
         -- suffixId = 9,
         -- uniqueId = 10,
-        -- linkLevel = 11,
+        linkLevel = 11,
         -- specId = 12,
         -- reforgeId = 13,
         -- difficultyId = 14,
@@ -292,7 +293,8 @@ Self.INFO = {
     },
     full = {
         classes = true,
-        relicType = true
+        relicType = true,
+        effectiveLevel = true
     }
 }
 
@@ -301,6 +303,14 @@ Self.playerSlotLevels = {}
 
 -- New items waiting for the BAG_UPDATE_DELAYED event
 Self.queue = {}
+
+-- Check if item scaling is currently active
+function Self.IsScalingActive(unit)
+    unit = Unit(unit or "player")
+    local level = UnitLevel(unit)
+
+    return level and Util.NumBetween(level, 0, MAX_PLAYER_LEVEL) or Util.IsTimewalking()
+end
 
 -------------------------------------------------------
 --                      Links                        --
@@ -339,6 +349,9 @@ local scanFn = function (i, line, lines, attr)
     -- relicType
     elseif attr == "relicType" then
         return line:match(Self.PATTERN_RELIC_TYPE)
+    -- effectiveLevel
+    elseif attr == "effectiveLevel" then
+        return tonumber(select(2, line:match(Self.PATTERN_ILVL_SCALED)) or line:match(Self.PATTERN_ILVL))
     end
 end
 
@@ -376,7 +389,7 @@ function Self.GetInfo(link, attr)
         return (select(Self.INFO.basic[attr], GetItemInfo(link)))
     -- From Tooltip scanning
     elseif Self.INFO.full[attr] then
-        return Util.ScanTooltip(scanFn, link, nil, nil, attr)
+        return Util.ScanTooltip(scanFn, link, nil, attr)
     end
 end
 
@@ -512,9 +525,9 @@ function Self:GetFullInfo()
             self.infoLevel = Self.INFO_FULL
 
             -- Ilvl (incl. upgrades)
-            if not self.level then
-                self.level = tonumber(line:match(Self.PATTERN_ILVL))
-                if self.level then return end
+            if not self.effectiveLevel then
+                self.effectiveLevel = tonumber(select(2, line:match(Self.PATTERN_ILVL_SCALED)) or line:match(Self.PATTERN_ILVL))
+                if self.effectiveLevel then return end
             end
             -- Class restrictions
             if not self.classes then
@@ -553,6 +566,8 @@ function Self:GetFullInfo()
                 end
             end
         end, self.link)
+
+        self.effectiveLevel = self.effectiveLevel or self.level
 
         -- Get item position in bags or equipment
         local bagOrEquip, slot = self:GetPosition()
@@ -663,10 +678,15 @@ end
 
 -- Get the threshold for the item's slot
 function Self:GetThresholdForLocation(unit, upper)
-    local applyCustomThresholds = not upper and UnitIsUnit(unit or "player", "player")
+    local unit = Unit(unit or "player")
 
-    -- Use DB option only for 
+    -- Use DB option only for the player and only for the lower threshold
+    local applyCustomThresholds = not upper and UnitIsUnit(unit, "player")
     local threshold = applyCustomThresholds and Addon.db.profile.ilvlThreshold or Self.ILVL_THRESHOLD
+
+    -- Scale threshold for lower level chars
+    local level = UnitLevel(unit)
+    threshold = ceil(threshold * (level and level > 0 and level / MAX_PLAYER_LEVEL or 1))
 
     -- Trinkets have double the normal threshold
     if (not applyCustomThresholds or Addon.db.profile.ilvlThresholdTrinkets) and self:GetBasicInfo().equipLoc == Self.TYPE_TRINKET then
@@ -678,7 +698,7 @@ end
 
 -- Get the reference level for equipment location
 function Self:GetLevelForLocation(unit)
-    unit = Unit.Name(unit or "player")
+    unit = Unit(unit or "player")
     local location = self:GetBasicInfo().isRelic and self:GetFullInfo().relicType or self.equipLoc
 
     if UnitIsUnit(unit, "player") then
@@ -695,7 +715,7 @@ function Self:GetLevelForLocation(unit)
         return cache.ilvl or 0
     else
         -- For other players
-        return Inspect.GetLevel(unit, location)
+        return Inspect.GetLevel(Unit.Name(unit), location)
     end
 end
 
@@ -766,7 +786,9 @@ end
 -- Check the item quality
 function Self:HasSufficientQuality()
     local quality = type(self) == "table" and self:GetLinkInfo().quality or type(self) == "string" and Self.GetInfo(self, "quality")
-    return quality and quality >= (IsInRaid() and not Addon.db.profile.transmog and LE_ITEM_QUALITY_EPIC or LE_ITEM_QUALITY_RARE)
+    local threshold = IsInRaid() and not Addon.db.profile.transmog and LE_ITEM_QUALITY_EPIC or LE_ITEM_QUALITY_RARE
+
+    return quality and quality >= threshold and quality < LE_ITEM_QUALITY_LEGENDARY
 end
 
 -- Check if an item can be equipped
@@ -839,8 +861,7 @@ end
 
 -- Check against equipped ilvl
 function Self:HasSufficientLevel(unit)
-    unit = unit or "player"
-    return self:GetBasicInfo().level + self:GetThresholdForLocation(unit) >= self:GetLevelForLocation(unit)
+    return self:GetFullInfo().effectiveLevel + self:GetThresholdForLocation(unit) >= self:GetLevelForLocation(unit)
 end
 
 -- Check if item is useful for the player

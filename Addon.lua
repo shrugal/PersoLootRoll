@@ -227,7 +227,7 @@ function Addon:HandleChatCommand(msg)
         self.GUI.Rolls.Show()
     -- Unknown
     else
-        self:Err(L["ERROR_CMD_UNKNOWN"]:format(cmd))
+        self:Err(L["ERROR_CMD_UNKNOWN"], cmd)
     end
 end
 
@@ -257,7 +257,7 @@ function Addon:RegisterOptions()
     config:RegisterOptionsTable(Name, {
         type = "group",
         args = {
-            version = {type = "description", fontSize = "medium", order = it(), name = L["OPT_VERSION"]:format(Addon.VERSION)},
+            version = {type = "description", fontSize = "medium", order = it(), name = Util.StrFormat(L["OPT_VERSION"], Addon.VERSION)},
             author = {type = "description", fontSize = "medium", order = it(), name = L["OPT_AUTHOR"]},
             translation = {type = "description", fontSize = "medium", order = it(), name = L["OPT_TRANSLATION"] .. "\n"},
             enable = {
@@ -273,7 +273,7 @@ function Addon:RegisterOptions()
                 width = "full"
             },
             ui = {type = "header", order = it(), name = L["OPT_UI"]},
-            uiDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_UI_DESC"]:format(Name) .. "\n"},
+            uiDesc = {type = "description", fontSize = "medium", order = it(), name = Util.StrFormat(L["OPT_UI_DESC"], Name) .. "\n"},
             minimapIcon = {
                 name = L["OPT_MINIMAP_ICON"],
                 desc = L["OPT_MINIMAP_ICON_DESC"],
@@ -313,8 +313,8 @@ function Addon:RegisterOptions()
                 type = "execute",
                 order = it(),
                 func = function ()
-                    InterfaceOptionsFrame:Hide()
-                    GameMenuFrame:Hide()
+                    HideUIPanel(InterfaceOptionsFrame)
+                    HideUIPanel(GameMenuFrame)
                     self.GUI.Actions.Show(true)
                 end
             },
@@ -498,14 +498,14 @@ function Addon:RegisterOptions()
                 args = {
                     desc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_CUSTOM_MESSAGES_DESC"] .. "\n"},
                     localized = {
-                        name = L["OPT_CUSTOM_MESSAGES_LOCALIZED"]:format(lang),
+                        name = Util.StrFormat(L["OPT_CUSTOM_MESSAGES_LOCALIZED"], lang),
                         type = "group",
                         order = it(),
                         hidden = Locale.GetLanguage() == Locale.DEFAULT,
                         args = Addon:GetCustomMessageOptions(false)
                     },
                     default = {
-                        name = L["OPT_CUSTOM_MESSAGES_DEFAULT"]:format(Locale.DEFAULT),
+                        name = Util.StrFormat(L["OPT_CUSTOM_MESSAGES_DEFAULT"], Locale.DEFAULT),
                         type = "group",
                         order = it(),
                         args = Addon:GetCustomMessageOptions(true)
@@ -645,7 +645,7 @@ function Addon:RegisterOptions()
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
                     needAnswers = {
                         name = L["OPT_MASTERLOOTER_NEED_ANSWERS"],
-                        desc = L["OPT_MASTERLOOTER_NEED_ANSWERS_DESC"]:format(NEED),
+                        desc = Util.StrFormat(L["OPT_MASTERLOOTER_NEED_ANSWERS_DESC"], NEED),
                         type = "input",
                         order = it(),
                         set = function (_, val)
@@ -669,7 +669,7 @@ function Addon:RegisterOptions()
                     },
                     greedAnswers = {
                         name = L["OPT_MASTERLOOTER_GREED_ANSWERS"],
-                        desc = L["OPT_MASTERLOOTER_GREED_ANSWERS_DESC"]:format(GREED),
+                        desc = Util.StrFormat(L["OPT_MASTERLOOTER_GREED_ANSWERS_DESC"], GREED),
                         type = "input",
                         order = it(),
                         set = function (_, val)
@@ -919,16 +919,17 @@ end
 
 -- Console output
 
-function Addon:Echo(lvl, ...)
+function Addon:Echo(lvl, line, ...)
     if self.db.profile.echo >= lvl then
         if lvl == self.ECHO_DEBUG then
-            local args = {...}
+            local args = Util.Tbl(false, line, ...)
             for i,v in pairs(args) do
                 if Util.In(type(v), "table", "function") then args[i] = Util.ToString(v) end
             end
             self:Print(unpack(args))
+            Util.TblRelease(args)
         else
-            self:Print(...)
+            self:Print(Util.StrFormat(line, ...))
         end
     end
 end

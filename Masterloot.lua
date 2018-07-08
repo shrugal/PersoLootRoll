@@ -49,7 +49,7 @@ function Self.SetMasterlooter(unit, session, silent)
         Self.SetSession(session)
 
         local isSelf = UnitIsUnit(Self.masterlooter, "player")
-        Addon:Info(isSelf and L["MASTERLOOTER_SELF"] or L["MASTERLOOTER_OTHER"]:format(Comm.GetPlayerLink(unit)))
+        Addon:Info(isSelf and L["MASTERLOOTER_SELF"] or L["MASTERLOOTER_OTHER"], Comm.GetPlayerLink(unit))
 
         if isSelf then
             Self.SendOffer(nil, silent)

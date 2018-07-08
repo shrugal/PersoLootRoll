@@ -284,7 +284,7 @@ function Self.GetTimeout()
     local items, ml = 0, Masterloot.GetMasterlooter()
     local base, perItem = ml and Masterloot.session.timeoutBase or Self.TIMEOUT, ml and Masterloot.session.timeoutPerItem or Self.TIMEOUT_PER_ITEM
 
-    if select(4, GetInstanceInfo()) == DIFFICULTY_DUNGEON_CHALLENGE then
+    if select(3, GetInstanceInfo()) == DIFFICULTY_DUNGEON_CHALLENGE then
         -- In M+ we get 2 items at the end of the dungeon, +1 if in time, +0.4 per keystone level above 15
         local _, level, _, onTime = C_ChallengeMode.GetCompletionInfo();
         items = 2 + (onTime and 1 or 0) + (level > 15 and math.ceil(0.4 * (level - 15)) or 0)
@@ -320,7 +320,7 @@ end
 
 -- Start a roll
 function Self:Start(started)
-    Addon:Verbose(L["ROLL_START"]:format(self.item.link, Comm.GetPlayerLink(self.item.owner)))
+    Addon:Verbose(L["ROLL_START"], self.item.link, Comm.GetPlayerLink(self.item.owner))
 
     self.item:OnLoaded(function ()
         self.item:GetFullInfo()
@@ -587,7 +587,7 @@ function Self:End(winner)
     
     -- End it if it is running
     if self.status < Self.STATUS_DONE then
-        Addon:Verbose(L["ROLL_END"]:format(self.item.link, Comm.GetPlayerLink(self.item.owner)))
+        Addon:Verbose(L["ROLL_END"], self.item.link, Comm.GetPlayerLink(self.item.owner))
 
         -- Check if we can end the roll
         local valid, msg = self:Validate(Self.STATUS_RUNNING, winner)
@@ -650,7 +650,7 @@ end
 -- Cancel a roll
 function Self:Cancel()
     if self.status == Self.STATUS_CANCELED then return end
-    Addon:Verbose(L["ROLL_CANCEL"]:format(self.item.link, Comm.GetPlayerLink(self.item.owner)))
+    Addon:Verbose(L["ROLL_CANCEL"], self.item.link, Comm.GetPlayerLink(self.item.owner))
 
     -- Cancel a pending timer
     if self.timer then
@@ -1023,7 +1023,7 @@ function Self:Validate(status, ...)
     else
         for _,unit in pairs({self.owner, ...}) do
             if not UnitExists(unit) or not Unit.InGroup(unit) then
-                return false, L["ERROR_PLAYER_NOT_FOUND"]:format(unit)
+                return false, Util.StrFormat(L["ERROR_PLAYER_NOT_FOUND"], unit)
             end
         end
 

@@ -291,6 +291,7 @@ function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender, _, _, _, _, _, _
     -- Log the conversation
     for i,roll in pairs(Addon.rolls) do
         if roll:IsRecent() and roll:IsActionNeeded() and unit == roll:GetActionTarget() then
+            -- print(event, roll.id) -- TODO: DEBUG
             roll:AddChat(msg, unit)
         end
     end
@@ -330,7 +331,7 @@ function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender, _, _, _, _, _, _
         -- Check if we should act on the whisper
         if not link and Self.lastChatted[unit] and Self.lastChatted[unit] > min(firstStarted, max(lastEnded, firstStarted - Self.CHAT_MARGIN_BEFORE)) then
             if roll ~= true and Self.lastChattedRoll[unit] ~= roll.id and roll:CanBeAwardedTo(unit) and not roll.bids[unit] then
-                Addon:Info(L["ROLL_IGNORING_BID"]:format(Comm.GetPlayerLink(unit), roll.item.link, Comm.GetBidLink(roll, unit, Roll.BID_NEED), Comm.GetBidLink(roll, unit, Roll.BID_GREED)))
+                Addon:Info(L["ROLL_IGNORING_BID"], Comm.GetPlayerLink(unit), roll.item.link, Comm.GetBidLink(roll, unit, Roll.BID_NEED), Comm.GetBidLink(roll, unit, Roll.BID_GREED))
             end
         else
             -- Ask for the item link if there is more than one roll right now
@@ -367,12 +368,12 @@ function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender, _, _, _, _, _, _
             
             -- Suppress the message and print an info message instead
             if suppress then
-                Addon:Info(L["ROLL_WHISPER_SUPPRESSED"]:format(
+                Addon:Info(L["ROLL_WHISPER_SUPPRESSED"],
                     Comm.GetPlayerLink(unit),
                     roll.item.link,
                     Comm.GetTooltipLink(msg, L["MESSAGE"], L["MESSAGE"]),
                     answer and Comm.GetTooltipLink(answer, L["ANSWER"], L["ANSWER"]) or L["ANSWER"] .. ": -"
-                ))
+                )
                 Self.lastSuppressed = answer and lineId or nil
             end
 
@@ -394,6 +395,7 @@ function Self.CHAT_MSG_WHISPER_INFORM_FILTER(self, event, msg, receiver, _, _, _
     -- Log the conversation
     for i,roll in pairs(Addon.rolls) do
         if roll:IsRecent() and roll:IsActionNeeded() and unit == roll:GetActionTarget() then
+            -- print(event, roll.id) -- TODO: DEBUG
             roll:AddChat(msg)
         end
     end
@@ -602,7 +604,7 @@ Comm.ListenData(Comm.EVENT_MASTERLOOT_OFFER, function (event, data, channel, sen
             Masterloot.SetMasterlooter(unit, data.session)
         elseif not data.silent then
             local dialog = StaticPopupDialogs[GUI.DIALOG_MASTERLOOT_ASK]
-            dialog.text = L["DIALOG_MASTERLOOT_ASK"]:format(unit)
+            dialog.text = Util.StrFormat(L["DIALOG_MASTERLOOT_ASK"], unit)
             dialog.OnAccept = function ()
                 Masterloot.SetMasterlooter(unit, data.session)
             end

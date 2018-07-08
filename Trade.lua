@@ -17,7 +17,7 @@ function Self.Initiate(target)
     -- Cancel any other trade
     Self.Cancel()
 
-    Addon:Verbose(L["TRADE_START"]:format(Comm.GetPlayerLink(target)))
+    Addon:Verbose(L["TRADE_START"], Comm.GetPlayerLink(target))
         
     -- Trade with owner
     if CheckInteractDistance(target, Util.INTERACT_TRADE) then
@@ -49,6 +49,8 @@ end
 function Self.Start()
     Self.Clear()
     Self.target = UnitName("NPC")
+
+    -- print(Self.target) -- TODO: DEBUG
 
     if Self.target then
         -- Find items the target has won and add them to the trade window
