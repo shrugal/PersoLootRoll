@@ -309,7 +309,7 @@ function Self.IsScalingActive(unit)
     unit = Unit(unit or "player")
     local level = UnitLevel(unit)
 
-    return level and Util.NumBetween(level, 0, MAX_PLAYER_LEVEL) or Util.IsTimewalking()
+    return level and Util.NumIn(level, 0, MAX_PLAYER_LEVEL) or Util.IsTimewalking()
 end
 
 -------------------------------------------------------
