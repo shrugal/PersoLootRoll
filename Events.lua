@@ -289,9 +289,10 @@ function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender, _, _, _, _, _, _
     if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
 
     -- Log the conversation
+    -- print(event, unit) -- TODO: DEBUG
     for i,roll in pairs(Addon.rolls) do
         if roll:IsRecent() and roll:IsActionNeeded() and unit == roll:GetActionTarget() then
-            -- print(event, roll.id) -- TODO: DEBUG
+            -- print("->", roll.id) -- TODO: DEBUG
             roll:AddChat(msg, unit)
         end
     end
@@ -391,11 +392,13 @@ end
 
 function Self.CHAT_MSG_WHISPER_INFORM_FILTER(self, event, msg, receiver, _, _, _, _, _, _, _, _, lineId)
     local unit = Unit(receiver)
+    if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
 
     -- Log the conversation
+    -- print(event, unit) -- TODO: DEBUG
     for i,roll in pairs(Addon.rolls) do
         if roll:IsRecent() and roll:IsActionNeeded() and unit == roll:GetActionTarget() then
-            -- print(event, roll.id) -- TODO: DEBUG
+            -- print("->", roll.id) -- TODO: DEBUG
             roll:AddChat(msg)
         end
     end
