@@ -133,11 +133,14 @@ function Self.Chat(msg, target)
     SendChatMessage(msg, channel, nil, player)
 end
 
-function Self.ChatLine(line, target, ...)
+function Self.GetChatLine(line, target, ...)
     local L = Locale.GetCommLocale(select(2, Self.GetDestination(target)))
     line = Addon.db.profile.messages[L.lang] and Addon.db.profile.messages[L.lang][line] or L[line]
+    return Util.StrFormat(line, ...)
+end
 
-    Self.Chat(line:format(...), target)
+function Self.ChatLine(line, target, ...)
+    Self.Chat(Self.GetChatLine(line, target, ...), target)
 end
 
 -- Send an addon message
@@ -189,11 +192,11 @@ end
 -- Send a bid to another player
 function Self.RollBid(owner, link, manually)
     if manually or Self.ShouldChat(owner) then
-        Self.ChatLine("BID", owner, link or Locale.GetSelfLine('ITEM', owner))
-        Addon:Info(L["BID_CHAT"]:format(Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner)))
+        Self.ChatLine("MSG_BID", owner, link or Locale.GetChatLine('MSG_ITEM', owner))
+        Addon:Info(L["BID_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
         return true
     else
-        Addon:Info(L["BID_NO_CHAT"]:format(Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner)))
+        Addon:Info(L["BID_NO_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
         return false
     end
 end
@@ -203,16 +206,16 @@ function Self.RollBidError(roll, sender)
     if UnitIsUnit(sender, "player") then
         Addon:Err(L["ERROR_ROLL_BID_UNKNOWN_SELF"])
     else
-        Addon:Verbose(L["ERROR_ROLL_BID_UNKNOWN_OTHER"]:format(sender, roll.item.link))
+        Addon:Verbose(L["ERROR_ROLL_BID_UNKNOWN_OTHER"], sender, roll.item.link)
     end
 end
 
 -- Show a confirmation message for a bid by the player
 function Self.RollBidSelf(roll, isImport)
     if roll.bid == Roll.BID_PASS then
-        Addon:Echo(isImport and Addon.ECHO_DEBUG or Addon.ECHO_VERBOSE, L["BID_PASS"]:format((roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner)))
+        Addon:Echo(isImport and Addon.ECHO_DEBUG or Addon.ECHO_VERBOSE, L["BID_PASS"], (roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner))
     else
-        Addon:Echo(isImport and Addon.ECHO_DEBUG or Addon.ECHO_VERBOSE, L["BID_START"]:format(roll:GetBidName(roll.bid), (roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner)))
+        Addon:Echo(isImport and Addon.ECHO_DEBUG or Addon.ECHO_VERBOSE, L["BID_START"], roll:GetBidName(roll.bid), (roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner))
     end
 end
 
@@ -234,9 +237,9 @@ function Self.RollEnd(roll, isWhisper)
     if roll.isWinner then
         if not roll.isOwner or roll.bid and floor(roll.bid) ~= Roll.BID_NEED or Masterloot.GetMasterlooter() then
             if roll.item.isOwner then
-                Addon:Info(L["ROLL_WINNER_OWN"]:format(roll.item.link))
+                Addon:Info(L["ROLL_WINNER_OWN"], roll.item.link)
             else
-                Addon:Info(L["ROLL_WINNER_SELF"]:format(roll.item.link, Self.GetPlayerLink(roll.item.owner), Self.GetTradeLink(roll.item.owner)))
+                Addon:Info(L["ROLL_WINNER_SELF"], roll.item.link, Self.GetPlayerLink(roll.item.owner), Self.GetTradeLink(roll.item.owner))
             end
 
             roll:ShowAlertFrame()
@@ -245,18 +248,18 @@ function Self.RollEnd(roll, isWhisper)
     -- Someone won our item
     else
         if roll.item.isOwner then
-            Addon:Info(L["ROLL_WINNER_OTHER"]:format(Self.GetPlayerLink(roll.winner), roll.item.link, Self.GetTradeLink(roll.winner)))
+            Addon:Info(L["ROLL_WINNER_OTHER"], Self.GetPlayerLink(roll.winner), roll.item.link, Self.GetTradeLink(roll.winner))
         elseif roll.isOwner then
-            Addon:Info(L["ROLL_WINNER_MASTERLOOT"]:format(Self.GetPlayerLink(roll.winner), roll.item.link, Self.GetPlayerLink(roll.item.owner)))
+            Addon:Info(L["ROLL_WINNER_MASTERLOOT"], Self.GetPlayerLink(roll.winner), roll.item.link, Self.GetPlayerLink(roll.item.owner))
         end
 
         if roll.isOwner then
             -- Announce to chat
             if roll.posted and Self.ShouldChat() then
                 if roll.item.isOwner then
-                    Self.ChatLine("ROLL_WINNER", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link)
+                    Self.ChatLine("MSG_ROLL_WINNER", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link)
                 else
-                    Self.ChatLine("ROLL_WINNER_MASTERLOOT", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "HER", "HIM"))
+                    Self.ChatLine("MSG_ROLL_WINNER_MASTERLOOT", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
                 end
             end
             
@@ -264,15 +267,15 @@ function Self.RollEnd(roll, isWhisper)
             if Addon.db.profile.answer and not Addon.versions[roll.winner] then
                 if roll.item:GetNumEligible(true) == 1 then
                     if roll.item.isOwner then
-                        Self.ChatLine("ROLL_ANSWER_YES", roll.winner)
+                        Self.ChatLine("MSG_ROLL_ANSWER_YES", roll.winner)
                     else
-                        Self.ChatLine("ROLL_ANSWER_YES_MASTERLOOT", roll.winner, roll.item.owner)
+                        Self.ChatLine("MSG_ROLL_ANSWER_YES_MASTERLOOT", roll.winner, roll.item.owner)
                     end
                 else
                     if roll.item.isOwner then
-                        Self.ChatLine("ROLL_WINNER_WHISPER", roll.winner, roll.item.link)
+                        Self.ChatLine("MSG_ROLL_WINNER_WHISPER", roll.winner, roll.item.link)
                     else
-                        Self.ChatLine("ROLL_WINNER_WHISPER_MASTERLOOT", roll.winner, roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "HER", "HIM"))
+                        Self.ChatLine("MSG_ROLL_WINNER_WHISPER_MASTERLOOT", roll.winner, roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
                     end
                 end
             end

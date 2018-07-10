@@ -10,8 +10,8 @@ Self.PATTERN_ROLL_RESULT = RANDOM_ROLL_RESULT:gsub("%(", "%%("):gsub("%)", "%%)"
 -- Version check
 Self.VERSION_CHECK_DELAY = 5
 -- Bids via whisper are ignored if we chatted after this many seconds BEFORE the roll started or AFTER the last one ended (max of the two)
-Self.LAST_CHATTED_BEFORE = 300
-Self.LAST_CHATTED_AFTER = 60
+Self.CHAT_MARGIN_BEFORE = 300
+Self.CHAT_MARGIN_AFTER = 30
 
 -- Remember the last locked item slot
 Self.lastLocked = {}
@@ -24,6 +24,8 @@ Self.lastVersionCheck = nil
 -- Remember the last time we chatted with someone and what roll (if any) we chatted about, so we know when to respond
 Self.lastChatted = {}
 Self.lastChattedRoll = {}
+-- Remember the last suppressed message
+Self.lastSuppressed = nil
 
 -------------------------------------------------------
 --                      Roster                       --
@@ -282,61 +284,69 @@ end
 
 -- Whisper
 
-function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender)
+function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender, _, _, _, _, _, _, _, _, lineId)
     local unit = Unit(sender)
     if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
 
-    local answer, suppress, handled = Addon.db.profile.answer, false, false
-    local roll
-    local link = select(2, GetItemInfo(Item.GetLink(msg) or ""))
-
-    if link then
-        -- Get the roll by link
-        roll = Roll.Find(nil, nil, link)
-    else
-        -- Go through all currently running rolls
-        rolls = Roll.ForUnit(unit)
-
-        -- Ask for the item link if there is more than one roll right now
-        if #rolls > 1 then
-            if answer then Comm.ChatLine("ROLL_ANSWER_AMBIGUOUS", unit) end
-        else
-            roll = rolls[1]
+    -- Log the conversation
+    -- print(event, unit) -- TODO: DEBUG
+    for i,roll in pairs(Addon.rolls) do
+        if roll:IsRecent() and roll:IsActionNeeded() and unit == roll:GetActionTarget() then
+            -- print("->", roll.id) -- TODO: DEBUG
+            roll:AddChat(msg, unit)
         end
     end
 
+    -- Don't act on whispers from other addon users
+    if Addon.versions[unit] then return end
 
-    if roll then
-        -- Check if we chatted since the last roll ended or the current one started, because then it might be about something else
-        if not link and Self.lastChatted[unit] then
-            local margin = roll.started - Self.LAST_CHATTED_BEFORE
-            for i,roll in pairs(Addon.rolls) do
-                if roll.status == Roll.STATUS_DONE and (roll.isOwner or roll.owner == unit) then
-                    margin = max(margin, (roll.ended or roll.started + roll.timeout) + Self.LAST_CHATTED_AFTER)
+    local answer, suppress
+    local lastEnded, firstStarted, running, recent, roll = 0
+    local link = select(2, GetItemInfo(Item.GetLink(msg) or ""))
+
+    -- Find eligible rolls
+    if link then
+        roll = Roll.Find(nil, nil, link)
+    else
+        -- Find running or recent rolls and determine firstStarted and lastEnded
+        for i,roll in pairs(Addon.rolls) do
+            if roll:CanBeAwardedTo(unit, true) and (roll.status == Roll.STATUS_RUNNING or roll:IsRecent(Self.CHAT_MARGIN_AFTER)) then
+                firstStarted = min(firstStarted or time(), roll.started)
+
+                if roll.status == Roll.STATUS_RUNNING then
+                    if not running then running = roll else running = true end
+                else
+                    if not recent then recent = roll else recent = true end
                 end
             end
-
-            if Self.lastChatted[unit] > margin then
-                if Self.lastChattedRoll[unit] ~= roll.id and roll:CanBeAwardedTo(unit) and not roll.bids[unit] then
-                    Addon:Info(L["ROLL_IGNORING_BID"]:format(Comm.GetPlayerLink(unit), roll.item.link, Comm.GetBidLink(roll, unit, Roll.BID_NEED), Comm.GetBidLink(roll, unit, Roll.BID_GREED)))
-                end
-                handled = true
+                
+            if roll.status == Roll.STATUS_DONE and (roll.isOwner and roll.item:GetEligible(unit) or roll.owner == unit) then
+                lastEnded = max(lastEnded, roll.ended + Self.CHAT_MARGIN_AFTER)
             end
         end
-        
-        if not handled then
+
+        roll = running or recent
+    end
+
+    if roll then
+        -- Check if we should act on the whisper
+        if not link and Self.lastChatted[unit] and Self.lastChatted[unit] > min(firstStarted, max(lastEnded, firstStarted - Self.CHAT_MARGIN_BEFORE)) then
+            if roll ~= true and Self.lastChattedRoll[unit] ~= roll.id and roll:CanBeAwardedTo(unit) and not roll.bids[unit] then
+                Addon:Info(L["ROLL_IGNORING_BID"], Comm.GetPlayerLink(unit), roll.item.link, Comm.GetBidLink(roll, unit, Roll.BID_NEED), Comm.GetBidLink(roll, unit, Roll.BID_GREED))
+            end
+        else
+            -- Ask for the item link if there is more than one roll right now
+            if roll == true then
+                answer = Comm.GetChatLine("MSG_ROLL_ANSWER_AMBIGUOUS", unit)
             -- The item is not tradable
-            if not roll.item.isTradable then
-                if answer then Comm.ChatLine("ROLL_ANSWER_NOT_TRADABLE", unit) end
-                handled = true
+            elseif not roll.item.isTradable then
+                answer = Comm.GetChatLine("MSG_ROLL_ANSWER_NOT_TRADABLE", unit)
             -- I need it for myself
             elseif roll.status == Roll.STATUS_CANCELED or roll.isWinner then
-                if answer then Comm.ChatLine("ROLL_ANSWER_NO_SELF", unit) end
-                handled = true
+                answer = Comm.GetChatLine("MSG_ROLL_ANSWER_NO_SELF", unit)
             -- Someone else won or got it
             elseif roll.winner and roll.winner ~= unit or roll.traded and roll.traded ~= unit then
-                if answer then Comm.ChatLine("ROLL_ANSWER_NO_OTHER", unit) end
-                handled = true
+                answer = Comm.GetChatLine("MSG_ROLL_ANSWER_NO_OTHER", unit)
             else
                 -- The roll is scheduled or happening
                 if roll:CanBeAwarded() then
@@ -345,33 +355,31 @@ function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender)
                         roll:Bid(Roll.BID_NEED, unit, true)
 
                         -- Answer only if his bid didn't end the roll
-                        if answer and roll:CanBeAwarded() then
-                            Comm.ChatLine("ROLL_ANSWER_BID", unit, roll.item.link)
-                        end
-                        
-                        handled = true
+                        answer = roll:CanBeAwarded() and Comm.GetChatLine("MSG_ROLL_ANSWER_BID", unit, roll.item.link) or false
                     end
                 -- He can have it
                 elseif (not roll.winner or roll.winner == unit) and not roll.traded then
                     roll.winner = unit
-
-                    if answer then
-                        if roll.item.isOwner then
-                            Comm.ChatLine("ROLL_ANSWER_YES", unit)
-                        else
-                            Comm.ChatLine("ROLL_ANSWER_YES_MASTERLOOT", unit, roll.item.owner)
-                        end
-                    end
-                    
-                    handled = true
+                    answer = roll.item.isOwner and Comm.GetChatLine("MSG_ROLL_ANSWER_YES", unit) or Comm.GetChatLine("MSG_ROLL_ANSWER_YES_MASTERLOOT", unit, roll.item.owner)
                 end
             end
-
+            
+            suppress = answer ~= nil and Addon.db.profile.suppress
+            answer = Addon.db.profile.answer and answer
+            
             -- Suppress the message and print an info message instead
-            if handled and Addon.db.profile.suppress then
-                Addon:Info(L["ROLL_WHISPER_SUPPRESSED"]:format(Comm.GetPlayerLink(unit), roll.item.link, Comm.GetTooltipLink(msg)))
-                suppress = true
+            if suppress then
+                Addon:Info(L["ROLL_WHISPER_SUPPRESSED"],
+                    Comm.GetPlayerLink(unit),
+                    roll.item.link,
+                    Comm.GetTooltipLink(msg, L["MESSAGE"], L["MESSAGE"]),
+                    answer and Comm.GetTooltipLink(answer, L["ANSWER"], L["ANSWER"]) or L["ANSWER"] .. ": -"
+                )
+                Self.lastSuppressed = answer and lineId or nil
             end
+
+            -- Post the answer
+            if answer then Comm.Chat(answer, unit) end
         end
 
         Self.lastChattedRoll[unit] = roll.id
@@ -382,8 +390,22 @@ function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender)
     return suppress
 end
 
-function Self.CHAT_MSG_WHISPER_INFORM(event, msg, receiver)
+function Self.CHAT_MSG_WHISPER_INFORM_FILTER(self, event, msg, receiver, _, _, _, _, _, _, _, _, lineId)
+    local unit = Unit(receiver)
+    if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
+
+    -- Log the conversation
+    -- print(event, unit) -- TODO: DEBUG
+    for i,roll in pairs(Addon.rolls) do
+        if roll:IsRecent() and roll:IsActionNeeded() and unit == roll:GetActionTarget() then
+            -- print("->", roll.id) -- TODO: DEBUG
+            roll:AddChat(msg)
+        end
+    end
+
     Self.lastChatted[Unit.Name(receiver)] = time()
+
+    return Self.lastSuppressed and Self.lastSuppressed + 1 == lineId or nil
 end
 
 -- Register
@@ -399,11 +421,11 @@ function Self.RegisterEvents()
     -- Inspect
     Addon:RegisterEvent("INSPECT_READY", Self.INSPECT_READY)
     -- Trade
-    Addon:RegisterEvent("TRADE_SHOW", Trade.OnOpen)
+    Addon:RegisterEvent("TRADE_SHOW", Trade.Start)
     Addon:RegisterEvent("TRADE_PLAYER_ITEM_CHANGED", Trade.OnPlayerItem)
     Addon:RegisterEvent("TRADE_TARGET_ITEM_CHANGED", Trade.OnTargetItem)
     Addon:RegisterEvent("TRADE_CLOSED", Trade.OnClose)
-    Addon:RegisterEvent("TRADE_REQUEST_CANCEL", Trade.OnCancel)
+    Addon:RegisterEvent("TRADE_REQUEST_CANCEL", Trade.Clear)
     -- Item
     Addon:RegisterEvent("ITEM_PUSH", Self.ITEM_PUSH)
     Addon:RegisterEvent("ITEM_LOCKED", Self.ITEM_LOCKED)
@@ -420,7 +442,7 @@ function Self.RegisterEvents()
     Addon:RegisterEvent("CHAT_MSG_INSTANCE_CHAT", Self.CHAT_MSG_GROUP)
     Addon:RegisterEvent("CHAT_MSG_INSTANCE_CHAT_LEADER", Self.CHAT_MSG_GROUP)
     ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER", Self.CHAT_MSG_WHISPER_FILTER)
-    Addon:RegisterEvent("CHAT_MSG_WHISPER_INFORM", Self.CHAT_MSG_WHISPER_INFORM)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER_INFORM", Self.CHAT_MSG_WHISPER_INFORM_FILTER)
 end
 
 function Self.UnregisterEvents()
@@ -455,7 +477,7 @@ function Self.UnregisterEvents()
     Addon:UnregisterEvent("CHAT_MSG_INSTANCE_CHAT")
     Addon:UnregisterEvent("CHAT_MSG_INSTANCE_CHAT_LEADER")
     ChatFrame_RemoveMessageEventFilter("CHAT_MSG_WHISPER", Self.CHAT_MSG_WHISPER_FILTER)
-    Addon:UnregisterEvent("CHAT_MSG_WHISPER_INFORM")
+    ChatFrame_RemoveMessageEventFilter("CHAT_MSG_WHISPER_INFORM", Self.CHAT_MSG_WHISPER_INFORM_FILTER)
 end
 
 -------------------------------------------------------
@@ -585,7 +607,7 @@ Comm.ListenData(Comm.EVENT_MASTERLOOT_OFFER, function (event, data, channel, sen
             Masterloot.SetMasterlooter(unit, data.session)
         elseif not data.silent then
             local dialog = StaticPopupDialogs[GUI.DIALOG_MASTERLOOT_ASK]
-            dialog.text = L["DIALOG_MASTERLOOT_ASK"]:format(unit)
+            dialog.text = Util.StrFormat(L["DIALOG_MASTERLOOT_ASK"], unit)
             dialog.OnAccept = function ()
                 Masterloot.SetMasterlooter(unit, data.session)
             end

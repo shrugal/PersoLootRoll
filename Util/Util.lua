@@ -12,6 +12,9 @@ Self.INTERACT_TRADE = 2   -- 11.11 yards
 Self.INTERACT_DUEL = 3    -- 9.9 yards
 Self.INTERACT_FOLLOW = 4  -- 28 yards
 
+-- Dungeon difficulty ids (https://wow.gamepedia.com/DifficultyID)
+Self.DIFFICULTY_TIMEWALKING = 33
+
 -- Check if the current group is a guild group (>=80% guild members)
 function Self.IsGuildGroup(guild)
     guild = guild or Unit.GuildName("player")
@@ -38,6 +41,11 @@ function Self.GetGuildRanks()
         i, name = i + 1, GuildControlGetRankName(i + 1)
     end
     return t
+end
+
+-- Check if currently in a timewalking dungeon
+function Self.IsTimewalking()
+    return select(3, GetInstanceInfo()) == Self.DIFFICULTY_TIMEWALKING
 end
 
 -- Get hidden tooltip for scanning
@@ -117,19 +125,22 @@ Self.tblPool = {}
 Self.tblPoolSize = 10
 
 -- Get a table (newly created or from the cache), and fill it with key/value pairs
-function Self.Tbl(...)
+function Self.Tbl(isMap, ...)
     local t = tremove(Self.tblPool) or {}
 
     Addon:Assert(Self.TblCount(t) == 0, "ERROR: Table from pool is not empty!", t)
     
-    for i=1, select("#", ...), 2 do
-        local k, v = select(i, ...)
-        t[k] = v
+    for i=1, select("#", ...), isMap and 2 or 1 do
+        if isMap then
+            t[select(i, ...)] = select(i+1, ...)
+        else
+            t[i] = select(i, ...)
+        end
     end
     return t
 end
 
--- Add one or more tables to the cache, first paramter can define a recursive depth
+-- Add one or more tables to the cache, first parameter can define a recursive depth
 function Self.TblRelease(...)
     local depth = type(...) ~= "table" and (type(...) == "number" and max(0, (...)) or ... and Self.tblPoolSize) or 0
 
@@ -251,6 +262,18 @@ function Self.TblIter(t, fn, ...)
         fn(v, i, ...)
     end
     return t
+end
+
+-- Call a function on every table entry
+function Self.TblCall(t, fn, val, index, ...)
+    for i,v in pairs(t) do
+        local f = Self.Fn(fn, v)
+        if val then
+            if index then f(val, index, ...) else f(val, ...) end
+        else
+            if index then f(index, ...) else f(...) end
+        end
+    end
 end
 
 -- COUNT, SUM, MULTIPLY, MIN, MAX
@@ -587,12 +610,13 @@ function Self.TblPluck(t, k)
 end
 
 -- Flip table keys and values
-function Self.TblFlip(t, fn, ...)
-    fn = Self.Fn(fn)
+function Self.TblFlip(t, val, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
-        if fn then
-            u[v] = fn(v, i, ...)
+        if type(val) == "function" then
+            u[v] = val(v, i, ...)
+        elseif val ~= nil then
+            u[v] = val
         else
             u[v] = i
         end
@@ -858,8 +882,24 @@ function Self.StrIsNumber(str, leadingZero)
     return tonumber(str) and (leadingZero or not Self.StrStartsWith(str, "0"))
 end
 
+-- Get abbreviation of given length
 function Self.StrAbbr(str, length)
     return str:len() <= length and str or str:sub(1, length) .. "..."
+end
+
+-- String format with argument reordering support (%#$x)
+function Self.StrFormat(str, ...)
+    local p = "%%(%d+)%$"
+    
+    if str:match(p) then
+        local args, order = Self.Tbl(false, ...), Self.Tbl()
+        str = str:gsub(p, function(i) tinsert(order, args[tonumber(i)]) return "%" end):format(unpack(order))
+        Self.TblRelease(args, order)
+    else
+        str = str:format(...)
+    end
+
+    return str
 end
 
 -------------------------------------------------------
@@ -867,15 +907,32 @@ end
 -------------------------------------------------------
 
 -- Rounds a number
-function Self.NumRound(num)
-    return floor(num + .5)
+function Self.NumRound(num) return floor(num + .5) end
+
+-- Check if num is in interval (exclusive or inclusive)
+function Self.NumIn(num, a, b, incl)
+    if incl then return num >= a and num <= b else return num > a and num < b end
+end
+
+-------------------------------------------------------
+--                      Boolean                      --
+-------------------------------------------------------
+
+function Self.BoolXor(...)
+    local v = false
+    for i=1, select("#", ...) do
+        if select(i, ...) then
+            if v then return false else v = true end
+        end
+    end
+    return v
 end
 
 -------------------------------------------------------
 --                      Function                     --
 -------------------------------------------------------
 
-function Self.Fn(fn) return type(fn) == "string" and _G[fn] or fn end
+function Self.Fn(fn, obj) return type(fn) == "string" and (obj and obj[fn] or _G[fn]) or fn end
 function Self.FnId(...) return ... end
 function Self.FnTrue() return true end
 function Self.FnFalse() return false end
@@ -1026,7 +1083,7 @@ local Fn = function (...)
     local c, k, v = Self.C, rawget(Self.C, "k"), rawget(Self.C, "v")
 
     local t = type(v)
-    local pre = t == "table" and "Tbl" or t == "string" and "Str" or t == "number" and "num" or t == "function" and "Fn" or ""
+    local pre = t == "table" and "Tbl" or t == "string" and "Str" or t == "number" and "Num" or t == "boolean" and "Bool" or t == "function" and "Fn" or ""
 
     c.v = (Self[pre .. k] or Self[k])(v, ...)
     return c

@@ -12,6 +12,8 @@ Self.CLEAR = 600
 Self.TIMEOUT = 15
 -- Timeout increase per item
 Self.TIMEOUT_PER_ITEM = 5
+-- Seconds after a roll ended when it's still considered "recently" ended
+Self.TIMEOUT_RECENT = 120
 -- Max # of whispers per item for all addons in the group
 Self.MAX_WHISPERS = 2
 
@@ -42,9 +44,12 @@ Self.EVENT_ADVERTISE = "ADVERTISE"
 Self.EVENT_BID = "BID"
 Self.EVENT_VOTE = "VOTE"
 Self.EVENT_END = "END"
+Self.EVENT_AWARD = "AWARD"
 Self.EVENT_TRADE = "TRADE"
+Self.EVENT_VISIBILITY = "VISIBILITY"
+Self.EVENT_CHAT = "CHAT"
 Self.EVENT_CHANGE = "CHANGE"
-Self.EVENTS = {Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_CANCEL, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_TRADE}
+Self.EVENTS = {Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_CANCEL, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_AWARD, Self.EVENT_TRADE, Self.EVENT_VISIBILITY, Self.EVENT_CHAT}
 
 Self.events = CB:New(Self, "On", "Off")
 
@@ -129,6 +134,7 @@ function Self.Add(item, owner, timeout, ownerId, itemOwnerId)
         votes = {},
         whispers = 0,
         shown = nil,
+        hidden = nil,
         posted = nil,
         traded = nil
     }
@@ -269,25 +275,16 @@ function Self.Clear(self)
 end
 
 -- Check for and convert from/to PLR roll id
-
-function Self.IsPlrId(id)
-    return Util.StrStartsWith("" .. id, Addon.ABBR)
-end
-
-function Self.ToPlrId(id)
-    return Addon.ABBR .. id
-end
-
-function Self.FromPlrId(id)
-    return tonumber(("" .. id):sub(Addon.ABBR:len() + 1))
-end
+function Self.IsPlrId(id) return id < 0 end
+function Self.ToPlrId(id) return -id end
+function Self.FromPlrId(id) return -id end
 
 -- Calculate the optimal timeout
 function Self.GetTimeout()
     local items, ml = 0, Masterloot.GetMasterlooter()
     local base, perItem = ml and Masterloot.session.timeoutBase or Self.TIMEOUT, ml and Masterloot.session.timeoutPerItem or Self.TIMEOUT_PER_ITEM
 
-    if select(4, GetInstanceInfo()) == DIFFICULTY_DUNGEON_CHALLENGE then
+    if select(3, GetInstanceInfo()) == DIFFICULTY_DUNGEON_CHALLENGE then
         -- In M+ we get 2 items at the end of the dungeon, +1 if in time, +0.4 per keystone level above 15
         local _, level, _, onTime = C_ChallengeMode.GetCompletionInfo();
         items = 2 + (onTime and 1 or 0) + (level > 15 and math.ceil(0.4 * (level - 15)) or 0)
@@ -323,7 +320,7 @@ end
 
 -- Start a roll
 function Self:Start(started)
-    Addon:Verbose(L["ROLL_START"]:format(self.item.link, Comm.GetPlayerLink(self.item.owner)))
+    Addon:Verbose(L["ROLL_START"], self.item.link, Comm.GetPlayerLink(self.item.owner))
 
     self.item:OnLoaded(function ()
         self.item:GetFullInfo()
@@ -355,10 +352,9 @@ function Self:Start(started)
             self.timer = Addon:ScheduleTimer(Self.Finish, self:GetTimeLeft(), self)
 
             -- Let the others know
+            Self.events:Fire(Self.EVENT_START, self)
             self:Advertise(false, true)
             self:SendStatus()
-
-            Self.events:Fire(Self.EVENT_START, self)
         end
     end)
 
@@ -400,6 +396,7 @@ function Self:Restart(started)
     self.winner = nil
     self.isWinner = nil
     self.shown = nil
+    self.hidden = nil
     self.posted = nil
     self.traded = nil
     self.status = Self.STATUS_PENDING
@@ -456,10 +453,12 @@ function Self:Bid(bid, fromUnit, rollOrImport)
         if fromSelf then
             self.bid = bid
             Comm.RollBidSelf(self, isImport)
-        end
+        end        
 
-        -- Check if we should advertise to chat
-        if self.isOwner and not (self.status == Self.STATUS_DONE or self:CheckEnd()) then
+        Self.events:Fire(Self.EVENT_BID, self, bid, fromUnit, rollOrImport)
+
+        -- Check if we should end the roll or advertise to chat
+        if self.status == Self.STATUS_RUNNING and not self:CheckEnd() and self.isOwner then
             self:Advertise()
         end
 
@@ -493,8 +492,6 @@ function Self:Bid(bid, fromUnit, rollOrImport)
                 end
             end
         end
-
-        Self.events:Fire(Self.EVENT_BID, self, bid, fromUnit, rollOrImport)
     end
 
     return self
@@ -520,6 +517,8 @@ function Self:Vote(vote, fromUnit, isImport)
             self.vote = vote
         end
 
+        Self.events:Fire(Self.EVENT_VOTE, self, vote, fromUnit, isImport)
+
         -- Inform others
         if not isImport then
             if self.isOwner then
@@ -538,15 +537,14 @@ function Self:Vote(vote, fromUnit, isImport)
                 Comm.SendData(Comm.EVENT_VOTE, {ownerId = self.ownerId, vote = Unit.FullName(vote)}, Masterloot.GetMasterlooter())
             end
         end
-
-        Self.events:Fire(Self.EVENT_VOTE, self, vote, fromUnit, isImport)
     end
 end
 
 -- Check if we should end the roll prematurely
 function Self:ShouldEnd()
-    -- Only end running rolls that we own and that we answered already
-    if not self.isOwner or self.status ~= Self.STATUS_RUNNING or not self.bid then
+    if not self.ownerId and self.bid then
+        return true
+    elseif not self.isOwner or self.status ~= Self.STATUS_RUNNING or not self.bid then
         return false
     end
 
@@ -589,7 +587,7 @@ function Self:End(winner)
     
     -- End it if it is running
     if self.status < Self.STATUS_DONE then
-        Addon:Verbose(L["ROLL_END"]:format(self.item.link, Comm.GetPlayerLink(self.item.owner)))
+        Addon:Verbose(L["ROLL_END"], self.item.link, Comm.GetPlayerLink(self.item.owner))
 
         -- Check if we can end the roll
         local valid, msg = self:Validate(Self.STATUS_RUNNING, winner)
@@ -606,6 +604,8 @@ function Self:End(winner)
         -- Update status
         self.status = Self.STATUS_DONE
         self.ended = time()
+
+        Self.events:Fire(Self.EVENT_END, self)
     end
 
     -- Determine a winner
@@ -616,6 +616,9 @@ function Self:End(winner)
     -- Set winner
     self.winner = winner
     self.isWinner = self.winner and UnitIsUnit(self.winner, "player")
+    
+    Self.events:Fire(Self.EVENT_AWARD, self)
+    self:SendStatus()
 
     if self.winner then
         -- It has already been traded
@@ -626,10 +629,6 @@ function Self:End(winner)
         -- Let the player know, announce to chat and the winner
         Comm.RollEnd(self)
     end
-
-    self:SendStatus()
-    
-    Self.events:Fire(Self.EVENT_END, self)
 
     return self
 end
@@ -651,7 +650,7 @@ end
 -- Cancel a roll
 function Self:Cancel()
     if self.status == Self.STATUS_CANCELED then return end
-    Addon:Verbose(L["ROLL_CANCEL"]:format(self.item.link, Comm.GetPlayerLink(self.item.owner)))
+    Addon:Verbose(L["ROLL_CANCEL"], self.item.link, Comm.GetPlayerLink(self.item.owner))
 
     -- Cancel a pending timer
     if self.timer then
@@ -666,16 +665,15 @@ function Self:Cancel()
     self:HideRollFrame(id)
 
     -- Let everyone know
-    self:SendStatus()
-        
     Self.events:Fire(Self.EVENT_CANCEL, self)
+    self:SendStatus()
     
     return self
 end
 
 -- Trade with the owner or the winner of the roll
 function Self:Trade()
-    local target = self.item.isOwner and self.winner or self.isWinner and self.item.owner
+    local target = self:GetActionTarget()
     if target then
         Trade.Initiate(target)
     end
@@ -698,13 +696,12 @@ function Self:OnTraded(target)
         end
     end
 
-    self:SendStatus(self.item.isOwner or self.isWinner)
-        
     Self.events:Fire(Self.EVENT_TRADE, self, target)
+    self:SendStatus(self.item.isOwner or self.isWinner)
 end
 
 -------------------------------------------------------
---                      Frames                       --
+--                      GUI                       --
 -------------------------------------------------------
 
 -- Get the loot frame for a loot id
@@ -758,6 +755,20 @@ function Self:ShowAlertFrame()
     GUI.LootAlertSystem:AddAlert(self.item.link, 1, nil, nil, nil, false, false, nil, false, false, true, false, self.id)
 end
 
+-- Toggle the rolls visiblity in GUIs
+function Self:ToggleVisibility(show)
+    if show == nil then self.hidden = not self.hidden else self.hidden = not show end
+    Self.events:Fire(Self.EVENT_VISIBILITY, self)
+end
+
+-- Log a chat message about the roll
+function Self:AddChat(msg, unit)
+    unit = unit or "player"
+    self.chat = self.chat or Util.Tbl()
+    tinsert(self.chat, "[" .. Unit.ColoredName(Unit.ShortenedName(unit), unit) .. "]: " .. msg)    
+    Self.events:Fire(Self.EVENT_CHAT, self)
+end
+
 -------------------------------------------------------
 --                       Comm                        --
 -------------------------------------------------------
@@ -789,9 +800,9 @@ function Self:Advertise(manually, silent)
 
     if i < 50 then
         if self.item.isOwner then
-            Comm.ChatLine("ROLL_START", Comm.TYPE_GROUP, self.item.link, 100 + i)
+            Comm.ChatLine("MSG_ROLL_START", Comm.TYPE_GROUP, self.item.link, 100 + i)
         else
-            Comm.ChatLine("ROLL_START_MASTERLOOT", Comm.TYPE_GROUP, self.item.link, self.item.owner, 100 + i)
+            Comm.ChatLine("MSG_ROLL_START_MASTERLOOT", Comm.TYPE_GROUP, self.item.link, self.item.owner, 100 + i)
         end
 
         self.posted = i
@@ -977,6 +988,21 @@ function Self:HasMasterlooter()
     return self.owner ~= self.item.owner or self.owner == Masterloot.GetMasterlooter(self.item.owner)
 end
 
+-- Check if the player has to take an action to complete the roll (e.g. trade)
+function Self:IsActionNeeded()
+    return not self.traded and ((self.item.isOwner and self.winner or self.isWinner) or (not self.ownerId and self.bid and self.bid ~= Self.BID_PASS))
+end
+
+-- Get the target for actions (e.g. trade, whisper)
+function Self:GetActionTarget()
+    return self.item.isOwner and self.winner or not self.item.isOwner and self.item.owner
+end
+
+-- Check if the roll is running or recently ended
+function Self:IsRecent(timeout)
+    return self.status == Self.STATUS_RUNNING or timeout ~= false and self.status == Self.STATUS_DONE and self.ended + (timeout or Self.TIMEOUT_RECENT) >= time()
+end
+
 -- Get the rolls id with PLR prefix
 function Self:GetPlrId()
     return Self.ToPlrId(self.id)
@@ -997,7 +1023,7 @@ function Self:Validate(status, ...)
     else
         for _,unit in pairs({self.owner, ...}) do
             if not UnitExists(unit) or not Unit.InGroup(unit) then
-                return false, L["ERROR_PLAYER_NOT_FOUND"]:format(unit)
+                return false, Util.StrFormat(L["ERROR_PLAYER_NOT_FOUND"], unit)
             end
         end
 

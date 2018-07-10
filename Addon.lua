@@ -36,7 +36,7 @@ function Addon:OnInitialize()
         profile = {
             -- General
             enabled = true,
-            ui = {showRollFrames = true, showRollsWindow = false},
+            ui = {showRollFrames = true, showActionsWindow = true, showRollsWindow = false},
             awardSelf = false,
             ilvlThreshold = 30,
             ilvlThresholdTrinkets = true,
@@ -69,7 +69,13 @@ function Addon:OnInitialize()
                 council = {guildmaster = false, guildofficer = false, raidleader = false, raidassistant = false},
                 votePublic = false
             },
-            version = 3
+
+            -- GUI status
+            gui = {
+                actions = {anchor = "LEFT", v = 10, h = 0}
+            },
+
+            version = 4
         },
         factionrealm = {
             masterloot = {
@@ -89,9 +95,8 @@ function Addon:OnInitialize()
         }
     }, true)
     
-    -- Migrate and register options
+    -- Migrate options
     self:MigrateOptions()
-    self:RegisterOptions()
 
     -- Minimap icon
     self:RegisterMinimapIcon()
@@ -99,6 +104,9 @@ end
 
 -- Called when the addon is enabled
 function Addon:OnEnable()
+    -- Register options table
+    self:RegisterOptions()
+
     -- Enable hooks
     self.Hooks.EnableGroupLootRoll()
     self.Hooks.EnableChatLinks()
@@ -219,7 +227,7 @@ function Addon:HandleChatCommand(msg)
         self.GUI.Rolls.Show()
     -- Unknown
     else
-        self:Err(L["ERROR_CMD_UNKNOWN"]:format(cmd))
+        self:Err(L["ERROR_CMD_UNKNOWN"], cmd)
     end
 end
 
@@ -249,7 +257,7 @@ function Addon:RegisterOptions()
     config:RegisterOptionsTable(Name, {
         type = "group",
         args = {
-            version = {type = "description", fontSize = "medium", order = it(), name = L["OPT_VERSION"]},
+            version = {type = "description", fontSize = "medium", order = it(), name = Util.StrFormat(L["OPT_VERSION"], Addon.VERSION)},
             author = {type = "description", fontSize = "medium", order = it(), name = L["OPT_AUTHOR"]},
             translation = {type = "description", fontSize = "medium", order = it(), name = L["OPT_TRANSLATION"] .. "\n"},
             enable = {
@@ -265,7 +273,7 @@ function Addon:RegisterOptions()
                 width = "full"
             },
             ui = {type = "header", order = it(), name = L["OPT_UI"]},
-            uiDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_UI_DESC"] .. "\n"},
+            uiDesc = {type = "description", fontSize = "medium", order = it(), name = Util.StrFormat(L["OPT_UI_DESC"], Name) .. "\n"},
             minimapIcon = {
                 name = L["OPT_MINIMAP_ICON"],
                 desc = L["OPT_MINIMAP_ICON_DESC"],
@@ -290,6 +298,25 @@ function Addon:RegisterOptions()
                 set = function (_, val) self.db.profile.ui.showRollFrames = val end,
                 get = function (_) return self.db.profile.ui.showRollFrames end,
                 width = "full"
+            },
+            showActionsWindow = {
+                name = L["OPT_ACTIONS_WINDOW"],
+                desc = L["OPT_ACTIONS_WINDOW_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) self.db.profile.ui.showActionsWindow = val end,
+                get = function (_) return self.db.profile.ui.showActionsWindow end
+            },
+            moveActionsWindow = {
+                name = L["OPT_ACTIONS_WINDOW_MOVE"],
+                desc = L["OPT_ACTIONS_WINDOW_MOVE_DESC"],
+                type = "execute",
+                order = it(),
+                func = function ()
+                    HideUIPanel(InterfaceOptionsFrame)
+                    HideUIPanel(GameMenuFrame)
+                    self.GUI.Actions.Show(true)
+                end
             },
             showRollsWindow = {
                 name = L["OPT_ROLLS_WINDOW"],
@@ -471,14 +498,14 @@ function Addon:RegisterOptions()
                 args = {
                     desc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_CUSTOM_MESSAGES_DESC"] .. "\n"},
                     localized = {
-                        name = L["OPT_CUSTOM_MESSAGES_LOCALIZED"]:format(lang),
+                        name = Util.StrFormat(L["OPT_CUSTOM_MESSAGES_LOCALIZED"], lang),
                         type = "group",
                         order = it(),
                         hidden = Locale.GetLanguage() == Locale.DEFAULT,
                         args = Addon:GetCustomMessageOptions(false)
                     },
                     default = {
-                        name = L["OPT_CUSTOM_MESSAGES_DEFAULT"]:format(Locale.DEFAULT),
+                        name = Util.StrFormat(L["OPT_CUSTOM_MESSAGES_DEFAULT"], Locale.DEFAULT),
                         type = "group",
                         order = it(),
                         args = Addon:GetCustomMessageOptions(true)
@@ -618,7 +645,7 @@ function Addon:RegisterOptions()
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
                     needAnswers = {
                         name = L["OPT_MASTERLOOTER_NEED_ANSWERS"],
-                        desc = L["OPT_MASTERLOOTER_NEED_ANSWERS_DESC"],
+                        desc = Util.StrFormat(L["OPT_MASTERLOOTER_NEED_ANSWERS_DESC"], NEED),
                         type = "input",
                         order = it(),
                         set = function (_, val)
@@ -642,7 +669,7 @@ function Addon:RegisterOptions()
                     },
                     greedAnswers = {
                         name = L["OPT_MASTERLOOTER_GREED_ANSWERS"],
-                        desc = L["OPT_MASTERLOOTER_GREED_ANSWERS_DESC"],
+                        desc = Util.StrFormat(L["OPT_MASTERLOOTER_GREED_ANSWERS_DESC"], GREED),
                         type = "input",
                         order = it(),
                         set = function (_, val)
@@ -760,6 +787,7 @@ end
 function Addon:GetCustomMessageOptions(isDefault)
     local lang = isDefault and Locale.DEFAULT or Locale.GetLanguage()
     local locale = Locale.GetLocale(lang)
+    local default = Locale.GetLocale(Locale.DEFAULT)
     local desc = L["OPT_CUSTOM_MESSAGES_" .. (isDefault and "DEFAULT" or "LOCALIZED") .. "_DESC"]
     local it = Util.Iter()
 
@@ -773,11 +801,11 @@ function Addon:GetCustomMessageOptions(isDefault)
         return c[lang] and c[lang][line] or locale[line]
     end
     local validate = function (info, val)
-        local line, pattern = info[3], ""
-        for v in locale[line]:gmatch("%%[sd]") do
-            pattern = pattern == "" and "%" .. v or pattern .. ".*%" .. v
+        local line, args = default[info[3]], {}
+        for v in line:gmatch("%%[sd]") do
+            tinsert(args, v == "%s" and "a" or 1)
         end
-        return val == "" or val:match(pattern) ~= nil and select(2, val:gsub("%%[sd]", "")) == select(2, locale[line]:gsub("%%[sd]", ""))
+        return (pcall(Util.StrFormat, val, unpack(args)))
     end
 
     local t = {
@@ -785,14 +813,14 @@ function Addon:GetCustomMessageOptions(isDefault)
         groupchat = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
     }
 
-    for i,line in pairs({"ROLL_START", "ROLL_START_MASTERLOOT", "ROLL_WINNER", "ROLL_WINNER_MASTERLOOT", "whisper", "BID", "ROLL_WINNER_WHISPER", "ROLL_WINNER_WHISPER_MASTERLOOT", "ROLL_ANSWER_BID", "ROLL_ANSWER_YES", "ROLL_ANSWER_YES_MASTERLOOT", "ROLL_ANSWER_NO_SELF", "ROLL_ANSWER_NO_OTHER", "ROLL_ANSWER_NOT_TRADABLE", "ROLL_ANSWER_AMBIGUOUS"}) do
+    for i,line in pairs({"MSG_ROLL_START", "MSG_ROLL_START_MASTERLOOT", "MSG_ROLL_WINNER", "MSG_ROLL_WINNER_MASTERLOOT", "whisper", "MSG_BID", "MSG_ROLL_WINNER_WHISPER", "MSG_ROLL_WINNER_WHISPER_MASTERLOOT", "MSG_ROLL_ANSWER_BID", "MSG_ROLL_ANSWER_YES", "MSG_ROLL_ANSWER_YES_MASTERLOOT", "MSG_ROLL_ANSWER_NO_SELF", "MSG_ROLL_ANSWER_NO_OTHER", "MSG_ROLL_ANSWER_NOT_TRADABLE", "MSG_ROLL_ANSWER_AMBIGUOUS"}) do
         if line == "whisper" then
             t[line] = {type = "header", order = it(), name = L["OPT_WHISPER"]}
         else
-            desc = DEFAULT .. ": \"" .. locale[line] .. "\"" .. Util.StrPrefix(L["OPT_MSG_" .. line .. "_DESC"], "\n\n")
+            desc = DEFAULT .. ": \"" .. locale[line] .. "\"" .. Util.StrPrefix(L["OPT_" .. line .. "_DESC"], "\n\n")
             t[line] = {
-                name = L["OPT_MSG_" .. line],
-                desc = desc:gsub("(%%.)", "|cffffff00%1|r"),
+                name = L["OPT_" .. line],
+                desc = desc:gsub("(%%.)", "|cffffff00%1|r"):gsub("%d:", "|cffffff00%1|r"),
                 type = "input",
                 order = it(),
                 validate = validate,
@@ -818,6 +846,12 @@ function Addon:MigrateOptions()
         c.masterlooter.votePublic = c.masterloot.votePublic or c.masterlooter.votePublic or false
         c.masterloot.timeoutBase, c.masterloot.timeoutPerItem, c.masterloot.bidPublic, c.masterloot.council, c.masterloot.votePublic, c.masterloot.whitelist, c.masterloot.councilWhitelist = nil
         c.version = 3
+    end
+    if c.version < 4 then
+        for lang,lines in pairs(self.db.profile.messages) do
+            self.db.profile.messages[lang] = Util.TblMapKeys(lines, function (line) return "MSG_" .. line end)
+        end
+        c.version = 4
     end
 
     -- Factionrealm
@@ -886,16 +920,17 @@ end
 
 -- Console output
 
-function Addon:Echo(lvl, ...)
+function Addon:Echo(lvl, line, ...)
     if self.db.profile.echo >= lvl then
         if lvl == self.ECHO_DEBUG then
-            local args = {...}
+            local args = Util.Tbl(false, line, ...)
             for i,v in pairs(args) do
                 if Util.In(type(v), "table", "function") then args[i] = Util.ToString(v) end
             end
             self:Print(unpack(args))
+            Util.TblRelease(args)
         else
-            self:Print(...)
+            self:Print(Util.StrFormat(line, ...))
         end
     end
 end

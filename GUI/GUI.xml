@@ -1,0 +1,12 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\FrameXML\UI.xsd">
+    <Script file="GUI.lua"/>
+    <Script file="Rolls.lua"/>
+    <Script file="Actions.lua"/>
+
+    <Button name="PLR_LootWonAlertFrameTemplate" parent="UIParent" virtual="true" inherits="LootWonAlertFrameTemplate">
+        <Scripts>
+            <OnClick function="PLR_LootWonAlertFrame_OnClick"/>
+        </Scripts>
+    </Button>
+</Ui>
