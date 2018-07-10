@@ -48,16 +48,13 @@ end
 -- Start a trade
 function Self.Start()
     Self.Clear()
-    Self.target = UnitName("NPC")
-
-    -- print(Self.target) -- TODO: DEBUG
+    Self.target = Unit.Name("NPC")
 
     if Self.target then
         -- Find items the target has won and add them to the trade window
         for i,roll in pairs(Addon.rolls) do
             if roll.item.isOwner and roll.winner == Self.target and not roll.traded then
                 local bag, slot, isTradable = roll.item:GetPosition()
-                -- print(roll.item.link, bag, slot, isTradable) -- TODO: DEBUG
                 if bag and slot and isTradable then
                     PickupContainerItem(bag, slot)
                     DropItemOnUnit(Self.target)
