@@ -787,6 +787,7 @@ end
 function Addon:GetCustomMessageOptions(isDefault)
     local lang = isDefault and Locale.DEFAULT or Locale.GetLanguage()
     local locale = Locale.GetLocale(lang)
+    local default = Locale.GetLocale(Locale.DEFAULT)
     local desc = L["OPT_CUSTOM_MESSAGES_" .. (isDefault and "DEFAULT" or "LOCALIZED") .. "_DESC"]
     local it = Util.Iter()
 
@@ -800,11 +801,11 @@ function Addon:GetCustomMessageOptions(isDefault)
         return c[lang] and c[lang][line] or locale[line]
     end
     local validate = function (info, val)
-        local line, pattern = info[3], ""
-        for v in locale[line]:gmatch("%%[sd]") do
-            pattern = pattern == "" and "%" .. v or pattern .. ".*%" .. v
+        local line, args = default[info[3]], {}
+        for v in line:gmatch("%%[sd]") do
+            tinsert(args, v == "%s" and "a" or 1)
         end
-        return val == "" or val:match(pattern) ~= nil and select(2, val:gsub("%%[sd]", "")) == select(2, locale[line]:gsub("%%[sd]", ""))
+        return (pcall(Util.StrFormat, val, unpack(args)))
     end
 
     local t = {
@@ -819,7 +820,7 @@ function Addon:GetCustomMessageOptions(isDefault)
             desc = DEFAULT .. ": \"" .. locale[line] .. "\"" .. Util.StrPrefix(L["OPT_" .. line .. "_DESC"], "\n\n")
             t[line] = {
                 name = L["OPT_" .. line],
-                desc = desc:gsub("(%%.)", "|cffffff00%1|r"),
+                desc = desc:gsub("(%%.)", "|cffffff00%1|r"):gsub("%d:", "|cffffff00%1|r"),
                 type = "input",
                 order = it(),
                 validate = validate,
