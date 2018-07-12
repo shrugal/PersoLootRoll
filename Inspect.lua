@@ -46,7 +46,6 @@ function Self.Update(unit)
     unit = Unit.Name(unit)
 
     local info = Self.cache[unit] or Util.Tbl(true, "levels", Util.Tbl(), "links", Util.Tbl())
-    local level = Item.IsScalingActive(unit) and "effectiveLevel" or "level"
 
     -- Remember when we did this
     info.time = GetTime()
@@ -60,7 +59,7 @@ function Self.Update(unit)
                 if link then
                     info.links[slot] = link
                     if slotMin then
-                        slotMin = min(slotMin, Item.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY and Item.GetInfo(link, level) or 0)
+                        slotMin = min(slotMin, Item.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY and Item.GetInfo(link, "maxLevel", unit) or 0)
                     end
                 else
                     slotMin = false
@@ -92,7 +91,7 @@ function Self.Update(unit)
                 if link then
                     tinsert(info.links[relicType], link)
                     if slotMin and relicsUnique[slot] then
-                        slotMin = min(slotMin, Item.GetInfo(link, level) or 0)
+                        slotMin = min(slotMin, Item.GetInfo(link, "effectiveLevel", unit) or 0)
                     end
                 elseif relicsUnique[slot] then
                     slotMin = false

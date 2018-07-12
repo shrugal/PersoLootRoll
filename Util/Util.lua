@@ -910,9 +910,8 @@ end
 function Self.NumRound(num) return floor(num + .5) end
 
 -- Check if num is in interval (exclusive or inclusive)
-function Self.NumIn(num, a, b, incl)
-    if incl then return num >= a and num <= b else return num > a and num < b end
-end
+function Self.NumBetween(num, a, b) return num > a and num < b end
+function Self.NumIn(num, a, b) return num >= a and num <= b end
 
 -------------------------------------------------------
 --                      Boolean                      --
@@ -1027,6 +1026,20 @@ function Self.In(val, ...)
             if select(i, ...) == val then return true end
         end
         return false
+    end
+end
+
+-- Shortcut for val == a and b or val == c and d or ...
+function Self.Select(val, ...)
+    local n = select("#", ...)
+    
+    for i=1, n - n % 2, 2 do
+        local a, b = select(i, ...)
+        if val == a then return b end
+    end
+
+    if n % 2 == 1 then
+        return select(n, ...)
     end
 end
 

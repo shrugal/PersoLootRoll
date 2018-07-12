@@ -18,6 +18,7 @@ Self.PATTERN_LINK_DATA = "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?
 Self.PATTERN_LINK = "(|?c?f?f?%x*|?H?item:[^|]*|?h?[^|]*|?h?|?r?)"
 Self.PATTERN_ILVL = ITEM_LEVEL:gsub("%%d", "(%%d+)")
 Self.PATTERN_ILVL_SCALED = ITEM_LEVEL_ALT:gsub("%(%%d%)", "%%%(%%%d%%%)"):gsub("%%d", "(%%d+)")
+Self.PATTERN_HEIRLOOM_LEVEL = ITEM_LEVEL_RANGE:gsub("%%d", "(%%d+)")
 Self.PATTERN_RELIC_TYPE = RELIC_TOOLTIP_TYPE:gsub("%%s", "(.+)")
 Self.PATTERN_CLASSES = ITEM_CLASSES_ALLOWED:gsub("%%s", "(.+)")
 Self.PATTERN_STRENGTH = ITEM_MOD_STRENGTH:gsub("%%c%%s", "^%%p(.+)")
@@ -294,7 +295,10 @@ Self.INFO = {
     full = {
         classes = true,
         relicType = true,
-        effectiveLevel = true
+        effectiveLevel = true,
+        fromLevel = true,
+        toLevel = true,
+        maxLevel = true
     }
 }
 
@@ -306,10 +310,7 @@ Self.queue = {}
 
 -- Check if item scaling is currently active
 function Self.IsScalingActive(unit)
-    unit = Unit(unit or "player")
-    local level = UnitLevel(unit)
-
-    return level and Util.NumIn(level, 0, MAX_PLAYER_LEVEL) or Util.IsTimewalking()
+    return Util.IsTimewalking() or Util.NumBetween(UnitLevel(Unit(unit or "player")), 0, MAX_PLAYER_LEVEL)
 end
 
 -------------------------------------------------------
@@ -323,6 +324,12 @@ function Self.GetLink(str, translate)
     elseif type(str) == "string" then
         return select(3, str:find(Self.PATTERN_LINK))
     end
+end
+
+-- Get a version of the link that is scaled to the given player level
+function Self.GetScaledLink(link, level)
+    local it = Util.Iter()
+    return link:gsub(".-:", function (s) if it() == 10 then return (level or MAX_PLAYER_LEVEL) .. ":" end end)
 end
 
 -- Check if string is an item link
@@ -352,10 +359,14 @@ local scanFn = function (i, line, lines, attr)
     -- effectiveLevel
     elseif attr == "effectiveLevel" then
         return tonumber(select(2, line:match(Self.PATTERN_ILVL_SCALED)) or line:match(Self.PATTERN_ILVL))
+    -- fromlevel, toLevel
+    elseif Util.In(attr, "fromLevel", "toLevel") then
+        local from, to = line:match(Self.PATTERN_HEIRLOOM_LEVEL)
+        return from and to and tonumber(attr == "fromLevel" and from or to) or nil
     end
 end
 
-function Self.GetInfo(link, attr)
+function Self.GetInfo(link, attr, ...)
     link = link.link or link
 
     if not link then
@@ -366,13 +377,20 @@ function Self.GetInfo(link, attr)
     -- isEquippable
     elseif attr == "isEquippable" then
         return IsEquippableItem(link) or Self.GetInfo(link, "isRelic")
-    -- level, baseLevel
-    elseif Util.In(attr, "level", "baseLevel") then
-        return (select(attr == "level" and 1 or 3, GetDetailedItemLevelInfo(link)))
     -- quality
     elseif attr == "quality" then
         local color = Self.GetInfo(link, "color")
         return color and Util.TblFindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. color) or 1
+    -- level, baseLevel
+    elseif Util.In(attr, "level", "baseLevel") then
+        return (select(attr == "level" and 1 or 3, GetDetailedItemLevelInfo(link)))
+    -- maxLevel
+    elseif attr == "maxLevel" then
+        if Self.GetInfo(link, "quality") == LE_ITEM_QUALITY_HEIRLOOM then
+            return Self.GetInfo(Self.GetScaledLink(link, Self.GetInfo(link, "toLevel")), "level", ...)
+        else
+            return Self.GetInfo(link, "effectiveLevel", ...)
+        end
     -- From link
     elseif Self.INFO.link[attr] then
         local v = select(Self.INFO.link[attr] + 2, link:find(Self.PATTERN_LINK_DATA))
@@ -389,7 +407,11 @@ function Self.GetInfo(link, attr)
         return (select(Self.INFO.basic[attr], GetItemInfo(link)))
     -- From Tooltip scanning
     elseif Self.INFO.full[attr] then
-        return Util.ScanTooltip(scanFn, link, nil, attr)
+        if attr == "effectiveLevel" and not Self.IsScalingActive((...)) then
+            return Self.GetInfo(link, "level", ...)
+        else
+            return Util.ScanTooltip(scanFn, link, nil, attr)
+        end
     end
 end
 
@@ -520,15 +542,10 @@ function Self:GetFullInfo()
     self:GetBasicInfo()
 
     -- TODO: Optimize (e.g. restrict line numbers)!
-    if self.infoLevel == Self.INFO_BASIC then
+    if self.infoLevel == Self.INFO_BASIC and self.isEquippable then
         Util.ScanTooltip(function (i, line)
             self.infoLevel = Self.INFO_FULL
 
-            -- Ilvl (incl. upgrades)
-            if not self.effectiveLevel then
-                self.effectiveLevel = tonumber(select(2, line:match(Self.PATTERN_ILVL_SCALED)) or line:match(Self.PATTERN_ILVL))
-                if self.effectiveLevel then return end
-            end
             -- Class restrictions
             if not self.classes then
                 local classes = line:match(Self.PATTERN_CLASSES)
@@ -538,36 +555,53 @@ function Self:GetFullInfo()
                 end
             end
 
-            if self.isEquippable then
-                -- Relic type
-                if self.isRelic and not self.relicType then
-                    self.relicType = line:match(Self.PATTERN_RELIC_TYPE)
-                    if self.relicType then return end
+            -- Ilvl (incl. upgrades)
+            if not self.effectiveLevel then
+                self.effectiveLevel = tonumber(select(2, line:match(Self.PATTERN_ILVL_SCALED)) or line:match(Self.PATTERN_ILVL))
+                if self.effectiveLevel then return end
+            end
+
+            -- Heirloom min/max level
+            if self.quality == LE_ITEM_QUALITY_HEIRLOOM and not (self.fromLevel and self.toLevel) then
+                local from, to = line:match(Self.PATTERN_HEIRLOOM_LEVEL)
+                if from and to then
+                    self.fromLevel, self.toLevel = tonumber(from), tonumber(to)
+                    return
                 end
-                -- Primary attributes
-                self.attributes = self.attributes or {}
-                for i,attr in pairs(Self.ATTRIBUTES) do
-                    if not self.attributes[attr] then
-                        local attrName = attr == LE_UNIT_STAT_STRENGTH and "STRENGTH" or attr == LE_UNIT_STAT_INTELLECT and "INTELLECT" or "AGILITY"
-                        local match = line:match(Self["PATTERN_" .. attrName])
-                        if match then
-                            self.attributes[attr] = tonumber((match:gsub(",", ""):gsub("\\.", "")))
-                            return
-                        end
+            end
+
+            -- Relic type
+            if self.isRelic and not self.relicType then
+                self.relicType = line:match(Self.PATTERN_RELIC_TYPE)
+                if self.relicType then return end
+            end
+
+            -- Primary attributes
+            self.attributes = self.attributes or {}
+            for i,attr in pairs(Self.ATTRIBUTES) do
+                if not self.attributes[attr] then
+                    local attrName = attr == LE_UNIT_STAT_STRENGTH and "STRENGTH" or attr == LE_UNIT_STAT_INTELLECT and "INTELLECT" or "AGILITY"
+                    local match = line:match(Self["PATTERN_" .. attrName])
+                    if match then
+                        self.attributes[attr] = tonumber((match:gsub(",", ""):gsub("\\.", "")))
+                        return
                     end
                 end
-                -- Transmog appearance
-                if not self.isRelic and Addon.db.profile.transmog and self.isTransmogKnown == nil then
-                    if line:match(Self.PATTERN_APPEARANCE_KNOWN) or line:match(Self.PATTERN_APPEARANCE_UNKNOWN_ITEM) then
-                        self.isTransmogKnown = true
-                    elseif line:match(Self.PATTERN_APPEARANCE_UNKNOWN) then
-                        self.isTransmogKnown = false
-                    end
+            end
+
+            -- Transmog appearance
+            if not self.isRelic and Addon.db.profile.transmog and self.isTransmogKnown == nil then
+                if line:match(Self.PATTERN_APPEARANCE_KNOWN) or line:match(Self.PATTERN_APPEARANCE_UNKNOWN_ITEM) then
+                    self.isTransmogKnown = true
+                elseif line:match(Self.PATTERN_APPEARANCE_UNKNOWN) then
+                    self.isTransmogKnown = false
                 end
             end
         end, self.link)
 
+        -- Effective and max level
         self.effectiveLevel = self.effectiveLevel or self.level
+        self.maxLevel = self.quality == LE_ITEM_QUALITY_HEIRLOOM and Self.GetInfo(Self.GetScaledLink(self.link, self.toLevel), "level") or self.effectiveLevel
 
         -- Get item position in bags or equipment
         local bagOrEquip, slot = self:GetPosition()
@@ -707,7 +741,7 @@ function Self:GetLevelForLocation(unit)
         if not cache.ilvl or not cache.time or cache.time + Inspect.REFRESH < GetTime() then
             cache.time = GetTime()
             cache.ilvl = Util(self:GetOwnedForLocation())
-                .Map(Self.GetInfo, false, "level")
+                .Map(Self.GetInfo, false, "maxLevel")
                 .Sort(true)(self:GetSlotCountForLocation())
             Self.playerSlotLevels[location] = cache
         end
@@ -861,7 +895,7 @@ end
 
 -- Check against equipped ilvl
 function Self:HasSufficientLevel(unit)
-    return self:GetFullInfo().effectiveLevel + self:GetThresholdForLocation(unit) >= self:GetLevelForLocation(unit)
+    return self:GetRealLevel() + self:GetThresholdForLocation(unit) >= self:GetLevelForLocation(unit)
 end
 
 -- Check if item is useful for the player
@@ -1013,6 +1047,11 @@ end
 -------------------------------------------------------
 --                       Helper                      --
 -------------------------------------------------------
+
+-- Get the real (unscaled) item level
+function Self:GetRealLevel()
+    return Self.IsScalingActive(self.owner) and self:GetFullInfo().effectiveLevel or self:GetBasicInfo().level
+end
 
 -- Check if the item (given by self or bag+slot) is tradable
 function Self.IsTradable(selfOrBag, slot)
