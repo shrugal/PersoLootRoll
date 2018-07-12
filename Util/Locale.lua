@@ -3,26 +3,22 @@ local RealmInfo = LibStub("LibRealmInfo")
 local Unit, Util = Addon.Unit, Addon.Util
 local Self = Addon.Locale
 
-Self.DEFAULT = "enUS"
-
--- Get the current region
-function Self.GetRegion()
-    return (select(7, RealmInfo:GetRealmInfoByUnit("player")))
-end
+-- The region's default language
+Self.DEFAULT = Util.Select(RealmInfo:GetCurrentRegion(), "KR", "koKR", "TW", "zhTW", "CN", "zhCN", "enUS")
 
 -- Get language for the given realm
-function Self.GetLanguage(realm)
-    return (select(5, RealmInfo:GetRealmInfo(realm or GetRealmName())))
+function Self.GetRealmLanguage(realm)
+    return (select(5, RealmInfo:GetRealmInfo(realm or GetRealmName()))) or Self.DEFAULT
 end
 
 -- Get language for the given unit
 function Self.GetUnitLanguage(unit)
-    return (select(5, RealmInfo:GetRealmInfoByUnit(unit or "player")))
+    return (select(5, RealmInfo:GetRealmInfoByUnit(unit or "player"))) or Self.DEFAULT
 end
 
 -- Get locale
 function Self.GetLocale(lang)
-    return Self[lang or Self.GetLanguage()] or Self[Self.DEFAULT]
+    return Self[lang or Self.GetRealmLanguage()] or Self[Self.DEFAULT]
 end
 
 -- Get a single line
@@ -37,7 +33,7 @@ end
 
 -- Get language for communication with another player or group/raid
 function Self.GetCommLanguage(unit)
-    local lang = Self.GetLanguage()
+    local lang = Self.GetRealmLanguage()
 
     -- Check single unit
     if unit then
@@ -87,6 +83,6 @@ Self.MT = {
         return table == Self[Self.DEFAULT] and key or Self[Self.DEFAULT][key]
     end,
     __call = function (table, line, ...)
-        return string.format(table[line], ...)
+        return Util.StrFormat(table[line], ...)
     end
 }

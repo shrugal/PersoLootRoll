@@ -398,7 +398,7 @@ function Addon:RegisterOptions()
     local groupKeys = {"party", "raid", "guild", "lfd", "lfr"}
     local groupValues = {PARTY, RAID, GUILD_GROUP, LOOKING_FOR_DUNGEON_PVEFRAME, RAID_FINDER_PVEFRAME}
 
-    local lang = Locale.GetLanguage()
+    local lang = Locale.GetRealmLanguage()
 
     it(1, true)
     config:RegisterOptionsTable(Name .. "_messages", {
@@ -501,7 +501,7 @@ function Addon:RegisterOptions()
                         name = Util.StrFormat(L["OPT_CUSTOM_MESSAGES_LOCALIZED"], lang),
                         type = "group",
                         order = it(),
-                        hidden = Locale.GetLanguage() == Locale.DEFAULT,
+                        hidden = Locale.GetRealmLanguage() == Locale.DEFAULT,
                         args = Addon:GetCustomMessageOptions(false)
                     },
                     default = {
@@ -785,7 +785,7 @@ function Addon:RegisterOptions()
 end
 
 function Addon:GetCustomMessageOptions(isDefault)
-    local lang = isDefault and Locale.DEFAULT or Locale.GetLanguage()
+    local lang = isDefault and Locale.DEFAULT or Locale.GetRealmLanguage()
     local locale = Locale.GetLocale(lang)
     local default = Locale.GetLocale(Locale.DEFAULT)
     local desc = L["OPT_CUSTOM_MESSAGES_" .. (isDefault and "DEFAULT" or "LOCALIZED") .. "_DESC"]
@@ -809,7 +809,7 @@ function Addon:GetCustomMessageOptions(isDefault)
     end
 
     local t = {
-        desc = {type = "description", fontSize = "medium", order = it(), name = desc:format(Locale.GetLanguage()) .. "\n"},
+        desc = {type = "description", fontSize = "medium", order = it(), name = desc:format(Locale.GetRealmLanguage()) .. "\n"},
         groupchat = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
     }
 

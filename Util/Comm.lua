@@ -136,7 +136,7 @@ end
 function Self.GetChatLine(line, target, ...)
     local L = Locale.GetCommLocale(select(2, Self.GetDestination(target)))
     line = Addon.db.profile.messages[L.lang] and Addon.db.profile.messages[L.lang][line] or L[line]
-    return Util.StrFormat(line, ...)
+    return L(line, ...)
 end
 
 function Self.ChatLine(line, target, ...)
