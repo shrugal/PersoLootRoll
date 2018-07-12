@@ -124,6 +124,8 @@ end
 -- System
 
 function Self.CHAT_MSG_SYSTEM(event, msg)
+    if not Addon:IsTracking() then return end
+
     -- Check if a player rolled
     do
         local unit, result, from, to = msg:match(Self.PATTERN_ROLL_RESULT)
@@ -220,7 +222,7 @@ end
 
 function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
     local unit = Unit(sender)
-    if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
+    if not Addon:IsTracking() or not Unit.InGroup(unit) or Addon.db.profile.onlyMasterloot then return end
 
     local item = Item.GetLink(msg)
 
@@ -291,7 +293,7 @@ function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender, _, _, _, _, _, _
     -- Log the conversation
     -- print(event, unit) -- TODO: DEBUG
     for i,roll in pairs(Addon.rolls) do
-        if roll:IsRecent() and roll:IsActionNeeded() and unit == roll:GetActionTarget() then
+        if roll:IsRecent() and unit == roll:GetActionTarget() then
             -- print("->", roll.id) -- TODO: DEBUG
             roll:AddChat(msg, unit)
         end
@@ -397,7 +399,7 @@ function Self.CHAT_MSG_WHISPER_INFORM_FILTER(self, event, msg, receiver, _, _, _
     -- Log the conversation
     -- print(event, unit) -- TODO: DEBUG
     for i,roll in pairs(Addon.rolls) do
-        if roll:IsRecent() and roll:IsActionNeeded() and unit == roll:GetActionTarget() then
+        if roll:IsRecent() and unit == roll:GetActionTarget() then
             -- print("->", roll.id) -- TODO: DEBUG
             roll:AddChat(msg)
         end

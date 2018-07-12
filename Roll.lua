@@ -31,6 +31,11 @@ Self.BID_DISENCHANT = 3
 Self.BID_PASS = 4
 Self.BIDS = {Self.BID_NEED, Self.BID_GREED, Self.BID_DISENCHANT, Self.BID_PASS}
 
+-- Actions
+Self.ACTION_TRADE = "TRADE"
+Self.ACTION_AWARD = "AWARD"
+Self.ACTION_ASK = "ASK"
+
 -- Custom answers
 Self.ANSWER_NEED = "NEED"
 Self.ANSWER_GREED = "GREED"
@@ -161,8 +166,13 @@ function Self.Update(data, unit)
     -- Get or create the roll
     local roll = Self.Find(data.ownerId, data.owner, data.item, data.itemOwnerId, data.item.owner)
     if not roll then
+        local ml, unitMl = Masterloot.GetMasterlooter(), Masterloot.GetMasterlooter(data.item.owner)
+
         -- Only the item owner or his/her masterlooter can create rolls
-        if not Util.In(unit, data.item.owner, Masterloot.masterlooting[data.item.owner]) then
+        if not Util.In(unit, data.item.owner, unitML) then
+            return
+        -- Only accept items from players with the same masterlooter if enabled
+        elseif Addon.db.profile.onlyMasterloot and (not ml or ml ~= unitML) then
             return
         end
 
@@ -567,7 +577,8 @@ end
 function Self:CheckEnd()
     local winner = self:ShouldEnd()
     if winner then
-        self:End(type(winner) == "string" and winner or nil)
+        local isString = type(winner) == "string"
+        self:End(isString and winner or nil, isString)
         return true
     else
         return false
@@ -575,15 +586,11 @@ function Self:CheckEnd()
 end
 
 -- End a roll
-function Self:End(winner)
+function Self:End(winner, noAlert)
     if self.winner then return end
 
     local award = winner == true
-    if award then
-        winner = nil
-    else
-        winner = winner and Unit.Name(winner) or nil
-    end
+    winner = not award and winner and Unit.Name(winner) or nil
     
     -- End it if it is running
     if self.status < Self.STATUS_DONE then
@@ -627,7 +634,7 @@ function Self:End(winner)
         end
 
         -- Let the player know, announce to chat and the winner
-        Comm.RollEnd(self)
+        Comm.RollEnd(self, noAlert)
     end
 
     return self
@@ -934,13 +941,13 @@ end
 
 -- Check if the given unit is eligible
 function Self:UnitIsEligible(unit, checkIlvl)
-    local val = self.item:GetEligible(unit)
+    local val = unit and self.item:GetEligible(unit) or nil
     if checkIlvl then return val else return val ~= nil end
 end
 
 -- Check if the roll can still be won
 function Self:CanBeWon(includeDone)
-    return not self.traded and (self.status == Self.STATUS_PENDING or self.status == Self.STATUS_RUNNING or includeDone and self.status == Self.STATUS_DONE and not self.winner)
+    return not self.traded and (Util.In(self.status, Self.STATUS_PENDING, Self.STATUS_RUNNING) or includeDone and self.status == Self.STATUS_DONE and not self.winner)
 end
 
 -- Check if the given unit can win this roll
@@ -989,13 +996,25 @@ function Self:HasMasterlooter()
 end
 
 -- Check if the player has to take an action to complete the roll (e.g. trade)
-function Self:IsActionNeeded()
-    return not self.traded and ((self.item.isOwner and self.winner or self.isWinner) or (not self.ownerId and self.bid and self.bid ~= Self.BID_PASS))
+function Self:GetActionRequired()
+    if self.traded then
+        return false
+    elseif self.item.isOwner and self.winner or self.isWinner then
+        return Self.ACTION_TRADE
+    elseif self.status == Self.STATUS_DONE and self:CanBeAwarded(true) and Util.TblCountExcept(self.bids, Self.BID_PASS) > 0 then
+        return Self.ACTION_AWARD
+    elseif not self.ownerId and self.bid and self.bid ~= Self.BID_PASS then
+        return Self.ACTION_ASK
+    else
+        return false
+    end
 end
 
 -- Get the target for actions (e.g. trade, whisper)
 function Self:GetActionTarget()
-    return self.item.isOwner and self.winner or not self.item.isOwner and self.item.owner
+    if Util.In(self:GetActionRequired(), Self.ACTION_TRADE, Self.ACTION_ASK) then
+        return self.item.isOwner and self.winner or not self.item.isOwner and self.item.owner
+    end
 end
 
 -- Check if the roll is running or recently ended

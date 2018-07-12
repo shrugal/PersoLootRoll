@@ -269,9 +269,9 @@ function Self.TblCall(t, fn, val, index, ...)
     for i,v in pairs(t) do
         local f = Self.Fn(fn, v)
         if val then
-            if index then f(val, index, ...) else f(val, ...) end
+            if index then f(v, i, ...) else f(v, ...) end
         else
-            if index then f(index, ...) else f(...) end
+            if index then f(i, ...) else f(...) end
         end
     end
 end
@@ -386,10 +386,19 @@ function Self.TblFindWhere(t, ...)
 end
 
 -- Find the first element (optinally matching a fn)
-function Self.TblFirst(t, fn, ...)
-    fn = Self.Fn(fn)
+function Self.TblFirst(t, fn, val, index, ...)
     for i,v in pairs(t) do
-        if not fn or fn(v, i, ...) then return v end
+        if not fn then
+            return v
+        else
+            local f, r = Self.Fn(fn, v)
+            if val then
+                if index then r = f(v, i, ...) else r = f(v, ...) end
+            else
+                if index then r = f(i, ...) else r = f(...) end
+            end
+            if r then return v end
+        end
     end
 end
 

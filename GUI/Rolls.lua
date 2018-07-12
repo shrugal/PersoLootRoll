@@ -316,7 +316,7 @@ function Self.Update()
                 .AddTo(scroll)
         
             -- Item
-            GUI.CreateItemLabel(scroll)
+            GUI.CreateItemLabel(scroll, "ANCHOR_LEFT")
             
             -- Ilvl
             GUI("Label")
@@ -403,7 +403,6 @@ function Self.Update()
                 f = GUI.CreateIconButton("Interface\\GossipFrame\\GossipGossipIcon", actions, GUI.UnitClick, nil, 13, 13)
                 f:SetCallback("OnEnter", GUI.TooltipChat)
                 f:SetCallback("OnLeave", GUI.TooltipHide)
-
         
                 -- Trade
                 GUI.CreateIconButton("Interface\\GossipFrame\\VendorGossipIcon", actions, function (self)
@@ -550,7 +549,7 @@ function Self.Update()
 
             local canBid = not roll.bid and roll:UnitCanBid("player")
             local canBeAwarded = roll:CanBeAwarded(true)
-            local isActionNeeded = roll:IsActionNeeded()
+            local actionTarget = roll:GetActionTarget()
 
             -- Need
             GUI(children[it()]).SetUserData("roll", roll).Toggle(canBid)
@@ -567,10 +566,10 @@ function Self.Update()
                 .SetImage("Interface\\GossipFrame\\" .. (roll.chat and "Petition" or "Gossip") .. "GossipIcon")
                 .SetImageSize(13, 13).SetWidth(16).SetHeight(16)
                 .SetUserData("roll", roll)
-                .SetUserData("unit", roll:GetActionTarget())
-                .Toggle(isActionNeeded)
+                .SetUserData("unit", actionTarget)
+                .Toggle(actionTarget)
             -- Trade
-            GUI(children[it()]).SetUserData("roll", roll).Toggle(isActionNeeded)
+            GUI(children[it()]).SetUserData("roll", roll).Toggle(actionTarget)
             -- Restart
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeRestarted())
             -- Cancel
@@ -586,20 +585,7 @@ function Self.Update()
                 .SetUserData("roll", roll)
                 .SetUserData("details", details)
 
-            local n, prev = 0
-            for i=#children,1,-1 do
-                local child = children[i]
-                if child:IsShown() then
-                    if not prev then
-                        child.frame:SetPoint("TOPRIGHT")
-                    else
-                        child.frame:SetPoint("TOPRIGHT", prev.frame, "TOPLEFT", -4, 0)
-                    end
-                    n, prev = n + 1, child
-                end
-            end
-
-            GUI(actions).SetWidth(max(0, 20 * n - 4)).Show()
+            GUI.ArrangeIconButtons(actions)
         end
 
         -- Details
@@ -689,7 +675,7 @@ function Self.UpdateDetails(details, roll)
     )()
 
     local it = Util.Iter(#header)
-    for _,player in pairs(players) do
+    for _,player in ipairs(players) do
         -- Create the row
         if not children[it(0) + 1] then
             -- Unit, Ilvl

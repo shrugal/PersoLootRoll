@@ -26,7 +26,7 @@ L["MSG_ROLL_WINNER_WHISPER"] = "你已經贏得 %s！請跟我交易。"
 L["MSG_ROLL_WINNER"] = "<%s> 已贏得 %s -> 請跟我交易！"
 
 -- Addon
-local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.DEFAULT)
+local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == "enUS")
 if not L then return end
 
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "物品的提供者並沒有使用PersoLootRoll插件。"
@@ -175,13 +175,20 @@ L["ERROR_ROLL_STATUS_NOT_0"] = "此擲骰已經開始或是結束。"
 L["ERROR_ROLL_STATUS_NOT_1"] = "此擲骰並沒有運作。"
 L["ERROR_ROLL_UNKNOWN"] = "此擲骰不存在。"
 
-L["OPT_ENABLE"] = "啟用"
-L["OPT_ENABLE_DESC"] = "啟用或停用此插件"
+-- Options: Home
+
 L["OPT_INFO"] = "資訊"
 L["OPT_INFO_DESC"] = "關於此插件的一些資訊。"
-L["OPT_VERSION"] = "|cffffff00版本:|r %s"
-L["OPT_AUTHOR"] = "|cffffff00作者:|r Shrugal (EU-Mal'Ganis)"
-L["OPT_TRANSLATION"] = "|cffffff00翻譯:|r 三皈依 (TW-暗影之月)"
+L["OPT_VERSION"] = "|cffffd100版本:|r %s"
+L["OPT_AUTHOR"] = "|cffffd100作者:|r Shrugal (EU-Mal'Ganis)"
+L["OPT_TRANSLATION"] = "|cffffd100翻譯:|r 三皈依 (TW-暗影之月)"
+L["OPT_ENABLE"] = "啟用"
+L["OPT_ENABLE_DESC"] = "啟用或停用此插件"
+L["OPT_ONLY_MASTERLOOT"] = "Only masterloot" -- Translation missing
+L["OPT_ONLY_MASTERLOOT_DESC"] = "Only activate the addon when using masterloot (e.g. with your guild)" -- Translation missing
+L["OPT_AWARD_SELF"] = "自行選擇贏家"
+L["OPT_AWARD_SELF_DESC"] = "自行選擇誰該得到你的戰利品，而非讓插件隨機選擇，當你是拾取分配者時，始終啟用此功能。"
+
 L["OPT_UI"] = "使用者介面"
 L["OPT_UI_DESC"] = "根據自己的喜好自訂%s的外觀。"
 L["OPT_MINIMAP_ICON"] = "顯示小地圖圖示"
@@ -194,6 +201,19 @@ L["OPT_ACTIONS_WINDOW"] = "顯示動作視窗"
 L["OPT_ACTIONS_WINDOW_DESC"] = "當有處理中的動作時顯示動作視窗，例如，當你贏得一件物品但還需要交易某人才能得到它。"
 L["OPT_ACTIONS_WINDOW_MOVE"] = "移動"
 L["OPT_ACTIONS_WINDOW_MOVE_DESC"] = "移動動作視窗到一旁。"
+
+L["OPT_ITEM_FILTER"] = "物品過濾"
+L["OPT_ITEM_FILTER_DESC"] = "更改你想要擲骰的物品。"
+L["OPT_ILVL_THRESHOLD"] = "物品等級門檻"
+L["OPT_ILVL_THRESHOLD_DESC"] = "物品等級低於你以下多少的物品將被忽略。"
+L["OPT_ILVL_THRESHOLD_TRINKETS"] = "飾品門檻為雙倍"
+L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "飾品的門檻應該是正常值的兩倍，因為觸發特效會讓收益變化很大。"
+L["OPT_SPECS"] = "專精"
+L["OPT_SPECS_DESC"] = "只建議這些職業專精的戰利品。"
+L["OPT_TRANSMOG"] = "檢查塑形外觀"
+L["OPT_TRANSMOG_DESC"] = "擲骰那些你還未擁有外觀的物品。"
+
+-- Options: Messages
 
 L["OPT_MESSAGES"] = "訊息"
 L["OPT_ECHO"] = "聊天資訊"
@@ -264,18 +284,7 @@ L["OPT_MSG_ROLL_ANSWER_NOT_TRADABLE_DESC"] = ""
 L["OPT_MSG_ROLL_ANSWER_AMBIGUOUS"] = "回答：發給我物品連結"
 L["OPT_MSG_ROLL_ANSWER_AMBIGUOUS_DESC"] = ""
 
-L["OPT_AWARD_SELF"] = "自行選擇贏家"
-L["OPT_AWARD_SELF_DESC"] = "自行選擇誰該得到你的戰利品，而非讓插件隨機選擇，當你是拾取分配者時，始終啟用此功能。"
-L["OPT_ITEM_FILTER"] = "物品過濾"
-L["OPT_ITEM_FILTER_DESC"] = "更改你想要擲骰的物品。"
-L["OPT_ILVL_THRESHOLD"] = "物品等級門檻"
-L["OPT_ILVL_THRESHOLD_DESC"] = "物品等級低於你以下多少的物品將被忽略。"
-L["OPT_ILVL_THRESHOLD_TRINKETS"] = "飾品門檻為雙倍"
-L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "飾品的門檻應該是正常值的兩倍，因為觸發特效會讓收益變化很大。"
-L["OPT_SPECS"] = "專精"
-L["OPT_SPECS_DESC"] = "只建議這些職業專精的戰利品。"
-L["OPT_TRANSMOG"] = "檢查塑形外觀"
-L["OPT_TRANSMOG_DESC"] = "擲骰那些你還未擁有外觀的物品。"
+-- Options: Masterloot
 
 L["OPT_MASTERLOOT"] = "拾取分配"
 L["OPT_MASTERLOOT_DESC"] = "當你(或其他人)成為分裝者，所有戰利品都將由此人分發。你會收到你贏得什麼物品以及誰贏得你物品的通知，因此你可以交易物品給合適的人。"

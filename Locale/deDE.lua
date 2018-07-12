@@ -26,7 +26,7 @@ L["MSG_ROLL_WINNER_WHISPER"] = "Du hast %s gewonnen! Bitte handel mich an."
 L["MSG_ROLL_WINNER"] = "<%s> hat %s gewonnen -> Mich anhandeln!"
 
 -- Addon
-local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.DEFAULT)
+local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == "enUS")
 if not L then return end
 
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "Der Besitzer dieses Items benutzt nicht das PersoLootRoll Addon."
@@ -175,13 +175,20 @@ L["ERROR_ROLL_STATUS_NOT_0"] = "Diese Verlosung hat schon begonnen oder wurde be
 L["ERROR_ROLL_STATUS_NOT_1"] = "Diese Verlosung läuft noch nicht."
 L["ERROR_ROLL_UNKNOWN"] = "Diese Verlosung existiert nicht."
 
-L["OPT_ENABLE"] = "Aktiviert"
-L["OPT_ENABLE_DESC"] = "Aktiviere oder deaktiviere das Addon"
+-- Options: Home
+
 L["OPT_INFO"] = "Informationen"
 L["OPT_INFO_DESC"] = "Ein paar Informationen über das Addon."
-L["OPT_VERSION"] = "|cffffff00Version:|r %s"
-L["OPT_AUTHOR"] = "|cffffff00Author:|r Shrugal (EU-Mal'Ganis)"
-L["OPT_TRANSLATION"] = "|cffffff00Übersetzung:|r Shrugal (EU-Mal'Ganis)"
+L["OPT_VERSION"] = "|cffffd100Version:|r %s"
+L["OPT_AUTHOR"] = "|cffffd100Author:|r Shrugal (EU-Mal'Ganis)"
+L["OPT_TRANSLATION"] = "|cffffd100Übersetzung:|r Shrugal (EU-Mal'Ganis)"
+L["OPT_ENABLE"] = "Aktiviert"
+L["OPT_ENABLE_DESC"] = "Aktiviere oder deaktiviere das Addon"
+L["OPT_ONLY_MASTERLOOT"] = "Nur Plündermeister"
+L["OPT_ONLY_MASTERLOOT_DESC"] = "Aktiviere das Addon nur, wenn der Plündermeister-Modus aktiv ist (z.B. mit deiner Gilde)"
+L["OPT_AWARD_SELF"] = "Eigene Beute selbst verteilen"
+L["OPT_AWARD_SELF_DESC"] = "Wähle selbst wer deinen Loot bekommen soll, anstatt das Addon entscheiden zu lassen. Wenn du Plündermeister bist ist dies immer aktiv"
+
 L["OPT_UI"] = "Benutzerinterface"
 L["OPT_UI_DESC"] = "Passe das Aussehen von %s nach deinen Bedürfnissen an."
 L["OPT_MINIMAP_ICON"] = "Minimap Icon anzeigen"
@@ -194,6 +201,19 @@ L["OPT_ACTIONS_WINDOW"] = "Zeige Aktions-Übersicht"
 L["OPT_ACTIONS_WINDOW_DESC"] = "Zeige die Aktions-Übersicht wenn eine Aktion ansteht, z.B. wenn du ein Item gewonnen hast und den Eigner anhandeln musst um es zu bekommen."
 L["OPT_ACTIONS_WINDOW_MOVE"] = "Verschieben"
 L["OPT_ACTIONS_WINDOW_MOVE_DESC"] = "Verschiebe die Aktions-Übersicht."
+
+L["OPT_ITEM_FILTER"] = "Item Filter"
+L["OPT_ITEM_FILTER_DESC"] = "Ändere welche Items dir vorgeschlagen werden."
+L["OPT_ILVL_THRESHOLD"] = "Item-Level Schwelle"
+L["OPT_ILVL_THRESHOLD_DESC"] = "Items deren Item-Level mehr als diesen Wert unter deinen Items liegen werden ignoriert."
+L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Doppelte Schwelle für Trinkets"
+L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Trinkets sollten eine doppelt so hohe Schwelle haben, da ihr Wert durch Proc-Effekte start schwanken kann."
+L["OPT_SPECS"] = "Spezialisierungen"
+L["OPT_SPECS_DESC"] = "Schlage nur Beute für diese Klassen-Spezialisierungen vor."
+L["OPT_TRANSMOG"] = "Prüfe Transmog-Aussehen"
+L["OPT_TRANSMOG_DESC"] = "Rolle auf Items deren Aussehen du noch nicht hast."
+
+-- Options: Messages
 
 L["OPT_MESSAGES"] = "Nachrichten"
 L["OPT_ECHO"] = "Chat Informationen"
@@ -264,18 +284,7 @@ L["OPT_MSG_ROLL_ANSWER_NOT_TRADABLE_DESC"] = ""
 L["OPT_MSG_ROLL_ANSWER_AMBIGUOUS"] = "Antwort: Sende mir den Item Link"
 L["OPT_MSG_ROLL_ANSWER_AMBIGUOUS_DESC"] = ""
 
-L["OPT_AWARD_SELF"] = "Eigene Beute selbst verteilen"
-L["OPT_AWARD_SELF_DESC"] = "Wähle selbst wer deinen Loot bekommen soll, anstatt das Addon entscheiden zu lassen. Wenn du Plündermeister bist ist dies immer aktiv"
-L["OPT_ITEM_FILTER"] = "Item Filter"
-L["OPT_ITEM_FILTER_DESC"] = "Ändere welche Items dir vorgeschlagen werden."
-L["OPT_ILVL_THRESHOLD"] = "Item-Level Schwelle"
-L["OPT_ILVL_THRESHOLD_DESC"] = "Items deren Item-Level mehr als diesen Wert unter deinen Items liegen werden ignoriert."
-L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Doppelte Schwelle für Trinkets"
-L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Trinkets sollten eine doppelt so hohe Schwelle haben, da ihr Wert durch Proc-Effekte start schwanken kann."
-L["OPT_SPECS"] = "Spezialisierungen"
-L["OPT_SPECS_DESC"] = "Schlage nur Beute für diese Klassen-Spezialisierungen vor."
-L["OPT_TRANSMOG"] = "Prüfe Transmog-Aussehen"
-L["OPT_TRANSMOG_DESC"] = "Rolle auf Items deren Aussehen du noch nicht hast."
+-- Options: Masterloot
 
 L["OPT_MASTERLOOT"] = "Plündermeister"
 L["OPT_MASTERLOOT_DESC"] = "Wenn du (oder jemand anderes) Plündermeister wird, dann wird jegliche Beute von diesem Spieler verteilt. Du wirst benachrichtigt wessen Items du gewinnst bzw. wer deine Items gewinnt, sodass du mit der entsprechenden Person handeln kannst."

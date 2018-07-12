@@ -38,6 +38,9 @@ function Addon:OnInitialize()
             enabled = true,
             ui = {showRollFrames = true, showActionsWindow = true, showRollsWindow = false},
             awardSelf = false,
+            onlyMasterloot = false,
+            
+            -- Item filter
             ilvlThreshold = 30,
             ilvlThresholdTrinkets = true,
             transmog = false,
@@ -110,7 +113,7 @@ function Addon:OnEnable()
     -- Enable hooks
     self.Hooks.EnableGroupLootRoll()
     self.Hooks.EnableChatLinks()
-    -- self.Hooks.EnableUnitMenus()
+    self.Hooks.EnableUnitMenus()
 
     -- Register events
     self.Events.RegisterEvents()
@@ -139,7 +142,7 @@ function Addon:OnDisable()
     -- Disable hooks
     self.Hooks.DisableGroupLootRoll()
     self.Hooks.DisableChatLinks()
-    -- self.Hooks.DisableUnitMenus()
+    self.Hooks.DisableUnitMenus()
 
     -- Unregister events
     self.Events.UnregisterEvents()
@@ -257,9 +260,12 @@ function Addon:RegisterOptions()
     config:RegisterOptionsTable(Name, {
         type = "group",
         args = {
-            version = {type = "description", fontSize = "medium", order = it(), name = Util.StrFormat(L["OPT_VERSION"], Addon.VERSION)},
-            author = {type = "description", fontSize = "medium", order = it(), name = L["OPT_AUTHOR"]},
-            translation = {type = "description", fontSize = "medium", order = it(), name = L["OPT_TRANSLATION"] .. "\n"},
+            info = {
+                type = "description",
+                fontSize = "medium",
+                order = it(),
+                name = Util.StrFormat(L["OPT_VERSION"], Addon.VERSION) .. "  |cff999999~|r  " .. L["OPT_AUTHOR"] .. "  |cff999999~|r  " .. L["OPT_TRANSLATION"] .. "\n"
+            },
             enable = {
                 name = L["OPT_ENABLE"],
                 desc = L["OPT_ENABLE_DESC"],
@@ -270,6 +276,24 @@ function Addon:RegisterOptions()
                     self:Info(L[val and "ENABLED" or "DISABLED"])
                 end,
                 get = function (_) return self.db.profile.enabled end,
+                width = "full"
+            },
+            onlyMasterloot = {
+                name = L["OPT_ONLY_MASTERLOOT"],
+                desc = L["OPT_ONLY_MASTERLOOT_DESC"] .. "\n",
+                type = "toggle",
+                order = it(),
+                set = function (_, val) self.db.profile.onlyMasterloot = val end,
+                get = function () return self.db.profile.onlyMasterloot end,
+                width = "full"
+            },
+            awardSelf = {
+                name = L["OPT_AWARD_SELF"],
+                desc = L["OPT_AWARD_SELF_DESC"] .. "\n",
+                type = "toggle",
+                order = it(),
+                set = function (_, val) self.db.profile.awardSelf = val end,
+                get = function () return self.db.profile.awardSelf end,
                 width = "full"
             },
             ui = {type = "header", order = it(), name = L["OPT_UI"]},
@@ -327,16 +351,6 @@ function Addon:RegisterOptions()
                 get = function (_) return self.db.profile.ui.showRollsWindow end,
                 width = "full"
             },
-            awardSelf = {
-                name = L["OPT_AWARD_SELF"],
-                desc = L["OPT_AWARD_SELF_DESC"] .. "\n",
-                type = "toggle",
-                order = it(),
-                set = function (_, val) self.db.profile.awardSelf = val end,
-                get = function () return self.db.profile.awardSelf end,
-                width = "full"
-            },
-            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             itemFilter = {type = "header", order = it(), name = L["OPT_ITEM_FILTER"]},
             itemFilterDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_ITEM_FILTER_DESC"] .. "\n"},
             ilvlThreshold = {

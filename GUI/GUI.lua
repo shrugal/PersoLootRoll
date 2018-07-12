@@ -16,12 +16,6 @@ tex:SetTexture("Interface\\Buttons\\UI-Listbox-Highlight")
 tex:SetVertexColor(1, 1, 1, .5)
 tex:SetAllPoints(Self.HIGHLIGHT)
 
--- Unit dropdown
--- Self.DROPDOWN_UNIT = CreateFrame("FRAME", "PlrUnitDropDown", UIParent, "UIDropDownMenuTemplate")
--- UIDropDownMenu_SetInitializeFunction(Self.DROPDOWN_UNIT, function (self, level, menuList)
---     UnitPopup_ShowMenu(self, self.which, self.unit)
--- end)
-
 -------------------------------------------------------
 --                  Popup dialogs                    --
 -------------------------------------------------------
@@ -109,11 +103,7 @@ function Self.ToggleMasterlootDropdown(...)
         Self.dropdownMasterloot = dropdown
     end
 
-    if not dropdown:IsShown() then
-        dropdown:Open(...)
-    else
-        dropdown:Close()
-    end
+    if not dropdown:IsShown() then dropdown:Open(...) else dropdown:Close() end
 end
 
 -- Custom bid answers
@@ -125,11 +115,7 @@ function Self.ToggleAnswersDropdown(roll, bid, answers, ...)
     end
 
     if roll ~= dropdown:GetUserData("roll") or bid ~= dropdown:GetUserData("bid") then
-        Self(dropdown)
-            .Clear()
-            .SetUserData("roll", roll)
-            .SetUserData("bid", bid)
-            .Hide()
+        Self(dropdown).Clear().SetUserData("roll", roll).SetUserData("bid", bid).Hide()
 
         for i,v in pairs(answers) do
             Self("Dropdown-Item-Execute")
@@ -139,11 +125,43 @@ function Self.ToggleAnswersDropdown(roll, bid, answers, ...)
         end
     end
 
-    if not dropdown:IsShown() then
-        dropdown:Open(...)
-    else
-        dropdown:Close()
+    if not dropdown:IsShown() then dropdown:Open(...) else dropdown:Close() end
+end
+
+-- Award loot to unit
+function Self.ToggleAwardUnitDropdown(unit, ...)
+    local dropdown = Self.dropdownAwardLoot
+    if not dropdown then
+        dropdown = AceGUI:Create("Dropdown-Pullout")
+        Self.dropdownAwardLoot = dropdown
     end
+
+    if unit ~= dropdown:GetUserData("unit") then
+        Self(dropdown).Clear().SetUserData("unit", unit).Hide()
+
+        for i,roll in pairs(Addon.rolls) do
+            if roll:CanBeAwardedTo(unit, true) then
+                Self("Dropdown-Item-Execute")
+                    .SetText(roll.item.link)
+                    .SetCallback("OnClick", function (...)
+                        if not Self.ItemClick(...) then
+                            roll:Finish(unit)
+                        end
+                    end)
+                    .SetCallback("OnEnter", Self.TooltipItemLink)
+                    .SetCallback("OnLeave", Self.TooltipHide)
+                    .SetUserData("link", roll.item.link)
+                    .AddTo(dropdown)
+            end
+        end
+
+        Self("Dropdown-Item-Execute")
+            .SetText(CLOSE)
+            .SetCallback("OnClick", function () dropdown:Close() end)
+            .AddTo(dropdown)
+    end
+
+    if not dropdown:IsShown() then dropdown:Open(...) else dropdown:Close() end
 end
 
 -------------------------------------------------------
@@ -154,7 +172,7 @@ function Self.ReverseAnchor(anchor)
     return anchor:gsub("TOP", "B-OTTOM"):gsub("BOTTOM", "T-OP"):gsub("LEFT", "R-IGHT"):gsub("RIGHT", "L-EFT"):gsub("-", "")
 end
 
-function Self.CreateItemLabel(parent)
+function Self.CreateItemLabel(parent, anchor)
     local f = Self("InteractiveLabel")
         .SetFontObject(GameFontNormal)
         .SetCallback("OnEnter", Self.TooltipItemLink)
@@ -221,6 +239,26 @@ function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
     return f
 end
 
+-- Arrange visible icon buttons
+function Self.ArrangeIconButtons(parent, margin)
+    margin = margin or 4
+    local n, width, prev = 0, 0
+
+    for i=#parent.children,1,-1 do
+        local child = parent.children[i]
+        if child:IsShown() then
+            if not prev then
+                child.frame:SetPoint("TOPRIGHT")
+            else
+                child.frame:SetPoint("TOPRIGHT", prev.frame, "TOPLEFT", -margin, 0)
+            end
+            n, prev, width = n + 1, child, width + child.frame:GetWidth()
+        end
+    end
+
+    Self(parent).SetWidth(max(0, width + (n-1) * margin)).Show()
+end
+
 -- Create an interactive label for a unit, with tooltip, unitmenu and whispering on click
 function Self.CreateUnitLabel(parent, baseTooltip)
     return Self("InteractiveLabel")
@@ -263,7 +301,7 @@ end
 function Self.TooltipItemLink(self)
     local link = self:GetUserData("link")
     if link then
-        GameTooltip:SetOwner(self.frame, "ANCHOR_LEFT")
+        GameTooltip:SetOwner(self.frame, self:GetUserData("anchor") or "ANCHOR_RIGHT")
         GameTooltip:SetHyperlink(link)
         GameTooltip:Show()
     end
@@ -304,9 +342,9 @@ end
 -- Handle clicks on item labels/icons
 function Self.ItemClick(self)
     if IsModifiedClick("DRESSUP") then
-        DressUpItemLink(self:GetUserData("link"))
+        return DressUpItemLink(self:GetUserData("link"))
     elseif IsModifiedClick("CHATLINK") then
-        ChatEdit_InsertLink(self:GetUserData("link"))
+        return ChatEdit_InsertLink(self:GetUserData("link"))
     end
 end
 

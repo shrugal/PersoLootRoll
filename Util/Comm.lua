@@ -228,10 +228,10 @@ end
 -- END
 
 -- Messages when ending a roll
-function Self.RollEnd(roll, isWhisper)
+function Self.RollEnd(roll, noAlert)
     -- We won the item
     if roll.isWinner then
-        if not roll.isOwner or roll.bid and floor(roll.bid) ~= Roll.BID_NEED or Masterloot.GetMasterlooter() then
+        if not noAlert then
             if roll.item.isOwner then
                 Addon:Info(L["ROLL_WINNER_OWN"], roll.item.link)
             else

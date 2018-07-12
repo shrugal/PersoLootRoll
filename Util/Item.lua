@@ -626,7 +626,7 @@ function Self:GetOwnedForLocation(equipped, bag)
     local classId = select(3, UnitClass("player"))
 
     -- No point in doing this if we don't have the info yet
-    _, success = self:GetBasicInfo()
+    local _, success = self:GetBasicInfo()
     if not success then return items end
 
     -- We will need the relic type for relics

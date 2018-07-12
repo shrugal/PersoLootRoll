@@ -10,7 +10,7 @@ Self.anchors = Util.TblFlip({"TOPLEFT", "TOP", "TOPRIGHT", "RIGHT", "BOTTOMRIGHT
 
 -- Register for roll changes
 Roll.On(Self, Roll.EVENT_CHANGE, function (_, e, roll)
-    if Addon.db.profile.ui.showActionsWindow and Util.In(e, Roll.EVENT_AWARD, Roll.EVENT_VISIBILITY) and roll:IsActionNeeded() then
+    if Addon.db.profile.ui.showActionsWindow and Util.In(e, Roll.EVENT_AWARD, Roll.EVENT_VISIBILITY) and roll:GetActionRequired() then
         Self.Show()
     end
     Self.Update()
@@ -32,7 +32,7 @@ function Self.Show(move)
             .SetClampedToScreen(true)
             .SetFrameStrata("MEDIUM")
             .SetUserData("table", {
-                columns = {20, {25, 300}, {25, 100}, {25, 100}, 3 * 20 - 4},
+                columns = {20, {25, 300}, {25, 100}, {25, 100}, 0},
                 space = 10
             })
             .SetTitle("PersoLootRoll - " .. L["ACTIONS"])
@@ -63,7 +63,7 @@ function Self.Show(move)
             -- Hide all
             Self.frames.hideAllBtn = Self.CreateHeaderIconButton(L["HIDE_ALL"], it(), function (self)
                 for i,roll in pairs(Addon.rolls) do
-                    if roll:IsActionNeeded() and not roll.hidden then
+                    if roll:GetActionRequired() and not roll.hidden then
                         roll:ToggleVisibility(false)
                     end
                 end
@@ -118,7 +118,7 @@ function Self.Update()
     -- Rolls
 
     local rolls = Util(Addon.rolls).CopyFilter(function (roll)
-        return roll:IsActionNeeded() and not roll.hidden
+        return roll:GetActionRequired() and not roll.hidden
     end).SortBy("id")()
 
     local it = Util.Iter()
@@ -162,17 +162,31 @@ function Self.Update()
                     self:GetUserData("roll"):Trade()
                 end, TRADE, 13, 13)
 
+                -- Award
+                f = GUI.CreateIconButton("UI-Panel-BiggerButton", actions, function (self)
+                    GUI.Rolls.Show()
+                end, L["AWARD"])
+                f.image:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+                f.image:SetPoint("TOP", 0, 1)
+                f.OnRelease = function (self)
+                    self.image:SetPoint("TOP", 0, -5)
+                    self.OnRelease = nil
+                end
+
                 -- Hide
                 f = GUI.CreateIconButton("Interface\\Buttons\\UI-CheckBox-Check", actions, function (self)
                     self:GetUserData("roll"):ToggleVisibility(false)
                 end, L["HIDE"])
                 f.image:SetPoint("TOP", 0, 1)
-
-                for i,child in ipairs(actions.children) do
-                    child.frame:SetPoint("TOPLEFT", (i-1) * 20, 0)
+                f.OnRelease = function (self)
+                    self.image:SetPoint("TOP", 0, -5)
+                    self.OnRelease = nil
                 end
             end
         end
+        
+        local action = roll:GetActionRequired()
+        local target = roll:GetActionTarget()
 
         -- ID
         GUI(children[it()]).SetText(roll.id).Show()
@@ -185,18 +199,18 @@ function Self.Update()
             .Show()
 
         -- Status
-        GUI(children[it()]).SetText(L[roll.isWinner and "GET_FROM" or roll.ownerId and "GIVE_TO" or "ASK"]).Show()
+        GUI(children[it()]).SetText(L[action == Roll.ACTION_TRADE and (roll.isWinner and "GET_FROM" or "GIVE_TO") or action]).Show()
 
         -- Target
-        local target = roll.item.isOwner and roll.winner or roll.item.owner
         GUI(children[it()])
-            .SetText(Unit.ColoredName(Unit.ShortenedName(target), target) or "-")
+            .SetText(target and Unit.ColoredName(Unit.ShortenedName(target), target) or "-")
             .SetUserData("unit", target)
             .Show()
 
         -- Actions
         do 
-            local children = children[it()].children
+            local actions = children[it()]
+            local children = actions.children
             local it = Util.Iter()
 
             -- Chat
@@ -207,10 +221,15 @@ function Self.Update()
                 .SetUserData("anchor", anchor == "TOPLEFT" and "TOPRIGHT" or anchor == "TOPRIGHT" and "TOPLEFT" or anchor)
                 .SetImage("Interface\\GossipFrame\\" .. (roll.chat and "Petition" or "Gossip") .. "GossipIcon")
                 .SetImageSize(13, 13).SetWidth(13).SetHeight(13)
+                .Toggle(target)
             -- Trade
-            GUI(children[it()]).SetUserData("roll", roll)
+            GUI(children[it()]).SetUserData("roll", roll).Toggle(target)
+            -- Award
+            GUI(children[it()]).Toggle(action == Roll.ACTION_AWARD)
             -- Hide
             GUI(children[it()]).SetUserData("roll", roll)
+            
+            GUI.ArrangeIconButtons(actions)
         end
     end
 

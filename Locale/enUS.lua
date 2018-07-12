@@ -26,7 +26,7 @@ L["MSG_ROLL_WINNER_WHISPER"] = "You have won %s! Please trade me."
 L["MSG_ROLL_WINNER"] = "<%s> has won %s -> Trade me!"
 
 -- Addon
-local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.DEFAULT)
+local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == "enUS")
 if not L then return end
 
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "The owner of this item doesn't use the PersoLootRoll addon."
@@ -175,13 +175,20 @@ L["ERROR_ROLL_STATUS_NOT_0"] = "The roll has already been started or finished."
 L["ERROR_ROLL_STATUS_NOT_1"] = "The roll is not running."
 L["ERROR_ROLL_UNKNOWN"] = "That roll doesn't exist."
 
-L["OPT_ENABLE"] = "Enable"
-L["OPT_ENABLE_DESC"] = "Enable or disable the addon"
+-- Options: Home
+
 L["OPT_INFO"] = "Information"
 L["OPT_INFO_DESC"] = "Some information about this addon."
-L["OPT_VERSION"] = "|cffffff00Version:|r %s"
-L["OPT_AUTHOR"] = "|cffffff00Author:|r Shrugal (EU-Mal'Ganis)"
-L["OPT_TRANSLATION"] = "|cffffff00Translation:|r Shrugal (EU-Mal'Ganis)"
+L["OPT_VERSION"] = "|cffffd100Version:|r %s"
+L["OPT_AUTHOR"] = "|cffffd100Author:|r Shrugal (EU-Mal'Ganis)"
+L["OPT_TRANSLATION"] = "|cffffd100Translation:|r Shrugal (EU-Mal'Ganis)"
+L["OPT_ENABLE"] = "Enable"
+L["OPT_ENABLE_DESC"] = "Enable or disable the addon"
+L["OPT_ONLY_MASTERLOOT"] = "Only masterloot"
+L["OPT_ONLY_MASTERLOOT_DESC"] = "Only activate the addon when using masterloot (e.g. with your guild)"
+L["OPT_AWARD_SELF"] = "Choose winner of your items yourself"
+L["OPT_AWARD_SELF_DESC"] = "Choose for yourself who should get your loot, instead of letting the addon randomly pick someone. This is always enabled when you are a masterlooter."
+
 L["OPT_UI"] = "User interface"
 L["OPT_UI_DESC"] = "Customize %s's look and feel to your liking."
 L["OPT_MINIMAP_ICON"] = "Show minimap icon"
@@ -194,6 +201,19 @@ L["OPT_ACTIONS_WINDOW"] = "Show actions window"
 L["OPT_ACTIONS_WINDOW_DESC"] = "Show the actions window when there are pending actions, e.g. when you won an item and need to trade someone to get it."
 L["OPT_ACTIONS_WINDOW_MOVE"] = "Move"
 L["OPT_ACTIONS_WINDOW_MOVE_DESC"] = "Move the actions window around."
+
+L["OPT_ITEM_FILTER"] = "Item Filter"
+L["OPT_ITEM_FILTER_DESC"] = "Change which items you are asked to roll on."
+L["OPT_ILVL_THRESHOLD"] = "Item-level threshold"
+L["OPT_ILVL_THRESHOLD_DESC"] = "Items that are more than this many item levels below yours are ignored."
+L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Double threshold for trinkets"
+L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Trinkets should have double the normal threshold because proc effects can make their value vary by a large amount."
+L["OPT_SPECS"] = "Specializations"
+L["OPT_SPECS_DESC"] = "Only suggest loot for these class specializations."
+L["OPT_TRANSMOG"] = "Check transmog appearance"
+L["OPT_TRANSMOG_DESC"] = "Roll on items that you don't have the appearance of yet."
+
+-- Options: Messages
 
 L["OPT_MESSAGES"] = "Messages"
 L["OPT_ECHO"] = "Chat information"
@@ -264,18 +284,7 @@ L["OPT_MSG_ROLL_ANSWER_NOT_TRADABLE_DESC"] = ""
 L["OPT_MSG_ROLL_ANSWER_AMBIGUOUS"] = "Answer: Send me the item link"
 L["OPT_MSG_ROLL_ANSWER_AMBIGUOUS_DESC"] = ""
 
-L["OPT_AWARD_SELF"] = "Choose winner of your items yourself"
-L["OPT_AWARD_SELF_DESC"] = "Choose for yourself who should get your loot, instead of letting the addon randomly pick someone. This is always enabled when you are a masterlooter."
-L["OPT_ITEM_FILTER"] = "Item Filter"
-L["OPT_ITEM_FILTER_DESC"] = "Change which items you are asked to roll on."
-L["OPT_ILVL_THRESHOLD"] = "Item-level threshold"
-L["OPT_ILVL_THRESHOLD_DESC"] = "Items that are more than this many item levels below yours are ignored."
-L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Double threshold for trinkets"
-L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Trinkets should have double the normal threshold because proc effects can make their value vary by a large amount."
-L["OPT_SPECS"] = "Specializations"
-L["OPT_SPECS_DESC"] = "Only suggest loot for these class specializations."
-L["OPT_TRANSMOG"] = "Check transmog appearance"
-L["OPT_TRANSMOG_DESC"] = "Roll on items that you don't have the appearance of yet."
+-- Options: Masterloot
 
 L["OPT_MASTERLOOT"] = "Masterloot"
 L["OPT_MASTERLOOT_DESC"] = "When you (or someone else) becomes masterlooter, all loot will be distributed by that person. You will get a notice about who's items you won or who won your items, so you can trade them to the right person."

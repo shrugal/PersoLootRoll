@@ -256,109 +256,54 @@ end
 --                    Unit menus                     --
 -------------------------------------------------------
 
-local MENUS = {"SELF", "PLAYER", "FRIEND", "PARTY", "RAID_PLAYER", "RAID"}
-local NAME = "PLR_LOOT_AWARD"
-
 function Self.EnableUnitMenus()
-    -- Add menu and button
-    UnitPopupMenus[NAME] = {}
-    UnitPopupButtons[NAME] = {text = L["AWARD_LOOT"], dist = 0, nested = 1}
+    local menus = {"SELF", "PLAYER", "FRIEND", "PARTY", "RAID_PLAYER", "RAID"}
 
-    -- Add entries to unit menus 
-    for _, which in pairs(MENUS) do
-        local menu = UnitPopupMenus[which]
-        local i = Util.TblFind(menu, "LOOT_PROMOTE") or Util.TblFind(menu, "OTHER_SUBSECTION_TITLE")
-        tinsert(menu, i or #menu+1, NAME)
-    end
+    local button = GUI(CreateFrame("Button", "PLR_AwardLootButton", UIParent, "UIDropDownMenuButtonTemplate"))
+        .SetText(L["AWARD_LOOT"])
+        .SetScript("OnClick", function (self)
+            local s, x, y = UIParent:GetEffectiveScale(), GetCursorPosition()
+            GUI.ToggleAwardUnitDropdown(self.unit, "TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
+        end)
+        .Hide()()
+    
+    PLR_AwardLootButtonNormalText:SetPoint("LEFT")
 
-    -- UnitPopup:HideButtons()
-    if not Addon:IsHooked("UnitPopup_HideButtons") then
-        Addon:SecureHook("UnitPopup_HideButtons", function ()
-            local dropdownMenu = UIDROPDOWNMENU_INIT_MENU;
-            local unit = Unit.Name(dropdownMenu.unit or dropdownMenu.chatTarget)
-            local which = UIDROPDOWNMENU_MENU_VALUE or dropdownMenu.which
+    if not Addon:IsHooked("UnitPopup_ShowMenu") then
+        Addon:SecureHook("UnitPopup_ShowMenu", function (dropdown, menu, unit)
+            unit = unit or dropdown.unit or dropdown.chatTarget
 
-            if unit and Util.TblFind(MENUS, which) then
-                local i = Util.TblFind(UnitPopupMenus[which], NAME)
-                if i then
-                    if Unit.InGroup(unit) then
-                        -- Populate submenu list with all awardable items for that unit
-                        UnitPopupMenus[NAME] = Util.TblMap(Roll.ForUnit(unit, true), function (roll, i)
-                            UnitPopupButtons[NAME .. i] = {text = roll.item.link, dist = 0, roll = roll.id}
-                            return NAME .. i
-                        end, true)
+            if UIDROPDOWNMENU_MENU_LEVEL == 1 then
+                button:Hide()
 
-                        -- Show parent entry if submenu isn't empty
-                        UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][i] = next(UnitPopupMenus[NAME]) and 1 or 0
-                    else
-                        wipe(UnitPopupMenus[NAME])
-                        UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][i] = 0
+                if Util.In(menu, menus) and Util.TblFirst(Addon.rolls, "CanBeAwardedTo", true, false, unit, true) then
+                    local parent = _G["DropDownList1"]
+                    local placed = false
+                    
+                    for i=1,UIDROPDOWNMENU_MAXBUTTONS do
+                        local f = _G["DropDownList1Button" .. i]
+
+                        if placed then
+                            local x, y = select(4, f:GetPoint(1))
+                            f:SetPoint("TOPLEFT", x, y - UIDROPDOWNMENU_BUTTON_HEIGHT)
+                        elseif Util.In(f.value, "LOOT_SUBSECTION_TITLE", "INTERACT_SUBSECTION_TITLE") then
+                            local x, y = select(4, f:GetPoint(1))
+                            GUI(button).SetParent(parent).ClearAllPoints()
+                                .SetPoint("TOPLEFT", x, y - UIDROPDOWNMENU_BUTTON_HEIGHT)
+                                .SetWidth(parent.maxWidth)
+                                .Show()
+                            button.unit = unit
+                            placed = true
+                        end
                     end
+
+                    parent:SetHeight(parent:GetHeight() + UIDROPDOWNMENU_BUTTON_HEIGHT)
                 end
             end
         end)
-    end
-
-    -- UnitPopup:OnUpdate()
-    if not Addon:IsHooked("UnitPopup_OnUpdate") then
-        Addon:SecureHook("UnitPopup_OnUpdate", function ()
-            local dropdownMenu = OPEN_DROPDOWNMENUS[2]
-
-            -- Disable all items buttons that can't be won anymore
-            if dropdownMenu and dropdownMenu.which == NAME then
-                local unit = Unit.Name(dropdownMenu.unit or dropdownMenu.chatTarget)
-
-                for i,_ in pairs(UnitPopupMenus[NAME]) do
-                    local roll = Roll.Get(UnitPopupButtons[NAME .. i].roll)
-                    if not roll or not roll:CanBeAwardedTo(unit, true) then
-                        UIDropDownMenu_DisableButton(2, i)
-                    end
-                end
-            end
-        end)
-    end
-
-    -- UnitPopup:OnClick()
-    if not Addon:IsHooked("UnitPopup_OnClick") then
-        Addon:SecureHook("UnitPopup_OnClick", function (self)
-            if self.value and Util.StrStartsWith(self.value, NAME) then
-                local dropdownMenu = UIDROPDOWNMENU_INIT_MENU
-                local unit = Unit.Name(dropdownMenu.unit or dropdownMenu.chatTarget)
-                local roll = Roll.Get(UnitPopupButtons[self.value].roll)
-                
-                if roll and roll:CanBeAwardedTo(unit, true) then
-                    roll:Finish(unit)
-                end
-            end
-        end)
-    end
-
-    -- UIDropDownList buttons
-    local onEnter = function (self)
-        if self.value and Util.StrStartsWith(self.value, NAME) then
-            local roll = Roll.Get(UnitPopupButtons[self.value].roll)
-            if roll and roll:CanBeAwarded(true) then
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                GameTooltip:SetHyperlink(roll.item.link)
-                GameTooltip:Show()
-            end
-        end
-    end
-
-    for i=1, UIDROPDOWNMENU_MAXBUTTONS do
-        local button = _G["DropDownList2Button" .. i]
-        if button and not Addon:IsHooked(button, "OnEnter") then
-            Addon:SecureHookScript(button, "OnEnter", onEnter)
-        end
     end
 end
 
 function Self.DisableUnitMenus()
-    Addon:Unhook("UnitPopup_HideButtons")
-    Addon:Unhook("UnitPopup_OnUpdate")
-    Addon:Unhook("UnitPopup_OnClick")
-    for i=1, UIDROPDOWNMENU_MAXBUTTONS do
-        local button = _G["DropDownList2Button" .. i]
-        if button then Addon:Unhook(button, "OnEnter") end
-    end
+    Addon:Unhook("UnitPopup_ShowMenu")
 end
