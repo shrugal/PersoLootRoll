@@ -6,6 +6,9 @@ local Self = Addon.Locale
 -- The region's default language
 Self.DEFAULT = Util.Select(RealmInfo:GetCurrentRegion(), "KR", "koKR", "TW", "zhTW", "CN", "zhCN", "enUS")
 
+-- Fallback language for missing lines
+Self.FALLBACK = "enUS"
+
 -- Get language for the given realm
 function Self.GetRealmLanguage(realm)
     return (select(5, RealmInfo:GetRealmInfo(realm or GetRealmName()))) or Self.DEFAULT
@@ -18,7 +21,7 @@ end
 
 -- Get locale
 function Self.GetLocale(lang)
-    return Self[lang or Self.GetRealmLanguage()] or Self[Self.DEFAULT]
+    return Self[lang or Self.GetRealmLanguage()] or Self[Self.FALLBACK]
 end
 
 -- Get a single line
@@ -80,7 +83,7 @@ end
 -- Meta table for chat message translations
 Self.MT = {
     __index = function (table, key)
-        return table == Self[Self.DEFAULT] and key or Self[Self.DEFAULT][key]
+        return table == Self[Self.FALLBACK] and key or Self[Self.FALLBACK][key]
     end,
     __call = function (table, line, ...)
         return Util.StrFormat(table[line], ...)

@@ -166,13 +166,13 @@ function Self.Update(data, unit)
     -- Get or create the roll
     local roll = Self.Find(data.ownerId, data.owner, data.item, data.itemOwnerId, data.item.owner)
     if not roll then
-        local ml, unitMl = Masterloot.GetMasterlooter(), Masterloot.GetMasterlooter(data.item.owner)
+        local ml = Masterloot.GetMasterlooter()
 
         -- Only the item owner or his/her masterlooter can create rolls
-        if not Util.In(unit, data.item.owner, unitML) then
+        if not Util.In(unit, data.item.owner, Masterloot.GetMasterlooter(data.item.owner)) then
             return
-        -- Only accept items from players with the same masterlooter if enabled
-        elseif Addon.db.profile.onlyMasterloot and (not ml or ml ~= unitML) then
+        -- Only accept items from our masterlooter if enabled
+        elseif Addon.db.profile.onlyMasterloot and not (ml and ml == data.owner) then
             return
         end
 
@@ -250,7 +250,7 @@ function Self.Update(data, unit)
             end
         end) end
     -- The winner can inform us that it has been traded, or the item owner if the winner doesn't have the addon or he traded it to someone else
-    elseif roll.winner and (unit == roll.winner or unit == roll.item.owner and (not Addon.versions[roll.winner]) or data.traded ~= roll.winner) then
+    elseif roll.winner and (unit == roll.winner or unit == roll.item.owner and not Addon:IsTracking(roll.winner) or data.traded ~= roll.winner) then
         roll.item:OnLoaded(function()
             -- Register when the roll has been traded
             if data.traded ~= roll.traded then

@@ -26,7 +26,7 @@ L["MSG_ROLL_WINNER_WHISPER"] = "你已經贏得 %s！請跟我交易。"
 L["MSG_ROLL_WINNER"] = "<%s> 已贏得 %s -> 請跟我交易！"
 
 -- Addon
-local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == "enUS")
+local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
 if not L then return end
 
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "物品的提供者並沒有使用PersoLootRoll插件。"

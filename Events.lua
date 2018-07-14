@@ -31,44 +31,42 @@ Self.lastSuppressed = nil
 --                      Roster                       --
 -------------------------------------------------------
 
-function Self.GROUP_JOINED(event)
-    -- Send sync event
-    Comm.Send(Comm.EVENT_SYNC)
-
-    -- Restore or ask for masterlooter
-    Masterloot.Restore()
-
+function Self.GROUP_JOINED()
     -- Schedule version check
     Addon.timers.versionCheck = Addon:ScheduleTimer(function ()
         Comm.SendData(Comm.EVENT_VERSION_ASK)
     end, Self.VERSION_CHECK_DELAY)
     
-    -- Start inspecting
-    Inspect.Queue()
-    Inspect.Start()
+    -- Restore or ask for masterlooter
+    Masterloot.Restore()
+
+    -- Start tracking process
+    Addon:OnTrackingChanged(true)
 end
 
-function Self.GROUP_LEFT(event)
-    -- Clear all rolls
-    Util.TblIter(Addon.rolls, Roll.Clear)
-
-    -- Stop inspecting
-    Inspect.Clear()
+function Self.GROUP_LEFT()
+    -- Stop tracking process
+    Addon:OnTrackingChanged(true)
 
     -- Clear masterlooter
     Masterloot.SetMasterlooter(nil)
     wipe(Masterloot.masterlooting)
 
-    -- Clear versions
+    -- Clear versions and disabled
     wipe(Addon.versions)
+    wipe(Addon.disabled)
 
     -- Clear lastXYZ stuff
     Self.lastPostedRoll = nil
     Self.lastVersionCheck = nil
+    Self.lastSuppressed = nil
     wipe(Self.lastChatted)
+    wipe(Self.lastChattedRoll)
 end
 
 function Self.PARTY_MEMBER_ENABLE(event, unit)
+    if not Addon:IsTracking() then return end
+
     Inspect.Queue(unit)
     Inspect.Start()
 end
@@ -211,7 +209,7 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
             Masterloot.SetMasterlooting(unit, nil)
             Masterloot.ClearMasterlooting(unit)
 
-            -- Clear version
+            -- Clear version and disabled
             Addon:SetVersion(unit, nil)
             return
         end
@@ -222,7 +220,7 @@ end
 
 function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
     local unit = Unit(sender)
-    if not Addon:IsTracking() or not Unit.InGroup(unit) or Addon.db.profile.onlyMasterloot then return end
+    if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
 
     local item = Item.GetLink(msg)
 
@@ -250,7 +248,7 @@ function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
                     end
                 end
             end)
-        elseif not msg:match(Self.PATTERN_BONUS_LOOT) and not Roll.Find(nil, unit, item) then
+        elseif not (msg:match(Self.PATTERN_BONUS_LOOT) or Roll.Find(nil, unit, item)) then
             Roll.Add(item, unit):Schedule()
         end
     end
@@ -300,7 +298,7 @@ function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender, _, _, _, _, _, _
     end
 
     -- Don't act on whispers from other addon users
-    if Addon.versions[unit] then return end
+    if Addon:IsTracking(unit) then return end
 
     local answer, suppress
     local lastEnded, firstStarted, running, recent, roll = 0
@@ -486,6 +484,39 @@ end
 --                   Addon message                   --
 -------------------------------------------------------
 
+-- Check
+local checkFn = function (event, data, channel, sender, unit)
+    if not Self.lastVersionCheck or Self.lastVersionCheck + Self.VERSION_CHECK_DELAY < GetTime() then
+        Self.lastVersionCheck = GetTime()
+
+        if Addon.timers.versionCheck then
+            Addon:CancelTimer(Addon.timers.versionCheck)
+            Addon.timers.versionCheck = nil
+        end
+
+        local target = channel == Comm.TYPE_WHISPER and sender or channel
+
+        -- Send version
+        Comm.SendData(Comm.EVENT_VERSION, floor(Addon.VERSION), target)
+        
+        -- Send disabled state
+        if Addon.disabled[UnitName("player")] then
+            Comm.Send(Comm.EVENT_DISABLE, target)
+        end
+    end
+end
+Comm.ListenData(Comm.EVENT_CHECK, checkFn, true)
+Comm.ListenData(Comm.EVENT_VERSION_ASK, checkFn, true) -- TODO: DEPRECATED
+
+-- Version
+Comm.ListenData(Comm.EVENT_VERSION, function (event, version, channel, sender, unit)
+    Addon:SetVersion(unit, tonumber(version))
+end)
+
+-- Enable/Disable
+Comm.Listen(Comm.EVENT_ENABLE, function (event, _, _, _, unit) Addon.disabled[unit] = nil end, true)
+Comm.Listen(Comm.EVENT_DISABLE, function (event, _, _, _, unit) Addon.disabled[unit] = true end, true)
+
 -- Sync
 Comm.Listen(Comm.EVENT_SYNC, function (event, msg, channel, sender, unit)
     -- Reset all owner ids and bids for the unit's rolls and items, because he/she doesn't know them anymore
@@ -504,45 +535,31 @@ Comm.Listen(Comm.EVENT_SYNC, function (event, msg, channel, sender, unit)
         end
     end
 
-    -- Send rolls for items that we own
-    for _,roll in pairs(Addon.rolls) do
-        if roll.item.isOwner and (roll:UnitCanBid(unit) or roll:UnitCanVote(unit)) then
-            roll:SendStatus(true, unit, roll.isOwner)
-        end
-    end
-
-    -- As masterlooter we send another update a bit later to inform them about bids and votes
-    if Masterloot.IsMasterlooter() then
-        Addon:ScheduleTimer(function ()
-            for _,roll in pairs(Addon.rolls) do
-                if roll.isOwner and not roll.item.isOwner and (roll:UnitCanBid(unit) or roll:UnitCanVote(unit)) then
-                    roll:SendStatus(nil, unit, true)
-                end
+    if Addon:IsTracking() then
+        -- Send rolls for items that we own
+        for _,roll in pairs(Addon.rolls) do
+            if roll.item.isOwner and (roll:UnitCanBid(unit) or roll:UnitCanVote(unit)) then
+                roll:SendStatus(true, unit, roll.isOwner)
             end
-        end, Roll.DELAY)
-    end
-end)
-
--- Version check
-Comm.ListenData(Comm.EVENT_VERSION_ASK, function (event, data, channel, sender, unit)
-    -- Send version
-    if not Self.lastVersionCheck or Self.lastVersionCheck + Self.VERSION_CHECK_DELAY < GetTime() then
-        Self.lastVersionCheck = GetTime()
-
-        if Addon.timers.versionCheck then
-            Addon:CancelTimer(Addon.timers.versionCheck)
-            Addon.timers.versionCheck = nil
         end
 
-        Comm.SendData(Comm.EVENT_VERSION, floor(Addon.VERSION), channel == Comm.TYPE_WHISPER and sender or channel)
+        -- As masterlooter we send another update a bit later to inform them about bids and votes
+        if Masterloot.IsMasterlooter() then
+            Addon:ScheduleTimer(function ()
+                for _,roll in pairs(Addon.rolls) do
+                    if roll.isOwner and not roll.item.isOwner and (roll:UnitCanBid(unit) or roll:UnitCanVote(unit)) then
+                        roll:SendStatus(nil, unit, true)
+                    end
+                end
+            end, Roll.DELAY)
+        end
     end
-end, true)
-Comm.ListenData(Comm.EVENT_VERSION, function (event, version, channel, sender, unit)
-    Addon:SetVersion(unit, tonumber(version))
 end)
 
 -- Roll status
 Comm.ListenData(Comm.EVENT_ROLL_STATUS, function (event, data, channel, sender, unit)
+    if not Addon:IsTracking() then return end
+
     data.owner = Unit.Name(data.owner)
     data.item.owner = Unit.Name(data.item.owner)
     data.winner = Unit.Name(data.winner)
@@ -553,6 +570,8 @@ end)
 
 -- Bids
 Comm.ListenData(Comm.EVENT_BID, function (event, data, channel, sender, unit)
+    if not Addon:IsTracking() then return end
+
     local owner = data.fromUnit and unit or nil
     local fromUnit = data.fromUnit or unit
 
@@ -562,6 +581,8 @@ Comm.ListenData(Comm.EVENT_BID, function (event, data, channel, sender, unit)
     end
 end)
 Comm.ListenData(Comm.EVENT_BID_WHISPER, function (event, item)
+    if not Addon:IsTracking() then return end
+
     local roll = Roll.Find(nil, nil, item)
     if roll then
         roll.whispers = roll.whispers + 1
@@ -570,6 +591,8 @@ end)
 
 -- Votes
 Comm.ListenData(Comm.EVENT_VOTE, function (event, data, channel, sender, unit)
+    if not Addon:IsTracking() then return end
+
     local owner = data.fromUnit and unit or nil
     local fromUnit = data.fromUnit or unit
     
@@ -581,6 +604,8 @@ end)
 
 -- Declaring interest
 Comm.ListenData(Comm.EVENT_INTEREST, function (event, data, channel, sender, unit)
+    if not Addon:IsTracking() then return end
+
     local roll = Roll.Find(data.ownerId)
     if roll then
         roll.item:SetEligible(unit)

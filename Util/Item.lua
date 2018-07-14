@@ -310,7 +310,7 @@ Self.queue = {}
 
 -- Check if item scaling is currently active
 function Self.IsScalingActive(unit)
-    return Util.IsTimewalking() or Util.NumBetween(UnitLevel(Unit(unit or "player")), 0, MAX_PLAYER_LEVEL)
+    return Util.NumBetween(UnitLevel(Unit(unit or "player")), 0, MAX_PLAYER_LEVEL)
 end
 
 -------------------------------------------------------

@@ -126,7 +126,6 @@ function Self.Clear(unit)
         Self.cache[unit] = nil
         Self.queue[unit] = nil
     else
-        Self.Stop()
         Self.lastQueued = 0
         Util.TblRelease(true, unpack(Self.cache))
         wipe(Self.cache)
@@ -141,7 +140,7 @@ function Self.Queue(unit)
 
     if unit then
         Self.queue[unit] = Self.queue[unit] or Self.MAX_PER_CHAR
-    else
+    elseif IsInGroup() then
         -- Queue all group members with missing or out-of-date cache entries
         local unitFound = false
         for i=1,GetNumGroupMembers() do

@@ -137,12 +137,8 @@ end
 
 -- Shortcut for checking whether a unit is in our party or raid
 function Self.InGroup(unit, onlyOthers)
-    local isSelf = UnitIsUnit(unit, "player")
-    if onlyOthers and isSelf then
-        return false
-    else
-        return isSelf or UnitInParty(unit) or UnitInRaid(unit)
-    end
+    local isSelf = unit and UnitIsUnit(unit, "player")
+    return not (isSelf and onlyOthers) and (isSelf or UnitInParty(unit) or UnitInRaid(unit))
 end
 
 setmetatable(Self, {

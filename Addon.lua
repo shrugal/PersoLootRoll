@@ -10,7 +10,7 @@ local Name, Addon = ...
 local LDB = LibStub("LibDataBroker-1.1")
 local LDBIcon = LibStub("LibDBIcon-1.0")
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local GUI, Item, Locale, Masterloot, Roll, Trade, Util = Addon.GUI, Addon.Item, Addon.Locale, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Util
+local Comm, GUI, Inspect, Item, Locale, Masterloot, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Inspect, Addon.Item, Addon.Locale, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 
 -- Echo levels
 Addon.ECHO_NONE = 0
@@ -25,6 +25,7 @@ Addon.timers = {}
 -- Versions
 Addon.versions = {}
 Addon.versionNoticeShown = false
+Addon.disabled = {}
 
 -------------------------------------------------------
 --                    Addon stuff                    --
@@ -101,6 +102,10 @@ function Addon:OnInitialize()
     -- Migrate options
     self:MigrateOptions()
 
+    -- Register chat commands
+    self:RegisterChatCommand(Name, "HandleChatCommand")
+    self:RegisterChatCommand("plr", "HandleChatCommand")
+
     -- Minimap icon
     self:RegisterMinimapIcon()
 end
@@ -108,7 +113,9 @@ end
 -- Called when the addon is enabled
 function Addon:OnEnable()
     -- Register options table
-    self:RegisterOptions()
+    if not self.configFrame then
+        self:RegisterOptions()
+    end
 
     -- Enable hooks
     self.Hooks.EnableGroupLootRoll()
@@ -118,23 +125,20 @@ function Addon:OnEnable()
     -- Register events
     self.Events.RegisterEvents()
 
-    -- Register chat commands
-    self:RegisterChatCommand(Name, "HandleChatCommand")
-    self:RegisterChatCommand("plr", "HandleChatCommand")
-
     -- Periodically clear old rolls
-    self.timers.clearRolls = self:ScheduleRepeatingTimer(self.Roll.Clear, self.Roll.CLEAR)
+    self.timers.clearRolls = self:ScheduleRepeatingTimer(Roll.Clear, Roll.CLEAR)
 
     -- Start inspecting
-    self.Inspect.Start()
-    if not self.Inspect.timer then
+    Inspect.Start()
+    if not Inspect.timer then
         -- IsInGroup doesn't work right after logging in, so check again after waiting a bit.
-        self.timers.inspectStart = self:ScheduleTimer(self.Inspect.Start, 10)
+        self.timers.inspectStart = self:ScheduleTimer(Inspect.Start, 10)
     end
 
-    -- Trigger GROUP_JOINED or GROUP_LEFT
-    local event = IsInGroup() and "GROUP_JOINED" or "GROUP_LEFT"
-    self.Events[event](event)
+    -- Update state
+    if IsInGroup() then
+        self.Events.GROUP_JOINED()
+    end
 end
 
 -- Called when the addon is disabled
@@ -154,10 +158,16 @@ function Addon:OnDisable()
     self.timers.clearRolls = nil
 
     -- Stop inspecting
-    self.Inspect.Clear()
     if self.timers.inspectStart then
         self:CancelTimer(self.timers.inspectStart)
         self.timers.inspectStart = nil
+    end
+
+    -- Update state
+    if IsInGroup() then
+        self.Events.GROUP_LEFT()
+    else
+        self:OnTrackingChanged(true)
     end
 end
 
@@ -198,7 +208,7 @@ function Addon:HandleChatCommand(msg)
             
             for i,item in pairs(items) do
                 item = Item.FromLink(item, owner or "player")
-                local roll = self.Roll.Add(item, owner or Masterloot.GetMasterlooter() or "player", timeout)
+                local roll = Roll.Add(item, owner or Masterloot.GetMasterlooter() or "player", timeout)
                 if roll.isOwner then
                     roll:Start()
                 else
@@ -212,14 +222,14 @@ function Addon:HandleChatCommand(msg)
         
         if Util.StrIsEmpty(owner) or Item.IsLink(owner)                 -- owner
         or item and not Item.IsLink(item)                               -- item
-        or bid and not Util.TblFind(self.Roll.BIDS, tonumber(bid)) then -- answer
+        or bid and not Util.TblFind(Roll.BIDS, tonumber(bid)) then -- answer
             self:Print(L["USAGE_BID"])
         else
-            local roll = self.Roll.Find(nil, owner, item)
+            local roll = Roll.Find(nil, owner, item)
             if roll then
                 roll:Bid(bid)
             else
-                self.Comm.RollBid(owner, item, true)
+                Comm.RollBid(owner, item, true)
             end
         end
     -- Trade
@@ -227,7 +237,7 @@ function Addon:HandleChatCommand(msg)
         Trade.Initiate(args[2] or "target")
     -- Rolls/None
     elseif cmd == "rolls" or not cmd then
-        self.GUI.Rolls.Show()
+        GUI.Rolls.Show()
     -- Unknown
     else
         self:Err(L["ERROR_CMD_UNKNOWN"], cmd)
@@ -273,6 +283,7 @@ function Addon:RegisterOptions()
                 order = it(),
                 set = function (_, val)
                     self.db.profile.enabled = val
+                    self:OnTrackingChanged(true)
                     self:Info(L[val and "ENABLED" or "DISABLED"])
                 end,
                 get = function (_) return self.db.profile.enabled end,
@@ -283,7 +294,10 @@ function Addon:RegisterOptions()
                 desc = L["OPT_ONLY_MASTERLOOT_DESC"] .. "\n",
                 type = "toggle",
                 order = it(),
-                set = function (_, val) self.db.profile.onlyMasterloot = val end,
+                set = function (_, val)
+                    self.db.profile.onlyMasterloot = val
+                    self:OnTrackingChanged(not val)
+                end,
                 get = function () return self.db.profile.onlyMasterloot end,
                 width = "full"
             },
@@ -339,7 +353,7 @@ function Addon:RegisterOptions()
                 func = function ()
                     HideUIPanel(InterfaceOptionsFrame)
                     HideUIPanel(GameMenuFrame)
-                    self.GUI.Actions.Show(true)
+                    GUI.Actions.Show(true)
                 end
             },
             showRollsWindow = {
@@ -515,11 +529,11 @@ function Addon:RegisterOptions()
                         name = Util.StrFormat(L["OPT_CUSTOM_MESSAGES_LOCALIZED"], lang),
                         type = "group",
                         order = it(),
-                        hidden = Locale.GetRealmLanguage() == Locale.DEFAULT,
+                        hidden = Locale.GetRealmLanguage() == Locale.FALLBACK,
                         args = Addon:GetCustomMessageOptions(false)
                     },
                     default = {
-                        name = Util.StrFormat(L["OPT_CUSTOM_MESSAGES_DEFAULT"], Locale.DEFAULT),
+                        name = Util.StrFormat(L["OPT_CUSTOM_MESSAGES_DEFAULT"], Locale.FALLBACK),
                         type = "group",
                         order = it(),
                         args = Addon:GetCustomMessageOptions(true)
@@ -554,7 +568,7 @@ function Addon:RegisterOptions()
                 name = L["OPT_MASTERLOOT_SEARCH"],
                 type = "execute",
                 order = it(),
-                func = function () self.Comm.Send(self.Comm.EVENT_MASTERLOOT_ASK) end
+                func = function () Comm.Send(Comm.EVENT_MASTERLOOT_ASK) end
             },
             start = {
                 name = L["OPT_MASTERLOOT_START"],
@@ -799,9 +813,9 @@ function Addon:RegisterOptions()
 end
 
 function Addon:GetCustomMessageOptions(isDefault)
-    local lang = isDefault and Locale.DEFAULT or Locale.GetRealmLanguage()
+    local lang = isDefault and Locale.FALLBACK or Locale.GetRealmLanguage()
     local locale = Locale.GetLocale(lang)
-    local default = Locale.GetLocale(Locale.DEFAULT)
+    local default = Locale.GetLocale(Locale.FALLBACK)
     local desc = L["OPT_CUSTOM_MESSAGES_" .. (isDefault and "DEFAULT" or "LOCALIZED") .. "_DESC"]
     local it = Util.Iter()
 
@@ -915,12 +929,43 @@ function Addon:RegisterMinimapIcon()
 end
 
 -------------------------------------------------------
---                       Other                       --
+--                       State                       --
 -------------------------------------------------------
 
 -- Check if we should currently track loot etc.
-function Addon:IsTracking()
-    return self.db.profile.enabled and IsInGroup() and Util.In(GetLootMethod(), "freeforall", "roundrobin", "personalloot", "group")
+function Addon:IsTracking(unit)
+    if not unit or UnitIsUnit(unit, "player") then
+        return self.db.profile.enabled
+           and (not self.db.profile.onlyMasterloot or Masterloot.GetMasterlooter())
+           and IsInGroup()
+           and Util.In(GetLootMethod(), "freeforall", "roundrobin", "personalloot", "group")
+    else
+        unit = Unit.Name(unit)
+        return self.versions[unit] and not self.disabled[unit]
+    end
+end
+
+-- Tracking state potentially changed
+function Addon:OnTrackingChanged(sync)
+    local isTracking = self:IsTracking()
+
+    -- Let others know
+    if not Util.BoolXor(isTracking, self.disabled[UnitName("player")]) then
+        Comm.Send(Comm["EVENT_" .. (isTracking and "ENABLE" or "DISABLE")])
+    end
+
+    -- Start/Stop tracking process
+    if sync then
+        if isTracking then
+            Comm.Send(Comm.EVENT_SYNC)
+            Inspect.Queue()
+        else
+            Util.TblIter(self.rolls, Roll.Clear)
+            Inspect.Clear()
+        end
+    end
+
+    Inspect[isTracking and "Start" or "Stop"]()
 end
 
 function Addon:SetVersion(unit, version)
@@ -929,10 +974,14 @@ function Addon:SetVersion(unit, version)
     if version and version > self.VERSION and not self.versionNoticeShown then
         self:Info(L["VERSION_NOTICE"])
         self.versionNoticeShown = true
+    elseif not version then
+        self.disabled[unit] = nil
     end
 end
 
--- Console output
+-------------------------------------------------------
+--                      Console                      --
+-------------------------------------------------------
 
 function Addon:Echo(lvl, line, ...)
     if self.db.profile.echo >= lvl then
@@ -975,7 +1024,9 @@ function Addon:Assert(cond, ...)
     end
 end
 
--- Timer
+-------------------------------------------------------
+--                       Timer                       --
+-------------------------------------------------------
 
 function Addon:ExtendTimerTo(timer, to)
     if not timer.canceled and timer.ends - GetTime() < to then

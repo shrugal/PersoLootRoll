@@ -44,6 +44,8 @@ function Self.SetMasterlooter(unit, session, silent)
     PersoLootRollML = unit
     Self.masterlooter = unit
 
+    Addon:OnTrackingChanged()
+
     -- Let others know
     if unit then
         Self.SetSession(session)
@@ -163,7 +165,7 @@ end
 
 -- Restore a session
 function Self.Restore()
-    if PersoLootRollML then
+    if Unit.InGroup(PersoLootRollML) then
         Self.SetMasterlooter(PersoLootRollML, {}, true)
     end
     Self.SendRequest(PersoLootRollML)

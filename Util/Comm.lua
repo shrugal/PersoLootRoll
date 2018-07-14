@@ -17,14 +17,17 @@ Self.TYPE_INSTANCE = "INSTANCE_CHAT"
 Self.TYPES = {Self.TYPE_GROUP, Self.TYPE_PARTY, Self.TYPE_RAID, Self.TYPE_GUILD, Self.TYPE_OFFICER, Self.TYPE_BATTLEGROUND, Self.TYPE_WHISPER, Self.TYPE_INSTANCE}
 
 -- Addon events
+Self.EVENT_CHECK = "CHECK"
+Self.EVENT_VERSION_ASK = "VERSION-ASK" -- TODO: DEPRECATED
+Self.EVENT_VERSION = "VERSION"
+Self.EVENT_ENABLE = "ENABLE"
+Self.EVENT_DISABLE = "DISABLE"
+Self.EVENT_SYNC = "SYNC"
 Self.EVENT_ROLL_STATUS = "STATUS"
 Self.EVENT_BID = "BID"
 Self.EVENT_BID_WHISPER = "WHISPER"
 Self.EVENT_VOTE = "VOTE"
 Self.EVENT_INTEREST = "INTEREST"
-Self.EVENT_SYNC = "SYNC"
-Self.EVENT_VERSION_ASK = "VERSION-ASK"
-Self.EVENT_VERSION = "VERSION"
 Self.EVENT_MASTERLOOT_ASK = "ML-ASK"
 Self.EVENT_MASTERLOOT_OFFER = "ML-OFFER"
 Self.EVENT_MASTERLOOT_ACK = "ML-ACK"
@@ -78,13 +81,13 @@ function Self.ShouldChat(target)
     local config = Addon.db.profile
 
     -- Check group
-    if not IsInGroup() or Util.TblCount(Addon.versions) + 1 == GetNumGroupMembers() then
+    if not IsInGroup() or Util.TblCount(Addon.disabled) == 0 and Util.TblCount(Addon.versions) + 1 == GetNumGroupMembers() then
         return false
     end
 
     -- Check whisper target
     if channel == Self.TYPE_WHISPER then
-        if Addon.versions[unit] or UnitIsUnit(unit, "player") then
+        if Addon:IsTracking(unit) or UnitIsUnit(unit, "player") then
             return false
         end
 
@@ -164,6 +167,7 @@ function Self.Listen(event, method, fromSelf, fromAll)
     Addon:RegisterComm(Self.GetPrefix(event), function (event, msg, channel, sender)
         local unit = Unit(sender)
         if fromAll or Unit.InGroup(unit, not fromSelf) then
+            -- print(event, unit)
             method(event, msg, channel, sender, unit)
         end
     end)
@@ -260,7 +264,7 @@ function Self.RollEnd(roll, noAlert)
             end
             
             -- Announce to target
-            if Addon.db.profile.answer and not Addon.versions[roll.winner] then
+            if Addon.db.profile.answer and not Addon:IsTracking(roll.winner) then
                 if roll.item:GetNumEligible(true) == 1 then
                     if roll.item.isOwner then
                         Self.ChatLine("MSG_ROLL_ANSWER_YES", roll.winner)

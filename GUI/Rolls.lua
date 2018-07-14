@@ -88,7 +88,8 @@ function Self.Show()
                             for unit,version in pairs(Addon.versions) do
                                 local name = Unit.ColoredName(Unit.ShortenedName(unit), unit)
                                 local versionColor = (not version or version == Addon.VERSION) and "ffffff" or version < Addon.VERSION and "ff0000" or "00ff00"
-                                GameTooltip:AddLine(("%s: |cff%s%s|r"):format(name, versionColor, version), 1, 1, 1, false)
+                                local line = ("%s: |cff%s%s|r"):format(name, versionColor, version) .. (Addon.disabled[unit] and " (" .. OFF .. ")" or "")
+                                GameTooltip:AddLine(line, 1, 1, 1, false)
                             end
                         end
 

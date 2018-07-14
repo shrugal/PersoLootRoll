@@ -26,7 +26,7 @@ L["MSG_ROLL_WINNER_WHISPER"] = "You have won %s! Please trade me."
 L["MSG_ROLL_WINNER"] = "<%s> has won %s -> Trade me!"
 
 -- Addon
-local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == "enUS")
+local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
 if not L then return end
 
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "The owner of this item doesn't use the PersoLootRoll addon."

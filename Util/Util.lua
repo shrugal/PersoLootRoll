@@ -12,9 +12,6 @@ Self.INTERACT_TRADE = 2   -- 11.11 yards
 Self.INTERACT_DUEL = 3    -- 9.9 yards
 Self.INTERACT_FOLLOW = 4  -- 28 yards
 
--- Dungeon difficulty ids (https://wow.gamepedia.com/DifficultyID)
-Self.DIFFICULTY_TIMEWALKING = 33
-
 -- Check if the current group is a guild group (>=80% guild members)
 function Self.IsGuildGroup(guild)
     guild = guild or Unit.GuildName("player")
@@ -45,7 +42,7 @@ end
 
 -- Check if currently in a timewalking dungeon
 function Self.IsTimewalking()
-    return select(3, GetInstanceInfo()) == Self.DIFFICULTY_TIMEWALKING
+    return Self.In(select(3, GetInstanceInfo()), 24, 33)
 end
 
 -- Get hidden tooltip for scanning
