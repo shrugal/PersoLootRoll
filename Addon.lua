@@ -539,7 +539,7 @@ function Addon:RegisterOptions()
                         name = Util.StrFormat(L["OPT_CUSTOM_MESSAGES_LOCALIZED"], Locale.GetLanguageName(lang)),
                         type = "group",
                         order = it(),
-                        hidden = Locale.GetRealmLanguage() == Locale.DEFAULT,
+                        hidden = Locale.GetRealmLanguage() == Locale.FALLBACK,
                         args = Addon:GetCustomMessageOptions(false)
                     },
                     default = {
