@@ -251,10 +251,10 @@ L["OPT_WHISPER_TARGET_DESC"] = "Flüstere andere an, abhängig davon ob sie auf 
 
 L["OPT_CUSTOM_MESSAGES"] = "Nachrichten anpassen"
 L["OPT_CUSTOM_MESSAGES_DESC"] = "Du kannst die Reihenfolge von Platzhaltern (|cffffff00%s|r, |cffffff00%d|r) verändern, indem du ihre Position und das $ Zeichen in der Mitte einfügst, also z.B. |cffffff00%2$s|r statt |cffffff00%s|r für den 2. Platzhalter. Weitere Details in den Tooltips."
-L["OPT_CUSTOM_MESSAGES_DEFAULT"] = "Standard Sprache (enUS)"
-L["OPT_CUSTOM_MESSAGES_DEFAULT_DESC"] = "Diese Nachrichten werden verwendet, wenn der Empfänger Englisch oder nicht die Standard Sprache deines Servers (%s) spricht."
+L["OPT_CUSTOM_MESSAGES_DEFAULT"] = "Standard Sprache (%s)"
+L["OPT_CUSTOM_MESSAGES_DEFAULT_DESC"] = "Diese Nachrichten werden verwendet, wenn der Empfänger %s oder nicht die Standardsprache deines Servers (%s) spricht."
 L["OPT_CUSTOM_MESSAGES_LOCALIZED"] = "Server Sprache (%s)"
-L["OPT_CUSTOM_MESSAGES_LOCALIZED_DESC"] = "Diese Nachrichten werden verwendet, wenn der Empfänger die Standard Sprache deines Servers (%s) spricht."
+L["OPT_CUSTOM_MESSAGES_LOCALIZED_DESC"] = "Diese Nachrichten werden verwendet, wenn der Empfänger die Standardsprache deines Servers (%s) spricht."
 L["OPT_MSG_ROLL_START"] = "Eine neue Verlosung verkünden"
 L["OPT_MSG_ROLL_START_DESC"] = "1: Item Link\n2: Roll Nummer\n"
 L["OPT_MSG_ROLL_START_MASTERLOOT"] = "Eine neue Verlosung verkünden (als Plündermeister)"

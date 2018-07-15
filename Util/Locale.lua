@@ -11,12 +11,19 @@ Self.FALLBACK = "enUS"
 
 -- Get language for the given realm
 function Self.GetRealmLanguage(realm)
-    return (select(5, RealmInfo:GetRealmInfo(realm or GetRealmName()))) or Self.DEFAULT
+    local lang = select(5, RealmInfo:GetRealmInfo(realm or GetRealmName())) or Self.DEFAULT
+    return lang == "enGB" and "enUS" or lang
 end
 
 -- Get language for the given unit
 function Self.GetUnitLanguage(unit)
-    return (select(5, RealmInfo:GetRealmInfoByUnit(unit or "player"))) or Self.DEFAULT
+    local lang = select(5, RealmInfo:GetRealmInfoByUnit(unit or "player")) or Self.DEFAULT
+    return lang == "enGB" and "enUS" or lang
+end
+
+-- Get a language's name (e.g. "enUS" -> "English")
+function Self.GetLanguageName(lang)
+    return lang:sub(1, 2) == "en" and LFG_LIST_LANGUAGE_ENUS or _G[lang:upper()]
 end
 
 -- Get locale

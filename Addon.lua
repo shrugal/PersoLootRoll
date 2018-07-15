@@ -526,14 +526,14 @@ function Addon:RegisterOptions()
                 args = {
                     desc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_CUSTOM_MESSAGES_DESC"] .. "\n"},
                     localized = {
-                        name = Util.StrFormat(L["OPT_CUSTOM_MESSAGES_LOCALIZED"], lang),
+                        name = Util.StrFormat(L["OPT_CUSTOM_MESSAGES_LOCALIZED"], Locale.GetLanguageName(lang)),
                         type = "group",
                         order = it(),
-                        hidden = Locale.GetRealmLanguage() == Locale.FALLBACK,
+                        hidden = Locale.GetRealmLanguage() == Locale.DEFAULT,
                         args = Addon:GetCustomMessageOptions(false)
                     },
                     default = {
-                        name = Util.StrFormat(L["OPT_CUSTOM_MESSAGES_DEFAULT"], Locale.FALLBACK),
+                        name = Util.StrFormat(L["OPT_CUSTOM_MESSAGES_DEFAULT"], Locale.GetLanguageName(Locale.DEFAULT)),
                         type = "group",
                         order = it(),
                         args = Addon:GetCustomMessageOptions(true)
@@ -813,11 +813,10 @@ function Addon:RegisterOptions()
 end
 
 function Addon:GetCustomMessageOptions(isDefault)
-    local lang = isDefault and Locale.FALLBACK or Locale.GetRealmLanguage()
+    local realm = Locale.GetRealmLanguage()
+    local lang = isDefault and Locale.DEFAULT or realm
     local locale = Locale.GetLocale(lang)
-    local default = Locale.GetLocale(Locale.FALLBACK)
-    local desc = L["OPT_CUSTOM_MESSAGES_" .. (isDefault and "DEFAULT" or "LOCALIZED") .. "_DESC"]
-    local it = Util.Iter()
+    local default = Locale.GetLocale(Locale.DEFAULT)
 
     local set = function (info, val)
         local line, c = info[3], self.db.profile.messages
@@ -836,8 +835,11 @@ function Addon:GetCustomMessageOptions(isDefault)
         return (pcall(Util.StrFormat, val, unpack(args)))
     end
 
+    local it = Util.Iter()
+    local desc = isDefault and L["OPT_CUSTOM_MESSAGES_DEFAULT_DESC"]:format(Locale.GetLanguageName(Locale.DEFAULT), Locale.GetLanguageName(realm))
+                            or L["OPT_CUSTOM_MESSAGES_LOCALIZED_DESC"]:format(Locale.GetLanguageName(realm))
     local t = {
-        desc = {type = "description", fontSize = "medium", order = it(), name = desc:format(Locale.GetRealmLanguage()) .. "\n"},
+        desc = {type = "description", fontSize = "medium", order = it(), name = desc .. "\n"},
         groupchat = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
     }
 
