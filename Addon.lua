@@ -37,9 +37,10 @@ function Addon:OnInitialize()
         profile = {
             -- General
             enabled = true,
-            ui = {showRollFrames = true, showActionsWindow = true, showRollsWindow = false},
-            awardSelf = false,
             onlyMasterloot = false,
+            dontShare = false,
+            awardSelf = false,
+            ui = {showRollFrames = true, showActionsWindow = true, showRollsWindow = false},
             
             -- Item filter
             ilvlThreshold = 30,
@@ -291,7 +292,7 @@ function Addon:RegisterOptions()
             },
             onlyMasterloot = {
                 name = L["OPT_ONLY_MASTERLOOT"],
-                desc = L["OPT_ONLY_MASTERLOOT_DESC"] .. "\n",
+                desc = L["OPT_ONLY_MASTERLOOT_DESC"],
                 type = "toggle",
                 order = it(),
                 set = function (_, val)
@@ -301,9 +302,18 @@ function Addon:RegisterOptions()
                 get = function () return self.db.profile.onlyMasterloot end,
                 width = "full"
             },
+            dontShare = {
+                name = L["OPT_DONT_SHARE"],
+                desc = L["OPT_DONT_SHARE_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) self.db.profile.dontShare = val end,
+                get = function () return self.db.profile.dontShare end,
+                width = "full"
+            },
             awardSelf = {
                 name = L["OPT_AWARD_SELF"],
-                desc = L["OPT_AWARD_SELF_DESC"] .. "\n",
+                desc = L["OPT_AWARD_SELF_DESC"],
                 type = "toggle",
                 order = it(),
                 set = function (_, val) self.db.profile.awardSelf = val end,

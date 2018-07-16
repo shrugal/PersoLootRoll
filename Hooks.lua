@@ -162,9 +162,10 @@ function Self.EnableGroupLootRoll()
     if not Addon:IsHooked("GroupLootContainer_RemoveFrame") then
         Addon:SecureHook("GroupLootContainer_RemoveFrame", function (self, frame)
             -- Find a running roll that hasn't been shown yet
-            local roll = Util.TblFirstWhere(Addon.rolls, "shown", false, "status", Roll.STATUS_RUNNING)
-            if roll then
-                roll:ShowRollFrame()
+            for i,roll in pairs(Addon.rolls) do
+                if not roll.shown and roll:UnitCanBid() then
+                    roll:ShowRollFrame() break
+                end
             end
         end)
     end

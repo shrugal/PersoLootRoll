@@ -983,12 +983,12 @@ end
 
 -- Check if the addon should offer to bid on an item
 function Self:ShouldBeBidOn()
-    return self:ShouldBeConsidered() and self:GetEligible("player")
+    return not Addon.db.profile.dontShare and self:ShouldBeConsidered() and self:GetEligible("player")
 end
 
 -- Check if the addon should start a roll for an item
 function Self:ShouldBeRolledFor()
-    return self:ShouldBeConsidered() and self:GetNumEligible(true) > (self:GetEligible(self.owner) and 1 or 0)
+    return not (self.isOwner and Addon.db.profile.dontShare) and self:ShouldBeConsidered() and self:GetNumEligible(true) > (self:GetEligible(self.owner) and 1 or 0)
 end
 
 -------------------------------------------------------

@@ -186,6 +186,8 @@ L["OPT_ENABLE"] = "Enable"
 L["OPT_ENABLE_DESC"] = "Enable or disable the addon"
 L["OPT_ONLY_MASTERLOOT"] = "Only masterloot"
 L["OPT_ONLY_MASTERLOOT_DESC"] = "Only activate the addon when using masterloot (e.g. with your guild)"
+L["OPT_DONT_SHARE"] = "Don't share loot"
+L["OPT_DONT_SHARE_DESC"] = "Don't roll on loot from others and don't share your own loot. The addon will deny incoming requests for your loot (if enabled), and you can still be masterlooter and loot council member."
 L["OPT_AWARD_SELF"] = "Choose winner of your items yourself"
 L["OPT_AWARD_SELF_DESC"] = "Choose for yourself who should get your loot, instead of letting the addon randomly pick someone. This is always enabled when you are a masterlooter."
 

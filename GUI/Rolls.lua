@@ -10,6 +10,11 @@ Self.status = {width = 700, height = 300}
 Self.open = {}
 
 -- Register for roll changes
+Roll.On(Self, Roll.EVENT_START, function (roll)
+    if roll.isOwner and Masterloot.IsMasterlooter() or Addon.db.profile.ui.showRollsWindow and (roll.item.isOwner or roll.item:ShouldBeBidOn()) then
+        Self.Show()
+    end
+end)
 Roll.On(Self, Roll.EVENT_CHANGE, function () Self.Update() end)
 Roll.On(Self, Roll.EVENT_CLEAR, function (_, roll)
     Self.open[roll.id] = nil

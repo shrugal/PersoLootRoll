@@ -186,6 +186,8 @@ L["OPT_ENABLE"] = "啟用"
 L["OPT_ENABLE_DESC"] = "啟用或停用此插件"
 L["OPT_ONLY_MASTERLOOT"] = "Only masterloot" -- Translation missing
 L["OPT_ONLY_MASTERLOOT_DESC"] = "Only activate the addon when using masterloot (e.g. with your guild)" -- Translation missing
+L["OPT_DONT_SHARE"] = "Don't share loot" -- Translation missing
+L["OPT_DONT_SHARE_DESC"] = "Don't roll on loot from others and don't share your own loot. The addon will deny incoming requests for your loot (if enabled), and you can still be masterlooter and loot council member." -- Translation missing
 L["OPT_AWARD_SELF"] = "自行選擇贏家"
 L["OPT_AWARD_SELF_DESC"] = "自行選擇誰該得到你的戰利品，而非讓插件隨機選擇，當你是拾取分配者時，始終啟用此功能。"
 

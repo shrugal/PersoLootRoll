@@ -350,12 +350,8 @@ function Self:Start(started)
             self.status = Self.STATUS_RUNNING
 
             -- Show some UI
-            local shouldRoll = self.item.isOwner or self.item:ShouldBeBidOn()
-            if shouldRoll then
+            if self.item.isOwner or self.item:ShouldBeBidOn() then
                 self:ShowRollFrame()
-            end
-            if self.isOwner and Masterloot.IsMasterlooter() or shouldRoll and Addon.db.profile.ui.showRollsWindow then
-                GUI.Rolls.Show()
             end
 
             -- Schedule timer to end the roll and hide the frame
@@ -941,7 +937,7 @@ end
 
 -- Check if the given unit is eligible
 function Self:UnitIsEligible(unit, checkIlvl)
-    local val = unit and self.item:GetEligible(unit) or nil
+    local val = unit and self.item:GetEligible(unit or "player") or nil
     if checkIlvl then return val else return val ~= nil end
 end
 
@@ -972,7 +968,7 @@ end
 
 -- Check if the given unit can bid on this roll
 function Self:UnitCanBid(unit, checkIlvl)
-    return self:CanBeBidOn() and self:CanBeWonBy(unit, nil, checkIlvl)
+    return not (Addon.db.profile.dontShare and UnitIsUnit(unit or "player", "player")) and self:CanBeBidOn() and self:CanBeWonBy(unit, nil, checkIlvl)
 end
 
 -- Check if the roll can be voted on

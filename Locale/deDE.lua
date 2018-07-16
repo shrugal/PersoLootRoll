@@ -186,6 +186,8 @@ L["OPT_ENABLE"] = "Aktiviert"
 L["OPT_ENABLE_DESC"] = "Aktiviere oder deaktiviere das Addon"
 L["OPT_ONLY_MASTERLOOT"] = "Nur Plündermeister"
 L["OPT_ONLY_MASTERLOOT_DESC"] = "Aktiviere das Addon nur, wenn der Plündermeister-Modus aktiv ist (z.B. mit deiner Gilde)"
+L["OPT_DONT_SHARE"] = "Keine Beute teilen"
+L["OPT_DONT_SHARE_DESC"] = "Rolle nicht auf die Beute anderer, und teile deine eigene Beute nicht. Das Addon wird Anfragen zu deiner eigenen Beute verneinen (wenn aktiviert), und du kannst weiterhin Plündermeister und Ratsmitglied sein."
 L["OPT_AWARD_SELF"] = "Eigene Beute selbst verteilen"
 L["OPT_AWARD_SELF_DESC"] = "Wähle selbst wer deinen Loot bekommen soll, anstatt das Addon entscheiden zu lassen. Wenn du Plündermeister bist ist dies immer aktiv"
 
