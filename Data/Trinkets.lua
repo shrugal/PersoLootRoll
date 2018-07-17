@@ -232,6 +232,7 @@ Self[Item.TRINKET_TANK] = {
     [154173] = true, -- Aggramar's Conviction
     [142169] = true, -- Raven Eidolon
     [151978] = true, -- Smoldering Titanguard
+    [151975] = true, -- Apocalypse Drive
 }
 
 Addon.Item.TRINKETS = Self
