@@ -380,7 +380,8 @@ function Self.GetInfo(link, attr, ...)
     -- quality
     elseif attr == "quality" then
         local color = Self.GetInfo(link, "color")
-        return color and Util.TblFindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. color) or 1
+        -- TODO: This is a workaround for epic item links having color "a335ee", but ITEM_QUALITY_COLORS has "a334ee"
+        return color == "a335ee" and 4 or color and Util.TblFindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. color) or 1
     -- level, baseLevel
     elseif Util.In(attr, "level", "baseLevel") then
         return (select(attr == "level" and 1 or 3, GetDetailedItemLevelInfo(link)))
@@ -500,8 +501,8 @@ function Self:GetLinkInfo()
             end
         end
         
-        -- Some extra infos
-        self.quality = info[1] and Util.TblFindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. info[1]) or 1
+        -- Some extra infos TODO: This is a workaround for epic item links having color "a335ee", but ITEM_QUALITY_COLORS has "a334ee"
+        self.quality = info[1] == "a335ee" and 4 or info[1] and Util.TblFindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. info[1]) or 1
         self.infoLevel = Self.INFO_LINK
     end
 
