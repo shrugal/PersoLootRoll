@@ -128,12 +128,55 @@ function Self.ToggleAnswersDropdown(roll, bid, answers, ...)
     if not dropdown:IsShown() then dropdown:Open(...) else dropdown:Close() end
 end
 
--- Award loot to unit
-function Self.ToggleAwardUnitDropdown(unit, ...)
-    local dropdown = Self.dropdownAwardLoot
+-- Award loot
+function Self.ToggleAwardOrVoteDropdown(roll, ...)
+    local dropdown = Self.dropdownAwardOrVote
     if not dropdown then
         dropdown = AceGUI:Create("Dropdown-Pullout")
-        Self.dropdownAwardLoot = dropdown
+        Self.dropdownAwardOrVote = dropdown
+    end
+
+    if not dropdown:IsShown() or roll ~= dropdown:GetUserData("roll") then
+        Self(dropdown).Clear().SetUserData("roll", roll)
+
+        local players = Self.GetRollEligibleList(roll)
+        local width = 0
+
+        for i,player in pairs(players) do
+            local f = Self("Dropdown-Item-Execute")
+                .SetText(("%s: |c%s%s|r (%s: %s, %s: %s)"):format(
+                    Unit.ColoredName(Unit.ShortenedName(player.unit), player.unit),
+                    Util.StrColor(Self.GetBidColor(player.bid)), roll:GetBidName(player.bid),
+                    L["VOTES"], player.votes,
+                    L["ITEM_LEVEL"], player.ilvl
+                ))
+                .SetCallback("OnClick", Self.UnitAwardOrVote)
+                .SetUserData("roll", roll)
+                .SetUserData("unit", player.unit)
+                .AddTo(dropdown)()
+            width = max(width, f.text:GetStringWidth())
+        end
+
+        Self("Dropdown-Item-Execute")
+            .SetText(CLOSE)
+            .SetCallback("OnClick", function () dropdown:Close() end)
+            .AddTo(dropdown)
+
+        dropdown.frame:SetWidth(max(200, width + 32 + dropdown:GetLeftBorderWidth() + dropdown:GetRightBorderWidth()))
+
+        Util.TblRelease(1, players)
+        dropdown:Open(...)
+    else
+        dropdown:Close()
+    end
+end
+
+-- Award loot to unit
+function Self.ToggleAwardUnitDropdown(unit, ...)
+    local dropdown = Self.dropdownAwardUnit
+    if not dropdown then
+        dropdown = AceGUI:Create("Dropdown-Pullout")
+        Self.dropdownAwardUnit = dropdown
     end
 
     if unit ~= dropdown:GetUserData("unit") then
@@ -167,6 +210,24 @@ end
 -------------------------------------------------------
 --                      Helper                       --
 -------------------------------------------------------
+
+function Self.GetRollEligibleList(roll)
+    return Util(roll.item:GetEligible()).Copy().Merge(roll.bids).Map(function (val, unit)
+        local t = Util.Tbl()
+        t.unit = unit
+        t.ilvl = roll.item:GetLevelForLocation(unit)
+        t.bid = type(val) == "number" and val or nil
+        t.votes = Util.TblCountOnly(roll.votes, unit)
+        t.roll = roll.rolls[unit]
+        return t
+    end, true).List().SortBy(
+        "bid",   99,  false,
+        "votes", 0,   true,
+        "roll",  100, true,
+        "ilvl",  0,   false,
+        "unit"
+    )()
+end
 
 function Self.ReverseAnchor(anchor)
     return anchor:gsub("TOP", "B-OTTOM"):gsub("BOTTOM", "T-OP"):gsub("LEFT", "R-IGHT"):gsub("RIGHT", "L-EFT"):gsub("-", "")
@@ -223,17 +284,15 @@ function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
         .SetImage(icon:sub(1, 9) == "Interface" and icon or "Interface\\Buttons\\" .. icon .. "-Up")
         .SetImageSize(width or 16, height or 16).SetHeight(16).SetWidth(16)
         .SetCallback("OnClick", function (...) onClick(...) GameTooltip:Hide() end)
+        .SetCallback("OnEnter", Self.TooltipText)
+        .SetCallback("OnLeave", Self.TooltipHide)
+        .SetUserData("text", desc)
         .AddTo(parent)
         .Show()()
     f.image:SetPoint("TOP")
-
-    if desc then
-        f:SetCallback("OnEnter", function (self)
-            GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
-            GameTooltip:SetText(desc)
-            GameTooltip:Show()
-        end)
-        f:SetCallback("OnLeave", Self.TooltipHide)
+    f.OnRelease = function (self)
+        self.image:SetPoint("TOP", 0, -5)
+        f.OnRelease = nil
     end
 
     return f
@@ -339,6 +398,16 @@ function Self.UnitClick(self, event, button)
     end
 end
 
+-- Award loot to or vote for unit
+function Self.UnitAwardOrVote(self)
+    local roll, unit = self:GetUserData("roll"), self:GetUserData("unit")
+    if roll:CanBeAwardedTo(unit, true) then
+        roll:Finish(unit)
+    elseif roll:UnitCanVote() then
+        roll:Vote(roll.vote ~= unit and unit or nil)
+    end
+end
+
 -- Handle clicks on item labels/icons
 function Self.ItemClick(self)
     if IsModifiedClick("DRESSUP") then
@@ -349,7 +418,7 @@ function Self.ItemClick(self)
 end
 
 -- Get the color for a bid
-function Self.GetBidColor(bid)
+function Self.GetBidColor(bid, hex)
     if not bid then
         return 1, 1, 1
     elseif bid == Roll.BID_PASS then

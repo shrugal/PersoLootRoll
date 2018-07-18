@@ -34,6 +34,7 @@ Self.BIDS = {Self.BID_NEED, Self.BID_GREED, Self.BID_DISENCHANT, Self.BID_PASS}
 -- Actions
 Self.ACTION_TRADE = "TRADE"
 Self.ACTION_AWARD = "AWARD"
+Self.ACTION_VOTE = "VOTE"
 Self.ACTION_ASK = "ASK"
 
 -- Custom answers
@@ -995,12 +996,12 @@ end
 function Self:GetActionRequired()
     if self.traded then
         return false
-    elseif self.item.isOwner and self.winner or self.isWinner then
-        return Self.ACTION_TRADE
-    elseif self.status == Self.STATUS_DONE and self:CanBeAwarded(true) and Util.TblCountExcept(self.bids, Self.BID_PASS) > 0 then
-        return Self.ACTION_AWARD
     elseif not self.ownerId and self.bid and self.bid ~= Self.BID_PASS then
         return Self.ACTION_ASK
+    elseif self.item.isOwner and self.winner or self.isWinner then
+        return Self.ACTION_TRADE
+    elseif self.status == Self.STATUS_DONE and Util.TblCountExcept(self.bids, Self.BID_PASS) > 0 then
+        return self:CanBeAwarded(true) and Self.ACTION_AWARD or self:UnitCanVote() and not self.vote and Self.ACTION_VOTE or false
     else
         return false
     end

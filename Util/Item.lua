@@ -753,6 +753,22 @@ function Self:GetLevelForLocation(unit)
     end
 end
 
+-- Get equipped item links for the location
+function Self:GetEquippedForLocation(unit)
+    unit = Unit(unit or "player")
+    local isSelf = UnitIsUnit(unit, "player")
+
+    if self:GetBasicInfo().isRelic then
+        return Inspect.GetLink(unit, self:GetFullInfo().relicType)
+    elseif self.isEquippable then
+        links = Util.Tbl()
+        for i,slot in pairs(Self.SLOTS[self.equipLoc]) do
+            tinsert(links, isSelf and GetInventoryItemLink(unit, slot) or Inspect.GetLink(unit, slot) or nil)
+        end
+        return links
+    end
+end
+
 -------------------------------------------------------
 --                 Gems, relics etc.                 --
 -------------------------------------------------------

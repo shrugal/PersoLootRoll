@@ -92,7 +92,7 @@ function Self.Show()
                             GameTooltip:SetText(L["TIP_ADDON_VERSIONS"])                        
                             for unit,version in pairs(Addon.versions) do
                                 local name = Unit.ColoredName(Unit.ShortenedName(unit), unit)
-                                local versionColor = (not version or version == Addon.VERSION) and "ffffff" or version < Addon.VERSION and "ff0000" or "00ff00"
+                                local versionColor = Util.Select(Addon:CompareVersion(version), -1, "ff0000", 1, "00ff00", "ffffff")
                                 local line = ("%s: |cff%s%s|r"):format(name, versionColor, version) .. (Addon.disabled[unit] and " (" .. OFF .. ")" or "")
                                 GameTooltip:AddLine(line, 1, 1, 1, false)
                             end
@@ -377,6 +377,7 @@ function Self.Update()
                 f:SetUserData("bid", Roll.BID_NEED)
                 f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
                 f.OnRelease = function (self)
+                    self.image:SetPoint("TOP", 0, -5)
                     self.frame:RegisterForClicks("LeftButtonUp")
                     self.OnRelease = nil
                 end
@@ -386,6 +387,7 @@ function Self.Update()
                 f:SetUserData("bid", Roll.BID_GREED)
                 f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
                 f.OnRelease = function (self)
+                    self.image:SetPoint("TOP", 0, -5)
                     self.frame:RegisterForClicks("LeftButtonUp")
                     self.OnRelease = nil
                 end
@@ -408,7 +410,6 @@ function Self.Update()
                 -- Chat
                 f = GUI.CreateIconButton("Interface\\GossipFrame\\GossipGossipIcon", actions, GUI.UnitClick, nil, 13, 13)
                 f:SetCallback("OnEnter", GUI.TooltipChat)
-                f:SetCallback("OnLeave", GUI.TooltipHide)
         
                 -- Trade
                 GUI.CreateIconButton("Interface\\GossipFrame\\VendorGossipIcon", actions, function (self)
@@ -439,12 +440,6 @@ function Self.Update()
                 f = GUI.CreateIconButton("Interface\\Buttons\\UI-CheckBox-Check", actions, function (self)
                     self:GetUserData("roll"):ToggleVisibility()
                 end)
-                f:SetCallback("OnEnter", function (self)
-                    GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
-                    GameTooltip:SetText(self:GetUserData("roll").hidden and L["SHOW"] or L["HIDE"])
-                    GameTooltip:Show()
-                end)
-                f:SetCallback("OnLeave", Self.TooltipHide)
                 f.image:SetPoint("TOP", 0, 1)
         
                 -- Toggle
@@ -584,6 +579,7 @@ function Self.Update()
             GUI(children[it()])
                 .SetImage("Interface\\Buttons\\UI-CheckBox-Check" .. (roll.hidden and "-Disabled" or ""), -.1, 1.1, -.1, 1.1)
                 .SetUserData("roll", roll)
+                .SetUserData("text", L[roll.hidden and "SHOW" or "HIDE"])
                 .Toggle(roll.hidden or roll.status > Roll.STATUS_RUNNING)
             -- Toggle
             GUI(children[it()])
@@ -664,21 +660,7 @@ function Self.UpdateDetails(details, roll)
 
     local canBeAwarded, canVote = roll:CanBeAwarded(true), roll:UnitCanVote()
 
-    local players = Util(roll.item:GetEligible()).Copy().Merge(roll.bids).Map(function (val, unit)
-        local t = Util.Tbl()
-        t.unit = unit
-        t.ilvl = roll.item:GetLevelForLocation(unit)
-        t.bid = type(val) == "number" and val or nil
-        t.votes = Util.TblCountOnly(roll.votes, unit)
-        t.roll = roll.rolls[unit]
-        return t
-    end, true).List().SortBy(
-        "bid",   99,  false,
-        "votes", 0,   true,
-        "roll",  100, true,
-        "ilvl",  0,   false,
-        "unit"
-    )()
+    local players = GUI.GetRollEligibleList(roll)
 
     local it = Util.Iter(#header)
     for _,player in ipairs(players) do
@@ -732,17 +714,10 @@ function Self.UpdateDetails(details, roll)
                 .SetCallback("OnLeave", GUI.TooltipHide)
                 .AddTo(details)
         
-            -- Actions
+            -- Action
             local f = GUI("Button")
                 .SetWidth(100)
-                .SetCallback("OnClick", function (self)
-                    local roll = self:GetUserData("roll")
-                    if roll:CanBeAwardedTo(self:GetUserData("unit"), true) then
-                        roll:Finish(self:GetUserData("unit"))
-                    elseif roll:UnitCanVote() then
-                        roll:Vote(roll.vote ~= self:GetUserData("unit") and self:GetUserData("unit") or nil)
-                    end
-                end)()
+                .SetCallback("OnClick", GUI.UnitAwardOrVote)()
             f.text:SetFont(GameFontNormal:GetFont())
             details:AddChild(f)
         end
@@ -757,16 +732,7 @@ function Self.UpdateDetails(details, roll)
         GUI(children[it()]).SetText(player.ilvl).Show()
 
         -- Items
-        local f, links = children[it()]
-
-        if roll.item.isRelic then
-            links = Inspect.GetLink(player.unit, roll.item.relicType)
-        elseif roll.item.isEquippable then
-            links = Util.Tbl()
-            for i,slot in pairs(Item.SLOTS[roll.item.equipLoc]) do
-                tinsert(links, Inspect.GetLink(player.unit, slot))
-            end
-        end
+        local f, links = children[it()], roll.item:GetEquippedForLocation(player.unit)
 
         for i,child in pairs(f.children) do
             if links and links[i] then
@@ -802,7 +768,7 @@ function Self.UpdateDetails(details, roll)
             .SetUserData("unit", player.unit)
             .Show()
 
-        -- Actions
+        -- Action
         local txt = canBeAwarded and L["AWARD"]
             or canVote and (roll.vote == player.unit and L["VOTE_WITHDRAW"] or L["VOTE"])
             or "-"

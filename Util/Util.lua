@@ -101,7 +101,7 @@ end
 
 -- Compare two values, returns -1 for a < b, 0 for a == b and 1 for a > b
 function Self.Compare(a, b)
-    return a < b and -1 or a == b and 0 or 1
+    return a == b and 0 or a > b and 1 or -1
 end
 
 -- Create an iterator
@@ -124,8 +124,6 @@ Self.tblPoolSize = 10
 -- Get a table (newly created or from the cache), and fill it with key/value pairs
 function Self.Tbl(isMap, ...)
     local t = tremove(Self.tblPool) or {}
-
-    Addon:Assert(Self.TblCount(t) == 0, "ERROR: Table from pool is not empty!", t)
     
     for i=1, select("#", ...), isMap and 2 or 1 do
         if isMap then
@@ -908,6 +906,14 @@ function Self.StrFormat(str, ...)
     return str
 end
 
+function Self.StrColor(...)
+    local s = ""
+    for i=-1,2 do
+        s = s .. Self.NumToHex((select(i % 4 + 1, ...) or 1) * 255, 2)
+    end
+    return s
+end
+
 -------------------------------------------------------
 --                       Number                      --
 -------------------------------------------------------
@@ -918,6 +924,11 @@ function Self.NumRound(num) return floor(num + .5) end
 -- Check if num is in interval (exclusive or inclusive)
 function Self.NumBetween(num, a, b) return num > a and num < b end
 function Self.NumIn(num, a, b) return num >= a and num <= b end
+
+function Self.NumToHex(num, minLength)
+    local s = ("%x"):format(num)
+    return minLength and ("0"):rep(minLength - s:len()) .. s or s
+end
 
 -------------------------------------------------------
 --                      Boolean                      --

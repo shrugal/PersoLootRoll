@@ -353,7 +353,7 @@ function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender, _, _, _, _, _, _
                 if roll:CanBeAwarded() then
                     -- He is eligible, so register the bid
                     if roll:UnitIsEligible(unit) and not roll.bids[unit] or floor(roll.bids[unit]) ~= Roll.BID_NEED then
-                        roll:Bid(Roll.BID_NEED, unit, true)
+                        roll:Bid(Roll.BID_NEED, unit)
 
                         -- Answer only if his bid didn't end the roll
                         answer = roll:CanBeAwarded() and Comm.GetChatLine("MSG_ROLL_ANSWER_BID", unit, roll.item.link) or false
@@ -498,7 +498,7 @@ local checkFn = function (event, data, channel, sender, unit)
         local target = channel == Comm.TYPE_WHISPER and sender or channel
 
         -- Send version
-        Comm.SendData(Comm.EVENT_VERSION, floor(Addon.VERSION), target)
+        Comm.SendData(Comm.EVENT_VERSION, Addon.VERSION, target)
         
         -- Send disabled state
         if Addon.disabled[UnitName("player")] then

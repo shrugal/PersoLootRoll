@@ -19,6 +19,12 @@ Addon.ECHO_INFO = 2
 Addon.ECHO_VERBOSE = 3
 Addon.ECHO_DEBUG = 4
 
+-- Channels
+Addon.CHANNEL_ALPHA = "alpha"
+Addon.CHANNEL_BETA = "beta"
+Addon.CHANNEL_STABLE = "stable"
+Addon.CHANNELS = Util.TblFlip({Addon.CHANNEL_ALPHA, Addon.CHANNEL_BETA, Addon.CHANNEL_STABLE})
+
 Addon.rolls = Util.TblCounter()
 Addon.timers = {}
 
@@ -980,14 +986,48 @@ function Addon:OnTrackingChanged(sync)
     Inspect[isTracking and "Start" or "Stop"]()
 end
 
+-- Set a unit's version string
 function Addon:SetVersion(unit, version)
     self.versions[unit] = version
 
-    if version and version > self.VERSION and not self.versionNoticeShown then
-        self:Info(L["VERSION_NOTICE"])
-        self.versionNoticeShown = true
-    elseif not version then
+    if not version then
         self.disabled[unit] = nil
+    elseif not self.versionNoticeShown then
+        if self:CompareVersion(version) == 1 then
+            self:Info(L["VERSION_NOTICE"])
+            self.versionNoticeShown = true
+        end
+    end
+end
+
+-- Get major, channel and minor versions for the given version string or unit
+function Addon:GetVersion(versionOrUnit)
+    local t = type(versionOrUnit)
+    local version = (not versionOrUnit or UnitIsUnit(versionOrUnit, "player")) and self.VERSION
+                 or (t == "number" or t == "string" and tonumber(versionOrUnit:sub(1, 1))) and versionOrUnit
+                 or self.versions[Unit.Name(versionOrUnit)]
+
+    t = type(version)
+    if t == "number" then
+        return floor(version), Addon.CHANNEL_STABLE, Util.NumRound((version - floor(version)) * 100)
+    elseif t == "string" then
+        major, channel, minor = version:match("([%d.]+)-(%a+)(%d+)")
+        return tonumber(major), channel, tonumber(minor)
+    end
+end
+
+-- Get 1 if the version is higher, -1 if the version is lower or 0 if they are the same or on non-comparable channels
+function Addon:CompareVersion(versionOrUnit)
+    local major, channel, minor = self:GetVersion(versionOrUnit)
+    if major then 
+        local myMajor, myChannel, myMinor = self:GetVersion()
+        local channelNum, myChannelNum = Addon.CHANNELS[channel], Addon.CHANNELS[myChannel]
+
+        return  channel == myChannel and Util.Compare(major + minor / 100, myMajor + myMinor / 100)
+                or channelNum and myChannelNum and (
+                    channelNum > myChannelNum and major >= myMajor and 1
+                    or channelNum < myChannelNum and major <= myMajor and -1
+                ) or 0
     end
 end
 

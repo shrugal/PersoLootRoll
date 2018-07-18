@@ -61,6 +61,7 @@ L["MESSAGE"] = "訊息"
 L["ML"] = "分裝者"
 L["BID"] = "拍裝"
 L["ITEM"] = "物品"
+L["OPEN_ROLLS"] = "Open rolls window" -- Translation missing
 L["OWNER"] = "提供者"
 L["PLAYER"] = "玩家"
 L["PRIVATE"] = "私人"

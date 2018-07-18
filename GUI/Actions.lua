@@ -155,33 +155,28 @@ function Self.Update()
                 -- Chat
                 f = GUI.CreateIconButton("Interface\\GossipFrame\\GossipGossipIcon", actions, GUI.UnitClick, nil, 13, 13)
                 f:SetCallback("OnEnter", GUI.TooltipChat)
-                f:SetCallback("OnLeave", GUI.TooltipHide)
 
                 -- Trade
                 f = GUI.CreateIconButton("Interface\\GossipFrame\\VendorGossipIcon", actions, function (self)
                     self:GetUserData("roll"):Trade()
                 end, TRADE, 13, 13)
 
-                -- Award
-                f = GUI.CreateIconButton("UI-Panel-BiggerButton", actions, function (self)
-                    GUI.Rolls.Show()
-                end, L["AWARD"])
+                -- Award or vote
+                f = GUI.CreateIconButton("Interface\\FriendsFrame\\UI-Toast-FriendOnlineIcon", actions, function (self)
+                    GUI.ToggleAwardOrVoteDropdown(self:GetUserData("roll"), "TOPLEFT", self.frame, "CENTER")
+                end)
+                f.image:SetPoint("TOP", 0, 1)
+
+                -- Rolls window
+                f = GUI.CreateIconButton("UI-Panel-BiggerButton", actions, GUI.Rolls.Show, L["OPEN_ROLLS"])
                 f.image:SetTexCoord(0.1, 0.9, 0.1, 0.9)
                 f.image:SetPoint("TOP", 0, 1)
-                f.OnRelease = function (self)
-                    self.image:SetPoint("TOP", 0, -5)
-                    self.OnRelease = nil
-                end
 
                 -- Hide
                 f = GUI.CreateIconButton("Interface\\Buttons\\UI-CheckBox-Check", actions, function (self)
                     self:GetUserData("roll"):ToggleVisibility(false)
                 end, L["HIDE"])
                 f.image:SetPoint("TOP", 0, 1)
-                f.OnRelease = function (self)
-                    self.image:SetPoint("TOP", 0, -5)
-                    self.OnRelease = nil
-                end
             end
         end
         
@@ -224,8 +219,13 @@ function Self.Update()
                 .Toggle(target)
             -- Trade
             GUI(children[it()]).SetUserData("roll", roll).Toggle(target)
-            -- Award
-            GUI(children[it()]).Toggle(action == Roll.ACTION_AWARD)
+            -- Award or vote
+            GUI(children[it()])
+                .SetUserData("roll", roll)
+                .SetUserData("text", L[action])
+                .Toggle(Util.In(action, Roll.ACTION_AWARD, Roll.ACTION_VOTE))
+            -- Rolls window
+            GUI(children[it()]).Toggle(Util.In(action, Roll.ACTION_AWARD, Roll.ACTION_VOTE))
             -- Hide
             GUI(children[it()]).SetUserData("roll", roll)
             
