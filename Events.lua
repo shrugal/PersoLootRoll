@@ -497,8 +497,8 @@ local checkFn = function (event, data, channel, sender, unit)
 
         local target = channel == Comm.TYPE_WHISPER and sender or channel
 
-        -- Send version
-        Comm.SendData(Comm.EVENT_VERSION, Addon.VERSION, target)
+        -- Send version TODO: Send full version string at some point
+        Comm.SendData(Comm.EVENT_VERSION, Addon:GetVersion(), target)
         
         -- Send disabled state
         if Addon.disabled[UnitName("player")] then
@@ -511,7 +511,7 @@ Comm.ListenData(Comm.EVENT_VERSION_ASK, checkFn, true) -- TODO: DEPRECATED
 
 -- Version
 Comm.ListenData(Comm.EVENT_VERSION, function (event, version, channel, sender, unit)
-    Addon:SetVersion(unit, tonumber(version))
+    Addon:SetVersion(unit, tonumber(version) or version)
 end)
 
 -- Enable/Disable

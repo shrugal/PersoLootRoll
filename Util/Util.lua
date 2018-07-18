@@ -906,12 +906,8 @@ function Self.StrFormat(str, ...)
     return str
 end
 
-function Self.StrColor(...)
-    local s = ""
-    for i=-1,2 do
-        s = s .. Self.NumToHex((select(i % 4 + 1, ...) or 1) * 255, 2)
-    end
-    return s
+function Self.StrColor(r, g, b, a)
+    return ("%.2x%.2x%.2x%.2x"):format((a or 1) * 255, r * 255, g * 255, b * 255)
 end
 
 -------------------------------------------------------
@@ -926,8 +922,7 @@ function Self.NumBetween(num, a, b) return num > a and num < b end
 function Self.NumIn(num, a, b) return num >= a and num <= b end
 
 function Self.NumToHex(num, minLength)
-    local s = ("%x"):format(num)
-    return minLength and ("0"):rep(minLength - s:len()) .. s or s
+    return ("%." .. (minLength or 1) .. "x"):format(num)
 end
 
 -------------------------------------------------------
