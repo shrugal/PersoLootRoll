@@ -232,9 +232,9 @@ function Self.EnableChatLinks()
             GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
             GameTooltip:ClearLines()
             if not Util.StrIsEmpty(title) then
-                GameTooltip:AddLine(title:gsub("@colon@", ":"), 1, .82, 0)
+                GameTooltip:AddLine(Comm.UnescapeString(title), 1, .82, 0)
             end
-            GameTooltip:AddLine(text:gsub("@colon@", ":"), 1, 1, 1, true)
+            GameTooltip:AddLine(Comm.UnescapeString(text), 1, 1, 1, true)
             GameTooltip:Show()
         end
     end

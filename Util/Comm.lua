@@ -305,8 +305,22 @@ function Self.GetBidLink(roll, unit, bid)
 end
 
 function Self.GetTooltipLink(text, title, abbr)
-    text = text:gsub(":", "@colon@")
-    title = title and title:gsub(":", "@colon@") or ""
-    abbr = abbr or Util.StrAbbr(text, 15)
+    abbr = abbr and Self.EscapeString(abbr) or Util.StrAbbr(Self.EscapeString(text), 15)
+    text = Self.EscapeString(text, true)
+    title = Self.EscapeString(title or "", true)
     return ("|cff4D85E6|Hplrtooltip:%s:%s|h[%s]|h|r"):format(title, text, abbr)
+end
+ 
+function Self.EscapeString(str, isLinkParam)
+    str = str:gsub("|H.-|h(.-)|h", "%1")
+    
+    if isLinkParam then
+        return str:gsub(":", "@c@"):gsub("|", "@b@")
+    else
+        return str:gsub("|c%w%w%w%w%w%w%w%w(.-)|r", "%1")
+    end
+end
+ 
+function Self.UnescapeString(str)
+    return str:gsub("@c@", ":"):gsub("@b@", "|")
 end
