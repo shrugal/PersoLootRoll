@@ -147,20 +147,20 @@ local scanFn = function (i, line, lines, attr)
     end
 end
 
-function Self.GetInfo(link, attr, ...)
-    link = link.link or link
+function Self.GetInfo(item, attr, ...)
+    local link = item.link or item
 
     if not link then
         return
     -- isRelic
     elseif attr == "isRelic" then
-        return Self.GetInfo(link, "subType") == "Artifact Relic"
+        return Self.GetInfo(item, "subType") == "Artifact Relic"
     -- isEquippable
     elseif attr == "isEquippable" then
-        return IsEquippableItem(link) or Self.GetInfo(link, "isRelic")
+        return IsEquippableItem(link) or Self.GetInfo(item, "isRelic")
     -- quality
     elseif attr == "quality" then
-        local color = Self.GetInfo(link, "color")
+        local color = Self.GetInfo(item, "color")
         -- TODO: This is a workaround for epic item links having color "a335ee", but ITEM_QUALITY_COLORS has "a334ee"
         return color == "a335ee" and 4 or color and Util.TblFindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. color) or 1
     -- level, baseLevel
@@ -168,29 +168,39 @@ function Self.GetInfo(link, attr, ...)
         return (select(attr == "level" and 1 or 3, GetDetailedItemLevelInfo(link)))
     -- maxLevel
     elseif attr == "maxLevel" then
-        if Self.GetInfo(link, "quality") == LE_ITEM_QUALITY_HEIRLOOM then
-            return Self.GetInfo(Self.GetScaledLink(link, Self.GetInfo(link, "toLevel")), "level", ...)
+        if Self.GetInfo(item, "quality") == LE_ITEM_QUALITY_HEIRLOOM then
+            return Self.GetInfo(Self.GetScaledLink(link, Self.GetInfo(item, "toLevel")), "level", ...)
         else
-            return Self.GetInfo(link, "effectiveLevel", ...)
+            return Self.GetInfo(item, "effectiveLevel", ...)
         end
     -- From link
     elseif Self.INFO.link[attr] then
-        local v = select(Self.INFO.link[attr] + 2, link:find(Self.PATTERN_LINK_DATA))
-
-        if v == "" then
-            return attr == "expacId" and 0 or nil
-        elseif Util.StrIsNumber(v) then
-            return tonumber(v)
+        if item.link then
+            return item:GetLinkInfo()[attr]
         else
-            return v
+            local v = select(Self.INFO.link[attr] + 2, link:find(Self.PATTERN_LINK_DATA))
+
+            if v == "" then
+                return attr == "expacId" and 0 or nil
+            elseif Util.StrIsNumber(v) then
+                return tonumber(v)
+            else
+                return v
+            end
         end
     -- From GetItemInfo()
     elseif Self.INFO.basic[attr] then
-        return (select(Self.INFO.basic[attr], GetItemInfo(link)))
+        if item.link then
+            return item:GetBasicInfo()[attr]
+        else
+            return (select(Self.INFO.basic[attr], GetItemInfo(link)))
+        end
     -- From Tooltip scanning
     elseif Self.INFO.full[attr] then
         if attr == "effectiveLevel" and not Self.IsScalingActive((...)) then
-            return Self.GetInfo(link, "level", ...)
+            return Self.GetInfo(item, "level", ...)
+        elseif item.link then
+            return item:GetFullInfo()[attr]
         else
             return Util.ScanTooltip(scanFn, link, nil, attr)
         end
@@ -402,11 +412,42 @@ end
 --              Equipment location info              --
 -------------------------------------------------------
 
+-- Determine if two items belong to the same location
+function Self:IsSameLocation(item)
+    local selfLoc = Self.GetInfo(self, "equipLoc")
+    local itemLoc = Self.GetInfo(item, "equipLoc")
+
+    -- Artifact relics (and maybe other things without equipLoc)
+    if Util.StrIsEmpty(selfLoc) then
+        return Util.StrIsEmpty(itemLoc)
+    elseif Util.StrIsEmpty(itemLoc) then
+        return false
+    end
+
+    local selfWeapon = Util.In(selfLoc, Self.TYPE_WEAPONS)
+    local itemWeapon = Util.In(itemLoc, Self.TYPE_WEAPONS)
+
+    -- Weapons and armor
+    if selfWeapon ~= itemWeapon then
+        return false
+    elseif not selfWeapon then
+        return Util.TblEquals(Self.SLOTS[selfLoc], Self.SLOTS[itemLoc])
+    elseif selfLoc == Self.TYPE_WEAPONMAINHAND then
+        return not Util.In(selfLoc, Self.TYPE_WEAPONOFFHAND, Self.TYPE_HOLDABLE)
+    elseif Util.In(selfLoc, Self.TYPE_WEAPONOFFHAND, Self.TYPE_HOLDABLE) then
+        return itemLoc ~= Self.TYPE_WEAPONMAINHAND
+    else
+        return true
+    end
+end
+
 -- Get a list of owned items by equipment location
 function Self:GetOwnedForLocation(equipped, bag)
     local items = Util.Tbl()
     local classId = Unit.ClassId("player")
-    local selfLoc = Util.In(self:GetBasicInfo().equipLoc, Self.TYPE_2HWEAPON, Self.TYPE_WEAPONOFFHAND) and Self.TYPE_WEAPON or self.equipLoc
+
+    -- We need to scan more slots for weapons
+    local slots = Self.SLOTS[self:IsWeapon() and Self.TYPE_WEAPON or self.equipLoc]
 
     -- We will need the relic type for relics
     if self.isRelic then
@@ -419,9 +460,9 @@ function Self:GetOwnedForLocation(equipped, bag)
             local weapon = Self.GetEquippedArtifact()
             items = weapon and weapon:GetRelics(self.relicType) or items
         else
-            for i,slot in pairs(Self.SLOTS[selfLoc]) do
+            for i,slot in pairs(slots) do
                 local link = GetInventoryItemLink("player", slot)
-                if link and Self.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY then
+                if link and Self.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY and self:IsSameLocation(link) then
                     tinsert(items, link)
                 end
             end
@@ -454,11 +495,8 @@ function Self:GetOwnedForLocation(equipped, bag)
                                 end
                             end
                         end
-                    elseif Self.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY then
-                        local subType, _, equipLoc = select(7, GetItemInfo(link))
-                        if subType and subType ~= "Artifact Relic" and equipLoc and Util.TblIntersects(Self.SLOTS[equipLoc], Self.SLOTS[selfLoc]) then
-                            tinsert(items, link)
-                        end
+                    elseif Self.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY and self:IsSameLocation(link) then
+                        tinsert(items, link)
                     end
                 end
             end
@@ -527,6 +565,7 @@ function Self:GetLevelForLocation(unit)
         -- For the player
         if self:IsWeapon() then
             -- Weapons
+            local loc = Util.Select(loc, Self.TYPE_HOLDABLE, Self.TYPE_WEAPONOFFHAND, Self.TYPE_2HWEAPON, Self.TYPE_WEAPON, loc)
             local specs = Self.CLASSES[Unit.ClassId(unit)].specs
             local owned, slotMin
 
@@ -546,7 +585,7 @@ function Self:GetLevelForLocation(unit)
                             if item:IsWeapon() and item:GetFullInfo().attributes[attr] then
                                 if item.equipLoc == Self.TYPE_WEAPONMAINHAND then
                                     main = max(main, item.level)
-                                elseif item.equipLoc == Self.TYPE_WEAPONOFFHAND then
+                                elseif Util.In(item.equipLoc, Self.TYPE_WEAPONOFFHAND, Self.TYPE_HOLDABLE) then
                                     off = max(off, item.level)
                                 elseif item.equipLoc == Self.TYPE_2HWEAPON then
                                     twohand = max(twohand, item.level)
@@ -570,6 +609,8 @@ function Self:GetLevelForLocation(unit)
                     slotMin = min(slotMin or cache.ilvl, cache.ilvl)
                 end
             end
+
+            Util.TblRelease(true, owned)
 
             return slotMin or 0
         else
@@ -673,7 +714,7 @@ end
 
 -- Check the item quality
 function Self:HasSufficientQuality()
-    local quality = type(self) == "table" and self:GetLinkInfo().quality or type(self) == "string" and Self.GetInfo(self, "quality")
+    local quality = Self.GetInfo(self, "quality")
     local threshold = IsInRaid() and not Addon.db.profile.transmog and LE_ITEM_QUALITY_EPIC or LE_ITEM_QUALITY_RARE
 
     return quality and quality >= threshold and quality < LE_ITEM_QUALITY_LEGENDARY
@@ -1018,7 +1059,7 @@ function Self:GetLocation()
 end
 
 function Self:IsWeapon()
-    return Util.In(self:GetBasicInfo().equipLoc, Self.TYPE_WEAPON, Self.TYPE_2HWEAPON, Self.TYPE_WEAPONMAINHAND, Self.TYPE_WEAPONOFFHAND)
+    return Util.In(Self.GetInfo(self, "equipLoc"), Self.TYPE_WEAPONS)
 end
 
 -------------------------------------------------------
