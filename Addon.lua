@@ -54,16 +54,22 @@ function Addon:OnInitialize()
             transmog = false,
 
             -- Messages
-            echo = Addon.ECHO_INFO,
-            announce = {lfd = true, party = true, lfr = true, raid = true, guild = true},
-            roll = true,
-            whisper = {
-                group = {lfd = true, party = true, lfr = true, raid = true, guild = false},
-                target = {friend = false, guild = false, other = true}
+            messages = {
+                echo = Addon.ECHO_INFO,
+                group = {
+                    announce = true,
+                    groupType = {lfd = true, party = true, lfr = true, raid = true, guild = true},
+                    roll = true
+                },
+                whisper = {
+                    ask = false,
+                    groupType = {lfd = true, party = true, lfr = true, raid = true, guild = false},
+                    target = {friend = false, guild = false, other = true},
+                    answer = true,
+                    suppress = false,
+                },
+                lines = {}
             },
-            answer = true,
-            suppress = false,
-            messages = {},
 
             -- Masterloot
             masterloot = {
@@ -86,7 +92,7 @@ function Addon:OnInitialize()
                 actions = {anchor = "LEFT", v = 10, h = 0}
             },
 
-            version = 4
+            version = 5
         },
         factionrealm = {
             masterloot = {
@@ -120,7 +126,7 @@ end
 -- Called when the addon is enabled
 function Addon:OnEnable()
     -- Register options table
-    if not self.configFrame then
+    if not self.configFrames then
         self:RegisterOptions()
     end
 
@@ -195,7 +201,26 @@ function Addon:HandleChatCommand(msg)
         self:ShowOptions()
     -- Config
     elseif cmd == "config" then
-        LibStub("AceConfigCmd-3.0").HandleCommand(Addon, "plr config", Name, msg:sub(7))
+        local name, pre, line = Name, "plr config", msg:sub(cmd:len() + 2)
+
+        -- Handle submenus
+        local subs = Util.Tbl(false, "messages", "masterloot", "profiles")
+        if Util.In(args[2], subs) then
+            name, pre, line = name .. " " .. Util.StrUcFirst(args[2]), pre .. " " .. args[2], line:sub(args[2]:len() + 2)
+        end
+
+        LibStub("AceConfigCmd-3.0").HandleCommand(Addon, pre, name, line)
+
+        -- Add submenus as additional options
+        if Util.StrIsEmpty(args[2]) then
+            for i,v in pairs(subs) do
+                local name = Util.StrUcFirst(v)
+                local getter = LibStub("AceConfigRegistry-3.0"):GetOptionsTable(Name .. " " .. name)
+                print("  |cffffff78" .. v .. "|r - " .. (getter("cmd", "AceConfigCmd-3.0").name or name))
+            end
+        end
+
+        Util.TblRelease(subs)
     -- Roll
     elseif cmd == "roll" then
         local items, i, item = {}, 1
@@ -235,8 +260,6 @@ function Addon:HandleChatCommand(msg)
             local roll = Roll.Find(nil, owner, item)
             if roll then
                 roll:Bid(bid)
-            else
-                Comm.RollBid(owner, item, true)
             end
         end
     -- Trade
@@ -259,16 +282,21 @@ end
 --                      Options                      --
 -------------------------------------------------------
 
-function Addon:ShowOptions()
+function Addon:ShowOptions(name)
+    local panel = self.configFrames[name or "General"]
+
     -- Have to call it twice because of a blizzard UI bug
-    InterfaceOptionsFrame_OpenToCategory(self.configFrame)
-    InterfaceOptionsFrame_OpenToCategory(self.configFrame)
+    InterfaceOptionsFrame_OpenToCategory(panel)
+    InterfaceOptionsFrame_OpenToCategory(panel)
 end
 
 function Addon:RegisterOptions()
     local config = LibStub("AceConfig-3.0")
     local dialog = LibStub("AceConfigDialog-3.0")
     local it = Util.Iter()
+    local half, third, quarter = 1.7, 1.1, 0.85
+
+    self.configFrames = {}
 
     -- GENERAL
 
@@ -281,7 +309,7 @@ function Addon:RegisterOptions()
                 type = "description",
                 fontSize = "medium",
                 order = it(),
-                name = Util.StrFormat(L["OPT_VERSION"], Addon.VERSION) .. "  |cff999999~|r  " .. L["OPT_AUTHOR"] .. "  |cff999999~|r  " .. L["OPT_TRANSLATION"] .. "\n"
+                name = Util.StrFormat(L["OPT_VERSION"], Addon.VERSION) .. "  |cff999999-|r  " .. L["OPT_AUTHOR"] .. "  |cff999999-|r  " .. L["OPT_TRANSLATION"] .. "\n"
             },
             enable = {
                 name = L["OPT_ENABLE"],
@@ -294,7 +322,16 @@ function Addon:RegisterOptions()
                     self:Info(L[val and "ENABLED" or "DISABLED"])
                 end,
                 get = function (_) return self.db.profile.enabled end,
-                width = "full"
+                width = half
+            },
+            dontShare = {
+                name = L["OPT_DONT_SHARE"],
+                desc = L["OPT_DONT_SHARE_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) self.db.profile.dontShare = val end,
+                get = function () return self.db.profile.dontShare end,
+                width = half
             },
             onlyMasterloot = {
                 name = L["OPT_ONLY_MASTERLOOT"],
@@ -306,16 +343,7 @@ function Addon:RegisterOptions()
                     self:OnTrackingChanged(not val)
                 end,
                 get = function () return self.db.profile.onlyMasterloot end,
-                width = "full"
-            },
-            dontShare = {
-                name = L["OPT_DONT_SHARE"],
-                desc = L["OPT_DONT_SHARE_DESC"],
-                type = "toggle",
-                order = it(),
-                set = function (_, val) self.db.profile.dontShare = val end,
-                get = function () return self.db.profile.dontShare end,
-                width = "full"
+                width = half
             },
             awardSelf = {
                 name = L["OPT_AWARD_SELF"],
@@ -324,7 +352,7 @@ function Addon:RegisterOptions()
                 order = it(),
                 set = function (_, val) self.db.profile.awardSelf = val end,
                 get = function () return self.db.profile.awardSelf end,
-                width = "full"
+                width = half
             },
             ui = {type = "header", order = it(), name = L["OPT_UI"]},
             uiDesc = {type = "description", fontSize = "medium", order = it(), name = Util.StrFormat(L["OPT_UI_DESC"], Name) .. "\n"},
@@ -395,6 +423,7 @@ function Addon:RegisterOptions()
                 step = 5,
                 set = function (_, val) self.db.profile.ilvlThreshold = val end,
                 get = function () return self.db.profile.ilvlThreshold end,
+                width = half
             },
             ilvlThresholdTrinkets = {
                 name = L["OPT_ILVL_THRESHOLD_TRINKETS"],
@@ -403,6 +432,7 @@ function Addon:RegisterOptions()
                 order = it(),
                 set = function (_, val) self.db.profile.ilvlThresholdTrinkets = val end,
                 get = function () return self.db.profile.ilvlThresholdTrinkets end,
+                width = half
             },
             ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             specs = {
@@ -435,7 +465,7 @@ function Addon:RegisterOptions()
             }
         }
     })
-    self.configFrame = dialog:AddToBlizOptions(Name)
+    self.configFrames["General"] = dialog:AddToBlizOptions(Name)
 
     -- MESSAGES
 
@@ -445,7 +475,7 @@ function Addon:RegisterOptions()
     local lang = Locale.GetRealmLanguage()
 
     it(1, true)
-    config:RegisterOptionsTable(Name .. "_messages", {
+    config:RegisterOptionsTable(Name .. " Messages", {
         name = L["OPT_MESSAGES"],
         type = "group",
         childGroups = "tab",
@@ -463,8 +493,8 @@ function Addon:RegisterOptions()
                     [Addon.ECHO_VERBOSE] = L["OPT_ECHO_VERBOSE"],
                     [Addon.ECHO_DEBUG] = L["OPT_ECHO_DEBUG"]
                 },
-                set = function (info, val) self.db.profile.echo = val end,
-                get = function () return self.db.profile.echo end
+                set = function (info, val) self.db.profile.messages.echo = val end,
+                get = function () return self.db.profile.messages.echo end
             },
             shouldChat = {
                 name = L["OPT_SHOULD_CHAT"],
@@ -472,34 +502,87 @@ function Addon:RegisterOptions()
                 order = it(),
                 args = {
                     ShouldChatDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_SHOULD_CHAT_DESC"] .. "\n"},
-                    groupchat = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
-                    groupchatAnnounce = {
+                    group = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
+                    groupAnnounce = {
                         name = L["OPT_GROUPCHAT_ANNOUNCE"],
                         desc = L["OPT_GROUPCHAT_ANNOUNCE_DESC"],
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val)
+                            local c = self.db.profile.messages.group
+                            c.announce = val
+                            local _ = not val or Util.TblFind(c.groupType, true) or Util.TblMap(c.groupType, Util.FnTrue)
+                        end,
+                        get = function () return self.db.profile.messages.group.announce end,
+                        width = "full"
+                    },
+                    groupGroupType = {
+                        name = L["OPT_GROUPCHAT_GROUP_TYPE"],
+                        desc = L["OPT_GROUPCHAT_GROUP_TYPE_DESC"],
                         type = "multiselect",
                         order = it(),
                         values = groupValues,
-                        set = function (_, key, val) self.db.profile.announce[groupKeys[key]] = val end,
-                        get = function (_, key) return self.db.profile.announce[groupKeys[key]] end,
+                        set = function (_, key, val)
+                            local c = self.db.profile.messages.group
+                            c.groupType[groupKeys[key]] = val
+                            c.announce = Util.TblFind(c.groupType, true) and c.announce or false
+                        end,
+                        get = function (_, key) return self.db.profile.messages.group.groupType[groupKeys[key]] end,
                     },
-                    groupchatRoll = {
+                    groupRoll = {
                         name = L["OPT_GROUPCHAT_ROLL"],
                         desc = L["OPT_GROUPCHAT_ROLL_DESC"],
                         type = "toggle",
                         order = it(),
-                        set = function (_, val) self.db.profile.roll = val end,
-                        get = function () return self.db.profile.roll end,
+                        set = function (_, val) self.db.profile.messages.group.roll = val end,
+                        get = function () return self.db.profile.messages.group.roll end,
                         width = "full"
                     },
                     whisper = {type = "header", order = it(), name = L["OPT_WHISPER"]},
-                    whisperGroup = {
-                        name = L["OPT_WHISPER_GROUP"],
-                        desc = L["OPT_WHISPER_GROUP_DESC"],
+                    whisperAsk = {
+                        name = L["OPT_WHISPER_ASK"],
+                        desc = L["OPT_WHISPER_ASK_DESC"],
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val)
+                            local c = self.db.profile.messages.whisper
+                            c.ask = val
+                            local _ = not val or Util.TblFind(c.groupType, true) or Util.TblMap(c.groupType, Util.FnTrue)
+                            local _ = not val or Util.TblFind(c.target, true) or Util.TblMap(c.target, Util.FnTrue)
+                        end,
+                        get = function () return self.db.profile.messages.whisper.ask end,
+                        width = third
+                    },
+                    whisperAnswer = {
+                        name = L["OPT_WHISPER_ANSWER"],
+                        desc = L["OPT_WHISPER_ANSWER_DESC"],
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) self.db.profile.messages.whisper.answer = val end,
+                        get = function () return self.db.profile.messages.whisper.answer end,
+                        width = third
+                    },
+                    whisperSuppress = {
+                        name = L["OPT_WHISPER_SUPPRESS"],
+                        desc = L["OPT_WHISPER_SUPPRESS_DESC"],
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) self.db.profile.messages.whisper.suppress = val end,
+                        get = function () return self.db.profile.messages.whisper.suppress end,
+                        width = third
+                    },
+                    whisperGroupType = {
+                        name = L["OPT_WHISPER_GROUP_TYPE"],
+                        desc = L["OPT_WHISPER_GROUP_TYPE_DESC"],
                         type = "multiselect",
                         order = it(),
                         values = groupValues,
-                        set = function (_, key, val) self.db.profile.whisper.group[groupKeys[key]] = val end,
-                        get = function (_, key) return self.db.profile.whisper.group[groupKeys[key]] end
+                        set = function (_, key, val)
+                            local c = self.db.profile.messages.whisper
+                            c.groupType[groupKeys[key]] = val
+                            c.ask = Util.TblFind(c.groupType, true) and c.ask or false
+                        end,
+                        get = function (_, key) return self.db.profile.messages.whisper.groupType[groupKeys[key]] end
                     },
                     whisperTarget = {
                         name = L["OPT_WHISPER_TARGET"],
@@ -511,26 +594,12 @@ function Addon:RegisterOptions()
                             guild = GUILD,
                             other = OTHER
                         },
-                        set = function (_, key, val) self.db.profile.whisper.target[key] = val end,
-                        get = function (_, key) return self.db.profile.whisper.target[key] end
-                    },
-                    whisperAnswer = {
-                        name = L["OPT_WHISPER_ANSWER"],
-                        desc = L["OPT_WHISPER_ANSWER_DESC"],
-                        type = "toggle",
-                        order = it(),
-                        set = function (_, val) self.db.profile.answer = val end,
-                        get = function () return self.db.profile.answer end,
-                        width = "full"
-                    },
-                    whisperSuppress = {
-                        name = L["OPT_WHISPER_SUPPRESS"],
-                        desc = L["OPT_WHISPER_SUPPRESS_DESC"],
-                        type = "toggle",
-                        order = it(),
-                        set = function (_, val) self.db.profile.suppress = val end,
-                        get = function () return self.db.profile.suppress end,
-                        width = "full"
+                        set = function (_, key, val)
+                            local c = self.db.profile.messages.whisper
+                            c.target[key] = val
+                            c.ask = Util.TblFind(c.target, true) and c.ask or false
+                        end,
+                        get = function (_, key) return self.db.profile.messages.whisper.target[key] end
                     }
                 }
             },
@@ -558,7 +627,7 @@ function Addon:RegisterOptions()
             }
         }
     })
-    dialog:AddToBlizOptions(Name .. "_messages", L["OPT_MESSAGES"], Name)
+    self.configFrames["Messages"] = dialog:AddToBlizOptions(Name .. " Messages", L["OPT_MESSAGES"], Name)
     
     -- MASTERLOOT
 
@@ -574,7 +643,7 @@ function Addon:RegisterOptions()
     local guildRanks
 
     it(1, true)
-    config:RegisterOptionsTable(Name .. "_masterloot", {
+    config:RegisterOptionsTable(Name .. " Masterloot", {
         name = L["OPT_MASTERLOOT"],
         type = "group",
         childGroups = "tab",
@@ -669,7 +738,7 @@ function Addon:RegisterOptions()
                             Masterloot.RefreshSession()
                         end,
                         get = function () return self.db.profile.masterlooter.timeoutBase end,
-                        -- width = 1.7 TODO: Can't use that yet
+                        width = half
                     },
                     timeoutPerItem = {
                         name = L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM"],
@@ -684,7 +753,7 @@ function Addon:RegisterOptions()
                             Masterloot.RefreshSession()
                         end,
                         get = function () return self.db.profile.masterlooter.timeoutPerItem end,
-                        -- width = 1.7 TODO: Can't use that yet
+                        width = half
                     },
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
                     needAnswers = {
@@ -820,12 +889,12 @@ function Addon:RegisterOptions()
             }
         }
     })
-    dialog:AddToBlizOptions(Name .. "_masterloot", L["OPT_MASTERLOOT"], Name)
+    self.configFrames["Masterloot"] = dialog:AddToBlizOptions(Name .. " Masterloot", L["OPT_MASTERLOOT"], Name)
 
     -- PROFILES
 
-    config:RegisterOptionsTable(Name .. "_profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db))
-    dialog:AddToBlizOptions(Name .. "_profiles", "Profiles", Name)
+    config:RegisterOptionsTable(Name .. " Profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db))
+    self.configFrames["Profiles"] = dialog:AddToBlizOptions(Name .. " Profiles", "Profiles", Name)
 end
 
 function Addon:GetCustomMessageOptions(isDefault)
@@ -835,12 +904,12 @@ function Addon:GetCustomMessageOptions(isDefault)
     local default = Locale.GetLocale(Locale.DEFAULT)
 
     local set = function (info, val)
-        local line, c = info[3], self.db.profile.messages
+        local line, c = info[3], self.db.profile.messages.lines
         if not c[lang] then c[lang] = {} end
         c[lang][line] = not (Util.StrIsEmpty(val) or val == locale[line]) and val or nil
     end
     local get = function (info)
-        local line, c = info[3], self.db.profile.messages
+        local line, c = info[3], self.db.profile.messages.lines
         return c[lang] and c[lang][line] or locale[line]
     end
     local validate = function (info, val)
@@ -866,7 +935,7 @@ function Addon:GetCustomMessageOptions(isDefault)
             desc = DEFAULT .. ": \"" .. locale[line] .. "\"" .. Util.StrPrefix(L["OPT_" .. line .. "_DESC"], "\n\n")
             t[line] = {
                 name = L["OPT_" .. line],
-                desc = desc:gsub("(%%.)", "|cffffff00%1|r"):gsub("%d:", "|cffffff00%1|r"),
+                desc = desc:gsub("(%%.)", "|cffffff78%1|r"):gsub("%d:", "|cffffff78%1|r"),
                 type = "input",
                 order = it(),
                 validate = validate,
@@ -884,7 +953,7 @@ end
 function Addon:MigrateOptions()
     -- Profile
     local c = Addon.db.profile
-    if not c.version or c.version < 3 then
+    if not c.version or 3 > c.version then
         c.masterlooter.timeoutBase = c.masterloot.timeoutBase or c.masterlooter.timeoutBase
         c.masterlooter.timeoutPerItem = c.masterloot.timeoutPerItem or c.masterlooter.timeoutPerItem
         c.masterlooter.bidPublic = c.masterloot.bidPublic or c.masterlooter.bidPublic or false
@@ -893,16 +962,31 @@ function Addon:MigrateOptions()
         c.masterloot.timeoutBase, c.masterloot.timeoutPerItem, c.masterloot.bidPublic, c.masterloot.council, c.masterloot.votePublic, c.masterloot.whitelist, c.masterloot.councilWhitelist = nil
         c.version = 3
     end
-    if c.version < 4 then
+    if 4 > c.version then
         for lang,lines in pairs(self.db.profile.messages) do
-            self.db.profile.messages[lang] = Util.TblMapKeys(lines, function (line) return "MSG_" .. line end)
+            if type(lang) == "string" and lang:match("^%l%l%u%u$") then
+                self.db.profile.messages[lang] = Util.TblMapKeys(lines, function (line) return "MSG_" .. line end)
+            end
         end
         c.version = 4
+    end
+    if 5 > c.version then
+        self:MigrateOption("echo", c, c.messages)
+        self:MigrateOption("announce", c, c.messages.group, true, "groupType")
+        self:MigrateOption("roll", c, c.messages.group)
+        c.messages.whisper.ask = true
+        self:MigrateOption("answer", c, c.messages.whisper)
+        self:MigrateOption("suppress", c, c.messages.whisper)
+        self:MigrateOption("group", c.whisper, c.messages.whisper, true, "groupType")
+        self:MigrateOption("target", c.whisper, c.messages.whisper, true)
+        c.whisper = nil
+        self:MigrateOption("messages", c, c.messages, true, "lines", "^%l%l%u%u$", true)
+        c.version = 5
     end
 
     -- Factionrealm
     local c = Addon.db.factionrealm
-    if not c.version or c.version < 3 then
+    if not c.version or 3 > c.version then
         c.masterlooter.councilWhitelist = not next(c.masterlooter.councilWhitelist) and c.masterloot.councilWhitelist or c.masterlooter.councilWhitelist
         c.masterloot.councilWhitelist = nil
         c.version = 3
@@ -910,8 +994,32 @@ function Addon:MigrateOptions()
 
     -- Char
     local c = Addon.db.char
-    if not c.version or c.version < 3 then
+    if not c.version or 3 > c.version then
         c.version = 3
+    end
+end
+
+-- Migrate a single option
+function Addon:MigrateOption(key, source, dest, depth, destKey, filter, keep)
+    if source then
+        depth = type(depth) == "number" and depth or depth and 10 or 0
+        destKey = destKey or key
+        local val, curr = source[key], dest[destKey]
+
+        if type(val) == "table" and depth > 0 then
+            for i,v in pairs(val) do
+                local filterType = type(filter)
+                if not filter or filterType == "table" and Util.In(i, filter) or filterType == "string" and i:match(filter) or filterType == "function" and filter(i, v, depth) then
+                    self:MigrateOption(i, val, curr, depth - 1)
+                end
+            end
+        else
+            dest[destKey] = Util.Default(val, curr)
+        end
+
+        if not keep then
+            source[key] = nil
+        end
     end
 end
 
@@ -1036,7 +1144,7 @@ end
 -------------------------------------------------------
 
 function Addon:Echo(lvl, line, ...)
-    if self.db.profile.echo >= lvl then
+    if self.db.profile.messages.echo >= lvl then
         if lvl == self.ECHO_DEBUG then
             local args = Util.Tbl(false, line, ...)
             for i,v in pairs(args) do
@@ -1067,7 +1175,7 @@ function Addon:Debug(...)
 end
 
 function Addon:Assert(cond, ...)
-    if not cond and self.db.profile.echo >= self.ECHO_DEBUG then
+    if not cond and self.db.profile.messages.echo >= self.ECHO_DEBUG then
         if type(...) == "function" then
             self:Echo(self.ECHO_DEBUG, (...)(select(2, ...)))
         else

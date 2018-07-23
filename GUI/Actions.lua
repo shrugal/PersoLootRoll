@@ -153,7 +153,7 @@ function Self.Update()
             end
             do
                 -- Chat
-                f = GUI.CreateIconButton("Interface\\GossipFrame\\GossipGossipIcon", actions, GUI.UnitClick, nil, 13, 13)
+                f = GUI.CreateIconButton("Interface\\GossipFrame\\GossipGossipIcon", actions, GUI.ChatClick, nil, 13, 13)
                 f:SetCallback("OnEnter", GUI.TooltipChat)
 
                 -- Trade

@@ -122,10 +122,11 @@ L["ROLL_WINNER_OTHER"] = "%s hat %s von dir gewonnen -> %s."
 L["ROLL_WINNER_OWN"] = "Du hast %s von dir selbst gewonnen."
 L["ROLL_WINNER_SELF"] = "Du hast %s von %s gewonnen -> %s."
 
-L["BID_START"] = "Biete auf %s von %s."
-L["BID_PASS"] = "Passe auf %s von %s."
 L["BID_CHAT"] = "Frage %s nach %s -> %s."
+L["BID_MAX_WHISPERS"] = "Frage %s nicht nach %s, weil %d Spieler in deiner Gruppe schon gefragt haben -> %s."
 L["BID_NO_CHAT"] = "Flüstern ist deaktiviert, du musst %s selbst nach %s fragen -> %s."
+L["BID_PASS"] = "Passe auf %s von %s."
+L["BID_START"] = "Biete auf %s von %s."
 
 L["TRADE_START"] = "Starte Handel mit %s."
 L["TRADE_CANCEL"] = "Breche Handel mit %s ab."
@@ -147,17 +148,18 @@ L["FILTER_HIDDEN_DESC"] = "Zeige abgebrochene, wartende, gepasste und versteckte
 
 L["TIP_ADDON_MISSING"] = "Addon fehlt:"
 L["TIP_ADDON_VERSIONS"] = "Addon Versionen:"
+L["TIP_ENABLE_WHISPER_ASK"] = "Tipp: Rechts-Klick um das automatische Fragen nach Loot zu aktivieren"
 L["TIP_MASTERLOOT_START"] = "Werde oder suche einen Plündermeister"
 L["TIP_MASTERLOOT_STOP"] = "Plündermeister entfernen"
 L["TIP_MASTERLOOT"] = "Plündermeister ist aktiv"
 L["TIP_MASTERLOOTING"] = "Plündermeister Gruppe:"
-L["TIP_MINIMAP_ICON"] = "|cffffff00Links-Klick:|r Verlosung-Übersicht umschalten\n|cffffff00Rechts-Klick:|r Optionen öffnen"
+L["TIP_MINIMAP_ICON"] = "|cffffff78Links-Klick:|r Verlosung-Übersicht umschalten\n|cffffff78Rechts-Klick:|r Optionen öffnen"
 L["TIP_VOTES"] = "Stimmen von:"
-L["TIP_MASTERLOOT_INFO"] = [=[|cffffff00Plündermeister:|r %s
-|cffffff00Roll Zeit:|r %ds (+ %ds pro Item)
-|cffffff00Rat:|r %s
-|cffffff00Gebote:|r %s
-|cffffff00Stimmen:|r %s]=]
+L["TIP_MASTERLOOT_INFO"] = [=[|cffffff78Plündermeister:|r %s
+|cffffff78Roll Zeit:|r %ds (+ %ds pro Item)
+|cffffff78Rat:|r %s
+|cffffff78Gebote:|r %s
+|cffffff78Stimmen:|r %s]=]
 
 L["MENU_MASTERLOOT_START"] = "Werde Plündermeister"
 L["MENU_MASTERLOOT_SEARCH"] = "Suche Plündermeister in Gruppe"
@@ -222,11 +224,11 @@ L["OPT_MESSAGES"] = "Nachrichten"
 L["OPT_ECHO"] = "Chat Informationen"
 L["OPT_ECHO_DESC"] = [=[Wie viel Information möchtest du vom Addon im Chat sehen?
 
-|cffffff00Nichts:|r Keine Infos im Chat.
-|cffffff00Fehler:|r Nur Fehlernachrichten.
-|cffffff00Info:|r Fehler und nützliche Infos, auf die du wahrscheinlich reagieren möchtest.
-|cffffff00Ausführlich:|r Informiert dich über quasi jede Aktion des Addons.
-|cffffff00Debug:|r Genauso wie Ausführlich, und zusätzlich Debug-Informationen.]=]
+|cffffff78Nichts:|r Keine Infos im Chat.
+|cffffff78Fehler:|r Nur Fehlernachrichten.
+|cffffff78Info:|r Fehler und nützliche Infos, auf die du wahrscheinlich reagieren möchtest.
+|cffffff78Ausführlich:|r Informiert dich über quasi jede Aktion des Addons.
+|cffffff78Debug:|r Genauso wie Ausführlich, und zusätzlich Debug-Informationen.]=]
 L["OPT_ECHO_NONE"] = "Nichts"
 L["OPT_ECHO_ERROR"] = "Fehler"
 L["OPT_ECHO_INFO"] = "Info"
@@ -234,26 +236,30 @@ L["OPT_ECHO_VERBOSE"] = "Ausführlich"
 L["OPT_ECHO_DEBUG"] = "Debug"
 
 L["OPT_SHOULD_CHAT"] = "An/abschalten"
-L["OPT_SHOULD_CHAT_DESC"] = "Ändere wann da Addon in den Gruppen/Raid Chat postet und andere Spieler anschreibt."
+L["OPT_SHOULD_CHAT_DESC"] = "Ändere wann da Addon in den Gruppen/Raid-Chat postet und andere Spieler anschreibt."
 L["OPT_GROUPCHAT"] = "Gruppenchat"
-L["OPT_GROUPCHAT_DESC"] = "Hier kannst du ändern wann das Addon Nachrichten im Gruppen/Raid Chat posten soll."
-L["OPT_GROUPCHAT_ANNOUNCE"] = "Verlosungen und Gewinner ankündigen"
-L["OPT_GROUPCHAT_ANNOUNCE_DESC"] = "Verkünde Verlosungen und Gewinner im Gruppen/Raid Chat."
+L["OPT_GROUPCHAT_DESC"] = "Hier kannst du ändern wann das Addon Nachrichten im Gruppen-Chat posten soll."
+L["OPT_GROUPCHAT_ANNOUNCE"] = "Verkünde Verlosungen und Gewinner"
+L["OPT_GROUPCHAT_ANNOUNCE_DESC"] = "Verkünde deine Verlosungen und Gewinner deiner Verlosungen im Gruppen-Chat."
+L["OPT_GROUPCHAT_GROUP_TYPE"] = "Verkünde nach Gruppentyp"
+L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = "Schreibe im Gruppen-Chat nur, wenn du in einer dieser Gruppentypen bist.\n\n|cffffff78Gildengruppe:|r Jemand aus einer Gilde deren Mitglieder 80% oder mehr der Gruppe stellen."
 L["OPT_GROUPCHAT_ROLL"] = "Auf Loot im Chat rollen"
-L["OPT_GROUPCHAT_ROLL_DESC"] = "Rolle auf Loot (/roll), wenn andere Links im Gruppen/Raid Chat posten."
+L["OPT_GROUPCHAT_ROLL_DESC"] = "Rolle auf Loot (/roll), der im Gruppen-Chat gepostet wurde."
 L["OPT_WHISPER"] = "Flüsternachrichten"
 L["OPT_WHISPER_DESC"] = "Hier kannst du ändern ob das Addon anderen Spielern Flüsternachrichten senden und auf sie antworten soll."
-L["OPT_WHISPER_ANSWER"] = "Flüsternachrichten beantworten"
-L["OPT_WHISPER_ANSWER_DESC"] = "Lass das Addon auf Flüsternachrichten von Gruppenmitgliedern antworten, die sich auf Items von dir beziehen."
-L["OPT_WHISPER_SUPPRESS"] = "Flüsternachrichten unterdrücken"
-L["OPT_WHISPER_SUPPRESS_DESC"] = "Unterdrücke Flüsternachrichten von Gruppenmitgliedern während du deine Beute vergibst."
-L["OPT_WHISPER_GROUP"] = "Flüstern nach Gruppe"
-L["OPT_WHISPER_GROUP_DESC"] = "Flüstere andere an, abhängig von der Art von Gruppe in der du gerade bist."
-L["OPT_WHISPER_TARGET"] = "Flüstern nach Ziel"
-L["OPT_WHISPER_TARGET_DESC"] = "Flüstere andere an, abhängig davon ob sie auf deiner Freundesliste oder in deiner Gilde sind."
+L["OPT_WHISPER_ASK"] = "Frage nach Beute"
+L["OPT_WHISPER_ASK_DESC"] = "Flüstere andere an, wenn sie Beute bekommen haben die du haben möchtest."
+L["OPT_WHISPER_ANSWER"] = "Anfragen beantworten"
+L["OPT_WHISPER_ANSWER_DESC"] = "Lass das Addon auf Anfragen von Gruppenmitgliedern antworten, die sich auf Items von dir beziehen."
+L["OPT_WHISPER_SUPPRESS"] = "Anfragen unterdrücken"
+L["OPT_WHISPER_SUPPRESS_DESC"] = "Unterdrücke Anfragen von Gruppenmitgliedern während du deine Beute vergibst."
+L["OPT_WHISPER_GROUP_TYPE"] = "Frage nach Gruppentyp"
+L["OPT_WHISPER_GROUP_TYPEDESC"] = "Frage nach Beute nur, wenn du in einer dieser Gruppentypen bist.\n\n|cffffff78Gildengruppe:|r Jemand aus einer Gilde deren Mitglieder 80% oder mehr der Gruppe stellen."
+L["OPT_WHISPER_TARGET"] = "Frage nach Ziel"
+L["OPT_WHISPER_TARGET_DESC"] = "Frage nach Beute, abhängig davon ob sie auf deiner Freundesliste oder in deiner Gilde sind."
 
 L["OPT_CUSTOM_MESSAGES"] = "Nachrichten anpassen"
-L["OPT_CUSTOM_MESSAGES_DESC"] = "Du kannst die Reihenfolge von Platzhaltern (|cffffff00%s|r, |cffffff00%d|r) verändern, indem du ihre Position und das $ Zeichen in der Mitte einfügst, also z.B. |cffffff00%2$s|r statt |cffffff00%s|r für den 2. Platzhalter. Weitere Details in den Tooltips."
+L["OPT_CUSTOM_MESSAGES_DESC"] = "Du kannst die Reihenfolge von Platzhaltern (|cffffff78%s|r, |cffffff78%d|r) verändern, indem du ihre Position und das $ Zeichen in der Mitte einfügst, also z.B. |cffffff78%2$s|r statt |cffffff78%s|r für den 2. Platzhalter. Weitere Details in den Tooltips."
 L["OPT_CUSTOM_MESSAGES_DEFAULT"] = "Standard Sprache (%s)"
 L["OPT_CUSTOM_MESSAGES_DEFAULT_DESC"] = "Diese Nachrichten werden verwendet, wenn der Empfänger %s oder nicht die Standardsprache deines Servers (%s) spricht."
 L["OPT_CUSTOM_MESSAGES_LOCALIZED"] = "Server Sprache (%s)"
@@ -297,13 +303,11 @@ L["OPT_MASTERLOOT_STOP"] = "Plündermeister stoppen"
 L["OPT_MASTERLOOT_APPROVAL"] = "Zustimmung"
 L["OPT_MASTERLOOT_APPROVAL_DESC"] = "Hier kannst du festlegen wer dein Plündermeister werden kann."
 L["OPT_MASTERLOOT_ALLOW"] = "Plündermeister erlauben"
-L["OPT_MASTERLOOT_ALLOW_DESC"] = [=[Entscheide wer dein Plündermeister werden kann. Du bekommst dann eine Popup-Nachricht die nach deiner Zustimmung verlangt, du kannst also Anfragen immer noch ablehnen.
-
-|cffffff00Gildengruppe:|r Jemand aus einer Gilde deren Mitglieder 80% oder mehr des Raids stellen.]=]
+L["OPT_MASTERLOOT_ALLOW_DESC"] = "Entscheide wer dein Plündermeister werden kann. Du bekommst dann eine Popup-Nachricht die nach deiner Zustimmung verlangt, du kannst also Anfragen immer noch ablehnen.\n\n|cffffff78Gildengruppe:|r Jemand aus einer Gilde deren Mitglieder 80% oder mehr des Raids stellen."
 L["OPT_MASTERLOOT_ACCEPT"] = "Plündermeister automatisch akzeptieren"
 L["OPT_MASTERLOOT_ACCEPT_DESC"] = "Akzeptiere Plündermeister-Anfragen von diesen Spielern automatisch."
 L["OPT_MASTERLOOT_WHITELIST"] = "Plündermeister Whitelist"
-L["OPT_MASTERLOOT_WHITELIST_DESC"] = "Wenn du jemand bestimmtes als Plündermeister haben möchtest, aber die obrigen Optionen nicht ausreichen, dann kannst du den Namen hier hinzufügen. Trenne mehrere Namen mit Leerzeichen oder Kommas"
+L["OPT_MASTERLOOT_WHITELIST_DESC"] = "Du kannst hier Namen von Spielern eintragen, die zusätzlich dein Plündermeister werden können sollen. Trenne mehrere Namen mit Leerzeichen oder Kommas."
 L["OPT_MASTERLOOT_ALLOW_ALL"] = "Jeden erlauben"
 L["OPT_MASTERLOOT_ALLOW_ALL_DESC"] = "|cffff0000WARNUNG:|r Diese Option erlaubt jedem dir eine Plündermeister-Anfrage zu schicken, es könnte also theoretisch passieren, dass du um deine Beute betrogen wirst. Aktiviere dies nur wenn du weißt was du tust."
 
@@ -326,6 +330,6 @@ L["OPT_MASTERLOOTER_COUNCIL_ALLOW_DESC"] = "Welche Spieler automatisch Teil dein
 L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK"] = "Rat Gildenrank"
 L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK_DESC"] = "Füge Gildenmitglieder mit diesem Rang deinem Rat hinzu, zusätzlich zu der obrigen Option."
 L["OPT_MASTERLOOTER_COUNCIL_WHITELIST"] = "Rat Whitelist"
-L["OPT_MASTERLOOTER_COUNCIL_WHITELIST_DESC"] = "Du kannst hier Namen von Spielern eintragen, die zusätzlich in deinem Rat sein sollen. Trenne mehrere Einträge mit Leerzeichen oder Kommas."
+L["OPT_MASTERLOOTER_COUNCIL_WHITELIST_DESC"] = "Du kannst hier Namen von Spielern eintragen, die zusätzlich in deinem Rat sein sollen. Trenne mehrere Namen mit Leerzeichen oder Kommas."
 L["OPT_MASTERLOOTER_VOTE_PUBLIC"] = "Rat Abstimmung öffentlich"
 L["OPT_MASTERLOOTER_VOTE_PUBLIC_DESC"] = "Du kannst Rat Stimmen öffentlich machen, sodass jeder sehen kann wer wieviele Stimmen bekommen hat."

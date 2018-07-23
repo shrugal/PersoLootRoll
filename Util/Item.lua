@@ -217,6 +217,7 @@ Self.TYPE_HEAD = "INVTYPE_HEAD"
 Self.TYPE_HOLDABLE = "INVTYPE_HOLDABLE"
 Self.TYPE_LEGS = "INVTYPE_LEGS"
 Self.TYPE_NECK = "INVTYPE_NECK"
+Self.TYPE_RANGEDRIGHT = "INVTYPE_RANGEDRIGHT"
 Self.TYPE_ROBE = "INVTYPE_ROBE"
 Self.TYPE_SHIELD = "INVTYPE_SHIELD"
 Self.TYPE_SHOULDER = "INVTYPE_SHOULDER"
@@ -242,11 +243,12 @@ Self.SLOTS = {
     [Self.TYPE_HOLDABLE] = {INVSLOT_OFFHAND},
     [Self.TYPE_LEGS] = {INVSLOT_LEGS},
     [Self.TYPE_NECK] = {INVSLOT_NECK},
+    [Self.TYPE_RANGEDRIGHT] = {INVSLOT_RANGED},
     [Self.TYPE_ROBE] = {INVSLOT_CHEST},
     [Self.TYPE_SHIELD] = {INVSLOT_OFFHAND},
     [Self.TYPE_SHOULDER] = {INVSLOT_SHOULDER},
     [Self.TYPE_TABARD] = {INVSLOT_TABARD},
-    [Self.TYPE_THROWN] = {}, -- TODO
+    [Self.TYPE_THROWN] = {INVSLOT_RANGED},
     [Self.TYPE_TRINKET] = {INVSLOT_TRINKET1, INVSLOT_TRINKET2},
     [Self.TYPE_WAIST] = {INVSLOT_WAIST},
     [Self.TYPE_WEAPON] = {INVSLOT_MAINHAND, INVSLOT_OFFHAND},
@@ -461,7 +463,7 @@ function Self.GetEquippedArtifact(unit)
     local classId = select(3, UnitClass(unit))
 
     for _,slot in pairs(Self.SLOTS[Self.TYPE_WEAPON]) do
-        local id = GetInventoryItemID(unit, slot)
+        local id = GetInventoryItemID(unit, slot) or Self.GetInfo(GetInventoryItemLink(unit, slot), "id")
         if id then
             for i,spec in pairs(Self.CLASS_INFO[classId].specs) do
                 if id == spec.artifact.id then
@@ -714,6 +716,11 @@ end
 -- Get the threshold for the item's slot
 function Self:GetThresholdForLocation(unit, upper)
     local unit = Unit(unit or "player")
+
+    -- Relics have a lower threshold of -1, meaning they have to be higher in ilvl to be worth considering
+    if not upper and self:GetBasicInfo().isRelic then
+        return -1
+    end
 
     -- Use DB option only for the player and only for the lower threshold
     local applyCustomThresholds = not upper and UnitIsUnit(unit, "player")

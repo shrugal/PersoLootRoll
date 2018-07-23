@@ -272,7 +272,7 @@ function Self.CHAT_MSG_GROUP(event, msg, sender)
 
             if not roll.ownerId then
                 -- Roll for the item in chat
-                if not roll.posted and Addon.db.profile.roll and roll.bid and Util.In(floor(roll.bid), Roll.BID_NEED, Roll.BID_GREED) then
+                if not roll.posted and Addon.db.profile.messages.group.roll and roll.bid and Util.In(floor(roll.bid), Roll.BID_NEED, Roll.BID_GREED) then
                     RandomRoll("1", floor(roll.bid) == Roll.BID_GREED and "50" or "100")
                 end
 
@@ -365,8 +365,8 @@ function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender, _, _, _, _, _, _
                 end
             end
             
-            suppress = answer ~= nil and Addon.db.profile.suppress
-            answer = Addon.db.profile.answer and answer
+            suppress = answer ~= nil and Addon.db.profile.messages.whisper.suppress
+            answer = Addon.db.profile.messages.whisper.answer and answer
             
             -- Suppress the message and print an info message instead
             if suppress then

@@ -206,10 +206,7 @@ function Self.Show()
                     end
                 end)
                 .SetCallback("OnLeave", GUI.TooltipHide)
-                .SetCallback("OnClick", function (self, ...)
-                    self:SetUserData("unit", Masterloot.GetMasterlooter())
-                    GUI.UnitClick(self, ...)
-                end)
+                .SetCallback("OnClick", GUI.UnitClick)
                 .SetHeight(12)
                 .SetPoint("TOP", 0, -6)
                 .SetPoint("RIGHT", f.frame, "LEFT")()
@@ -408,7 +405,7 @@ function Self.Update()
                 end, L["AWARD_RANDOMLY"], 11, 11)
 
                 -- Chat
-                f = GUI.CreateIconButton("Interface\\GossipFrame\\GossipGossipIcon", actions, GUI.UnitClick, nil, 13, 13)
+                f = GUI.CreateIconButton("Interface\\GossipFrame\\GossipGossipIcon", actions, GUI.ChatClick, nil, 13, 13)
                 f:SetCallback("OnEnter", GUI.TooltipChat)
         
                 -- Trade
@@ -625,7 +622,9 @@ function Self.Update()
     filter.children[it()]:SetImage(ml and "Interface\\Buttons\\UI-StopButton" or "Interface\\GossipFrame\\WorkOrderGossipIcon")
 
     -- ML
-    GUI(filter.children[it()]).SetText(L["ML"] .. ": " .. (ml and Unit.ColoredName(Unit.ShortenedName(ml)) or ""))
+    GUI(filter.children[it()])
+        .SetText(L["ML"] .. ": " .. (ml and Unit.ColoredName(Unit.ShortenedName(ml)) or ""))
+        .SetUserData("unit", ml)
 end
 
 -------------------------------------------------------

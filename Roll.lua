@@ -14,8 +14,6 @@ Self.TIMEOUT = 15
 Self.TIMEOUT_PER_ITEM = 5
 -- Seconds after a roll ended when it's still considered "recently" ended
 Self.TIMEOUT_RECENT = 120
--- Max # of whispers per item for all addons in the group
-Self.MAX_WHISPERS = 2
 
 -- Status
 Self.STATUS_CANCELED = -1
@@ -358,7 +356,7 @@ function Self:Start(started)
             -- Schedule timer to end the roll and hide the frame
             self.timer = Addon:ScheduleTimer(Self.Finish, self:GetTimeLeft(), self)
 
-            -- Let the others know
+            -- Let everyone know
             Self.events:Fire(Self.EVENT_START, self)
             self:Advertise(false, true)
             self:SendStatus()
@@ -464,40 +462,14 @@ function Self:Bid(bid, fromUnit, rollOrImport)
 
         Self.events:Fire(Self.EVENT_BID, self, bid, fromUnit, rollOrImport)
 
+        -- Let everyone know
+        if not isImport then
+            Comm.RollBid(self, bid, fromUnit)
+        end
+
         -- Check if we should end the roll or advertise to chat
         if self.status == Self.STATUS_RUNNING and not self:CheckEnd() and self.isOwner then
             self:Advertise()
-        end
-
-        -- Inform others
-        if not isImport then
-            if self.isOwner then
-                local data = {ownerId = self.ownerId, bid = bid, fromUnit = Unit.FullName(fromUnit)}
-
-                -- Send to all or the council
-                if Addon.db.profile.masterlooter.bidPublic then
-                    Comm.SendData(Comm.EVENT_BID, data)
-                elseif Masterloot.IsMasterlooter() then
-                    for target,_ in pairs(Masterloot.session.council or {}) do
-                        Comm.SendData(Comm.EVENT_BID, data, target)
-                    end
-                end
-            elseif fromSelf then
-                if self.ownerId then
-                    -- Send to owner
-                    Comm.SendData(Comm.EVENT_BID, {ownerId = self.ownerId, bid = bid}, self.owner)
-                elseif bid ~= Self.BID_PASS then
-                    -- Roll on it in chat or whisper the owner
-                    if self.posted then
-                        if Addon.db.profile.roll and Events.lastPostedRoll == self then
-                            RandomRoll("1", floor(bid) == Self.BID_GREED and "50" or "100")
-                        end
-                    elseif self.whispers < Self.MAX_WHISPERS and Comm.RollBid(self.item.owner, self.item.link) then
-                        self.whispers = self.whispers + 1
-                        Comm.SendData(Comm.EVENT_BID_WHISPER, {owner = Unit.FullName(self.item.owner), link = self.item.link})
-                    end
-                end
-            end
         end
     end
 
@@ -522,27 +494,14 @@ function Self:Vote(vote, fromUnit, isImport)
 
         if fromSelf then
             self.vote = vote
+            Comm.RollVoteSelf(self, isImport)
         end
 
         Self.events:Fire(Self.EVENT_VOTE, self, vote, fromUnit, isImport)
 
-        -- Inform others
+        -- Let everyone know
         if not isImport then
-            if self.isOwner then
-                local data = {ownerId = self.ownerId, vote = Unit.FullName(vote), fromUnit = Unit.FullName(fromUnit)}
-
-                -- Send to all or the council
-                if Addon.db.profile.masterlootert.votePublic then
-                    Comm.SendData(Comm.EVENT_VOTE, data)
-                elseif Masterloot.IsMasterlooter() then
-                    for target,_ in pairs(Masterloot.session.council or {}) do
-                        Comm.SendData(Comm.EVENT_VOTE, data, target)
-                    end
-                end
-            elseif fromSelf then
-                -- Send to owner
-                Comm.SendData(Comm.EVENT_VOTE, {ownerId = self.ownerId, vote = Unit.FullName(vote)}, Masterloot.GetMasterlooter())
-            end
+            Comm.RollVote(self, vote, fromUnit)
         end
     end
 end
@@ -630,7 +589,7 @@ function Self:End(winner, noAlert)
             self:OnTraded(self.winner)
         end
 
-        -- Let the player know, announce to chat and the winner
+        -- Let everyone know
         Comm.RollEnd(self, noAlert)
     end
 
@@ -778,7 +737,9 @@ end
 -------------------------------------------------------
 
 function Self:ShouldAdvertise(manually)
-    return not self.posted and self:CanBeAwarded() and not self:ShouldEnd() and (manually or Comm.ShouldChat() and (self.bid or Masterloot.GetMasterlooter()))
+    return not self.posted and self:CanBeAwarded() and not self:ShouldEnd() and (
+        manually or Comm.ShouldInitChat() and (self.bid or Masterloot.GetMasterlooter())
+    )
 end
 
 -- Advertise the roll to the group

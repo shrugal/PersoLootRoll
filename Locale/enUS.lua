@@ -122,10 +122,11 @@ L["ROLL_WINNER_OTHER"] = "%s has won %s from you -> %s."
 L["ROLL_WINNER_OWN"] = "You have won your own %s."
 L["ROLL_WINNER_SELF"] = "You have won %s from %s -> %s."
 
-L["BID_START"] = "Bidding with %q for %s from %s."
-L["BID_PASS"] = "Passing on %s from %s."
 L["BID_CHAT"] = "Asking %s for %s -> %s."
-L["BID_NO_CHAT"] = "Whispering is disabled, you need to ask %s for %s yourself -> %s."
+L["BID_MAX_WHISPERS"] = "Won't ask %s for %s, because %d players in your group already asked -> %s."
+L["BID_NO_CHAT"] = "Won't ask %s for %s, because it is disabled for the group or target -> %s."
+L["BID_PASS"] = "Passing on %s from %s."
+L["BID_START"] = "Bidding with %q for %s from %s."
 
 L["TRADE_START"] = "Starting trade with %s."
 L["TRADE_CANCEL"] = "Canceling trade with %s."
@@ -147,17 +148,18 @@ L["FILTER_HIDDEN_DESC"] = "Include canceled, pending, passed and hidden rolls."
 
 L["TIP_ADDON_MISSING"] = "Addon missing:"
 L["TIP_ADDON_VERSIONS"] = "Addon versions:"
+L["TIP_ENABLE_WHISPER_ASK"] = "Tip: Right-Click to enable asking for loot automatically"
 L["TIP_MASTERLOOT_START"] = "Become or search for a masterlooter"
 L["TIP_MASTERLOOT_STOP"] = "Remove masterlooter"
 L["TIP_MASTERLOOT"] = "Masterloot is active"
 L["TIP_MASTERLOOTING"] = "Masterlooting group:"
-L["TIP_MINIMAP_ICON"] = "|cffffff00Left-Click:|r Toggle rolls window\n|cffffff00Right-Click:|r Show Options"
+L["TIP_MINIMAP_ICON"] = "|cffffff78Left-Click:|r Toggle rolls window\n|cffffff78Right-Click:|r Show Options"
 L["TIP_VOTES"] = "Votes from:"
-L["TIP_MASTERLOOT_INFO"] = [=[|cffffff00Masterlooter:|r %s
-|cffffff00Roll time:|r %ds (+ %ds per item)
-|cffffff00Council:|r %s
-|cffffff00Bids:|r %s
-|cffffff00Votes:|r %s]=]
+L["TIP_MASTERLOOT_INFO"] = [=[|cffffff78Masterlooter:|r %s
+|cffffff78Roll time:|r %ds (+ %ds per item)
+|cffffff78Council:|r %s
+|cffffff78Bids:|r %s
+|cffffff78Votes:|r %s]=]
 
 L["MENU_MASTERLOOT_START"] = "Become masterlooter"
 L["MENU_MASTERLOOT_SEARCH"] = "Search group for a masterlooter"
@@ -222,11 +224,11 @@ L["OPT_MESSAGES"] = "Messages"
 L["OPT_ECHO"] = "Chat information"
 L["OPT_ECHO_DESC"] = [=[How much information do you want to see from the addon in chat?
 
-|cffffff00None:|r No info in chat.
-|cffffff00Error:|r Only error messages.
-|cffffff00Info:|r Errors and useful info that you probably want to act on.
-|cffffff00Verbose:|r Get notices about pretty much anything the addon does.
-|cffffff00Debug:|r Same as verbose, plus additional debug info.]=]
+|cffffff78None:|r No info in chat.
+|cffffff78Error:|r Only error messages.
+|cffffff78Info:|r Errors and useful info that you probably want to act on.
+|cffffff78Verbose:|r Get notices about pretty much anything the addon does.
+|cffffff78Debug:|r Same as verbose, plus additional debug info.]=]
 L["OPT_ECHO_NONE"] = "None"
 L["OPT_ECHO_ERROR"] = "Error"
 L["OPT_ECHO_INFO"] = "Info"
@@ -234,26 +236,30 @@ L["OPT_ECHO_VERBOSE"] = "Verbose"
 L["OPT_ECHO_DEBUG"] = "Debug"
 
 L["OPT_SHOULD_CHAT"] = "Enable/Disable"
-L["OPT_SHOULD_CHAT_DESC"] = "Define when the addon will post to group/raid chat and whisper other players."
+L["OPT_SHOULD_CHAT_DESC"] = "Define when the addon will post to party/raid chat and whisper other players."
 L["OPT_GROUPCHAT"] = "Group Chat"
 L["OPT_GROUPCHAT_DESC"] = "Change whether or not the addon will post things to the group chat."
 L["OPT_GROUPCHAT_ANNOUNCE"] = "Announce rolls and winners"
-L["OPT_GROUPCHAT_ANNOUNCE_DESC"] = "Announce rolls and winners in group/raid chat."
+L["OPT_GROUPCHAT_ANNOUNCE_DESC"] = "Announce your rolls and winners of your rolls in group chat."
+L["OPT_GROUPCHAT_GROUP_TYPE"] = "Announce by group type"
+L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = "Post to group chat only if you are in one of these group types.\n\n|cffffff78Guild Group:|r Someone from a guild whose members make up 80% or more of the group."
 L["OPT_GROUPCHAT_ROLL"] = "Roll on loot in chat"
-L["OPT_GROUPCHAT_ROLL_DESC"] = "Roll on loot you want (/roll) if others post links in group/raid chat."
+L["OPT_GROUPCHAT_ROLL_DESC"] = "Roll on loot you want (/roll) if others post links in group chat."
 L["OPT_WHISPER"] = "Whisper Chat"
 L["OPT_WHISPER_DESC"] = "Change whether or not the addon will whisper other players and/or answer incoming messages."
-L["OPT_WHISPER_ANSWER"] = "Answer whispers"
-L["OPT_WHISPER_ANSWER_DESC"] = "Let the addon answer whispers from group/raid members about items you looted."
-L["OPT_WHISPER_SUPPRESS"] = "Suppress whispers"
+L["OPT_WHISPER_ASK"] = "Ask for loot"
+L["OPT_WHISPER_ASK_DESC"] = "Whisper others if they got loot you want."
+L["OPT_WHISPER_ANSWER"] = "Answer requests"
+L["OPT_WHISPER_ANSWER_DESC"] = "Let the addon answer whispers from group members about items you looted."
+L["OPT_WHISPER_SUPPRESS"] = "Suppress requests"
 L["OPT_WHISPER_SUPPRESS_DESC"] = "Suppress incoming whisper messages from eligible players when giving away your loot."
-L["OPT_WHISPER_GROUP"] = "Whisper by group type"
-L["OPT_WHISPER_GROUP_DESC"] = "Whisper others if they got loot you want, depending on the type of group you are currently in."
-L["OPT_WHISPER_TARGET"] = "Whisper by target"
-L["OPT_WHISPER_TARGET_DESC"] = "Whisper others if they got loot you want, depending on whether the target is in your guild or on your friend list."
+L["OPT_WHISPER_GROUP_TYPE"] = "Ask by group type"
+L["OPT_WHISPER_GROUP_TYPE_DESC"] = "Ask for loot only if you are in one of these group types.\n\n|cffffff78Guild Group:|r Someone from a guild whose members make up 80% or more of the group."
+L["OPT_WHISPER_TARGET"] = "Ask by target"
+L["OPT_WHISPER_TARGET_DESC"] = "Ask for loot depending on whether the target is in your guild or on your friend list."
 
 L["OPT_CUSTOM_MESSAGES"] = "Custom messages"
-L["OPT_CUSTOM_MESSAGES_DESC"] = "You can reorder placeholders (|cffffff00%s|r, |cffffff00%d|r) by adding their position and a $ sign in the middle, so e.g. |cffffff00%2$s|r instead of |cffffff00%s|r for the 2nd placeholder. See tooltips for details."
+L["OPT_CUSTOM_MESSAGES_DESC"] = "You can reorder placeholders (|cffffff78%s|r, |cffffff78%d|r) by adding their position and a $ sign in the middle, so e.g. |cffffff78%2$s|r instead of |cffffff78%s|r for the 2nd placeholder. See tooltips for details."
 L["OPT_CUSTOM_MESSAGES_DEFAULT"] = "Default language (%s)"
 L["OPT_CUSTOM_MESSAGES_DEFAULT_DESC"] = "These messages will be used when the recipient speaks %s or something other than your realm's default language (%s)."
 L["OPT_CUSTOM_MESSAGES_LOCALIZED"] = "Realm language (%s)"
@@ -297,11 +303,9 @@ L["OPT_MASTERLOOT_STOP"] = "Stop masterloot"
 L["OPT_MASTERLOOT_APPROVAL"] = "Approval"
 L["OPT_MASTERLOOT_APPROVAL_DESC"] = "Here you can define who can become your masterlooter."
 L["OPT_MASTERLOOT_ALLOW"] = "Allow becoming masterlooter"
-L["OPT_MASTERLOOT_ALLOW_DESC"] = [=[Choose who can request to become your masterlooter. You will still get a popup message asking you to confirm it, so you can decline a masterlooter request when it happens.
-
-|cffffff00Guild Group:|r Someone from a guild whose members make up 80% or more of the group.]=]
+L["OPT_MASTERLOOT_ALLOW_DESC"] = "Choose who can request to become your masterlooter. You will still get a popup message asking you to confirm it, so you can decline a masterlooter request when it happens.\n\n|cffffff78Guild Group:|r Someone from a guild whose members make up 80% or more of the group."
 L["OPT_MASTERLOOT_WHITELIST"] = "Masterlooter Whitelist"
-L["OPT_MASTERLOOT_WHITELIST_DESC"] = "If the above options don't really fit a specific person, but you still want that player to be able to become your masterlooter, then enter the name here. Separate multiple names with spaces or commas."
+L["OPT_MASTERLOOT_WHITELIST_DESC"] = "You can also name specific players who should be able to become your masterlooter. Separate multiple names with spaces or commas."
 L["OPT_MASTERLOOT_ALLOW_ALL"] = "Allow everbody"
 L["OPT_MASTERLOOT_ALLOW_ALL_DESC"] = "|cffff0000WARNING:|r This will allow everybody to request becoming your masterlooter and potentially scam you into giving away your loot! Only activate it if you know what you are doing."
 L["OPT_MASTERLOOT_ACCEPT"] = "Automatically accept masterlooter"
@@ -326,6 +330,6 @@ L["OPT_MASTERLOOTER_COUNCIL_ALLOW_DESC"] = "Which players should automatically b
 L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK"] = "Council guild rank"
 L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK_DESC"] = "Add members of this guild rank to you council, in addition to the options above."
 L["OPT_MASTERLOOTER_COUNCIL_WHITELIST"] = "Council whitelist"
-L["OPT_MASTERLOOTER_COUNCIL_WHITELIST_DESC"] = "You can also name specific players to be on your council. Separate multiple people by spaces or commas."
+L["OPT_MASTERLOOTER_COUNCIL_WHITELIST_DESC"] = "You can also name specific players to be on your council. Separate multiple names with spaces or commas."
 L["OPT_MASTERLOOTER_VOTE_PUBLIC"] = "Council votes public"
 L["OPT_MASTERLOOTER_VOTE_PUBLIC_DESC"] = "You can make council votes public, so everybody can see who has how many votes."

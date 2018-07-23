@@ -113,6 +113,16 @@ function Self.Iter(from, to, step)
     end
 end
 
+-- Return val if it's not nil, default otherwise
+function Self.Default(val, default)
+    if val ~= nil then return val else return default end
+end
+
+-- Return a when cond is true, b otherwise
+function Self.Check(cond, a, b)
+    if cond then return a else return b end
+end
+
 -------------------------------------------------------
 --                       Table                       --
 -------------------------------------------------------

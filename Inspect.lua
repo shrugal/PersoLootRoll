@@ -9,7 +9,7 @@ Self.QUEUE_DELAY = 60
 -- How long between two inspect requests
 Self.INSPECT_DELAY = 2
 -- How many tries per char
-Self.MAX_PER_CHAR = 3
+Self.MAX_PER_CHAR = 10
 -- We are not interested in those slots
 Self.IGNORE = {Item.TYPE_BODY, Item.TYPE_HOLDABLE, Item.TYPE_TABARD, Item.TYPE_THROWN}
 
@@ -46,6 +46,7 @@ function Self.Update(unit)
     unit = Unit.Name(unit)
 
     local info = Self.cache[unit] or Util.Tbl(true, "levels", Util.Tbl(), "links", Util.Tbl())
+    local isValid = Self.IsValid(unit)
 
     -- Remember when we did this
     info.time = GetTime()
@@ -53,23 +54,30 @@ function Self.Update(unit)
     -- Determine the level for all basic inventory locations
     for equipLoc,slots in pairs(Item.SLOTS) do
         if not Util.In(equipLoc, Self.IGNORE) then
-            local slotMin = 1000
+            local slotMin
             for i,slot in pairs(slots) do
-                local link = GetInventoryItemLink(unit, slot)
-                if link then
-                    info.links[slot] = link
-                    if slotMin then
-                        slotMin = min(slotMin, Item.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY and Item.GetInfo(link, "maxLevel", unit) or 0)
+                if GetInventoryItemTexture(unit, slot) then
+                    local link = GetInventoryItemLink(unit, slot) or isValid and info.links[slot]
+                    if link then
+                        info.links[slot] = link
+                        if slotMin ~= false then
+                            local lvl = Item.GetInfo(link, "quality") == LE_ITEM_QUALITY_LEGENDARY and 0 or Item.GetInfo(link, "maxLevel", unit)
+                            slotMin = lvl and min(slotMin or lvl, lvl) or false
+                        end
+                    else
+                        info.links[slot] = false
+                        slotMin = false
                     end
                 else
-                    slotMin = false
+                    info.links[slot] = nil
+                    slotMin = slotMin ~= false and 0 or false
                 end
             end
 
             -- Only set it if we got links for all slots
-            if slotMin and slotMin < 1000 then
+            if slotMin then
                 info.levels[equipLoc] = max(0, info.levels[equipLoc] or 0, slotMin)
-            elseif not info.levels[equipLoc] then
+            elseif not (isValid and info.levels[equipLoc]) then
                 info.levels[equipLoc] = false
             end
         end
@@ -79,30 +87,44 @@ function Self.Update(unit)
     local weapon = Item.GetEquippedArtifact(unit)
     if weapon then
         local relics = Util.TblGroupKeys(weapon:GetRelicSlots())
-        local relicsUnique = weapon:GetRelicSlots(true)
+        local uniqueTypes = Util.TblFlip(weapon:GetRelicSlots(true))
 
         for relicType,slots in pairs(relics) do
-            local slotMin = 1000
-            info.links[relicType] = info.links[relicType] or Util.Tbl()
-            wipe(info.links[relicType])
+            local slotMin
+            local links = Util.Tbl()
+            local isUnique = uniqueTypes[relicType]
 
             for i,slot in pairs(slots) do
                 local link = weapon:GetGem(slot)
                 if link then
-                    tinsert(info.links[relicType], link)
-                    if slotMin and relicsUnique[slot] then
-                        slotMin = min(slotMin, Item.GetInfo(link, "effectiveLevel", unit) or 0)
+                    tinsert(links, link)
+                    if isUnique and slotMin ~= false then
+                        local lvl = Item.GetInfo(link, "effectiveLevel", unit)
+                        slotMin = lvl and min(slotMin or lvl, lvl) or false
                     end
-                elseif relicsUnique[slot] then
+                elseif isUnique then
                     slotMin = false
                 end
             end
 
             -- Only set it if we got links for all slots
-            if slotMin and slotMin < 1000 then
+            if slotMin then
                 info.levels[relicType] = max(0, info.levels[relicType] or 0, slotMin)
-            elseif not info.levels[relicType] then
+            elseif isUnique and not (isValid and info.levels[relicType]) then
                 info.levels[relicType] = false
+            elseif not info.levels[relicType] then
+                info.levels[relicType] = nil
+            end
+
+            -- Handle links
+            if not info.links[relicType] then
+                info.links[relicType] = links
+            else
+                if slotMin or not isValid or #info.links[relicType] < #links then
+                    wipe(info.links[relicType])
+                    Util.TblMerge(info.links[relicType], links)
+                end
+                Util.TblRelease(links)
             end
         end
 
@@ -110,8 +132,7 @@ function Self.Update(unit)
     end
 
     -- Check if the inspect was successfull
-    local n = Util.TblCount(info.levels)
-    local failed = n == 0 or Util.TblCountOnly(info.levels, false) >= n/2
+    local failed = Util.TblCountOnly(info.levels, false) + Util.TblCountOnly(info.links, false) > 0
     local inspectsLeft = Self.queue[unit] or Self.MAX_PER_CHAR
 
     -- Update cache and queue entries
@@ -142,20 +163,17 @@ function Self.Queue(unit)
         Self.queue[unit] = Self.queue[unit] or Self.MAX_PER_CHAR
     elseif IsInGroup() then
         -- Queue all group members with missing or out-of-date cache entries
-        local unitFound = false
+        local allFound = true
         for i=1,GetNumGroupMembers() do
             unit = GetRaidRosterInfo(i)
-            if unit then
-                if not Self.queue[unit] and not Self.IsValid(unit) then
-                    Self.queue[unit] = Self.MAX_PER_CHAR
-                end
-                break
-            else
-                unit = nil
+            if not unit then
+                allFound = false
+            elseif not (Self.IsValid(unit) or Self.queue[unit]) then
+                Self.queue[unit] = Self.MAX_PER_CHAR
             end
         end
         
-        if unit then
+        if allFound then
             Self.lastQueued = GetTime()
         end
     end

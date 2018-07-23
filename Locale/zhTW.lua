@@ -123,7 +123,8 @@ L["ROLL_WINNER_OWN"] = "你贏得自己的 %s。"
 L["ROLL_WINNER_SELF"] = "你贏得 %s (%s 提供的) -> %s。"
 
 L["BID_CHAT"] = "詢問%s為%s -> %s。"
-L["BID_NO_CHAT"] = "密語已禁用，你需要詢問%s為%s你自己 -> %s。"
+L["BID_MAX_WHISPERS"] = "Won't ask %s for %s, because %d players in your group already asked -> %s." -- Translation missing
+L["BID_NO_CHAT"] = "密語已禁用，你需要詢問%s為%s你自己 -> %s。" -- Translation outdated
 L["BID_PASS"] = "放棄%s 由%s。"
 L["BID_START"] = "競標%q 在%s 從%s。"
 
@@ -147,17 +148,18 @@ L["FILTER_HIDDEN_DESC"] = "包含已取消、待決的、已放棄以及隱藏�
 
 L["TIP_ADDON_MISSING"] = "插件缺少："
 L["TIP_ADDON_VERSIONS"] = "插件版本："
+L["TIP_ENABLE_WHISPER_ASK"] = "Tip: Right-Click to enable asking for loot automatically" -- Translation missing
 L["TIP_MASTERLOOT_START"] = "成為或搜尋負責分裝者"
 L["TIP_MASTERLOOT_STOP"] = "移除負責分裝者"
 L["TIP_MASTERLOOT"] = "隊長分配是啟用的"
 L["TIP_MASTERLOOTING"] = "有分裝者的隊伍::"
-L["TIP_MINIMAP_ICON"] = "|cffffff00左鍵點擊:|r 開關擲骰視窗\n|cffffff00右鍵點擊:|r 顯示選項"
+L["TIP_MINIMAP_ICON"] = "|cffffff78左鍵點擊:|r 開關擲骰視窗\n|cffffff78右鍵點擊:|r 顯示選項"
 L["TIP_VOTES"] = "表決來自:"
-L["TIP_MASTERLOOT_INFO"] = [=[|cffffff00分裝者:|r %s 
-|cffffff00擲骰時間:|r %ds (+ %ds 每項物品) 
-|cffffff00議會:|r %s |
-cffffff00競標:|r %s 
-|cffffff00表決:|r %s]=]
+L["TIP_MASTERLOOT_INFO"] = [=[|cffffff78分裝者:|r %s 
+|cffffff78擲骰時間:|r %ds (+ %ds 每項物品) 
+|cffffff78議會:|r %s |
+cffffff78競標:|r %s 
+|cffffff78表決:|r %s]=]
 
 L["MENU_MASTERLOOT_START"] = "成為分裝者"
 L["MENU_MASTERLOOT_SEARCH"] = "搜尋有人負責分裝的團體"
@@ -222,11 +224,11 @@ L["OPT_MESSAGES"] = "訊息"
 L["OPT_ECHO"] = "聊天資訊"
 L["OPT_ECHO_DESC"] = [=[你想要在聊天中顯示多少插件的資訊？
 
-|cffffff00無:|r 聊天中無資訊。 
-|cffffff00錯誤:|r 只有錯誤訊息。 
-|cffffff00資訊:|r 你可能會採取行動的錯誤與有用訊息。 
-|cffffff00詳細:|r 獲取有關插件所做的任何事情的通知。
-|cffffff00偵錯:|r 類似於詳細，但有額外偵錯訊息。]=]
+|cffffff78無:|r 聊天中無資訊。 
+|cffffff78錯誤:|r 只有錯誤訊息。 
+|cffffff78資訊:|r 你可能會採取行動的錯誤與有用訊息。 
+|cffffff78詳細:|r 獲取有關插件所做的任何事情的通知。
+|cffffff78偵錯:|r 類似於詳細，但有額外偵錯訊息。]=]
 L["OPT_ECHO_NONE"] = "無"
 L["OPT_ECHO_ERROR"] = "錯誤"
 L["OPT_ECHO_INFO"] = "資訊"
@@ -238,22 +240,26 @@ L["OPT_SHOULD_CHAT_DESC"] = "決定插件何時發佈到隊伍/團隊聊天並�
 L["OPT_GROUPCHAT"] = "團體聊天頻道"
 L["OPT_GROUPCHAT_DESC"] = "更改插件是否要將骰裝公告到團體聊天中。"
 L["OPT_GROUPCHAT_ANNOUNCE"] = "公告骰裝以及贏家"
-L["OPT_GROUPCHAT_ANNOUNCE_DESC"] = "在隊伍/團隊/副本聊天中公告骰裝以及獲得者。"
+L["OPT_GROUPCHAT_ANNOUNCE_DESC"] = "在隊伍/團隊/副本聊天中公告骰裝以及獲得者。" -- Translation outdated
+L["OPT_GROUPCHAT_GROUP_TYPE"] = "Announce by group type" -- Translation missing
+L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = "Post to group chat only if you are in one of these group types.\n\n|cffffff78公會團隊:|r 團隊的80%或更多的成員是來自一個公會。" -- Translation missing
 L["OPT_GROUPCHAT_ROLL"] = "在聊天中擲骰戰利品"
 L["OPT_GROUPCHAT_ROLL_DESC"] = "如果其他人在團體聊天中貼出連結，請擲骰你要的戰利品(/roll)。"
 L["OPT_WHISPER"] = "聊天密語"
 L["OPT_WHISPER_DESC"] = "更改插件是否會密語其他玩家並且/或回應其他人的訊息。"
-L["OPT_WHISPER_ANSWER"] = "回應密語"
-L["OPT_WHISPER_ANSWER_DESC"] = "讓插件自動回應從隊伍/團隊成員來的關於你拾取物品的密語。"
-L["OPT_WHISPER_SUPPRESS"] = "阻擋密語"
-L["OPT_WHISPER_SUPPRESS_DESC"] = "當放棄你的戰利品時，阻擋來自符合條件玩家的密語訊息。"
-L["OPT_WHISPER_GROUP"] = "密語根據團體類型"
-L["OPT_WHISPER_GROUP_DESC"] = "如果其他人拾取你想要的物品則密語他們，這取決於你目前所處的團體類型。"
-L["OPT_WHISPER_TARGET"] = "密語目標"
-L["OPT_WHISPER_TARGET_DESC"] = "如果其他人得到你想要的物品則密語他們，這取決於目標是否在你的公會或是好友名單上。"
+L["OPT_WHISPER_ASK"] = "Ask for loot" -- Translation missing
+L["OPT_WHISPER_ASK_DESC"] = "Whisper others if they got loot you want." -- Translation missing
+L["OPT_WHISPER_ANSWER"] = "回應密語" -- Translation outdated
+L["OPT_WHISPER_ANSWER_DESC"] = "讓插件自動回應從隊伍/團隊成員來的關於你拾取物品的密語。" -- Translation outdated
+L["OPT_WHISPER_SUPPRESS"] = "阻擋密語" -- Translation outdated
+L["OPT_WHISPER_SUPPRESS_DESC"] = "當放棄你的戰利品時，阻擋來自符合條件玩家的密語訊息。" -- Translation outdated
+L["OPT_WHISPER_GROUP_TYPE"] = "密語根據團體類型" -- Translation outdated
+L["OPT_WHISPER_GROUP_TYPE_DESC"] = "如果其他人拾取你想要的物品則密語他們，這取決於你目前所處的團體類型。\n\n|cffffff78公會團隊:|r 團隊的80%或更多的成員是來自一個公會。" -- Translation outdated
+L["OPT_WHISPER_TARGET"] = "密語目標" -- Translation outdated
+L["OPT_WHISPER_TARGET_DESC"] = "如果其他人得到你想要的物品則密語他們，這取決於目標是否在你的公會或是好友名單上。" -- Translation outdated
 
 L["OPT_CUSTOM_MESSAGES"] = "自訂訊息"
-L["OPT_CUSTOM_MESSAGES_DESC"] = "你可以重新排列佔位符(|cffffff00%s|r, |cffffff00%d|r)透過在中間添加它們的位置和$符號，例如：像第二個佔位符可以用|cffffff00%2$s|r取代|cffffff00%s|r，詳情請看工具提示。"
+L["OPT_CUSTOM_MESSAGES_DESC"] = "你可以重新排列佔位符(|cffffff78%s|r, |cffffff78%d|r)透過在中間添加它們的位置和$符號，例如：像第二個佔位符可以用|cffffff78%2$s|r取代|cffffff78%s|r，詳情請看工具提示。"
 L["OPT_CUSTOM_MESSAGES_DEFAULT"] = "預設語言 (%s)"
 L["OPT_CUSTOM_MESSAGES_DEFAULT_DESC"] = "These messages will be used when the recipient speaks %s or something other than your realm's default language (%s)." -- Translation missing
 L["OPT_CUSTOM_MESSAGES_LOCALIZED"] = "伺服器語言 (%s)"
@@ -297,9 +303,7 @@ L["OPT_MASTERLOOT_STOP"] = "停止拾取分配"
 L["OPT_MASTERLOOT_APPROVAL"] = "贊同"
 L["OPT_MASTERLOOT_APPROVAL_DESC"] = "在此你可以決定誰可以成為你的分裝者。"
 L["OPT_MASTERLOOT_ALLOW"] = "允許成為分裝者"
-L["OPT_MASTERLOOT_ALLOW_DESC"] = [=[選擇誰可以請求成為你的拾取分配者。你仍然會收到一個需要確認的彈出訊息，所以你可以在當時拒絕成為拾取分配者。
-
-|cffffff00公會團隊:|r 團隊的80%或更多的成員是來自一個公會。]=]
+L["OPT_MASTERLOOT_ALLOW_DESC"] = "選擇誰可以請求成為你的拾取分配者。你仍然會收到一個需要確認的彈出訊息，所以你可以在當時拒絕成為拾取分配者。\n\n|cffffff78公會團隊:|r 團隊的80%或更多的成員是來自一個公會。"
 L["OPT_MASTERLOOT_WHITELIST"] = "分裝者白名單"
 L["OPT_MASTERLOOT_WHITELIST_DESC"] = "如果上述選項某人並非真正適宜，但你仍希望該玩家能成為你的分裝者，那麼請在此輸入名稱，用空格或逗號在名稱中分隔。"
 L["OPT_MASTERLOOT_ALLOW_ALL"] = "允許所有人"

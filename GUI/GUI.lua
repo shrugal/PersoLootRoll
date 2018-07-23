@@ -369,9 +369,10 @@ end
 function Self.TooltipChat(self)
     local chat = self:GetUserData("roll").chat
     local anchor = chat and self:GetUserData("anchor") or "TOP"
+    local hint = not chat and not Addon.db.profile.messages.whisper.ask
 
     GameTooltip:SetOwner(self.frame, "ANCHOR_" .. anchor)
-    GameTooltip:SetText(WHISPER)
+    GameTooltip:SetText(WHISPER .. (hint and " (" .. L["TIP_ENABLE_WHISPER_ASK"] .. ")" or ""))
     if chat then for i,line in ipairs(chat) do
         GameTooltip:AddLine(line, 1, 1, 1, true)
     end end
@@ -395,6 +396,14 @@ function Self.UnitClick(self, event, button)
             -- dropDown.unit = unit
             -- ToggleDropDownMenu(1, nil, dropDown, "cursor", 3, -3)
         end
+    end
+end
+
+function Self.ChatClick(self, event, button)
+    if button == "RightButton" and not Addon.db.profile.messages.whisper.ask then
+        Addon:ShowOptions("Messages")
+    else
+        Self.UnitClick(self, event, button)
     end
 end
 

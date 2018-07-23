@@ -1,9 +1,11 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Locale, Masterloot, Roll, Unit, Util = Addon.Locale, Addon.Masterloot, Addon.Roll, Addon.Unit, Addon.Util
+local Events, Locale, Masterloot, Roll, Unit, Util = Addon.Events, Addon.Locale, Addon.Masterloot, Addon.Roll, Addon.Unit, Addon.Util
 local Self = Addon.Comm
 
 Self.PREFIX = "[" .. Addon.ABBR .. "] "
+-- Max # of whispers per item for all addons in the group
+Self.MAX_WHISPERS = 2
 
 -- Distribution types
 Self.TYPE_GROUP = "GROUP"
@@ -75,23 +77,26 @@ function Self.GetDestination(target)
     end
 end
 
--- Check if chat on given channel and to giver target is enabled
-function Self.ShouldChat(target)
+-- Check if initializing chat on given channel and to giver target is enabled
+function Self.ShouldInitChat(target)
     local channel, unit = Self.GetDestination(target)
-    local config = Addon.db.profile
+    local c = Addon.db.profile.messages
 
     -- Check group
     if not IsInGroup() or Util.TblCount(Addon.disabled) == 0 and Util.TblCount(Addon.versions) + 1 == GetNumGroupMembers() then
         return false
     end
 
-    -- Check whisper target
+    -- Check whisper options
     if channel == Self.TYPE_WHISPER then
-        if Addon:IsTracking(unit) or UnitIsUnit(unit, "player") then
+        if not c.whisper.ask then
+            return false
+        elseif Addon:IsTracking(unit) or UnitIsUnit(unit, "player") then
             return false
         end
 
-        local target = config.whisper.target
+        -- Check target
+        local target = c.whisper.target
         local guild = Unit.GuildName(unit)
         local isGuild, isFriend = guild ~= nil and guild == Unit.GuildName("player"), Unit.IsFriend(unit)
 
@@ -102,10 +107,13 @@ function Self.ShouldChat(target)
         elseif not target.other then
             return false
         end
+    -- Check group options
+    elseif not c.group.announce then
+        return false
     end
 
-    -- Check party type
-    local group = channel == Self.TYPE_WHISPER and config.whisper.group or config.announce
+    -- Check group type options
+    local group = channel == Self.TYPE_WHISPER and c.whisper.groupType or c.group.groupType
 
     if IsInRaid(LE_PARTY_CATEGORY_INSTANCE) then
         return group.lfr
@@ -138,7 +146,7 @@ end
 
 function Self.GetChatLine(line, target, ...)
     local L = Locale.GetCommLocale(select(2, Self.GetDestination(target)))
-    line = Addon.db.profile.messages[L.lang] and Addon.db.profile.messages[L.lang][line] or L[line]
+    line = Addon.db.profile.messages.lines[L.lang] and Addon.db.profile.messages.lines[L.lang][line] or L[line]
     return L(line, ...)
 end
 
@@ -193,15 +201,47 @@ end
 
 -- BID
 
--- Send a bid to another player
-function Self.RollBid(owner, link, manually)
-    if manually or Self.ShouldChat(owner) then
-        Self.ChatLine("MSG_BID", owner, link or Locale.GetChatLine('MSG_ITEM', owner))
-        Addon:Info(L["BID_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
-        return true
-    else
-        Addon:Info(L["BID_NO_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
-        return false
+-- Messages when bidding on a roll
+function Self.RollBid(roll, bid, fromUnit)
+    local fromSelf = UnitIsUnit(fromUnit, "player")
+
+    if roll.isOwner then
+        local data = {ownerId = roll.ownerId, bid = bid, fromUnit = Unit.FullName(fromUnit)}
+
+        -- Send to all or the council
+        if Addon.db.profile.masterlooter.bidPublic then
+            Self.SendData(Self.EVENT_BID, data)
+        elseif Masterloot.IsMasterlooter() then
+            for target,_ in pairs(Masterloot.session.council or {}) do
+                Self.SendData(Self.EVENT_BID, data, target)
+            end
+        end
+    elseif fromSelf then
+        if roll.ownerId then
+            -- Send to owner
+            Self.SendData(Self.EVENT_BID, {ownerId = roll.ownerId, bid = bid}, roll.owner)
+        elseif bid ~= Roll.BID_PASS then
+            local owner, link = roll.item.owner, roll.item.link
+
+            -- Roll on it in chat or whisper the owner
+            if roll.posted then
+                if Addon.db.profile.messages.group.roll and Events.lastPostedRoll == roll then
+                    RandomRoll("1", floor(bid) == Roll.BID_GREED and "50" or "100")
+                end
+            elseif Addon.db.profile.messages.whisper.ask then
+                if roll.whispers >= Self.MAX_WHISPERS then
+                    Addon:Info(L["BID_MAX_WHISPERS"], Self.GetPlayerLink(owner), link, Self.MAX_WHISPERS, Self.GetTradeLink(owner))
+                elseif not Self.ShouldInitChat(owner) then
+                    Addon:Info(L["BID_NO_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
+                else
+                    Self.ChatLine("MSG_BID", owner, link or Locale.GetChatLine('MSG_ITEM', owner))
+                    roll.whispers = roll.whispers + 1
+
+                    Addon:Info(L["BID_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
+                    Self.SendData(Self.EVENT_BID_WHISPER, {owner = Unit.FullName(owner), link = link})
+                end
+            end
+        end
     end
 end
 
@@ -225,12 +265,35 @@ end
 
 -- VOTE
 
-function Self.RollVote(roll)
+-- Messages when voting on a roll
+function Self.RollVote(roll, vote, fromUnit)
+    local fromSelf = UnitIsUnit(fromUnit, "player")
 
+    if roll.isOwner then
+        local data = {ownerId = roll.ownerId, vote = Unit.FullName(vote), fromUnit = Unit.FullName(fromUnit)}
+
+        -- Send to all or the council
+        if Addon.db.profile.masterlootert.votePublic then
+            Self.SendData(Self.EVENT_VOTE, data)
+        elseif Masterloot.IsMasterlooter() then
+            for target,_ in pairs(Masterloot.session.council or {}) do
+                Self.SendData(Self.EVENT_VOTE, data, target)
+            end
+        end
+    elseif fromSelf then
+        -- Send to owner
+        Self.SendData(Self.EVENT_VOTE, {ownerId = roll.ownerId, vote = Unit.FullName(vote)}, Masterloot.GetMasterlooter())
+    end
 end
 
+-- Show an error message for an invalid vote
 function Self.RollVoteError(roll, sender)
+    -- TODO
+end
 
+-- Show a confirmation message for a vote by the player
+function Self.RollVoteSelf(roll, isImport)
+    -- TODO
 end
 
 -- END
@@ -259,7 +322,7 @@ function Self.RollEnd(roll, noAlert)
 
         if roll.isOwner then
             -- Announce to chat
-            if roll.posted and Self.ShouldChat() then
+            if roll.posted and Self.ShouldInitChat() then
                 if roll.item.isOwner then
                     Self.ChatLine("MSG_ROLL_WINNER", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link)
                 else
@@ -268,7 +331,7 @@ function Self.RollEnd(roll, noAlert)
             end
             
             -- Announce to target
-            if Addon.db.profile.answer and not Addon:IsTracking(roll.winner) then
+            if Addon.db.profile.messages.whisper.answer and not Addon:IsTracking(roll.winner) then
                 if roll.item:GetNumEligible(true) == 1 then
                     if roll.item.isOwner then
                         Self.ChatLine("MSG_ROLL_ANSWER_YES", roll.winner)
