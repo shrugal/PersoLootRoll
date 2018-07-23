@@ -40,6 +40,7 @@ Addon.disabled = {}
 -- Called when the addon is loaded
 function Addon:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New(Name .. "DB", {
+        -- VERSION 5
         profile = {
             -- General
             enabled = true,
@@ -90,25 +91,23 @@ function Addon:OnInitialize()
             -- GUI status
             gui = {
                 actions = {anchor = "LEFT", v = 10, h = 0}
-            },
-
-            version = 5
+            }
         },
+        -- VERSION 3
         factionrealm = {
             masterloot = {
                 whitelist = {}
             },
             masterlooter = {
                 councilWhitelist = {},
-            },
-            version = 3
+            }
         },
+        -- VERSION 3
         char = {
             specs = {true, true, true, true},
             masterloot = {
                 guildRank = 0
-            },
-            version = 3
+            }
         }
     }, true)
     
@@ -953,24 +952,7 @@ end
 function Addon:MigrateOptions()
     -- Profile
     local c = Addon.db.profile
-    if not c.version or 3 > c.version then
-        c.masterlooter.timeoutBase = c.masterloot.timeoutBase or c.masterlooter.timeoutBase
-        c.masterlooter.timeoutPerItem = c.masterloot.timeoutPerItem or c.masterlooter.timeoutPerItem
-        c.masterlooter.bidPublic = c.masterloot.bidPublic or c.masterlooter.bidPublic or false
-        c.masterlooter.council = not next(c.masterlooter.council) and c.masterloot.council or c.masterlooter.council
-        c.masterlooter.votePublic = c.masterloot.votePublic or c.masterlooter.votePublic or false
-        c.masterloot.timeoutBase, c.masterloot.timeoutPerItem, c.masterloot.bidPublic, c.masterloot.council, c.masterloot.votePublic, c.masterloot.whitelist, c.masterloot.councilWhitelist = nil
-        c.version = 3
-    end
-    if 4 > c.version then
-        for lang,lines in pairs(self.db.profile.messages) do
-            if type(lang) == "string" and lang:match("^%l%l%u%u$") then
-                self.db.profile.messages[lang] = Util.TblMapKeys(lines, function (line) return "MSG_" .. line end)
-            end
-        end
-        c.version = 4
-    end
-    if 5 > c.version then
+    if not c.version or c.version < 5 then -- TODO: Change for the next version
         self:MigrateOption("echo", c, c.messages)
         self:MigrateOption("announce", c, c.messages.group, true, "groupType")
         self:MigrateOption("roll", c, c.messages.group)
@@ -986,17 +968,11 @@ function Addon:MigrateOptions()
 
     -- Factionrealm
     local c = Addon.db.factionrealm
-    if not c.version or 3 > c.version then
-        c.masterlooter.councilWhitelist = not next(c.masterlooter.councilWhitelist) and c.masterloot.councilWhitelist or c.masterlooter.councilWhitelist
-        c.masterloot.councilWhitelist = nil
-        c.version = 3
-    end
-
+    c.version = 3 -- TODO: Change for the next version
+    
     -- Char
     local c = Addon.db.char
-    if not c.version or 3 > c.version then
-        c.version = 3
-    end
+    c.version = 3 -- TODO: Change for the next version
 end
 
 -- Migrate a single option
@@ -1004,17 +980,18 @@ function Addon:MigrateOption(key, source, dest, depth, destKey, filter, keep)
     if source then
         depth = type(depth) == "number" and depth or depth and 10 or 0
         destKey = destKey or key
-        local val, curr = source[key], dest[destKey]
+        local val = source[key]
 
         if type(val) == "table" and depth > 0 then
             for i,v in pairs(val) do
                 local filterType = type(filter)
                 if not filter or filterType == "table" and Util.In(i, filter) or filterType == "string" and i:match(filter) or filterType == "function" and filter(i, v, depth) then
-                    self:MigrateOption(i, val, curr, depth - 1)
+                    dest[destKey] = dest[destKey] or {}
+                    self:MigrateOption(i, val, dest[destKey], depth - 1)
                 end
             end
         else
-            dest[destKey] = Util.Default(val, curr)
+            dest[destKey] = Util.Default(val, dest[destKey])
         end
 
         if not keep then
