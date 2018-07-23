@@ -170,6 +170,42 @@ function Self.TblRelease(...)
     end
 end
 
+-- Get a value from a table
+function Self.TblGet(t, ...)
+    local n = select("#", ...)
+
+    if n == 1 then
+        if type(...) == "table" then
+            return Self.TblGet(t, unpack(...))
+        elseif type(...) == "string" and (...):find("%.") then
+            return Self.TblGet(t, ("."):split(...))
+        end
+    end
+    
+    for i=1,n do t = t ~= nil and t[select(i, ...)] or nil end
+
+    return t
+end
+
+-- Set a value on a table
+function Self.TblSet(t, ...)
+    local n = select("#", ...) - 1
+    local val = select(n + 1, ...)
+
+    if n == 1 then
+        if type(...) == "table" then
+            return Self.TblSet(t, unpack((...)), val)
+        elseif type(...) == "string" and (...):find("%.") then
+            return Self.TblSet(t, ("."):split((...)), val)
+        end
+    end
+
+    for i=1,n-1 do t = Self.Default(t[select(i, ...)], {}) end
+    t[select(n, ...)] = val
+
+    return t
+end
+
 -- Get a random key from the table
 function Self.TblRandomKey(t)
     local keys = Self.TblKeys(t)
@@ -493,11 +529,7 @@ function Self.TblCopy(t, fn, index, ...)
     local fn, u = Self.Fn(fn), Self.Tbl()
     for i,v in pairs(t) do
         if fn then
-            if index then
-                u[i] = fn(v, i, ...)
-            else
-                u[i] = fn(v, ...)
-            end
+            if index then u[i] = fn(v, i, ...) else u[i] = fn(v, ...) end
         else
             u[i] = v
         end
@@ -678,11 +710,16 @@ end
 
 -- Make sure all table entries are unique 
 function Self.TblUnique(t, k)
+    local u = Self.Tbl()
     for i,v in pairs(t) do
-        if Self.TblCountOnly(t, v) > 1 then
+        if u[v] ~= nil then
             if k then t[i] = nil else tremove(t, i) end
+        else
+            u[v] = true
         end
     end
+    Self.TblRelease(u)
+    return t
 end
 
 -- Substract the given tables from the table
@@ -878,7 +915,7 @@ end
 
 -- Split string on delimiter
 function Self.StrSplit(str, del)
-    return {del:split(str)}
+    return Self.Tbl(del:split(str))
 end
 
 -- Uppercase first char

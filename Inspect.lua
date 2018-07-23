@@ -51,7 +51,7 @@ function Self.Update(unit)
     -- Remember when we did this
     info.time = GetTime()
 
-    -- Determine the level for all basic inventory locations
+    -- Equipped items
     for equipLoc,slots in pairs(Item.SLOTS) do
         if not Util.In(equipLoc, Self.IGNORE) then
             local slotMin
@@ -83,7 +83,7 @@ function Self.Update(unit)
         end
     end
 
-    -- Determine the min level of all unique relic types for the currently equipped artifact weapon
+    -- Equipped relics
     local weapon = Item.GetEquippedArtifact(unit)
     if weapon then
         local relics = Util.TblGroupKeys(weapon:GetRelicSlots())

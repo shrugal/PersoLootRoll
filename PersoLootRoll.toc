@@ -22,7 +22,7 @@ Util\Comm.lua
 Util\Item.lua
 
 # Data
-Data\Trinkets.lua
+Data\Items.lua
 
 # Application logic
 Addon.lua

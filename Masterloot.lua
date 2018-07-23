@@ -66,7 +66,7 @@ end
 -- Check if the unit (or the player) is our masterlooter
 function Self.GetMasterlooter(unit)
     unit = Unit.Name(unit or "player")
-    if UnitIsUnit(unit, "player") then
+    if Unit.IsSelf(unit) then
         return Self.masterlooter
     else
         return Self.masterlooting[unit]
@@ -111,7 +111,7 @@ function Self.UnitAllow(unit)
     end
 
     -- Always allow
-    if UnitIsUnit(unit, "player") or config.allowAll then
+    if Unit.IsSelf(unit) or config.allowAll then
         return true
     end
 
@@ -180,7 +180,7 @@ function Self.SetSession(session, silent)
         local council = {}
         for i=1,GetNumGroupMembers() do
             local unit, rank = GetRaidRosterInfo(i)
-            if unit and not UnitIsUnit(unit, "player") and Self.IsOnCouncil(unit, true, rank) then
+            if unit and not Unit.IsSelf(unit) and Self.IsOnCouncil(unit, true, rank) then
                 council[Unit.FullName(unit)] = true
             end
         end

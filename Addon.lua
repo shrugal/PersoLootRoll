@@ -442,8 +442,8 @@ function Addon:RegisterOptions()
                 order = it(),
                 values = function ()
                     if not specs then
-                        local classId = select(3, UnitClass("player"))
-                        specs = Util.TblCopy(Item.CLASS_INFO[classId].specs, function (_, i) return select(2, GetSpecializationInfo(i)) end, true)
+                        local classId = Unit.ClassId("player")
+                        specs = Util.TblCopy(Item.CLASSES[classId].specs, function (_, i) return select(2, GetSpecializationInfo(i)) end, true)
                     end
                     return specs
                 end,
@@ -1060,7 +1060,7 @@ end
 
 -- Check if we should currently track loot etc.
 function Addon:IsTracking(unit)
-    if not unit or UnitIsUnit(unit, "player") then
+    if not unit or Unit.IsSelf(unit) then
         return self.db.profile.enabled
            and (not self.db.profile.onlyMasterloot or Masterloot.GetMasterlooter())
            and IsInGroup()

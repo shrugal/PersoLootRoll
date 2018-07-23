@@ -104,7 +104,7 @@ function Self.Show()
                             local s = ""
                             for i=1,GetNumGroupMembers() do
                                 local unit = GetRaidRosterInfo(i)
-                                if unit and not Addon.versions[unit] and not UnitIsUnit(unit, "player") then
+                                if unit and not Addon.versions[unit] and not Unit.IsSelf(unit) then
                                     s = Util.StrPostfix(s, ", ") .. Unit.ColoredName(Unit.ShortenedName(unit), unit)
                                 end
                             end

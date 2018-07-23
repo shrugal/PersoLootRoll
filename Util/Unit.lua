@@ -105,6 +105,16 @@ end
 --                       Other                       --
 -------------------------------------------------------
 
+-- Check if the unit is the current player
+function Self.IsSelf(unit)
+    return unit and UnitIsUnit(unit, "player")
+end
+
+-- Get the unit's class id
+function Self.ClassId(unit)
+    return select(3, UnitClass(unit))
+end
+
 -- Get a unit's realm name
 function Self.Realm(unit)
     local name, realm = UnitFullName(Self(unit))
@@ -137,7 +147,7 @@ end
 
 -- Shortcut for checking whether a unit is in our party or raid
 function Self.InGroup(unit, onlyOthers)
-    local isSelf = unit and UnitIsUnit(unit, "player")
+    local isSelf = Self.IsSelf(unit)
     return not (isSelf and onlyOthers) and (isSelf or UnitInParty(unit) or UnitInRaid(unit))
 end
 

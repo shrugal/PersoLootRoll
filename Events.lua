@@ -162,7 +162,7 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
             result = result * 100 / to
             
             -- Register the unit's bid
-            if roll and not roll.bids[unit] and Unit.InGroup(unit) and (UnitIsUnit(unit, "player") and roll:CanBeWon(unit) or roll:CanBeAwardedTo(unit)) then
+            if roll and not roll.bids[unit] and Unit.InGroup(unit) and (Unit.IsSelf(unit) and roll:CanBeWon(unit) or roll:CanBeAwardedTo(unit)) then
                 roll:Bid(bid, unit, result)
             end
 

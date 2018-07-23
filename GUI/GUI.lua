@@ -392,7 +392,7 @@ function Self.UnitClick(self, event, button)
             ChatFrame_SendSmartTell(unit)
         elseif button == "RightButton" then
             -- local dropDown = Self.DROPDOWN_UNIT
-            -- dropDown.which = UnitIsUnit(unit, "player") and "SELF" or UnitInRaid(unit) and "RAID_PLAYER" or UnitInParty(unit) and "PARTY" or "PLAYER"
+            -- dropDown.which = Unit.IsSelf(unit) and "SELF" or UnitInRaid(unit) and "RAID_PLAYER" or UnitInParty(unit) and "PARTY" or "PLAYER"
             -- dropDown.unit = unit
             -- ToggleDropDownMenu(1, nil, dropDown, "cursor", 3, -3)
         end

@@ -91,7 +91,7 @@ function Self.ShouldInitChat(target)
     if channel == Self.TYPE_WHISPER then
         if not c.whisper.ask then
             return false
-        elseif Addon:IsTracking(unit) or UnitIsUnit(unit, "player") then
+        elseif Addon:IsTracking(unit) or Unit.IsSelf(unit) then
             return false
         end
 
