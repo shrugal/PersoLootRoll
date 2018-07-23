@@ -1094,25 +1094,29 @@ function Addon:GetVersion(versionOrUnit)
 
     t = type(version)
     if t == "number" then
-        return floor(version), Addon.CHANNEL_STABLE, Util.NumRound((version - floor(version)) * 100)
+        return version, Addon.CHANNEL_STABLE, 0
     elseif t == "string" then
-        major, channel, minor = version:match("([%d.]+)-(%a+)(%d+)")
-        return tonumber(major), channel, tonumber(minor)
+        local version, channel, revision = version:match("([%d.]+)-(%a+)(%d+)")
+        return tonumber(version), channel, tonumber(revision)
     end
 end
 
 -- Get 1 if the version is higher, -1 if the version is lower or 0 if they are the same or on non-comparable channels
 function Addon:CompareVersion(versionOrUnit)
-    local major, channel, minor = self:GetVersion(versionOrUnit)
-    if major then 
-        local myMajor, myChannel, myMinor = self:GetVersion()
+    local version, channel, revision = self:GetVersion(versionOrUnit)
+    if version then
+        local myVersion, myChannel, myRevision = self:GetVersion()
         local channelNum, myChannelNum = Addon.CHANNELS[channel], Addon.CHANNELS[myChannel]
 
-        return  channel == myChannel and Util.Compare(major + minor / 100, myMajor + myMinor / 100)
-                or channelNum and myChannelNum and (
-                    channelNum > myChannelNum and major >= myMajor and 1
-                    or channelNum < myChannelNum and major <= myMajor and -1
-                ) or 0
+        if channel == myChannel then
+            return version == myVersion and Util.Compare(revision, myRevision) or Util.Compare(version, myVersion)
+        elseif channelNum and myChannelNum then
+            return version >= myVersion and channelNum > myChannelNum and 1
+                or version <= myVersion and channelNum < myChannelNum and -1
+                or 0
+        else
+            return 0
+        end
     end
 end
 
