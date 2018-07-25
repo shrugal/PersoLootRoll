@@ -202,43 +202,55 @@ end
 -- BID
 
 -- Messages when bidding on a roll
-function Self.RollBid(roll, bid, fromUnit)
-    local fromSelf = UnitIsUnit(fromUnit, "player")
-
-    if roll.isOwner then
-        local data = {ownerId = roll.ownerId, bid = bid, fromUnit = Unit.FullName(fromUnit)}
-
-        -- Send to all or the council
-        if Addon.db.profile.masterlooter.bidPublic then
-            Self.SendData(Self.EVENT_BID, data)
-        elseif Masterloot.IsMasterlooter() then
-            for target,_ in pairs(Masterloot.session.council or {}) do
-                Self.SendData(Self.EVENT_BID, data, target)
-            end
+function Self.RollBid(roll, bid, fromUnit, isImport)
+    local fromSelf = Unit.IsSelf(fromUnit)
+    
+    -- Show a confirmation message
+    if fromSelf then
+        if bid == Roll.BID_PASS then
+            Addon:Echo(isImport and Addon.ECHO_DEBUG or Addon.ECHO_VERBOSE, L["BID_PASS"], (roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner))
+        else
+            Addon:Echo(isImport and Addon.ECHO_DEBUG or Addon.ECHO_VERBOSE, L["BID_START"], roll:GetBidName(bid), (roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner))
         end
-    elseif fromSelf then
-        if roll.ownerId then
-            -- Send to owner
-            Self.SendData(Self.EVENT_BID, {ownerId = roll.ownerId, bid = bid}, roll.owner)
-        elseif bid ~= Roll.BID_PASS then
-            local owner, link = roll.item.owner, roll.item.link
+    end
 
-            -- Roll on it in chat or whisper the owner
-            if roll.posted then
-                if Addon.db.profile.messages.group.roll and Events.lastPostedRoll == roll then
-                    RandomRoll("1", floor(bid) == Roll.BID_GREED and "50" or "100")
+    -- Inform others
+    if not isImport then
+        if roll.isOwner then
+            local data = Util.Tbl(true, "ownerId", roll.ownerId, "bid", bid, "fromUnit", Unit.FullName(fromUnit))
+
+            -- Send to all or the council
+            if Util.Check(Masterloot.GetMasterlooter(), Addon.db.profile.masterlooter.bidPublic, Addon.db.profile.bidPublic) then
+                Self.SendData(Self.EVENT_BID, data)
+            elseif Masterloot.IsMasterlooter() then
+                for target,_ in pairs(Masterloot.session.council or {}) do
+                    Self.SendData(Self.EVENT_BID, data, target)
                 end
-            elseif Addon.db.profile.messages.whisper.ask then
-                if roll.whispers >= Self.MAX_WHISPERS then
-                    Addon:Info(L["BID_MAX_WHISPERS"], Self.GetPlayerLink(owner), link, Self.MAX_WHISPERS, Self.GetTradeLink(owner))
-                elseif not Self.ShouldInitChat(owner) then
-                    Addon:Info(L["BID_NO_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
-                else
-                    Self.ChatLine("MSG_BID", owner, link or Locale.GetChatLine('MSG_ITEM', owner))
-                    roll.whispers = roll.whispers + 1
+            end
+        elseif fromSelf then
+            if roll.ownerId then
+                -- Send to owner
+                Self.SendData(Self.EVENT_BID, {ownerId = roll.ownerId, bid = bid}, roll.owner)
+            elseif bid ~= Roll.BID_PASS then
+                local owner, link = roll.item.owner, roll.item.link
 
-                    Addon:Info(L["BID_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
-                    Self.SendData(Self.EVENT_BID_WHISPER, {owner = Unit.FullName(owner), link = link})
+                -- Roll on it in chat or whisper the owner
+                if roll.posted then
+                    if Addon.db.profile.messages.group.roll and Events.lastPostedRoll == roll then
+                        RandomRoll("1", floor(bid) == Roll.BID_GREED and "50" or "100")
+                    end
+                elseif Addon.db.profile.messages.whisper.ask then
+                    if roll.whispers >= Self.MAX_WHISPERS then
+                        Addon:Info(L["BID_MAX_WHISPERS"], Self.GetPlayerLink(owner), link, Self.MAX_WHISPERS, Self.GetTradeLink(owner))
+                    elseif not Self.ShouldInitChat(owner) then
+                        Addon:Info(L["BID_NO_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
+                    else
+                        Self.ChatLine("MSG_BID", owner, link or Locale.GetChatLine('MSG_ITEM', owner))
+                        roll.whispers = roll.whispers + 1
+
+                        Addon:Info(L["BID_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
+                        Self.SendData(Self.EVENT_BID_WHISPER, {owner = Unit.FullName(owner), link = link})
+                    end
                 end
             end
         end
@@ -254,45 +266,34 @@ function Self.RollBidError(roll, sender)
     end
 end
 
--- Show a confirmation message for a bid by the player
-function Self.RollBidSelf(roll, isImport)
-    if roll.bid == Roll.BID_PASS then
-        Addon:Echo(isImport and Addon.ECHO_DEBUG or Addon.ECHO_VERBOSE, L["BID_PASS"], (roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner))
-    else
-        Addon:Echo(isImport and Addon.ECHO_DEBUG or Addon.ECHO_VERBOSE, L["BID_START"], roll:GetBidName(roll.bid), (roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner))
-    end
-end
-
 -- VOTE
 
 -- Messages when voting on a roll
-function Self.RollVote(roll, vote, fromUnit)
-    local fromSelf = UnitIsUnit(fromUnit, "player")
+function Self.RollVote(roll, vote, fromUnit, isImport)
+    local fromSelf = Unit.IsSelf(fromUnit)
 
-    if roll.isOwner then
-        local data = {ownerId = roll.ownerId, vote = Unit.FullName(vote), fromUnit = Unit.FullName(fromUnit)}
+    -- Inform others
+    if not isImport then
+        if roll.isOwner then
+            local data = Util.Tbl(true, "ownerId", roll.ownerId, "vote", Unit.FullName(vote), "fromUnit", Unit.FullName(fromUnit))
 
-        -- Send to all or the council
-        if Addon.db.profile.masterlootert.votePublic then
-            Self.SendData(Self.EVENT_VOTE, data)
-        elseif Masterloot.IsMasterlooter() then
-            for target,_ in pairs(Masterloot.session.council or {}) do
-                Self.SendData(Self.EVENT_VOTE, data, target)
+            -- Send to all or the council
+            if Addon.db.profile.masterlooter.votePublic then
+                Self.SendData(Self.EVENT_VOTE, data)
+            elseif Masterloot.IsMasterlooter() then
+                for target,_ in pairs(Masterloot.session.council or {}) do
+                    Self.SendData(Self.EVENT_VOTE, data, target)
+                end
             end
+        elseif fromSelf then
+            -- Send to owner
+            Self.SendData(Self.EVENT_VOTE, {ownerId = roll.ownerId, vote = Unit.FullName(vote)}, Masterloot.GetMasterlooter())
         end
-    elseif fromSelf then
-        -- Send to owner
-        Self.SendData(Self.EVENT_VOTE, {ownerId = roll.ownerId, vote = Unit.FullName(vote)}, Masterloot.GetMasterlooter())
     end
 end
 
 -- Show an error message for an invalid vote
 function Self.RollVoteError(roll, sender)
-    -- TODO
-end
-
--- Show a confirmation message for a vote by the player
-function Self.RollVoteSelf(roll, isImport)
     -- TODO
 end
 

@@ -193,6 +193,8 @@ L["OPT_DONT_SHARE"] = "Keine Beute teilen"
 L["OPT_DONT_SHARE_DESC"] = "Rolle nicht auf die Beute anderer, und teile deine eigene Beute nicht. Das Addon wird Anfragen zu deiner eigenen Beute verneinen (wenn aktiviert), und du kannst weiterhin Plündermeister und Ratsmitglied sein."
 L["OPT_AWARD_SELF"] = "Eigene Beute selbst verteilen"
 L["OPT_AWARD_SELF_DESC"] = "Wähle selbst wer deinen Loot bekommen soll, anstatt das Addon entscheiden zu lassen. Wenn du Plündermeister bist ist dies immer aktiv"
+L["OPT_BID_PUBLIC"] = "Gebote öffentlich"
+L["OPT_BID_PUBLIC_DESC"] = "Gebote deiner Verlosungen sind öffentlich, sodass jeder mit dem Addon sie sehen kann."
 
 L["OPT_UI"] = "Benutzerinterface"
 L["OPT_UI_DESC"] = "Passe das Aussehen von %s nach deinen Bedürfnissen an."

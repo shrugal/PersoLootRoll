@@ -193,6 +193,8 @@ L["OPT_DONT_SHARE"] = "Don't share loot" -- Translation missing
 L["OPT_DONT_SHARE_DESC"] = "Don't roll on loot from others and don't share your own loot. The addon will deny incoming requests for your loot (if enabled), and you can still be masterlooter and loot council member." -- Translation missing
 L["OPT_AWARD_SELF"] = "自行選擇贏家"
 L["OPT_AWARD_SELF_DESC"] = "自行選擇誰該得到你的戰利品，而非讓插件隨機選擇，當你是拾取分配者時，始終啟用此功能。"
+L["OPT_BID_PUBLIC"] = "公開競標"
+L["OPT_BID_PUBLIC_DESC"] = "Bids on your rolls are public, so everyone with the addon can see them." -- Translation missing
 
 L["OPT_UI"] = "使用者介面"
 L["OPT_UI_DESC"] = "根據自己的喜好自訂%s的外觀。"

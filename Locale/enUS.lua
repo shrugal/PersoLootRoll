@@ -193,6 +193,8 @@ L["OPT_DONT_SHARE"] = "Don't share loot"
 L["OPT_DONT_SHARE_DESC"] = "Don't roll on loot from others and don't share your own loot. The addon will deny incoming requests for your loot (if enabled), and you can still be masterlooter and loot council member."
 L["OPT_AWARD_SELF"] = "Choose winner of your items yourself"
 L["OPT_AWARD_SELF_DESC"] = "Choose for yourself who should get your loot, instead of letting the addon randomly pick someone. This is always enabled when you are a masterlooter."
+L["OPT_BID_PUBLIC"] = "Bids public"
+L["OPT_BID_PUBLIC_DESC"] = "Bids on your rolls are public, so everyone with the addon can see them."
 
 L["OPT_UI"] = "User interface"
 L["OPT_UI_DESC"] = "Customize %s's look and feel to your liking."

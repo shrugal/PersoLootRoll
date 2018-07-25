@@ -424,7 +424,7 @@ end
 function Self:Bid(bid, fromUnit, rollOrImport)
     bid = bid or Self.BID_NEED
     fromUnit = Unit.Name(fromUnit or "player")
-    local fromSelf = UnitIsUnit(fromUnit, "player")
+    local fromSelf = Unit.IsSelf(fromUnit)
 
     -- It might be a roll in chat or an import operation
     local rollResult, isImport = type(rollOrImport) == "number" and rollOrImport, rollOrImport == true
@@ -457,15 +457,12 @@ function Self:Bid(bid, fromUnit, rollOrImport)
 
         if fromSelf then
             self.bid = bid
-            Comm.RollBidSelf(self, isImport)
         end        
 
         Self.events:Fire(Self.EVENT_BID, self, bid, fromUnit, rollOrImport)
 
         -- Let everyone know
-        if not isImport then
-            Comm.RollBid(self, bid, fromUnit)
-        end
+        Comm.RollBid(self, bid, fromUnit, isImport)
 
         -- Check if we should end the roll or advertise to chat
         if self.status == Self.STATUS_RUNNING and not self:CheckEnd() and self.isOwner then
@@ -480,7 +477,7 @@ end
 function Self:Vote(vote, fromUnit, isImport)
     vote = Unit.Name(vote)
     fromUnit = Unit.Name(fromUnit or "player")
-    local fromSelf = UnitIsUnit(fromUnit, "player")
+    local fromSelf = Unit.IsSelf(fromUnit)
 
     -- Check if we can vote
     local valid, msg = self:Validate(nil, vote, fromUnit)
@@ -494,15 +491,12 @@ function Self:Vote(vote, fromUnit, isImport)
 
         if fromSelf then
             self.vote = vote
-            Comm.RollVoteSelf(self, isImport)
         end
 
         Self.events:Fire(Self.EVENT_VOTE, self, vote, fromUnit, isImport)
 
         -- Let everyone know
-        if not isImport then
-            Comm.RollVote(self, vote, fromUnit)
-        end
+        Comm.RollVote(self, vote, fromUnit)
     end
 end
 

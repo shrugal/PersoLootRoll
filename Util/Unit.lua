@@ -132,9 +132,13 @@ function Self.ClassId(unit)
 end
 
 -- Get a list of all specs
-function Self.Specs(forSelf)
-    if forSelf then
-        return Util.TblCopy(Self.CLASSES[Self.ClassId("player")].specs, function (_, i) return select(2, GetSpecializationInfo(i)) end, true)
+function Self.Specs(unit)
+    if unit then
+        local classId, specs = Self.ClassId(unit), Util.Tbl()
+        for i=1,GetNumSpecializationsForClassID(classId) do
+            specs[i] = select(2, GetSpecializationInfoForClassID(classId, i))
+        end
+        return specs
     else
         Self.specs = Self.specs or Util.TblCopy(Self.SPECS, function (id) return select(2, GetSpecializationInfoByID(id)) end)
         return Self.specs

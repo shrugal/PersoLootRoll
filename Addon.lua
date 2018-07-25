@@ -47,6 +47,7 @@ function Addon:OnInitialize()
             onlyMasterloot = false,
             dontShare = false,
             awardSelf = false,
+            bidPublic = false,
             ui = {showRollFrames = true, showActionsWindow = true, showRollsWindow = false},
             
             -- Item filter
@@ -326,13 +327,13 @@ function Addon:RegisterOptions()
                 get = function (_) return self.db.profile.enabled end,
                 width = half
             },
-            dontShare = {
-                name = L["OPT_DONT_SHARE"],
-                desc = L["OPT_DONT_SHARE_DESC"],
+            awardSelf = {
+                name = L["OPT_AWARD_SELF"],
+                desc = L["OPT_AWARD_SELF_DESC"],
                 type = "toggle",
                 order = it(),
-                set = function (_, val) self.db.profile.dontShare = val end,
-                get = function () return self.db.profile.dontShare end,
+                set = function (_, val) self.db.profile.awardSelf = val end,
+                get = function () return self.db.profile.awardSelf end,
                 width = half
             },
             onlyMasterloot = {
@@ -347,13 +348,22 @@ function Addon:RegisterOptions()
                 get = function () return self.db.profile.onlyMasterloot end,
                 width = half
             },
-            awardSelf = {
-                name = L["OPT_AWARD_SELF"],
-                desc = L["OPT_AWARD_SELF_DESC"],
+            bidPublic = {
+                name = L["OPT_BID_PUBLIC"],
+                desc = L["OPT_BID_PUBLIC_DESC"],
                 type = "toggle",
                 order = it(),
-                set = function (_, val) self.db.profile.awardSelf = val end,
-                get = function () return self.db.profile.awardSelf end,
+                set = function (_, val) self.db.profile.bidPublic = val end,
+                get = function () return self.db.profile.bidPublic end,
+                width = half
+            },
+            dontShare = {
+                name = L["OPT_DONT_SHARE"],
+                desc = L["OPT_DONT_SHARE_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) self.db.profile.dontShare = val end,
+                get = function () return self.db.profile.dontShare end,
                 width = half
             },
             ui = {type = "header", order = it(), name = L["OPT_UI"]},
@@ -444,7 +454,7 @@ function Addon:RegisterOptions()
                 order = it(),
                 values = function ()
                     if not specs then
-                        specs = Unit.Specs(true)
+                        specs = Unit.Specs("player")
                     end
                     return specs
                 end,
