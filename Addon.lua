@@ -267,6 +267,9 @@ function Addon:HandleChatCommand(msg)
     -- Rolls/None
     elseif cmd == "rolls" or not cmd then
         GUI.Rolls.Show()
+    -- Update and export trinket list
+    elseif cmd == "updatetrinkets" and Item.UpdateTrinkets then
+        Item.UpdateTrinkets()
     -- Unknown
     else
         self:Err(L["ERROR_CMD_UNKNOWN"], cmd)
@@ -441,14 +444,13 @@ function Addon:RegisterOptions()
                 order = it(),
                 values = function ()
                     if not specs then
-                        local classId = Unit.ClassId("player")
-                        specs = Util.TblCopy(Item.CLASSES[classId].specs, function (_, i) return select(2, GetSpecializationInfo(i)) end, true)
+                        specs = Unit.Specs(true)
                     end
                     return specs
                 end,
                 set = function (_, key, val)
                     self.db.char.specs[key] = val
-                    wipe(Item.playerSlotLevels)
+                    wipe(Item.playerCache)
                 end,
                 get = function (_, key) return self.db.char.specs[key] end
             },

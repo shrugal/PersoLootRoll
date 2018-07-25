@@ -131,6 +131,9 @@ end
 Self.tblPool = {}
 Self.tblPoolSize = 10
 
+-- For whenever we need an empty table as a noop
+Self.TBL_EMPTY = {}
+
 -- Get a table (newly created or from the cache), and fill it with key/value pairs
 function Self.Tbl(isMap, ...)
     local t = tremove(Self.tblPool) or {}
@@ -915,7 +918,7 @@ end
 
 -- Split string on delimiter
 function Self.StrSplit(str, del)
-    return Self.Tbl(del:split(str))
+    return Self.Tbl(false, del:split(str))
 end
 
 -- Uppercase first char
@@ -1078,7 +1081,9 @@ end
 
 -- Shortcut for val == x or val == y or ...
 function Self.In(val, ...)
-    if type(...) == "table" then
+    if select("#", ...) == 0 then
+        return false
+    elseif type(...) == "table" then
         return Self.TblFind((...), val) ~= nil
     else
         for i=1,select("#", ...) do

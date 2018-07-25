@@ -19,6 +19,22 @@ Self.SHAMAN = 7
 Self.WARLOCK = 9
 Self.WARRIOR = 1
 
+-- Specs
+Self.SPECS = {
+    250, 251, 252,      -- Death Knight
+    577, 581,           -- Demon Hunter
+    102, 103, 104, 105, -- Druid
+    253, 254, 255,      -- Hunter
+    62, 63, 64,         -- Mage
+    268, 270, 269,      -- Monk
+    65, 66, 70,         -- Paladin
+    256, 257, 258,      -- Priest
+    259, 260, 261,      -- Rogue
+    262, 263, 264,      -- Shaman
+    265, 266, 267,      -- Warlock
+    71, 72, 73          -- Warrior
+}
+
 -------------------------------------------------------
 --                       Names                       --
 -------------------------------------------------------
@@ -113,6 +129,16 @@ end
 -- Get the unit's class id
 function Self.ClassId(unit)
     return select(3, UnitClass(unit))
+end
+
+-- Get a list of all specs
+function Self.Specs(forSelf)
+    if forSelf then
+        return Util.TblCopy(Self.CLASSES[Self.ClassId("player")].specs, function (_, i) return select(2, GetSpecializationInfo(i)) end, true)
+    else
+        Self.specs = Self.specs or Util.TblCopy(Self.SPECS, function (id) return select(2, GetSpecializationInfoByID(id)) end)
+        return Self.specs
+    end
 end
 
 -- Get a unit's realm name

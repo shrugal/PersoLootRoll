@@ -21,6 +21,7 @@ Self.PATTERN_ILVL_SCALED = ITEM_LEVEL_ALT:gsub("%(%%d%)", "%%%(%%%d%%%)"):gsub("
 Self.PATTERN_HEIRLOOM_LEVEL = ITEM_LEVEL_RANGE:gsub("%%d", "(%%d+)")
 Self.PATTERN_RELIC_TYPE = RELIC_TOOLTIP_TYPE:gsub("%%s", "(.+)")
 Self.PATTERN_CLASSES = ITEM_CLASSES_ALLOWED:gsub("%%s", "(.+)")
+Self.PATTERN_SPEC = ITEM_REQ_SPECIALIZATION:gsub("%%s", "(.+)")
 Self.PATTERN_STRENGTH = ITEM_MOD_STRENGTH:gsub("%%c%%s", "^%%p(.+)")
 Self.PATTERN_INTELLECT = ITEM_MOD_INTELLECT:gsub("%%c%%s", "^%%p(.+)")
 Self.PATTERN_AGILITY = ITEM_MOD_AGILITY:gsub("%%c%%s", "^%%p(.+)")
@@ -69,7 +70,7 @@ Self.INFO = {
         classId = 12,
         subClassId = 13,
         bindType = 14,
-        -- expacId = 15,
+        expacId = 15,
         -- setId = 16,
         -- isCraftingReagent = 17
     },
@@ -84,7 +85,7 @@ Self.INFO = {
 }
 
 -- Cache the player's ilvl per slot
-Self.playerSlotLevels = {}
+Self.playerCache = {}
 
 -- New items waiting for the BAG_UPDATE_DELAYED event
 Self.queue = {}
@@ -148,7 +149,7 @@ local scanFn = function (i, line, lines, attr)
 end
 
 function Self.GetInfo(item, attr, ...)
-    local link = item.link or item
+    local link = item and item.link or item
 
     if not link then
         return
@@ -342,7 +343,16 @@ function Self:GetFullInfo()
             if not self.classes then
                 local classes = line:match(Self.PATTERN_CLASSES)
                 if classes then
-                    self.classes = Util.StrSplit(classes, ", ")
+                    self.classes = Util.StrSplit(classes:gsub(", ", ","), ",")
+                    return
+                end
+            end
+
+            -- Spec restrictions
+            if not self.spec then
+                local spec = line:match(Self.PATTERN_SPEC)
+                if spec and Util.In(spec, Unit.Specs()) then
+                    self.spec = spec
                     return
                 end
             end
@@ -391,6 +401,8 @@ function Self:GetFullInfo()
             end
         end, self.link)
 
+        Util.TblRelease(specs)
+
         -- Effective and max level
         self.effectiveLevel = self.effectiveLevel or self.level
         self.maxLevel = self.quality == LE_ITEM_QUALITY_HEIRLOOM and Self.GetInfo(Self.GetScaledLink(self.link, self.toLevel), "level") or self.effectiveLevel
@@ -412,10 +424,15 @@ end
 --              Equipment location info              --
 -------------------------------------------------------
 
+-- Get the equipment location or relic type
+function Self:GetLocation()
+    return self:GetBasicInfo().isRelic and self:GetFullInfo().relicType or self.equipLoc
+end
+
 -- Determine if two items belong to the same location
-function Self:IsSameLocation(item)
-    local selfLoc = Self.GetInfo(self, "equipLoc")
-    local itemLoc = Self.GetInfo(item, "equipLoc")
+function Self:IsSameLocation(item, weaponsSameLoc)
+    local selfLoc = (type(self) == "table" or Self.IsLink(self)) and Self.GetInfo(self, "equipLoc") or self
+    local itemLoc = (type(item) == "table" or Self.IsLink(item)) and Self.GetInfo(item, "equipLoc") or item
 
     -- Artifact relics (and maybe other things without equipLoc)
     if Util.StrIsEmpty(selfLoc) then
@@ -424,80 +441,78 @@ function Self:IsSameLocation(item)
         return false
     end
 
-    local selfWeapon = Util.In(selfLoc, Self.TYPE_WEAPONS)
-    local itemWeapon = Util.In(itemLoc, Self.TYPE_WEAPONS)
+    local selfWeapon = Util.In(selfLoc, Self.TYPES_WEAPON)
+    local itemWeapon = Util.In(itemLoc, Self.TYPES_WEAPON)
 
     -- Weapons and armor
     if selfWeapon ~= itemWeapon then
         return false
-    elseif not selfWeapon then
-        return Util.TblEquals(Self.SLOTS[selfLoc], Self.SLOTS[itemLoc])
+    elseif selfWeapon and weaponsSameLoc then
+        return true
     elseif selfLoc == Self.TYPE_WEAPONMAINHAND then
         return not Util.In(selfLoc, Self.TYPE_WEAPONOFFHAND, Self.TYPE_HOLDABLE)
     elseif Util.In(selfLoc, Self.TYPE_WEAPONOFFHAND, Self.TYPE_HOLDABLE) then
         return itemLoc ~= Self.TYPE_WEAPONMAINHAND
     else
-        return true
+        return selfWeapon or Util.TblEquals(Self.SLOTS[selfLoc], Self.SLOTS[itemLoc])
     end
 end
 
 -- Get a list of owned items by equipment location
-function Self:GetOwnedForLocation(equipped, bag)
+function Self.GetOwnedForLocation(loc, allWeapons)
     local items = Util.Tbl()
     local classId = Unit.ClassId("player")
 
-    -- We need to scan more slots for weapons
-    local slots = Self.SLOTS[self:IsWeapon() and Self.TYPE_WEAPON or self.equipLoc]
-
-    -- We will need the relic type for relics
-    if self.isRelic then
-        self:GetFullInfo()
+    local isRelic
+    if type(loc) == "table" then
+        isRelic = loc:GetBasicInfo().isRelic
+        loc = isRelic and loc:GetFullInfo().relicType or loc.equipLoc
+    else
+        isRelic = loc:sub(1, 7) ~= "INVTYPE"
     end
 
+    local slots = Self.SLOTS[allWeapons and Util.In(loc, Self.TYPES_WEAPON) and Self.TYPE_WEAPON or loc]
+
     -- Get equipped item(s)
-    if self.isEquippable and equipped ~= false then
-        if self.isRelic then
-            local weapon = Self.GetEquippedArtifact()
-            items = weapon and weapon:GetRelics(self.relicType) or items
-        else
-            for i,slot in pairs(slots) do
-                local link = GetInventoryItemLink("player", slot)
-                if link and Self.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY and self:IsSameLocation(link) then
-                    tinsert(items, link)
-                end
+    if isRelic then
+        local weapon = Self.GetEquippedArtifact()
+        items = weapon and weapon:GetRelics(loc) or items
+    else
+        for i,slot in pairs(slots) do
+            local link = GetInventoryItemLink("player", slot)
+            if link and not Self.IsLegionLegendary(link) and Self.IsSameLocation(link, loc, allWeapons) then
+                tinsert(items, link)
             end
         end
     end
 
     -- Get item(s) from bag
-    if bag ~= false then
-        for bag=1,NUM_BAG_SLOTS do
-            for slot=1, GetContainerNumSlots(bag) do
-                local link = GetContainerItemLink(bag, slot)
+    for bag=1,NUM_BAG_SLOTS do
+        for slot=1, GetContainerNumSlots(bag) do
+            local link = GetContainerItemLink(bag, slot)
 
-                if link and Self.GetInfo(link, "isEquippable") then
-                    if self.isRelic then
-                        if Self.GetInfo(link, "isRelic") then
-                            -- It's a relic
-                            if Self.GetInfo(link, "relicType") == self.relicType then
-                                tinsert(items, link)
-                            end
-                        elseif Self.GetInfo(link, "classId") == LE_ITEM_CLASS_WEAPON then
-                            -- It might be an artifact weapon
-                            local id = Self.GetInfo(link, "id")
-                            for i,spec in pairs(Self.CLASSES[classId].specs) do
-                                if id == spec.artifact.id and Addon.db.char.specs[i] then
-                                    for slot,relicType in pairs(spec.artifact.relics) do
-                                        if relicType == self.relicType then
-                                            tinsert(items, (select(2, GetItemGem(link, slot))))
-                                        end
+            if link and Self.GetInfo(link, "isEquippable") then
+                if isRelic then
+                    if Self.GetInfo(link, "isRelic") then
+                        -- It's a relic
+                        if Self.GetInfo(link, "relicType") == loc then
+                            tinsert(items, link)
+                        end
+                    elseif Self.GetInfo(link, "classId") == LE_ITEM_CLASS_WEAPON then
+                        -- It might be an artifact weapon
+                        local id = Self.GetInfo(link, "id")
+                        for i,spec in pairs(Self.CLASSES[classId].specs) do
+                            if id == spec.artifact.id and Addon.db.char.specs[i] then
+                                for slot,relicType in pairs(spec.artifact.relics) do
+                                    if relicType == loc then
+                                        tinsert(items, (select(2, GetItemGem(link, slot))))
                                     end
                                 end
                             end
                         end
-                    elseif Self.GetInfo(link, "quality") ~= LE_ITEM_QUALITY_LEGENDARY and self:IsSameLocation(link) then
-                        tinsert(items, link)
                     end
+                elseif not Self.IsLegionLegendary(link) and Self.IsSameLocation(link, loc, allWeapons) then
+                    tinsert(items, link)
                 end
             end
         end
@@ -559,69 +574,34 @@ end
 -- Get the reference level for equipment location
 function Self:GetLevelForLocation(unit)
     unit = Unit(unit or "player")
-    local loc = self:GetBasicInfo().isRelic and self:GetFullInfo().relicType or self.equipLoc
+    local loc = self:GetLocation()
 
     if Unit.IsSelf(unit) then
         -- For the player
         if self:IsWeapon() then
             -- Weapons
+            Self.UpdatePlayerCacheWeapons()
+
             local loc = Util.Select(loc, Self.TYPE_HOLDABLE, Self.TYPE_WEAPONOFFHAND, Self.TYPE_2HWEAPON, Self.TYPE_WEAPON, loc)
-            local specs = Self.CLASSES[Unit.ClassId(unit)].specs
-            local owned, slotMin
+            local slotMin
 
-            -- Find the min owned itemlvl for all usable attributes the weapon has
-            for attr in pairs(self:GetFullInfo().attributes) do
-                if Util.TblFindWhere(specs, "attribute", attr) then
-                    local cache = Self.playerSlotLevels[loc .. attr] or {}
-                    if not cache.ilvl or not cache.time or cache.time + Inspect.REFRESH < GetTime() then
-                        cache.time = GetTime()
-                        owned = owned or self:GetOwnedForLocation()
-                        local main, off, both1, both2, twohand = 0, 0, 0, 0, 0
-
-                        for i,item in pairs(owned) do
-                            owned[i] = Self.FromLink(item, "player"):GetBasicInfo()
-                            item = owned[i]
-
-                            if item:IsWeapon() and item:GetFullInfo().attributes[attr] then
-                                if item.equipLoc == Self.TYPE_WEAPONMAINHAND then
-                                    main = max(main, item.level)
-                                elseif Util.In(item.equipLoc, Self.TYPE_WEAPONOFFHAND, Self.TYPE_HOLDABLE) then
-                                    off = max(off, item.level)
-                                elseif item.equipLoc == Self.TYPE_2HWEAPON then
-                                    twohand = max(twohand, item.level)
-                                else
-                                    both1, both2 = max(both1, both2, item.level), min(both1, max(both2, item.level))
-                                end
-                            end
-                        end
-
-                        if loc == Self.TYPE_WEAPONMAINHAND then
-                            cache.ilvl = max(main, both1, twohand)
-                        elseif loc == Self.TYPE_WEAPONOFFHAND then
-                            cache.ilvl = max(off, both1, twohand)
-                        else
-                            cache.ilvl = max(min(main, off), min(main, both1), min(both1, off), both2, twohand)
-                        end
-
-                        Self.playerSlotLevels[loc .. attr] = cache
-                    end
-
-                    slotMin = min(slotMin or cache.ilvl, cache.ilvl)
+            for spec in pairs(Self.CLASSES[Unit.ClassId(unit)].specs) do
+                if self:IsUseful(unit, spec) then
+                    local cache = Self.GetPlayerCache(loc, spec)
+                    slotMin = cache and min(slotMin or cache.ilvl, cache.ilvl)
                 end
             end
-
-            Util.TblRelease(true, owned)
 
             return slotMin or 0
         else
             -- Everything else
-            local cache = Self.playerSlotLevels[loc] or {}
+            local cache = Self.playerCache[loc] or {}
             if not cache.ilvl or not cache.time or cache.time + Inspect.REFRESH < GetTime() then
                 cache.time = GetTime()
                 cache.ilvl = Util(self:GetOwnedForLocation())
                     .Map(Self.GetInfo, false, "maxLevel")
                     .Sort(true)(self:GetSlotCountForLocation())
-                Self.playerSlotLevels[loc] = cache
+                Self.playerCache[loc] = cache
             end
 
             return cache.ilvl or 0
@@ -721,7 +701,7 @@ function Self:HasSufficientQuality()
 end
 
 -- Check if an item can be equipped
-function Self:CanBeEquipped(unit)
+function Self:CanBeEquipped(unit, ...)
     -- Check if it's equippable
     if not self:GetBasicInfo().isEquippable then
         return false
@@ -733,9 +713,19 @@ function Self:CanBeEquipped(unit)
     local className, _, classId = UnitClass(unit)
     local isSelf = Unit.IsSelf(unit)
 
-    -- Check if there are class restrictions
+    -- Check if there are class/spec restrictions
     if self.classes and not Util.In(className, self.classes) then
         return false
+    elseif ... then
+        local found = false
+        for i=1, select("#", ...) do
+            local spec = select(i, ...)
+            if not (self.spec and self.spec ~= select(2, GetSpecializationInfo(spec))) and
+               not (self:IsLegionArtifact() and self.id ~= Self.CLASSES[classId].specs[spec].artifact.id) then
+                found = true break
+            end
+        end
+        if not found then return false end
     end
 
     -- Everyone can wear cloaks
@@ -763,24 +753,20 @@ function Self:CanBeEquipped(unit)
 end
 
 -- Check if item either has no or matching primary attributes
-function Self:HasMatchingAttributes(unit)
+function Self:HasMatchingAttributes(unit, ...)
     unit = unit or "player"
-    local isSelf, classId = Unit.IsSelf(unit), Unit.ClassId(unit)
-
     self:GetFullInfo()
 
     -- Item has no primary attributes
     if not self.attributes or not next(self.attributes) then
         return true
-    -- Check if item has a primary attribute that the class can use
+    -- Check if item has a primary attribute that the class/spec can use
     else
-        for i,spec in pairs(Self.CLASSES[classId].specs) do
-            if not isSelf or Addon.db.char.specs[i] then
-                for attr,_ in pairs(self.attributes) do
-                    if attr == spec.attribute then
-                        return true
-                    end
-                end
+        local isSelf, classId = Unit.IsSelf(unit), Unit.ClassId(unit)
+
+        for i,info in pairs(Self.CLASSES[classId].specs) do
+            if not isSelf or Util.Check(..., Util.In(i, ...), true) then
+                if self.attributes[info.attribute] then return true end
             end
         end
     end
@@ -794,25 +780,32 @@ function Self:HasSufficientLevel(unit)
 end
 
 -- Check if item is useful for the player
-function Self:IsUseful(unit)
+function Self:IsUseful(unit, ...)
     unit = unit or "player"
+    self:GetBasicInfo()
 
-    if not (self:CanBeEquipped(unit) and self:HasMatchingAttributes(unit)) then
-        return false
-    elseif self:GetBasicInfo().equipLoc == Self.TYPE_TRINKET then
-        if not Util.TblFindWhere(Self.TRINKETS, self.id) then
+    if self.equipLoc == Self.TYPE_TRINKET then
+        if not Self.TRINKETS[self.id] then
             return true
         else
-            local isSelf, classId = Unit.IsSelf(unit), Unit.ClassId(unit)
-            for i,spec in pairs(Self.CLASSES[classId].specs) do
-                if (not isSelf or Addon.db.char.specs[i]) then
-                    if Self.TRINKETS[spec.attribute][self.id] or Self.TRINKETS[spec.role] and Self.TRINKETS[spec.role][self.id] then
-                        return true
-                    end
+            local cat = Self.TRINKETS[self.id]
+            for i,spec in pairs(Self.CLASSES[Unit.ClassId(unit)].specs) do
+                if  (not ... or Util.In(i, ...))
+                    and (bit.band(cat, Self.MASK_ATTR) == 0 or bit.band(cat, spec.attribute) > 0)
+                    and (bit.band(cat, Self.MASK_ROLE) == 0 or bit.band(cat, spec.role) > 0) then
+                    return true
                 end
             end
             return false
         end
+    elseif not self:CanBeEquipped(unit, ...) or not self:HasMatchingAttributes(unit, ...) then
+        return false
+    elseif self:IsWeapon() and ... then
+        for i=1,select("#", ...) do
+            local spec = Self.CLASSES[Unit.ClassId(unit)].specs[select(i, ...)]
+            if not spec.weapons or Util.In(self.equipLoc, spec.weapons) then return true end
+        end
+        return false
     else
         return true
     end
@@ -836,7 +829,8 @@ function Self:GetEligible(unit)
             if not self:CanBeEquipped(unit) then
                 return nil
             else
-                return self:IsTransmogNeeded(unit) or self:IsUseful(unit) and self:HasSufficientLevel(unit)
+                local specs = Unit.IsSelf(unit) and Addon.db.char.specs or Util.TBL_EMPTY
+                return self:IsTransmogNeeded(unit) or self:IsUseful(unit, unpack(specs)) and self:HasSufficientLevel(unit)
             end
         else
             local eligible = {}
@@ -940,13 +934,8 @@ function Self:OnFullyLoaded(fn, ...)
 end
 
 -------------------------------------------------------
---                       Helper                      --
+--              Position and tradability             --
 -------------------------------------------------------
-
--- Get the real (unscaled) item level
-function Self:GetRealLevel()
-    return Self.IsScalingActive(self.owner) and self:GetFullInfo().effectiveLevel or self:GetBasicInfo().level
-end
 
 -- Check if the item (given by self or bag+slot) is tradable
 function Self.IsTradable(selfOrBag, slot)
@@ -963,6 +952,12 @@ function Self.IsTradable(selfOrBag, slot)
         elseif not self.owner then
             return true, false, false
         elseif not self.isOwner then
+            -- Check for azerite gear
+            if self:IsAzeriteGear() then
+                return false, true, false
+            end
+
+            -- Check ilvl
             local level = self:GetLevelForLocation(self.owner)
             local isTradable = level == 0 or level + self:GetThresholdForLocation(self.owner, true) >= self.level
 
@@ -1053,13 +1048,123 @@ function Self:SetPosition(bagOrEquip, slot)
     end
 end
 
--- Get the equipment location or relic type
-function Self:GetLocation()
-    return self:GetBasicInfo().isRelic and self:GetFullInfo().relicType or self.equipLoc
+-------------------------------------------------------
+--                 Player level cache                --
+-------------------------------------------------------
+
+-- Get an entry from the player level cache
+function Self.GetPlayerCache(loc, spec)
+    return Self.playerCache[spec and loc .. spec or loc]
 end
 
+-- Set an entry ont he player level cache
+function Self.SetPlayerCache(loc, specOrCache, cache)
+    cache = cache or specOrCache
+    spec = cache and specOrCache
+    Self.playerCache[spec and loc .. spec or loc] = cache
+end
+
+-- Update cache for all weapons that are useful to the player
+function Self.UpdatePlayerCacheWeapons()
+    local specs = Self.CLASSES[Unit.ClassId("player")].specs
+    local owned
+
+    for spec,info in pairs(specs) do
+        for _,loc in pairs(info.weapons or Self.TYPES_WEAPON) do
+            local loc = Util.Select(loc, Self.TYPE_HOLDABLE, Self.TYPE_WEAPONOFFHAND, Self.TYPE_2HWEAPON, Self.TYPE_WEAPON, loc)
+            local key = loc .. spec
+            local cache = Self.GetPlayerCache(loc, spec) or Util.Tbl()
+
+            if not Self.IsPlayerCacheValid(cache) then
+                -- Find another applicable and valid cache entry
+                local found = false
+                for i,info2 in pairs(specs) do
+                    local cache2 = Self.GetPlayerCache(loc, i)
+                    if info.attribute == info2.attribute and info.weapons == info2.weapons and Self.IsPlayerCacheValid(cache2) and not cache2.spec then
+                        Util.TblMerge(cache, cache2)
+                        found = true break
+                    end
+                end
+
+                -- Create a new cache entry
+                if not found then
+                    cache.time = GetTime()
+                    owned = owned or Self.GetOwnedForLocation(loc, true)
+                    local main, off, both1, both2, twohand = 0, 0, 0, 0, 0
+
+                    -- Go through all owned weapons and find highest ilvl for each type
+                    for i,item in pairs(owned) do
+                        owned[i] = Self.FromLink(item, "player"):GetBasicInfo()
+                        item = owned[i]
+
+                        if item:IsWeapon() then
+                            cache.spec = cache.spec or item:GetFullInfo().spec ~= nil
+
+                            if item:IsUseful("player", spec) then
+                                if item.equipLoc == Self.TYPE_2HWEAPON or item:IsLegionArtifact() then
+                                    twohand = max(twohand, item.maxLevel)
+                                elseif item.equipLoc == Self.TYPE_WEAPONMAINHAND then
+                                    main = max(main, item.maxLevel)
+                                elseif Util.In(item.equipLoc, Self.TYPE_WEAPONOFFHAND, Self.TYPE_HOLDABLE) then
+                                    off = max(off, item.maxLevel)
+                                else
+                                    both1, both2 = max(both1, both2, item.maxLevel), min(both1, max(both2, item.maxLevel))
+                                end
+                            end
+                        end
+                    end
+
+                    -- Determine max ilvl for covering all the weapon's slots
+                    if loc == Self.TYPE_WEAPONMAINHAND then
+                        cache.ilvl = max(main, both1, twohand)
+                    elseif loc == Self.TYPE_WEAPONOFFHAND then
+                        cache.ilvl = max(off, both1, twohand)
+                    else
+                        cache.ilvl = max(min(main, off), min(main, both1), min(both1, off), both2, twohand)
+                    end
+                end
+
+                Self.SetPlayerCache(loc, spec, cache)
+            end
+        end
+    end
+
+    Util.TblRelease(true, owned)
+end
+
+-- Check if a player cache entry is still valid
+function Self.IsPlayerCacheValid(cache)
+    local cache = Util.Check(type(cache) == "string", Self.playerCache[key], cache)
+    return cache and cache.ilvl and cache.time and cache.time + Inspect.REFRESH < GetTime()
+end
+
+-------------------------------------------------------
+--                       Helper                      --
+-------------------------------------------------------
+
+-- Get the real (unscaled) item level
+function Self:GetRealLevel()
+    return Self.IsScalingActive(self.owner) and self:GetFullInfo().effectiveLevel or self:GetBasicInfo().level
+end
+
+-- Check if the item should get special treatment for being a weapon
 function Self:IsWeapon()
-    return Util.In(Self.GetInfo(self, "equipLoc"), Self.TYPE_WEAPONS)
+    return Util.In(self:GetBasicInfo().equipLoc, Self.TYPES_WEAPON)
+end
+
+-- Check if the item is a Legion legendary
+function Self:IsLegionLegendary()
+    return Self.GetInfo(self, "expacId") == Self.EXPAC_LEGION and Self.GetInfo(self, "quality") == LE_ITEM_QUALITY_LEGENDARY
+end
+
+-- Check if the item is a Legion artifact
+function Self:IsLegionArtifact()
+    return Self.GetInfo(self, "expacId") == Self.EXPAC_LEGION and Self.GetInfo(self, "quality") == LE_ITEM_QUALITY_ARTIFACT
+end
+
+-- Check if the item has azerite traits
+function Self:IsAzeriteGear()
+    return self:GetBasicInfo().expacId == Self.EXPAC_BFA and self.quality >= LE_ITEM_QUALITY_RARE and Util.In(self.equipLoc, Self.TYPE_HEAD, Self.TYPE_SHOULDER, Self.TYPE_CHEST, Self.TYPE_ROBE)
 end
 
 -------------------------------------------------------
