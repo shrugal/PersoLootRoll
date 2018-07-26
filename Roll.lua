@@ -360,6 +360,11 @@ function Self:Start(started)
             Self.events:Fire(Self.EVENT_START, self)
             self:Advertise(false, true)
             self:SendStatus()
+
+            -- Send message to PLH users
+            if self.isOwner then
+                Comm.SendPlh(self, Comm.PLH_ACTION_TRADE, self.item.link)
+            end
         end
     end)
 
@@ -516,8 +521,7 @@ function Self:End(winner, cleanup, force)
         return self
     end
 
-    local award = winner == true
-    winner = winner and winner ~= true and Unit.Name(winner) or nil
+    winner = winner and winner ~= true and Unit.Name(winner) or winner
     
     -- End it if it is running
     if self.status < Self.STATUS_DONE then

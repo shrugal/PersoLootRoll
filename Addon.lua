@@ -33,6 +33,9 @@ Addon.versions = {}
 Addon.versionNoticeShown = false
 Addon.disabled = {}
 
+-- Remember who uses PLH so we can send PLH events to them
+Addon.plhUsers = {}
+
 -------------------------------------------------------
 --                    Addon stuff                    --
 -------------------------------------------------------

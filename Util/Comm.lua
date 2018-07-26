@@ -45,13 +45,26 @@ Self.PATTERN_RAID_LEFT = ERR_RAID_MEMBER_REMOVED_S:gsub("%%s", "(.+)")
 Self.PATTERNS_JOINED = {Self.PATTERN_PARTY_JOINED, Self.PATTERN_INSTANCE_JOINED, Self.PATTERN_RAID_JOINED}
 Self.PATTERNS_LEFT = {Self.PATTERN_PARTY_LEFT, Self.PATTERN_INSTANCE_LEFT, Self.PATTERN_RAID_LEFT}
 
+-- PLH integration
+Self.PLH_EVENT = "PLH"
+Self.PLH_VERSION = "2.08"
+Self.PLH_BID_NEED = "MAIN SPEC"
+Self.PLH_BID_GREED = "OFF SPEC"
+Self.PLH_BID_DISENCHANT = "SHARD"
+Self.PLH_ACTION_CHECK = "IDENTIFY_USERS"
+Self.PLH_ACTION_VERSION = "VERSION"
+Self.PLH_ACTION_KEEP = "KEEP"
+Self.PLH_ACTION_TRADE = "TRADE"
+Self.PLH_ACTION_REQUEST = "REQUEST"
+Self.PLH_ACTION_OFFER = "OFFER"
+
 -------------------------------------------------------
 --                      Chatting                     --
 -------------------------------------------------------
 
 -- Get the complete message prefix for an event
 function Self.GetPrefix(event)
-    if not Util.StrStartsWith(event, Addon.ABBR) then
+    if not Util.StrStartsWith(event, Addon.ABBR) and not Util.StrStartsWith(event, Self.PLH_EVENT) then
         event = Addon.ABBR .. event
     end
 
@@ -173,6 +186,12 @@ function Self.SendData(event, data, target, prio, callbackFn, callbackArg)
     Self.Send(event, Addon:Serialize(data), target, prio, callbackFn, callbackArg)
 end
 
+-- Send a PLH message
+function Self.SendPlh(roll, action, param)
+    local msg = param and "%s~%s~%d~%s" or "%s~%s~%d"
+    Self.Send(Self.PLH_EVENT, msg:format(action, Unit.FullName(roll.item.owner), roll.item.id, param))
+end
+
 -- Listen for an addon message
 function Self.Listen(event, method, fromSelf, fromAll)
     Addon:RegisterComm(Self.GetPrefix(event), function (event, msg, channel, sender)
@@ -239,7 +258,7 @@ function Self.RollBid(roll, bid, fromUnit, isImport)
                     if Addon.db.profile.messages.group.roll and Events.lastPostedRoll == roll then
                         RandomRoll("1", floor(bid) == Roll.BID_GREED and "50" or "100")
                     end
-                elseif Addon.db.profile.messages.whisper.ask then
+                elseif Addon.db.profile.messages.whisper.ask and not Addon.plhUser[roll.owner] then
                     if roll.whispers >= Self.MAX_WHISPERS then
                         Addon:Info(L["BID_MAX_WHISPERS"], Self.GetPlayerLink(owner), link, Self.MAX_WHISPERS, Self.GetTradeLink(owner))
                     elseif not Self.ShouldInitChat(owner) then
@@ -250,6 +269,16 @@ function Self.RollBid(roll, bid, fromUnit, isImport)
 
                         Addon:Info(L["BID_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
                         Self.SendData(Self.EVENT_BID_WHISPER, {owner = Unit.FullName(owner), link = link})
+                    end
+                end
+                
+                -- Send message to PLH users
+                if Addon.plhUser[owner] then
+                    if roll.isOwner then
+                        Self.SendPlh(roll, Self.PLH_ACTION_KEEP)
+                    else
+                        local request = Util.Select(bid, Roll.BID_NEED and Self.PLH_BID_NEED, Roll.BID_DISENCHANT, Self.PLH_BID_DISENCHANT, Self.PLH_BID_GREED)
+                        Self.SendPlh(roll, Self.PLH_ACTION_REQUEST, request)
                     end
                 end
             end
@@ -318,7 +347,9 @@ function Self.RollEnd(roll)
             end
             
             -- Announce to target
-            if Addon.db.profile.messages.whisper.answer and not Addon:IsTracking(roll.winner) then
+            if Addon.plhUsers[roll.winner] then
+                Self.SendPlh(roll, Self.PLH_ACTION_OFFER, Unit.FullName(roll.winner))
+            elseif Addon.db.profile.messages.whisper.answer and not Addon:IsTracking(roll.winner) then
                 if roll.item:GetNumEligible(true) == 1 then
                     if roll.item.isOwner then
                         Self.ChatLine("MSG_ROLL_ANSWER_YES", roll.winner)

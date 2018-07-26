@@ -36,6 +36,9 @@ function Self.GROUP_JOINED()
     Addon.timers.versionCheck = Addon:ScheduleTimer(function ()
         Comm.SendData(Comm.EVENT_VERSION_ASK)
     end, Self.VERSION_CHECK_DELAY)
+
+    -- Discover PLH users
+    Comm.Send(Comm.PLH_EVENT, ("%s~ ~%s"):format(Comm.PLH_ACTION_CHECK, Unit.FullName("player")))
     
     -- Restore or ask for masterlooter
     Masterloot.Restore()
@@ -55,6 +58,7 @@ function Self.GROUP_LEFT()
     -- Clear versions and disabled
     wipe(Addon.versions)
     wipe(Addon.disabled)
+    wipe(Addon.plhUsers)
 
     -- Clear lastXYZ stuff
     Self.lastPostedRoll = nil
@@ -235,7 +239,7 @@ function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
             item:SetPosition(Self.lastLootedBag, 0)
 
             local owner = Masterloot.GetMasterlooter() or unit
-            local isOwner = UnitIsUnit(owner, "player")
+            local isOwner = Unit.IsSelf(owner)
 
             item:OnFullyLoaded(function ()
                 if isOwner and item:ShouldBeRolledFor() then
@@ -670,5 +674,36 @@ Comm.Listen(Comm.EVENT_MASTERLOOT_DEC, function (event, player, channel, sender,
     -- Clear everybody who has the sender as masterlooter
     if Util.StrIsEmpty(player) then
         Masterloot.ClearMasterlooting(unit)
+    end
+end)
+
+-------------------------------------------------------
+--          Personal Loot Helper integration         --
+-------------------------------------------------------
+
+Comm.Listen(Comm.PLH_EVENT, function (event, msg, channel, _, unit)
+    local action, itemId, owner, param = message:match('^([^~]+)~([^~]+)~([^~]+)~?([^~]*)$')
+    owner = Unit(owner)
+    local fromOwner = owner == unit
+    local roll = Roll.Find(nil, owner, tonumber(itemId))
+
+    if roll then
+        -- Check: Version check
+        if action == Comm.PLH_ACTION_CHECK then
+            Comm.Send(Comm.PLH_EVENT, ("%s~ ~%s~%s"):format(Comm.PLH_ACTION_VERSION, Unit.FullName("player"), Comm.PLH_VERSION))
+        -- Version: Answer to version check
+        elseif action == Comm.PLH_ACTION_VERSION then
+            Addon.plhUsers[unit] = true
+        -- Keep: The owner wants to keep the item
+        elseif action == Comm.PLH_ACTION_KEEP and fromOwner then
+            roll:End(owner)
+        -- Request: The sender bids on an item
+        elseif action == Comm.PLH_ACTION_REQUEST then
+            local bid = Util.Select(param, Comm.PLH_BID_NEED, Roll.BID_NEED, Comm.PLH_BID_DISENCHANT, Roll.BID_DISENCHANT, Roll.BID_GREED)
+            roll:Bid(bid, unit)
+        -- Offer: The owner has picked a winner
+        elseif action == Comm.PLH_ACTION_OFFER and fromOwner then
+            roll:End(param)
+        end
     end
 end)
