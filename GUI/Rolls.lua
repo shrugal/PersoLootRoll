@@ -545,7 +545,8 @@ function Self.Update()
             local children = actions.children
             local it = Util.Iter()
 
-            local canBid = not roll.bid and roll:UnitCanBid("player")
+            local canBid = not roll.bid and roll:UnitCanBid()
+            local canPass = roll:UnitCanPass()
             local canBeAwarded = roll:CanBeAwarded(true)
             local actionTarget = roll:GetActionTarget()
 
@@ -554,7 +555,7 @@ function Self.Update()
             -- Greed
             GUI(children[it()]).SetUserData("roll", roll).Toggle(canBid and (roll.ownerId or roll.itemOwnerId))
             -- Pass
-            GUI(children[it()]).SetUserData("roll", roll).Toggle(canBid)
+            GUI(children[it()]).SetUserData("roll", roll).Toggle(canBid or canPass)
             -- Advertise
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:ShouldAdvertise(true))
             -- Award randomly

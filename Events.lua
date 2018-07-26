@@ -195,7 +195,9 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
                     end
 
                     roll.bids[unit] = nil
-                    roll:CheckEnd()
+                    if roll:ShouldEnd() then
+                        roll:End()
+                    end
                 end
             end
 

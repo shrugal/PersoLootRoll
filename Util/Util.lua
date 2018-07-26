@@ -123,6 +123,49 @@ function Self.Check(cond, a, b)
     if cond then return a else return b end
 end
 
+-- Iterate tables or parameter lists
+function Self.Each(...)
+    if ... and type(...) == "table" then
+        local t, i = ...
+        if not i then
+            return Self.Each, t, true
+        elseif i == true then
+            return next(t)
+        else
+            local i, v = next(t, i)
+            if i then
+                return i, v
+            elseif Self.TblIsTmp(t) then
+                Self.TblRelease(t)
+            end
+        end
+    else
+        return Self.Each, Self.TblTmp(false, ...), true
+    end
+end
+
+-- Shortcut for val == x or val == y or ...
+function Self.In(val, ...)
+    for i,v in Self.Each(...) do
+        if v == val then return true end
+    end
+    return false
+end
+
+-- Shortcut for val == a and b or val == c and d or ...
+function Self.Select(val, ...)
+    local n = select("#", ...)
+    
+    for i=1, n - n % 2, 2 do
+        local a, b = select(i, ...)
+        if val == a then return b end
+    end
+
+    if n % 2 == 1 then
+        return select(n, ...)
+    end
+end
+
 -------------------------------------------------------
 --                       Table                       --
 -------------------------------------------------------
@@ -131,10 +174,10 @@ end
 Self.tblPool = {}
 Self.tblPoolSize = 10
 
--- For whenever we need an empty table as a noop
+-- For when we need an empty table as noop
 Self.TBL_EMPTY = {}
 
--- Get a table (newly created or from the cache), and fill it with key/value pairs
+-- Get a table (newly created or from the cache), and fill it with values or key/value pairs
 function Self.Tbl(isMap, ...)
     local t = tremove(Self.tblPool) or {}
     
@@ -147,6 +190,10 @@ function Self.Tbl(isMap, ...)
     end
     return t
 end
+
+-- Same as Self.Tbl, but the resulting table is marked as being temporary
+function Self.TblTmp(...) return setmetatable(Self.Tbl(...), Self.TBL_EMPTY) end
+function Self.TblIsTmp(t) return getmetatable(t) == Self.TBL_EMPTY end
 
 -- Add one or more tables to the cache, first parameter can define a recursive depth
 function Self.TblRelease(...)
@@ -212,7 +259,9 @@ end
 -- Get a random key from the table
 function Self.TblRandomKey(t)
     local keys = Self.TblKeys(t)
-    return #keys > 0 and keys[math.random(#keys)] or nil
+    local r = #keys > 0 and keys[math.random(#keys)] or nil
+    Self.TblRelease(keys)
+    return r
 end
 
 -- Get a random entry from the table
@@ -477,11 +526,7 @@ end
 
 -- Omit specific keys from a table
 function Self.TblUnselect(t, ...)
-    if type(...) == "table" then
-        for i,v in pairs(...) do t[v] = nil end
-    else
-        for i=1,select("#", ...) do t[select(i, ...)] = nil end
-    end
+    for i,v in Self.Each(...) do t[v] = nil end
     return t
 end
 
@@ -555,14 +600,7 @@ end
 -- Pick specific keys from a table
 function Self.TblCopySelect(t, ...)
     local u = Self.Tbl()
-    if type(...) == "table" then
-        for i,v in pairs(...) do u[v] = t[v] end
-    else
-        for i=1,select("#", ...) do
-            local v = select(i, ...)
-            u[v] = t[v]
-        end
-    end
+    for i,v in Self.Each(...) do u[v] = t[v] end
     return u
 end
 
@@ -980,13 +1018,11 @@ end
 -------------------------------------------------------
 
 function Self.BoolXor(...)
-    local v = false
-    for i=1, select("#", ...) do
-        if select(i, ...) then
-            if v then return false else v = true end
-        end
+    local u = false
+    for i,v in Self.Each(...) do
+        if u and v then return false else u = u or v end
     end
-    return v
+    return u
 end
 
 -------------------------------------------------------
@@ -1077,34 +1113,6 @@ end
  
 function Self.Safecall(func, ...)
 	return Dispatchers[select("#", ...)](func, ...)
-end
-
--- Shortcut for val == x or val == y or ...
-function Self.In(val, ...)
-    if select("#", ...) == 0 then
-        return false
-    elseif type(...) == "table" then
-        return Self.TblFind((...), val) ~= nil
-    else
-        for i=1,select("#", ...) do
-            if select(i, ...) == val then return true end
-        end
-        return false
-    end
-end
-
--- Shortcut for val == a and b or val == c and d or ...
-function Self.Select(val, ...)
-    local n = select("#", ...)
-    
-    for i=1, n - n % 2, 2 do
-        local a, b = select(i, ...)
-        if val == a then return b end
-    end
-
-    if n % 2 == 1 then
-        return select(n, ...)
-    end
 end
 
 -- Get string representation values for dumping

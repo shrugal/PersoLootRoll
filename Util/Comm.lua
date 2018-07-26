@@ -257,15 +257,6 @@ function Self.RollBid(roll, bid, fromUnit, isImport)
     end
 end
 
--- Show an error message for an invalid bid
-function Self.RollBidError(roll, sender)
-    if UnitIsUnit(sender, "player") then
-        Addon:Err(L["ERROR_ROLL_BID_UNKNOWN_SELF"])
-    else
-        Addon:Verbose(L["ERROR_ROLL_BID_UNKNOWN_OTHER"], sender, roll.item.link)
-    end
-end
-
 -- VOTE
 
 -- Messages when voting on a roll
@@ -292,18 +283,13 @@ function Self.RollVote(roll, vote, fromUnit, isImport)
     end
 end
 
--- Show an error message for an invalid vote
-function Self.RollVoteError(roll, sender)
-    -- TODO
-end
-
 -- END
 
 -- Messages when ending a roll
-function Self.RollEnd(roll, noAlert)
+function Self.RollEnd(roll)
     -- We won the item
     if roll.isWinner then
-        if not noAlert then
+        if Masterloot.GetMasterlooter() or not (roll.item.isOwner and roll.bid and floor(roll.bid) == Roll.BID_NEED) then
             if roll.item.isOwner then
                 Addon:Info(L["ROLL_WINNER_OWN"], roll.item.link)
             else

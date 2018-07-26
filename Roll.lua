@@ -354,7 +354,7 @@ function Self:Start(started)
             end
 
             -- Schedule timer to end the roll and hide the frame
-            self.timer = Addon:ScheduleTimer(Self.Finish, self:GetTimeLeft(), self)
+            self.timer = Addon:ScheduleTimer(Self.End, self:GetTimeLeft(), self, nil, true)
 
             -- Let everyone know
             Self.events:Fire(Self.EVENT_START, self)
@@ -417,7 +417,7 @@ function Self:Restart(started)
         self.timer = nil
     end
 
-    self:Start(started)
+    return self:Start(started)
 end
 
 -- Bid on a roll
@@ -441,32 +441,25 @@ function Self:Bid(bid, fromUnit, rollOrImport)
         self:HideRollFrame()
     end
     
-    -- Check if we can bid
-    local valid, msg = self:Validate(not isImport and Self.STATUS_RUNNING or nil, fromUnit)
-    if not valid then
-        Addon:Err(msg)
-    elseif not Util.TblFind(Self.BIDS, floor(bid)) or Masterloot.GetMasterlooter(self.owner) and answer > 0 and not (answers and answers[answer]) then
-        Comm.RollBidError(self, fromUnit)
-    else
-        -- Register the bid
+    if self:ValidateBid(bid, answer, fromUnit, isImport) then
         self.bids[fromUnit] = bid
 
-        if rollResult then
-            self.rolls[fromUnit] = rollResult
-        end
-
-        if fromSelf then
-            self.bid = bid
-        end        
+        if rollResult then self.rolls[fromUnit] = rollResult end
+        if fromSelf then self.bid = bid end        
 
         Self.events:Fire(Self.EVENT_BID, self, bid, fromUnit, rollOrImport)
 
         -- Let everyone know
         Comm.RollBid(self, bid, fromUnit, isImport)
 
-        -- Check if we should end the roll or advertise to chat
-        if self.status == Self.STATUS_RUNNING and not self:CheckEnd() and self.isOwner then
-            self:Advertise()
+        if self.isOwner then
+            -- Check if we should end the roll or advertise to chat
+            if self.status == Self.STATUS_RUNNING and not (self:ShouldEnd() and self:End()) then
+                self:Advertise()
+            -- Check if the winner just passed on the item
+            elseif self.winner == fromUnit and not self.traded then
+                self:End(nil, false, true)
+            end
         end
     end
 
@@ -477,19 +470,11 @@ end
 function Self:Vote(vote, fromUnit, isImport)
     vote = Unit.Name(vote)
     fromUnit = Unit.Name(fromUnit or "player")
-    local fromSelf = Unit.IsSelf(fromUnit)
 
-    -- Check if we can vote
-    local valid, msg = self:Validate(nil, vote, fromUnit)
-    if not valid then
-        Addon:Err(msg)
-    elseif not (isImport or self:UnitCanVote(fromUnit)) then
-        Comm.RollVoteError(self)
-    else
-        -- Register the vote
+    if self:ValidateVote(vote, fromUnit, isImport) then
         self.votes[fromUnit] = vote
 
-        if fromSelf then
+        if Unit.IsSelf(fromUnit) then
             self.vote = vote
         end
 
@@ -498,19 +483,21 @@ function Self:Vote(vote, fromUnit, isImport)
         -- Let everyone know
         Comm.RollVote(self, vote, fromUnit)
     end
+
+    return self
 end
 
 -- Check if we should end the roll prematurely
 function Self:ShouldEnd()
+    -- We have bid and the owner doesn't have the addon
     if not self.ownerId and self.bid then
         return true
+    -- Not the owner, not running or we haven't bid yet
     elseif not self.isOwner or self.status ~= Self.STATUS_RUNNING or not self.bid then
         return false
-    end
-
     -- We voted need on our own item
-    if not Masterloot.GetMasterlooter() and self.item.isOwner and self.bid and floor(self.bid) == Self.BID_NEED then
-        return self.item.owner
+    elseif not Masterloot.GetMasterlooter() and self.item.isOwner and self.bid and floor(self.bid) == Self.BID_NEED then
+        return true
     end
 
     -- Check if all eligible players have bid
@@ -523,24 +510,14 @@ function Self:ShouldEnd()
     return true
 end
 
--- Check if we should end the roll prematurely, and then end it
-function Self:CheckEnd()
-    local winner = self:ShouldEnd()
-    if winner then
-        local isString = type(winner) == "string"
-        self:End(isString and winner or nil, isString)
-        return true
-    else
-        return false
-    end
-end
-
 -- End a roll
-function Self:End(winner, noAlert)
-    if self.winner then return end
+function Self:End(winner, cleanup, force)
+    if self.winner and not force then
+        return self
+    end
 
     local award = winner == true
-    winner = not award and winner and Unit.Name(winner) or nil
+    winner = winner and winner ~= true and Unit.Name(winner) or nil
     
     -- End it if it is running
     if self.status < Self.STATUS_DONE then
@@ -554,7 +531,7 @@ function Self:End(winner, noAlert)
         end
 
         -- Check if we should post it to chat first
-        if self.isOwner and not award and not winner and self:Advertise() then
+        if self.isOwner and not winner and self:Advertise() then
             return self
         end
 
@@ -565,36 +542,8 @@ function Self:End(winner, noAlert)
         Self.events:Fire(Self.EVENT_END, self)
     end
 
-    -- Determine a winner
-    if self.isOwner and (award or not (winner or Addon.db.profile.awardSelf or Masterloot.IsMasterlooter())) then
-        winner = self:DetermineWinner()
-    end
-    
-    -- Set winner
-    self.winner = winner
-    self.isWinner = self.winner and UnitIsUnit(self.winner, "player")
-    
-    Self.events:Fire(Self.EVENT_AWARD, self)
-    self:SendStatus()
-
-    if self.winner then
-        -- It has already been traded
-        if self.winner == self.item.owner then
-            self:OnTraded(self.winner)
-        end
-
-        -- Let everyone know
-        Comm.RollEnd(self, noAlert)
-    end
-
-    return self
-end
-
--- End a roll, including closing UI elements etc.
-function Self:Finish(winner)
-    self:End(winner)
-
-    if self.status == Self.STATUS_DONE then
+    -- Hide UI elements etc.
+    if cleanup then
         if self.timer then
             Addon:CancelTimer(self.timer)
             self.timer = nil
@@ -602,6 +551,38 @@ function Self:Finish(winner)
 
         self:HideRollFrame()
     end
+
+    -- Determine a winner
+    if self.isOwner and not winner or winner == true then
+        if not Masterloot.GetMasterlooter() and self.item.isOwner and self.bid and floor(self.bid) == Self.BID_NEED then
+            winner = UnitName("player")
+        elseif self.isOwner and (winner or not Addon.db.profile.awardSelf and not Masterloot.IsMasterlooter()) then
+            winner = self:DetermineWinner()
+        end
+    end
+
+    -- Set winner or just send status
+    if winner ~= self.winner then
+        self.winner = winner
+        self.isWinner = Unit.IsSelf(self.winner)
+        
+        Self.events:Fire(Self.EVENT_AWARD, self)
+        self:SendStatus()
+
+        if self.winner then
+            -- It has already been traded
+            if self.winner == self.item.owner then
+                self:OnTraded(self.winner)
+            end
+
+            -- Let everyone know
+            Comm.RollEnd(self)
+        end
+    else
+        self:SendStatus()
+    end
+
+    return self
 end
 
 -- Cancel a roll
@@ -856,6 +837,80 @@ function Self:ExtendTimeLeft(to)
 end
 
 -------------------------------------------------------
+--                    Validation                     --
+-------------------------------------------------------
+
+-- Some common error checks for a loot roll
+function Self:Validate(status, ...)
+    if Addon.DEBUG then
+        return true
+    end
+
+    if status and self.status ~= status then
+        return false, L["ERROR_ROLL_STATUS_NOT_" .. status]
+    elseif not self.item.isTradable then
+        return false, L["ERROR_ITEM_NOT_TRADABLE"]
+    elseif not IsInGroup() then 
+        return false, L["ERROR_NOT_IN_GROUP"]
+    else
+        for _,unit in pairs({self.owner, ...}) do
+            if not UnitExists(unit) or not Unit.InGroup(unit) then
+                return false, Util.StrFormat(L["ERROR_PLAYER_NOT_FOUND"], unit)
+            end
+        end
+
+        return true
+    end
+end
+
+-- Validate an incoming bid
+function Self:ValidateBid(bid, answer, fromUnit, isImport)
+    local valid, msg = self:Validate(nil, fromUnit)
+    if not valid then
+        Addon:Err(msg)
+    -- Don't validate imports any further
+    elseif isImport then
+        return true
+    -- Check if it's a valid bid
+    elseif not Util.TblFind(Self.BIDS, floor(bid)) or Masterloot.GetMasterlooter(self.owner) and answer > 0 and not (answers and answers[answer]) then
+        if Unit.IsSelf(fromUnit) then
+            Addon:Err(L["ERROR_ROLL_BID_UNKNOWN_SELF"])
+        else
+            Addon:Verbose(L["ERROR_ROLL_BID_UNKNOWN_OTHER"], fromUnit, self.item.link)
+        end
+    -- Check if the unit can bid
+    elseif not (self:CanBeBidOn() or Util.In(self.status, Self.STATUS_RUNNING, Self.STATUS_DONE) and self.bids[fromUnit] and bid == Self.BID_PASS) then
+        if Unit.IsSelf(fromUnit) then
+            Addon:Err(L["ERROR_ROLL_BID_IMPOSSIBLE_SELF"])
+        else
+            Addon:Verbose(L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"], fromUnit, self.item.link)
+        end
+    else
+        return true
+    end
+end
+
+-- Validate an incoming vote
+function Self:ValidateVote(vote, fromUnit, isImport)
+    local valid, msg = self:Validate(nil, vote, fromUnit)
+    if not valid then
+        Addon:Err(msg)
+    -- Don't validate imports any further
+    elseif isImport then
+        return true
+    -- Check if the unit can bid
+    elseif not self:UnitCanVote(fromUnit) then
+        if fromSelf then
+            Addon:Err(L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"])
+        else
+            Addon:Verbose(L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"], fromUnit, self.item.link)
+        end
+    else
+        return true
+    end
+end
+
+-------------------------------------------------------
 --                      Helper                       --
 -------------------------------------------------------
 
@@ -924,7 +979,7 @@ end
 
 -- Check if the given unit can bid on this roll
 function Self:UnitCanBid(unit, checkIlvl)
-    return not (Addon.db.profile.dontShare and UnitIsUnit(unit or "player", "player")) and self:CanBeBidOn() and self:CanBeWonBy(unit, nil, checkIlvl)
+    return not (Addon.db.profile.dontShare and Unit.IsSelf(unit or "player")) and self:CanBeBidOn() and self:CanBeWonBy(unit, nil, checkIlvl)
 end
 
 -- Check if the roll can be voted on
@@ -934,7 +989,13 @@ end
 
 -- Check if the given unit can vote on this roll
 function Self:UnitCanVote(unit)
-    return self:CanBeVotedOn() and Masterloot.IsOnCouncil(unit)
+    return self:CanBeVotedOn() and Masterloot.IsOnCouncil(unit or "player")
+end
+
+-- Check if the given unit can pass on this roll
+function Self:UnitCanPass(unit)
+    unit = Unit.Name(unit or "player")
+    return not self.traded and self.bids[unit] and self.bids[unit] ~= Self.BID_PASS
 end
 
 -- Check if we can restart a roll
@@ -977,27 +1038,4 @@ end
 -- Get the rolls id with PLR prefix
 function Self:GetPlrId()
     return Self.ToPlrId(self.id)
-end
-
--- Some common error checks for a loot roll
-function Self:Validate(status, ...)
-    if Addon.DEBUG then
-        return true
-    end
-
-    if status and self.status ~= status then
-        return false, L["ERROR_ROLL_STATUS_NOT_" .. status]
-    elseif not self.item.isTradable then
-        return false, L["ERROR_ITEM_NOT_TRADABLE"]
-    elseif not IsInGroup() then 
-        return false, L["ERROR_NOT_IN_GROUP"]
-    else
-        for _,unit in pairs({self.owner, ...}) do
-            if not UnitExists(unit) or not Unit.InGroup(unit) then
-                return false, Util.StrFormat(L["ERROR_PLAYER_NOT_FOUND"], unit)
-            end
-        end
-
-        return true
-    end
 end

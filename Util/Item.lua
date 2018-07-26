@@ -718,8 +718,7 @@ function Self:CanBeEquipped(unit, ...)
         return false
     elseif ... then
         local found = false
-        for i=1, select("#", ...) do
-            local spec = select(i, ...)
+        for i,spec in Util.Each(...) do
             if not (self.spec and self.spec ~= select(2, GetSpecializationInfo(spec))) and
                not (self:IsLegionArtifact() and self.id ~= Self.CLASSES[classId].specs[spec].artifact.id) then
                 found = true break
@@ -801,8 +800,8 @@ function Self:IsUseful(unit, ...)
     elseif not self:CanBeEquipped(unit, ...) or not self:HasMatchingAttributes(unit, ...) then
         return false
     elseif self:IsWeapon() and ... then
-        for i=1,select("#", ...) do
-            local spec = Self.CLASSES[Unit.ClassId(unit)].specs[select(i, ...)]
+        for i,v in Util.Each(...) do
+            local spec = Self.CLASSES[Unit.ClassId(unit)].specs[v]
             if not spec.weapons or Util.In(self.equipLoc, spec.weapons) then return true end
         end
         return false
@@ -828,9 +827,13 @@ function Self:GetEligible(unit)
         if unit then
             if not self:CanBeEquipped(unit) then
                 return nil
+            elseif self:IsTransmogNeeded(unit) then
+                return true
             else
-                local specs = Unit.IsSelf(unit) and Addon.db.char.specs or Util.TBL_EMPTY
-                return self:IsTransmogNeeded(unit) or self:IsUseful(unit, unpack(specs)) and self:HasSufficientLevel(unit)
+                local specs = Unit.IsSelf(unit) and Util(Addon.db.char.specs).CopyOnly(true, true).Keys()() or nil
+                local result = self:IsUseful(unit, specs) and self:HasSufficientQuality(unit)
+                Util.TblRelease(specs)
+                return result
             end
         else
             local eligible = {}

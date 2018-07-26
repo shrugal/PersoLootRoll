@@ -188,7 +188,7 @@ function Self.ToggleAwardUnitDropdown(unit, ...)
                     .SetText(roll.item.link)
                     .SetCallback("OnClick", function (...)
                         if not Self.ItemClick(...) then
-                            roll:Finish(unit)
+                            roll:End(unit, true)
                         end
                     end)
                     .SetCallback("OnEnter", Self.TooltipItemLink)
@@ -411,7 +411,7 @@ end
 function Self.UnitAwardOrVote(self)
     local roll, unit = self:GetUserData("roll"), self:GetUserData("unit")
     if roll:CanBeAwardedTo(unit, true) then
-        roll:Finish(unit)
+        roll:End(unit, true)
     elseif roll:UnitCanVote() then
         roll:Vote(roll.vote ~= unit and unit or nil)
     end
