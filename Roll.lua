@@ -68,7 +68,7 @@ function Self.Get(id)
 end
 
 -- Get a roll by id and owner
-function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner)
+function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner, status)
     owner = Unit.Name(owner or "player")
     local id
     
@@ -96,9 +96,10 @@ function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner)
 
         id = Util.TblSearch(Addon.rolls, function (roll)
             return  (roll.owner == owner or not (roll.owner and owner))
-                and (roll.item.owner == (itemOwner or item.owner) or not (roll.item.owner and (itemOwner or item.owner)))
+                and (roll.item.owner == (itemOwner or t == "table" and item.owner) or not (roll.item.owner and (itemOwner or t == "table" and item.owner)))
                 and (roll.ownerId == ownerId or not (roll.ownerId and ownerId))
                 and (roll.itemOwnerId == itemOwnerId or not (roll.itemOwnerId and itemOwnerId))
+                and (roll.status == status or not status)
                 and (
                        t == "table" and roll.item.link == item.link
                     or t == "number" and item == roll.item.id
@@ -363,7 +364,7 @@ function Self:Start(started)
 
             -- Send message to PLH users
             if self.isOwner then
-                Comm.SendPlh(self, Comm.PLH_ACTION_TRADE, self.item.link)
+                Comm.SendPlh(Comm.PLH_ACTION_TRADE, self, self.item.link)
             end
         end
     end)
@@ -952,7 +953,7 @@ end
 
 -- Check if the given unit is eligible
 function Self:UnitIsEligible(unit, checkIlvl)
-    local val = unit and self.item:GetEligible(unit or "player") or nil
+    local val = self.item:GetEligible(unit or "player")
     if checkIlvl then return val else return val ~= nil end
 end
 

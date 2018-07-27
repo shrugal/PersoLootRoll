@@ -38,7 +38,7 @@ function Self.GROUP_JOINED()
     end, Self.VERSION_CHECK_DELAY)
 
     -- Discover PLH users
-    Comm.Send(Comm.PLH_EVENT, ("%s~ ~%s"):format(Comm.PLH_ACTION_CHECK, Unit.FullName("player")))
+    Comm.SendPlh(Comm.PLH_ACTION_CHECK, nil, Unit.FullName("player"))
     
     -- Restore or ask for masterlooter
     Masterloot.Restore()
@@ -232,7 +232,7 @@ function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
     local isBonusLoot = msg:match(Self.PATTERN_BONUS_LOOT)
     local item = Item.GetLink(msg)
 
-    if item and unit and not isBonusLoot and not (dontShare and not Unit.IsSelf(unit)) and Item.HasSufficientQuality(item) then
+    if item and unit and not isBonusLoot and not (dontShare and not Unit.IsSelf(unit)) and IsEquippableItem(item) and Item.HasSufficientQuality(item) then
         item = Item.FromLink(item, unit)
 
         if item.isOwner then
@@ -244,16 +244,14 @@ function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
             item:OnFullyLoaded(function ()
                 if isOwner and item:ShouldBeRolledFor() then
                     Roll.Add(item, owner):Start()
-                elseif item.isEquippable then
-                    if not dontShare and item:GetFullInfo().isTradable then
-                        local roll = Roll.Add(item, owner)
-                        if isOwner then
-                            roll:Schedule()
-                        end
-                        roll:SendStatus(true)
-                    else
-                        Roll.Add(item, unit):Cancel()
+                elseif not dontShare and item:GetFullInfo().isTradable then
+                    local roll = Roll.Add(item, owner)
+                    if isOwner then
+                        roll:Schedule()
                     end
+                    roll:SendStatus(true)
+                else
+                    Roll.Add(item, unit):Cancel()
                 end
             end)
         elseif not Roll.Find(nil, unit, item) then
@@ -682,28 +680,37 @@ end)
 -------------------------------------------------------
 
 Comm.Listen(Comm.PLH_EVENT, function (event, msg, channel, _, unit)
-    local action, itemId, owner, param = message:match('^([^~]+)~([^~]+)~([^~]+)~?([^~]*)$')
-    owner = Unit(owner)
-    local fromOwner = owner == unit
-    local roll = Roll.Find(nil, owner, tonumber(itemId))
+    if not IsAddOnLoaded(Comm.PLH_NAME) and not Unit.IsSelf(unit) then
+        local action, itemId, owner, param = msg:match('^([^~]+)~([^~]+)~([^~]+)~?([^~]*)$')
+        itemId = tonumber(itemId)
+        owner = Unit(owner)
+        local fromOwner = owner == unit
 
-    if roll then
         -- Check: Version check
         if action == Comm.PLH_ACTION_CHECK then
-            Comm.Send(Comm.PLH_EVENT, ("%s~ ~%s~%s"):format(Comm.PLH_ACTION_VERSION, Unit.FullName("player"), Comm.PLH_VERSION))
+            Comm.SendPlh(Comm.PLH_ACTION_VERSION, Unit.FullName("player"), Comm.PLH_VERSION)
         -- Version: Answer to version check
         elseif action == Comm.PLH_ACTION_VERSION then
-            Addon.plhUsers[unit] = true
-        -- Keep: The owner wants to keep the item
-        elseif action == Comm.PLH_ACTION_KEEP and fromOwner then
-            roll:End(owner)
-        -- Request: The sender bids on an item
-        elseif action == Comm.PLH_ACTION_REQUEST then
-            local bid = Util.Select(param, Comm.PLH_BID_NEED, Roll.BID_NEED, Comm.PLH_BID_DISENCHANT, Roll.BID_DISENCHANT, Roll.BID_GREED)
-            roll:Bid(bid, unit)
-        -- Offer: The owner has picked a winner
-        elseif action == Comm.PLH_ACTION_OFFER and fromOwner then
-            roll:End(param)
+            Addon.plhUsers[unit] = param
+        else
+            local roll = Roll.Find(nil, owner, itemId, nil, nil, Roll.STATUS_RUNNING) or Roll.Find(nil, owner, itemId)
+            
+            -- Trade: The owner offers the item up for requests
+            if action == Comm.PLH_ACTION_TRADE and not roll and fromOwner and Item.IsLink(param) then
+                roll = Roll.Add(param, owner):Start()
+            elseif roll and (roll.isOwner or not roll.ownerId) then
+                -- Keep: The owner wants to keep the item
+                if action == Comm.PLH_ACTION_KEEP and fromOwner then
+                    roll:End(owner)
+                -- Request: The sender bids on an item
+                elseif action == Comm.PLH_ACTION_REQUEST then
+                    local bid = Util.Select(param, Comm.PLH_BID_NEED, Roll.BID_NEED, Comm.PLH_BID_DISENCHANT, Roll.BID_DISENCHANT, Roll.BID_GREED)
+                    roll:Bid(bid, unit)
+                -- Offer: The owner has picked a winner
+                elseif action == Comm.PLH_ACTION_OFFER and fromOwner then
+                    roll:End(param)
+                end
+            end
         end
     end
-end)
+end, true) -- TODO: DEBUG

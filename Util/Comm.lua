@@ -3,7 +3,8 @@ local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Events, Locale, Masterloot, Roll, Unit, Util = Addon.Events, Addon.Locale, Addon.Masterloot, Addon.Roll, Addon.Unit, Addon.Util
 local Self = Addon.Comm
 
-Self.PREFIX = "[" .. Addon.ABBR .. "] "
+Self.PREFIX = Addon.ABBR
+Self.CHAT_PREFIX = "[" .. Addon.ABBR .. "] "
 -- Max # of whispers per item for all addons in the group
 Self.MAX_WHISPERS = 2
 
@@ -46,8 +47,9 @@ Self.PATTERNS_JOINED = {Self.PATTERN_PARTY_JOINED, Self.PATTERN_INSTANCE_JOINED,
 Self.PATTERNS_LEFT = {Self.PATTERN_PARTY_LEFT, Self.PATTERN_INSTANCE_LEFT, Self.PATTERN_RAID_LEFT}
 
 -- PLH integration
-Self.PLH_EVENT = "PLH"
+Self.PLH_NAME = "Personal Loot Helper"
 Self.PLH_VERSION = "2.08"
+Self.PLH_EVENT = "PLH"
 Self.PLH_BID_NEED = "MAIN SPEC"
 Self.PLH_BID_GREED = "OFF SPEC"
 Self.PLH_BID_DISENCHANT = "SHARD"
@@ -64,8 +66,8 @@ Self.PLH_ACTION_OFFER = "OFFER"
 
 -- Get the complete message prefix for an event
 function Self.GetPrefix(event)
-    if not Util.StrStartsWith(event, Addon.ABBR) and not Util.StrStartsWith(event, Self.PLH_EVENT) then
-        event = Addon.ABBR .. event
+    if not Util.In(event:sub(1, 3), Self.PREFIX, Self.PLH_EVENT) then
+        event = Self.PREFIX .. event
     end
 
     return event
@@ -146,7 +148,7 @@ function Self.Chat(msg, target)
     local channel, player = Self.GetDestination(target)
 
     if channel ~= Self.TYPE_WHISPER then
-        msg = Util.StrPrefix(msg, Self.PREFIX)
+        msg = Util.StrPrefix(msg, Self.CHAT_PREFIX)
     end
 
     if Addon.DEBUG then
@@ -170,8 +172,6 @@ end
 -- Send an addon message
 function Self.Send(event, txt, target, prio, callbackFn, callbackArg)
     event = Self.GetPrefix(event)
-
-    -- Figure out the correct channel and target
     local channel, player = Self.GetDestination(target)
 
     -- TODO: This fixes a beta bug that causes a dc when sending empty strings
@@ -187,9 +187,14 @@ function Self.SendData(event, data, target, prio, callbackFn, callbackArg)
 end
 
 -- Send a PLH message
-function Self.SendPlh(roll, action, param)
-    local msg = param and "%s~%s~%d~%s" or "%s~%s~%d"
-    Self.Send(Self.PLH_EVENT, msg:format(action, Unit.FullName(roll.item.owner), roll.item.id, param))
+function Self.SendPlh(action, roll, param)
+    if not IsAddOnLoaded(Self.PLH_NAME) then
+        local msg = not roll and ("%s~ ~%s"):format(action, param)
+                or type(roll) == "string" and ("%s~ ~%s~%s"):format(action, roll, param)
+                or param and ("%s~%d~%s~%s"):format(action, roll.item.id, Unit.FullName(roll.item.owner), param)
+                or ("%s~%d~%s"):format(action, roll.item.id, Unit.FullName(roll.item.owner))
+        Self.Send(Self.PLH_EVENT, msg)
+    end
 end
 
 -- Listen for an addon message
@@ -198,7 +203,6 @@ function Self.Listen(event, method, fromSelf, fromAll)
         msg = msg ~= "" and msg ~= " " and msg or nil
         local unit = Unit(sender)
         if fromAll or Unit.InGroup(unit, not fromSelf) then
-            -- print(event, unit)
             method(event, msg, channel, sender, unit)
         end
     end)
@@ -233,8 +237,8 @@ function Self.RollBid(roll, bid, fromUnit, isImport)
         end
     end
 
-    -- Inform others
     if not isImport then
+        -- Inform others
         if roll.isOwner then
             local data = Util.Tbl(true, "ownerId", roll.ownerId, "bid", bid, "fromUnit", Unit.FullName(fromUnit))
 
@@ -246,19 +250,29 @@ function Self.RollBid(roll, bid, fromUnit, isImport)
                     Self.SendData(Self.EVENT_BID, data, target)
                 end
             end
+
+            -- Send message to PLH users
+            if fromSelf and bid == Roll.BID_NEED and not Masterloot.GetMasterlooter() then
+                Self.SendPlh(Self.PLH_ACTION_KEEP, roll)
+            end
+        -- Send bid to owner
         elseif fromSelf then
             if roll.ownerId then
-                -- Send to owner
                 Self.SendData(Self.EVENT_BID, {ownerId = roll.ownerId, bid = bid}, roll.owner)
             elseif bid ~= Roll.BID_PASS then
                 local owner, link = roll.item.owner, roll.item.link
 
-                -- Roll on it in chat or whisper the owner
-                if roll.posted then
+                -- Send message to PLH users
+                if Addon.plhUsers[owner] then
+                    local request = Util.Select(bid, Roll.BID_NEED, Self.PLH_BID_NEED, Roll.BID_DISENCHANT, Self.PLH_BID_DISENCHANT, Self.PLH_BID_GREED)
+                    Self.SendPlh(Self.PLH_ACTION_REQUEST, roll, request)
+                -- Roll on it in chat
+                elseif roll.posted then
                     if Addon.db.profile.messages.group.roll and Events.lastPostedRoll == roll then
                         RandomRoll("1", floor(bid) == Roll.BID_GREED and "50" or "100")
                     end
-                elseif Addon.db.profile.messages.whisper.ask and not Addon.plhUser[roll.owner] then
+                -- Whisper the owner
+                elseif Addon.db.profile.messages.whisper.ask then
                     if roll.whispers >= Self.MAX_WHISPERS then
                         Addon:Info(L["BID_MAX_WHISPERS"], Self.GetPlayerLink(owner), link, Self.MAX_WHISPERS, Self.GetTradeLink(owner))
                     elseif not Self.ShouldInitChat(owner) then
@@ -269,16 +283,6 @@ function Self.RollBid(roll, bid, fromUnit, isImport)
 
                         Addon:Info(L["BID_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
                         Self.SendData(Self.EVENT_BID_WHISPER, {owner = Unit.FullName(owner), link = link})
-                    end
-                end
-                
-                -- Send message to PLH users
-                if Addon.plhUser[owner] then
-                    if roll.isOwner then
-                        Self.SendPlh(roll, Self.PLH_ACTION_KEEP)
-                    else
-                        local request = Util.Select(bid, Roll.BID_NEED and Self.PLH_BID_NEED, Roll.BID_DISENCHANT, Self.PLH_BID_DISENCHANT, Self.PLH_BID_GREED)
-                        Self.SendPlh(roll, Self.PLH_ACTION_REQUEST, request)
                     end
                 end
             end
@@ -329,7 +333,7 @@ function Self.RollEnd(roll)
         end
 
     -- Someone won our item
-    else
+    elseif roll.winner then
         if roll.item.isOwner then
             Addon:Info(L["ROLL_WINNER_OTHER"], Self.GetPlayerLink(roll.winner), roll.item.link, Self.GetTradeLink(roll.winner))
         elseif roll.isOwner then
@@ -348,7 +352,7 @@ function Self.RollEnd(roll)
             
             -- Announce to target
             if Addon.plhUsers[roll.winner] then
-                Self.SendPlh(roll, Self.PLH_ACTION_OFFER, Unit.FullName(roll.winner))
+                Self.SendPlh(Self.PLH_ACTION_OFFER, roll, Unit.FullName(roll.winner))
             elseif Addon.db.profile.messages.whisper.answer and not Addon:IsTracking(roll.winner) then
                 if roll.item:GetNumEligible(true) == 1 then
                     if roll.item.isOwner then

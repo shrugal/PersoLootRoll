@@ -148,6 +148,7 @@ L["FILTER_HIDDEN_DESC"] = "Include canceled, pending, passed and hidden rolls."
 
 L["TIP_ADDON_MISSING"] = "Addon missing:"
 L["TIP_ADDON_VERSIONS"] = "Addon versions:"
+L["TIP_PLH_USERS"] = "PLH users:"
 L["TIP_ENABLE_WHISPER_ASK"] = "Tip: Right-Click to enable asking for loot automatically"
 L["TIP_MASTERLOOT_START"] = "Become or search for a masterlooter"
 L["TIP_MASTERLOOT_STOP"] = "Remove masterlooter"

@@ -148,6 +148,7 @@ L["FILTER_HIDDEN_DESC"] = "包含已取消、待決的、已放棄以及隱藏�
 
 L["TIP_ADDON_MISSING"] = "插件缺少："
 L["TIP_ADDON_VERSIONS"] = "插件版本："
+L["TIP_PLH_USERS"] = "PLH users:" -- Translation missing
 L["TIP_ENABLE_WHISPER_ASK"] = "Tip: Right-Click to enable asking for loot automatically" -- Translation missing
 L["TIP_MASTERLOOT_START"] = "成為或搜尋負責分裝者"
 L["TIP_MASTERLOOT_STOP"] = "移除負責分裝者"

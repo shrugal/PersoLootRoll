@@ -100,7 +100,7 @@ end
 -------------------------------------------------------
 
 -- Get the item link from a string
-function Self.GetLink(str, translate)
+function Self.GetLink(str)
     if type(str) == "table" then
         return str.link
     elseif type(str) == "string" then
@@ -121,6 +121,8 @@ function Self.IsLink(str)
     if type(str) == "string" then
         local i, j = str:find(Self.PATTERN_LINK)
         return i == 1 and j == str:len()
+    else
+        return false
     end
 end
 

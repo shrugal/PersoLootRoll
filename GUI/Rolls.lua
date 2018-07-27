@@ -10,7 +10,7 @@ Self.status = {width = 700, height = 300}
 Self.open = {}
 
 -- Register for roll changes
-Roll.On(Self, Roll.EVENT_START, function (roll)
+Roll.On(Self, Roll.EVENT_START, function (_, roll)
     if roll.isOwner and Masterloot.IsMasterlooter() or Addon.db.profile.ui.showRollsWindow and (roll.item.isOwner or roll.item:ShouldBeBidOn()) then
         Self.Show()
     end
@@ -98,9 +98,17 @@ function Self.Show()
                             end
                         end
 
+                        -- PLH users
+                        if next(Addon.plhUsers) then
+                            GameTooltip:AddLine((count > 0 and "\n" or "") .. L["TIP_PLH_USERS"])
+                            for unit,version in pairs(Addon.plhUsers) do
+                                GameTooltip:AddLine(Unit.ColoredName(Unit.ShortenedName(unit), unit) .. ": " .. version, 1, 1, 1, false)
+                            end
+                        end
+
                         -- Addon missing
                         if count + 1 < GetNumGroupMembers() then
-                            GameTooltip:AddLine((count > 0 and "\n" or "") .. L["TIP_ADDON_MISSING"])
+                            GameTooltip:AddLine(((count > 0 or next(Addon.plhUsers)) and "\n" or "") .. L["TIP_ADDON_MISSING"])
                             local s = ""
                             for i=1,GetNumGroupMembers() do
                                 local unit = GetRaidRosterInfo(i)

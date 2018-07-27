@@ -148,6 +148,7 @@ L["FILTER_HIDDEN_DESC"] = "Zeige abgebrochene, wartende, gepasste und versteckte
 
 L["TIP_ADDON_MISSING"] = "Addon fehlt:"
 L["TIP_ADDON_VERSIONS"] = "Addon Versionen:"
+L["TIP_PLH_USERS"] = "PLH Nutzer:"
 L["TIP_ENABLE_WHISPER_ASK"] = "Tipp: Rechts-Klick um das automatische Fragen nach Loot zu aktivieren"
 L["TIP_MASTERLOOT_START"] = "Werde oder suche einen Plündermeister"
 L["TIP_MASTERLOOT_STOP"] = "Plündermeister entfernen"
