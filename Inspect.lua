@@ -85,9 +85,11 @@ function Self.Update(unit)
 
     -- Equipped relics
     local weapon = Item.GetEquippedArtifact(unit)
-    if weapon then
-        local relics = Util.TblGroupKeys(weapon:GetRelicSlots())
-        local uniqueTypes = Util.TblFlip(weapon:GetRelicSlots(true))
+    local relics = weapon and weapon:GetRelicSlots()
+    local uniqueTypes = weapon and weapon:GetRelicSlots(true)
+
+    if relics and uniqueTypes then
+        relics, uniqueTypes = Util.TblGroupKeys(relics), Util.TblFlip(uniqueTypes)
 
         for relicType,slots in pairs(relics) do
             local slotMin
@@ -127,9 +129,9 @@ function Self.Update(unit)
                 Util.TblRelease(links)
             end
         end
-
-        Util.TblRelease(1, relics, relicsUnique)
     end
+
+    Util.TblRelease(1, weapon, relics, uniqueTypes)
 
     -- Check if the inspect was successfull
     local failed = Util.TblCountOnly(info.levels, false) + Util.TblCountOnly(info.links, false) > 0
