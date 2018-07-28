@@ -767,24 +767,20 @@ end
 -- Send the roll status to others
 function Self:SendStatus(noCheck, target, full)
     if noCheck or self.isOwner then
-        local data = {
-            owner = Unit.FullName(self.owner),
-            ownerId = self.ownerId,
-            itemOwnerId = self.itemOwnerId,
-            status = self.status,
-            started = self.started,
-            timeout = self.timeout,
-            posted = self.posted,
-            winner = self.winner and Unit.FullName(self.winner),
-            traded = self.traded and Unit.FullName(self.traded),
-            item = {
-                link = self.item.link,
-                owner = Unit.FullName(self.item.owner)
-            }
-        }
+        local data = Util.Tbl()
+        data.owner = Unit.FullName(self.owner)
+        data.ownerId = self.ownerId
+        data.itemOwnerId = self.itemOwnerId
+        data.status = self.status
+        data.started = self.started
+        data.timeout = self.timeout
+        data.posted = self.posted
+        data.winner = self.winner and Unit.FullName(self.winner)
+        data.traded = self.traded and Unit.FullName(self.traded)
+        data.item = Util.Tbl(true, "link", self.item.link, "owner", Unit.FullName(self.item.owner))
 
         if full then
-            if Masterloot.session.bidPublic or Masterloot.IsOnCouncil(target) then
+            if Addon.db.profile.bidPublic or Masterloot.session.bidPublic or Masterloot.IsOnCouncil(target) then
                 data.bids = Util.TblMapKeys(self.bids, Unit.FullName)
             end
 
@@ -794,6 +790,8 @@ function Self:SendStatus(noCheck, target, full)
         end
 
         Comm.SendData(Comm.EVENT_ROLL_STATUS, data, target or Comm.TYPE_GROUP)
+
+        Util.TblRelease(true, data)
     end
 end
 

@@ -187,6 +187,13 @@ function Addon:OnDisable()
     end
 end
 
+function Addon:ToggleDebug()
+    self.DEBUG = not self.DEBUG
+    PersoLootRollDebug = self.DEBUG
+
+    self:Info("Debugging " .. (self.DEBUG and "en" or "dis") .. "abled")
+end
+
 -------------------------------------------------------
 --                   Chat command                    --
 -------------------------------------------------------
@@ -255,8 +262,8 @@ function Addon:HandleChatCommand(msg)
     elseif cmd == "bid" then
         local owner, item, bid = select(2, unpack(args))
         
-        if Util.StrIsEmpty(owner) or Item.IsLink(owner)                 -- owner
-        or item and not Item.IsLink(item)                               -- item
+        if Util.StrIsEmpty(owner) or Item.IsLink(owner)            -- owner
+        or item and not Item.IsLink(item)                          -- item
         or bid and not Util.TblFind(Roll.BIDS, tonumber(bid)) then -- answer
             self:Print(L["USAGE_BID"])
         else
@@ -271,9 +278,15 @@ function Addon:HandleChatCommand(msg)
     -- Rolls/None
     elseif cmd == "rolls" or not cmd then
         GUI.Rolls.Show()
+    -- Toggle debug mode
+    elseif cmd == "debug" then
+        self:ToggleDebug()
     -- Update and export trinket list
-    elseif cmd == "updatetrinkets" and Item.UpdateTrinkets then
+    elseif cmd == "trinkets" and Item.UpdateTrinkets then
         Item.UpdateTrinkets()
+    -- Update and export instance list
+    elseif cmd == "instances" and Util.ExportInstances then
+        Util.ExportInstances()
     -- Unknown
     else
         self:Err(L["ERROR_CMD_UNKNOWN"], cmd)
@@ -1089,6 +1102,7 @@ end
 -- Set a unit's version string
 function Addon:SetVersion(unit, version)
     self.versions[unit] = version
+    self.plhUsers[unit] = nil
 
     if not version then
         self.disabled[unit] = nil

@@ -4,7 +4,7 @@ LibStub("AceAddon-3.0"):NewAddon(Addon, Name, "AceConsole-3.0", "AceComm-3.0", "
 -- Constants
 Addon.ABBR = "PLR"
 Addon.VERSION = GetAddOnMetadata("PersoLootRoll", "Version")
-Addon.DEBUG = false
+Addon.DEBUG = PersoLootRollDebug or false
 
 -- Modules
 Addon.Comm = {}

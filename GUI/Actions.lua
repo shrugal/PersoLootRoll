@@ -321,11 +321,7 @@ function Self.UpdateButtons()
                     .AddTo(Self.frames.window.frame)
                     .SetPoint(name, name:sub(-5) == "RIGHT" and 5 or name:sub(-4) == "LEFT" and -5 or 0, name:sub(1, 3) == "TOP" and 5 or name:sub(1, 6) == "BOTTOM" and -5 or 0)()
                 btn.image:SetPoint("TOP")
-                btn.OnRelease = function (self)
-                    self.image:SetPoint("TOP", 0, -5)
-                    self.frame:SetFrameStrata("MEDIUM")
-                    self.OnRelease = nil
-                end
+                btn.OnRelease = GUI.ResetIcon
                 Self.anchors[name] = btn
             end
 
@@ -354,10 +350,7 @@ function Self.CreateHeaderIconButton(text, n, onClick, icon, ...)
         .SetPoint("TOPRIGHT", -(n-1)*17 - 3, -2)
         .Show()()
     f.image:SetPoint("TOP")
-    f.OnRelease = function (self)
-        self.image:SetPoint("TOP", 0, -5)
-        self.OnRelease = nil
-    end
+    f.OnRelease = Self.ResetIcon
 
     return f
 end

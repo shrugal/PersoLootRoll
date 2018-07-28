@@ -12,6 +12,18 @@ Self.INTERACT_TRADE = 2   -- 11.11 yards
 Self.INTERACT_DUEL = 3    -- 9.9 yards
 Self.INTERACT_FOLLOW = 4  -- 28 yards
 
+-- Expac IDs
+Self.TIER_CLASSIC = 1
+Self.TIER_BC = 2
+Self.TIER_WOTLK = 3
+Self.TIER_CATA = 4
+Self.TIER_MOP = 5
+Self.TIER_WOD = 6
+Self.TIER_LEGION = 7
+Self.TIER_BFA = 8
+
+Self.TIER_LEVELS = {60, 70, 80, 85, 90, 100, 110, 120, 130, 140}
+
 -- Check if the current group is a guild group (>=80% guild members)
 function Self.IsGuildGroup(guild)
     guild = guild or Unit.GuildName("player")
@@ -38,6 +50,24 @@ function Self.GetGuildRanks()
         i, name = i + 1, GuildControlGetRankName(i + 1)
     end
     return t
+end
+
+-- Get the tier for the current instance
+function Self.GetInstanceTier()
+    if IsInInstance() then
+        local mapID = C_Map.GetBestMapForUnit("player")
+        return mapID and Self.INSTANCES[EJ_GetInstanceForMap(mapID)] or nil
+    end
+end
+
+-- Check if the legacy loot mode is active
+function Self.IsLegacyLoot()
+    if IsInInstance() and GetLootMethod() == "personalloot" then
+        local iTier = Self.GetInstanceTier()
+        local pTier = Self.TblFindFn(Self.TIER_LEVELS, function (v) return v >= UnitLevel("player") end, true)
+
+        return iTier and pTier and iTier < pTier - 1
+    end
 end
 
 -- Check if currently in a timewalking dungeon
@@ -464,7 +494,7 @@ end
 -- Find a value in a table
 function Self.TblFind(t, val)
     for i,v in pairs(t) do
-        if v == val then return i end
+        if v == val then return i, v end
     end
 end
 
@@ -473,32 +503,36 @@ function Self.TblFindWhere(t, ...)
     local isTbl, tbl, deep = type(...) == "table", ...
     for i,v in pairs(t) do
         if isTbl and Self.TblContains(v, tbl, deep) or not isTbl and Self.TblMatches(v, ...) then
-            return i
+            return i, v
         end
+    end
+end
+
+-- Find the first element matching a fn
+function Self.TblFindFn(t, fn, val, index, ...)
+    for i,v in pairs(t) do
+        local f, r = Self.Fn(fn, v)
+        if val then
+            if index then r = f(v, i, ...) else r = f(v, ...) end
+        else
+            if index then r = f(i, ...) else r = f(...) end
+        end
+        if r then return i, v end
     end
 end
 
 -- Find the first element (optinally matching a fn)
 function Self.TblFirst(t, fn, val, index, ...)
-    for i,v in pairs(t) do
-        if not fn then
-            return v
-        else
-            local f, r = Self.Fn(fn, v)
-            if val then
-                if index then r = f(v, i, ...) else r = f(v, ...) end
-            else
-                if index then r = f(i, ...) else r = f(...) end
-            end
-            if r then return v end
-        end
+    if not fn then
+        return select(2, next(t))
+    else
+        return select(2, Self.TblFindFn(t, fn, val, index, ...))
     end
 end
 
 -- Find the first set of key/value pairs in a table
 function Self.TblFirstWhere(t, ...)
-    local i = Self.TblFindWhere(t, ...)
-    if i ~= nil then return t[i] end
+    return select(2, Self.TblFindWhere(t, ...))
 end
 
 -- FILTER
@@ -1003,7 +1037,10 @@ end
 -------------------------------------------------------
 
 -- Rounds a number
-function Self.NumRound(num) return floor(num + .5) end
+function Self.NumRound(num, p)
+    p = math.pow(10, p or 0)
+    return floor(num * p + .5) / p
+end
 
 -- Check if num is in interval (exclusive or inclusive)
 function Self.NumBetween(num, a, b) return num > a and num < b end

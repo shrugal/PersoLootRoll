@@ -695,11 +695,18 @@ end
 -------------------------------------------------------
 
 -- Check the item quality
-function Self:HasSufficientQuality()
+function Self:HasSufficientQuality(loot)
     local quality = Self.GetInfo(self, "quality")
-    local threshold = IsInRaid() and not Addon.db.profile.transmog and LE_ITEM_QUALITY_EPIC or LE_ITEM_QUALITY_RARE
 
-    return quality and quality >= threshold and quality < LE_ITEM_QUALITY_LEGENDARY
+    if not quality or quality >= LE_ITEM_QUALITY_LEGENDARY then
+        return false
+    elseif loot and Util.IsLegacyLoot() then
+        return quality >= LE_ITEM_QUALITY_COMMON
+    elseif IsInRaid() then
+        return quality >= LE_ITEM_QUALITY_EPIC
+    else
+        return quality >= LE_ITEM_QUALITY_RARE
+    end
 end
 
 -- Check if an item can be equipped
@@ -827,18 +834,18 @@ end
 function Self:GetEligible(unit)
     if not self.eligible then
         if unit then
-            if not self:CanBeEquipped(unit) then
-                return nil
-            elseif self:IsTransmogNeeded(unit) then
+            if not self.isSoulbound and self:IsTransmogNeeded(unit) then
                 return true
+            elseif not self:CanBeEquipped(unit) then
+                return nil
             else
                 local specs = Unit.IsSelf(unit) and Util(Addon.db.char.specs).CopyOnly(true, true).Keys()() or nil
-                local result = self:IsUseful(unit, specs) and self:HasSufficientQuality(unit)
+                local result = self:IsTransmogNeeded(unit) or self:HasSufficientLevel(unit) and self:IsUseful(unit, specs)
                 Util.TblRelease(specs)
                 return result
             end
         else
-            local eligible = {}
+            local eligible = Util.Tbl()
             for i=1,GetNumGroupMembers() do
                 local unit = GetRaidRosterInfo(i)
                 if unit then
@@ -869,6 +876,13 @@ end
 -------------------------------------------------------
 --                     Decisions                     --
 -------------------------------------------------------
+
+-- Check if a looted item should be checked further
+function Self:ShouldBeChecked(owner)
+    owner = owner or type(self) == "table" and self.owner
+    local item = type(self) == "table" and self.link or self
+    return item and owner and not (Addon.db.profile.dontShare and not Unit.IsSelf(owner)) and IsEquippableItem(item) and Self.HasSufficientQuality(item, true)
+end
 
 -- Check if the item should be handled by the addon
 function Self:ShouldBeConsidered()

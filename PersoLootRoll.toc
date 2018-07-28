@@ -2,7 +2,7 @@
 ## Title: PersoLootRoll
 ## Notes: A loot roll addon for personal loot.
 ## Version: 12-beta2
-## SavedVariables: PersoLootRollDB, PersoLootRollIconDB, PersoLootRollML
+## SavedVariables: PersoLootRollDB, PersoLootRollIconDB, PersoLootRollML, PersoLootRollDebug
 
 # Libs
 Libs\libs.xml
@@ -23,6 +23,7 @@ Util\Item.lua
 
 # Data
 Data\Items.lua
+Data\Instances.lua
 
 # Application logic
 Addon.lua

@@ -228,11 +228,10 @@ function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
     local unit = Unit(sender)
     if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
 
-    local dontShare = Addon.db.profile.dontShare
-    local isBonusLoot = msg:match(Self.PATTERN_BONUS_LOOT)
     local item = Item.GetLink(msg)
+    local dontShare = Addon.db.profile.dontShare
 
-    if item and unit and not isBonusLoot and not (dontShare and not Unit.IsSelf(unit)) and IsEquippableItem(item) and Item.HasSufficientQuality(item) then
+    if not msg:match(Self.PATTERN_BONUS_LOOT) and Item.ShouldBeChecked(item, unit) then
         item = Item.FromLink(item, unit)
 
         if item.isOwner then
@@ -680,7 +679,7 @@ end)
 -------------------------------------------------------
 
 Comm.Listen(Comm.PLH_EVENT, function (event, msg, channel, _, unit)
-    if not IsAddOnLoaded(Comm.PLH_NAME) and not Unit.IsSelf(unit) then
+    if not IsAddOnLoaded(Comm.PLH_NAME) then
         local action, itemId, owner, param = msg:match('^([^~]+)~([^~]+)~([^~]+)~?([^~]*)$')
         itemId = tonumber(itemId)
         owner = Unit(owner)
@@ -691,7 +690,9 @@ Comm.Listen(Comm.PLH_EVENT, function (event, msg, channel, _, unit)
             Comm.SendPlh(Comm.PLH_ACTION_VERSION, Unit.FullName("player"), Comm.PLH_VERSION)
         -- Version: Answer to version check
         elseif action == Comm.PLH_ACTION_VERSION then
-            Addon.plhUsers[unit] = param
+            if not Addon.versions[unit] then
+                Addon.plhUsers[unit] = param
+            end
         else
             local roll = Roll.Find(nil, owner, itemId, nil, nil, Roll.STATUS_RUNNING) or Roll.Find(nil, owner, itemId)
             
@@ -713,4 +714,4 @@ Comm.Listen(Comm.PLH_EVENT, function (event, msg, channel, _, unit)
             end
         end
     end
-end, true) -- TODO: DEBUG
+end)

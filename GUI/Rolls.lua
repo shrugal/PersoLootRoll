@@ -65,11 +65,7 @@ function Self.Show()
                 .SetCallback("OnLeave", GUI.TooltipHide)
                 .SetUserData("text", OPTIONS)
                 .AddTo(window)()
-            f.OnRelease = function (self)
-                self.image:SetPoint("TOP", 0, -5)
-                self.frame:SetFrameStrata("MEDIUM")
-                self.OnRelease = nil
-            end
+            f.OnRelease = GUI.ResetIcon
             f.image:SetPoint("TOP", 0, -2)
             f.frame:SetParent(window.frame)
             f.frame:SetPoint("TOPRIGHT", window.closebutton, "TOPLEFT", -8, -8)
@@ -123,10 +119,7 @@ function Self.Show()
                 end)
                 .SetCallback("OnLeave", GUI.TooltipHide)
                 .AddTo(window)()
-            f.OnRelease = function (self)
-                self.frame:SetFrameStrata("MEDIUM")
-                self.OnRelease = nil
-            end
+            f.OnRelease = GUI.ResetLabel
             f.frame:SetParent(window.frame)
             f.frame:SetPoint("RIGHT", window.optionsBtn.frame, "LEFT", -15, -1)
             f.frame:SetFrameStrata("HIGH")
@@ -149,9 +142,8 @@ function Self.Show()
                 .SetFontObject(GameFontNormal)
                 .SetText(L["FILTER"] .. ":")
                 .AddTo(Self.frames.filter)
-                .SetPoint("TOPLEFT")()
-            f:SetWidth(f.label:GetStringWidth() + 30)
-            f.label:SetPoint("TOPLEFT", 15, -6)
+                .SetPoint("LEFT", 15, 0)()
+            f:SetWidth(f.label:GetStringWidth())
 
             for _,key in ipairs({"all", "done", "awarded", "traded", "hidden"}) do
                 Self.CreateFilterCheckbox(key)
@@ -178,6 +170,7 @@ function Self.Show()
                 .SetPoint("TOP", 0, -4)
                 .SetPoint("RIGHT")()
             f.image:SetPoint("TOP")
+            f.OnRelease = GUI.ResetIcon
 
             -- ML
             f = GUI("InteractiveLabel")
@@ -340,10 +333,7 @@ function Self.Update()
         
             -- Status
             local f = GUI("Label").SetFontObject(GameFontNormal).AddTo(scroll)()
-            f.OnRelease = function (self)
-                self.frame:SetScript("OnUpdate", nil)
-                self.OnRelease = nil
-            end
+            f.OnRelease = GUI.ResetLabel
         
             -- Your bid, Winner
             GUI("Label").SetFontObject(GameFontNormal).AddTo(scroll)
@@ -381,21 +371,11 @@ function Self.Update()
                 f = GUI.CreateIconButton("UI-GroupLoot-Dice", actions, needGreedClick, NEED, 14, 14)
                 f:SetUserData("bid", Roll.BID_NEED)
                 f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-                f.OnRelease = function (self)
-                    self.image:SetPoint("TOP", 0, -5)
-                    self.frame:RegisterForClicks("LeftButtonUp")
-                    self.OnRelease = nil
-                end
         
                 -- Greed
                 f = GUI.CreateIconButton("UI-GroupLoot-Coin", actions, needGreedClick, GREED)
                 f:SetUserData("bid", Roll.BID_GREED)
                 f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-                f.OnRelease = function (self)
-                    self.image:SetPoint("TOP", 0, -5)
-                    self.frame:RegisterForClicks("LeftButtonUp")
-                    self.OnRelease = nil
-                end
         
                 -- Pass
                 GUI.CreateIconButton("UI-GroupLoot-Pass", actions, function (self)
@@ -692,10 +672,7 @@ function Self.UpdateDetails(details, roll)
                     .AddTo(grp)
                     .SetPoint(i == 1 and "LEFT" or "RIGHT")()
                 f.image:SetPoint("TOP")
-                f.OnRelease = function (self)
-                    self.image:SetPoint("TOP", 0, -5)
-                    self.OnRelease = nil
-                end
+                f.OnRelease = GUI.ResetIcon
             end
         
             -- Bid, Roll
@@ -823,8 +800,8 @@ function Self.CreateFilterCheckbox(key)
         end)
         .SetCallback("OnLeave", GUI.TooltipHide)
         .AddTo(parent)
-        .SetPoint("TOPLEFT", parent.children[#parent.children-1].frame, "TOPRIGHT")()
-    f:SetWidth(f.text:GetStringWidth() + 24 + 15)
+        .SetPoint("LEFT", parent.children[#parent.children-1].frame, "RIGHT", 15, 0)()
+    f:SetWidth(f.text:GetStringWidth() + 24)
     return f
 end
 

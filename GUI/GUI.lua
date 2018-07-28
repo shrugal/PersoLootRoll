@@ -233,6 +233,17 @@ function Self.ReverseAnchor(anchor)
     return anchor:gsub("TOP", "B-OTTOM"):gsub("BOTTOM", "T-OP"):gsub("LEFT", "R-IGHT"):gsub("RIGHT", "L-EFT"):gsub("-", "")
 end
 
+-- Create an interactive label for a unit, with tooltip, unitmenu and whispering on click
+function Self.CreateUnitLabel(parent, baseTooltip)
+    return Self("InteractiveLabel")
+        .SetFontObject(GameFontNormal)
+        .SetCallback("OnEnter", baseTooltip and Self.TooltipUnit or Self.TooltipUnitFullName)
+        .SetCallback("OnLeave", Self.TooltipHide)
+        .SetCallback("OnClick", Self.UnitClick)
+        .AddTo(parent)
+end
+
+-- Create an interactive label for an item, with tooltip and click support
 function Self.CreateItemLabel(parent, anchor)
     local f = Self("InteractiveLabel")
         .SetFontObject(GameFontNormal)
@@ -242,7 +253,7 @@ function Self.CreateItemLabel(parent, anchor)
         .AddTo(parent)()
 
     -- Fix the stupid label anchors
-    local methods = Util.TblFlip(Util.Tbl(false, "OnWidthSet", "SetText", "SetImage", "SetImageSize"), function (v) return f[v] end)
+    local methods = Util.TblCopySelect(f, "OnWidthSet", "SetText", "SetImage", "SetImageSize")
     for name,fn in pairs(methods) do
         f[name] = function (self, ...)
             fn(self, ...)
@@ -264,6 +275,7 @@ function Self.CreateItemLabel(parent, anchor)
                 local height = max(self.image:GetHeight(), self.label:GetHeight())
                 self.resizing = true
                 self.frame:SetHeight(height)
+                self.frame:SetWidth(Util.NumRound(self.frame:GetWidth()), 1)
                 self.frame.height = height
                 self.resizing = nil
             end
@@ -271,8 +283,8 @@ function Self.CreateItemLabel(parent, anchor)
     end
     f.OnRelease = function (self)
         for name,fn in pairs(methods) do f[name] = fn end
-        f.OnRelease = nil
         Util.TblRelease(methods)
+        f.OnRelease = nil
     end
 
     return f
@@ -290,10 +302,7 @@ function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
         .AddTo(parent)
         .Show()()
     f.image:SetPoint("TOP")
-    f.OnRelease = function (self)
-        self.image:SetPoint("TOP", 0, -5)
-        f.OnRelease = nil
-    end
+    f.OnRelease = Self.ResetIcon
 
     return f
 end
@@ -316,16 +325,6 @@ function Self.ArrangeIconButtons(parent, margin)
     end
 
     Self(parent).SetWidth(max(0, width + (n-1) * margin)).Show()
-end
-
--- Create an interactive label for a unit, with tooltip, unitmenu and whispering on click
-function Self.CreateUnitLabel(parent, baseTooltip)
-    return Self("InteractiveLabel")
-        .SetFontObject(GameFontNormal)
-        .SetCallback("OnEnter", baseTooltip and Self.TooltipUnit or Self.TooltipUnitFullName)
-        .SetCallback("OnLeave", Self.TooltipHide)
-        .SetCallback("OnClick", Self.UnitClick)
-        .AddTo(parent)
 end
 
 -- Display the given text as tooltip
@@ -440,6 +439,20 @@ function Self.GetBidColor(bid, hex)
             return 1, max(0, min(1, 1 - .1 * i)), 0
         end
     end
+end
+
+function Self.ResetIcon(self)
+    self.image:SetPoint("TOP", 0, -5)
+    self.frame:SetFrameStrata("MEDIUM")
+    self.frame:RegisterForClicks("LeftButtonUp")
+    self.OnRelease = nil
+end
+
+function Self.ResetLabel(self)
+    self.label:SetPoint("TOPLEFT")
+    self.frame:SetFrameStrata("MEDIUM")
+    self.frame:SetScript("OnUpdate", nil)
+    self.OnRelease = nil
 end
 
 -- Add row-highlighting to a table
@@ -741,7 +754,8 @@ local Fn = function (...)
         -- Fix Label's stupid image anchoring
         if Util.In(obj.type, "Label", "InteractiveLabel") and Util.In(k, "SetText", "SetFont", "SetFontObject", "SetImage") then
             local strWidth, imgWidth = obj.label:GetStringWidth(), obj.imageshown and obj.image:GetWidth() or 0
-            obj:SetWidth(strWidth + imgWidth + (min(strWidth, imgWidth) > 0 and 4 or 0))
+            local width = Util.NumRound(strWidth + imgWidth + (min(strWidth, imgWidth) > 0 and 4 or 0), 1)
+            obj:SetWidth(width)
         end
     end
     return c
