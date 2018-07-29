@@ -12,7 +12,10 @@ function Self.EnableGroupLootRoll()
     if not Addon:IsHooked("GetLootRollTimeLeft") then
         Addon:RawHook("GetLootRollTimeLeft", function (id)
             if Roll.IsPlrId(id) then
-                return Roll.Get(id):GetTimeLeft()
+                local roll = Roll.Get(id)
+                if roll then
+                    return roll:GetTimeLeft()
+                end
             else
                 return Addon.hooks.GetLootRollTimeLeft(id)
             end
@@ -24,17 +27,19 @@ function Self.EnableGroupLootRoll()
         Addon:RawHook("GetLootRollItemInfo", function (id)
             if Roll.IsPlrId(id) then
                 local roll = Roll.Get(id)
-                local item = roll.item
+                if roll then
+                    local item = roll.item
 
-                return item.texture, item.name, 1, item.quality, item.bindType == LE_ITEM_BIND_ON_ACQUIRE,
-                    true, -- Can need
-                    roll.ownerId or roll.itemOwnerId or Addon.plhUsers[roll.owner], -- Can greed
-                    false, -- Can disenchant
-                    5, -- Reason need
-                    "PLR_NO_ADDON", -- Reason greed
-                    "PLR_NO_DISENCHANT", -- Reason disenchant
-                    nil -- Disenchant skill required
-                    -- TODO
+                    return item.texture, item.name, 1, item.quality, item.bindType == LE_ITEM_BIND_ON_ACQUIRE,
+                        true, -- Can need
+                        roll.ownerId or roll.itemOwnerId or Addon.plhUsers[roll.owner], -- Can greed
+                        false, -- Can disenchant
+                        5, -- Reason need
+                        "PLR_NO_ADDON", -- Reason greed
+                        "PLR_NO_DISENCHANT", -- Reason disenchant
+                        nil -- Disenchant skill required
+                        -- TODO
+                end
             else
                 return Addon.hooks.GetLootRollItemInfo(id)
             end
@@ -45,7 +50,10 @@ function Self.EnableGroupLootRoll()
     if not Addon:IsHooked("GetLootRollItemLink") then
         Addon:RawHook("GetLootRollItemLink", function (id)
             if Roll.IsPlrId(id) then
-                return Roll.Get(id).item.link
+                local roll = Roll.Get(id)
+                if roll then
+                    return Roll.Get(id).item.link
+                end
             else
                 return Addon.hooks.GetLootRollItemLink(id)
             end
@@ -57,11 +65,12 @@ function Self.EnableGroupLootRoll()
         Addon:RawHook("RollOnLoot", function (id, bid)
             if Roll.IsPlrId(id) then
                 local roll = Roll.Get(id)
-
-                if roll.status == Roll.STATUS_RUNNING then
-                    roll:Bid(bid == 0 and Roll.BID_PASS or bid)
-                else
-                    roll:HideRollFrame()
+                if roll then
+                    if roll.status == Roll.STATUS_RUNNING then
+                        roll:Bid(bid == 0 and Roll.BID_PASS or bid)
+                    else
+                        roll:HideRollFrame()
+                    end
                 end
             else
                 return Addon.hooks.RollOnLoot(id, bid)
@@ -175,7 +184,10 @@ function Self.EnableGroupLootRoll()
         Addon:RawHook(GameTooltip, "SetLootRollItem", function (self, id)
             --Util.dump(id)
             if Roll.IsPlrId(id) then
-                self:SetHyperlink(Roll.Get(id).item.link)
+                local roll = Roll.Get(id)
+                if roll then
+                    self:SetHyperlink(roll.item.link)
+                end
             else
                 return Addon.hooks[self].SetLootRollItem(id)
             end
