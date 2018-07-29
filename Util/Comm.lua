@@ -98,7 +98,7 @@ function Self.ShouldInitChat(target)
     local c = Addon.db.profile.messages
 
     -- Check group
-    if not IsInGroup() or Util.TblCount(Addon.disabled) == 0 and Util.TblCount(Addon.versions) + 1 == GetNumGroupMembers() then
+    if not IsInGroup() or Addon:GetNumAddonUsers(true) + 1 == GetNumGroupMembers() then
         return false
     end
 

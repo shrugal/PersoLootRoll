@@ -262,7 +262,7 @@ function Self.TblGet(t, ...)
         end
     end
     
-    for i=1,n do t = t ~= nil and t[select(i, ...)] or nil end
+    for i=1,n do if t ~= nil then t = t[select(i, ...)] end end
 
     return t
 end

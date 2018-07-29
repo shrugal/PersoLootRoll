@@ -1149,6 +1149,15 @@ function Addon:CompareVersion(versionOrUnit)
     end
 end
 
+-- Get the number of addon users in the group
+function Addon:GetNumAddonUsers(inclCompAddons)
+    local n = Util.TblCount(self.versions) - Util.TblCount(self.disabled)
+    if inclCompAddons then
+        n = n + Util.TblCount(Addon.plhUsers)
+    end
+    return n
+end
+
 -------------------------------------------------------
 --                      Console                      --
 -------------------------------------------------------
