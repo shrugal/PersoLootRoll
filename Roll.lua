@@ -293,14 +293,19 @@ function Self.FromPlrId(id) return -id end
 function Self.GetTimeout()
     local items, ml = 0, Masterloot.GetMasterlooter()
     local base, perItem = ml and Masterloot.session.timeoutBase or Self.TIMEOUT, ml and Masterloot.session.timeoutPerItem or Self.TIMEOUT_PER_ITEM
+    local difficulty, _, maxPlayers = select(3, GetInstanceInfo())
 
-    if select(3, GetInstanceInfo()) == DIFFICULTY_DUNGEON_CHALLENGE then
+    if difficulty == DIFFICULTY_DUNGEON_CHALLENGE then
         -- In M+ we get 2 items at the end of the dungeon, +1 if in time, +0.4 per keystone level above 15
         local _, level, _, onTime = C_ChallengeMode.GetCompletionInfo();
         items = 2 + (onTime and 1 or 0) + (level > 15 and math.ceil(0.4 * (level - 15)) or 0)
     else
-        -- Normally we get 1 item per 5 players in the group
-        items = math.ceil(GetNumGroupMembers() / 5)
+        -- Normally we get about 1 item per 5 players in the group
+        local players = GetNumGroupMembers()
+        if Util.IsLegacyLoot() then
+            players = Util.In(difficulty, DIFFICULTY_RAID_LFR, DIFFICULTY_PRIMARYRAID_LFR, DIFFICULTY_PRIMARYRAID_NORMAL, DIFFICULTY_PRIMARYRAID_HEROIC) and 20 or maxPlayers
+        end
+        items = math.ceil(players / 5)
     end
 
     return base + items * perItem
@@ -458,12 +463,13 @@ function Self:Bid(bid, fromUnit, rollOrImport)
         -- Let everyone know
         Comm.RollBid(self, bid, fromUnit, isImport)
 
-        if self.isOwner then
-            -- Check if we should end the roll or advertise to chat
-            if self.status == Self.STATUS_RUNNING and not (self:ShouldEnd() and self:End()) then
+        -- Check if we should end the roll
+        if not (self:ShouldEnd() and self:End()) and self.isOwner then
+            -- or advertise to chat
+            if self.status == Self.STATUS_RUNNING then
                 self:Advertise()
-            -- Check if the winner just passed on the item
-            elseif self.winner == fromUnit and not self.traded then
+            -- or if the winner just passed on the item
+            elseif self.winner == fromUnit and bid == Self.BID_PASS and not self.traded then
                 self:End(nil, false, true)
             end
         end
@@ -495,14 +501,17 @@ end
 
 -- Check if we should end the roll prematurely
 function Self:ShouldEnd()
-    -- We have bid and the owner doesn't have the addon
-    if not self.ownerId and self.bid then
+    -- Not running or we haven't bid yet
+    if self.status ~= Self.STATUS_RUNNING or not self.bid then
+        return false
+    -- The owner doesn't have the addon
+    elseif not self.ownerId then
         return true
-    -- Not the owner, not running or we haven't bid yet
-    elseif not self.isOwner or self.status ~= Self.STATUS_RUNNING or not self.bid then
+    -- Not the owner
+    elseif not self.isOwner then
         return false
     -- We voted need on our own item
-    elseif not Masterloot.GetMasterlooter() and self.item.isOwner and self.bid and floor(self.bid) == Self.BID_NEED then
+    elseif not Masterloot.GetMasterlooter() and self.item.isOwner and floor(self.bid) == Self.BID_NEED then
         return true
     end
 
