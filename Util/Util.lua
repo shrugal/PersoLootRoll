@@ -42,6 +42,27 @@ function Self.IsGuildGroup(guild)
     return count / GetNumGroupMembers() >= 0.8
 end
 
+-- Check if the current group is a community group (>=80% members from one community)
+function Self.IsCommunityGroup()
+    if not IsInGroup() or not Self.TblFirstWhere(C_Club.GetSubscribedClubs(), "clubType", Enum.ClubType.Character) then
+        return false
+    end
+
+    local n, comms = GetNumGroupMembers(), Self.Tbl()
+    for i=1,n do
+        local c = Unit.CommonCommunities(GetRaidRosterInfo(i))
+        for _,clubId in pairs(c) do
+            comms[clubId] = (comms[clubId] or 0) + 1
+            if comms[clubId] / n >= 0.8 then
+                Self.TblRelease(comms, c)
+                return true
+            end
+        end
+        Self.TblRelease(c)
+    end
+    Self.TblRelease(comms)
+end
+
 -- Get a list of guild ranks
 function Self.GetGuildRanks()
     local t, i, name = Self.Tbl(), 1, GuildControlGetRankName(1)

@@ -45,7 +45,7 @@ function Addon:OnInitialize()
     self:ToggleDebug(PersoLootRollDebug or self.DEBUG)
     
     self.db = LibStub("AceDB-3.0"):New(Name .. "DB", {
-        -- VERSION 5
+        -- VERSION 6
         profile = {
             -- General
             enabled = true,
@@ -65,13 +65,13 @@ function Addon:OnInitialize()
                 echo = Addon.ECHO_INFO,
                 group = {
                     announce = true,
-                    groupType = {lfd = true, party = true, lfr = true, raid = true, guild = true},
+                    groupType = {lfd = true, party = true, lfr = true, raid = true, guild = true, community = true},
                     roll = true
                 },
                 whisper = {
                     ask = false,
-                    groupType = {lfd = true, party = true, lfr = true, raid = true, guild = false},
-                    target = {friend = false, guild = false, other = true},
+                    groupType = {lfd = true, party = true, lfr = true, raid = true, guild = false, community = false},
+                    target = {friend = false, guild = false, community = false, other = true},
                     answer = true,
                     suppress = false,
                 },
@@ -80,7 +80,7 @@ function Addon:OnInitialize()
 
             -- Masterloot
             masterloot = {
-                allow = {friend = true, guild = true, guildgroup = true, raidleader = false, raidassistant = false},
+                allow = {friend = true, guild = true, community = false, guildgroup = true, raidleader = false, raidassistant = false},
                 accept = {friend = false, guildmaster = false, guildofficer = false},
                 allowAll = false
             },
@@ -505,8 +505,8 @@ function Addon:RegisterOptions()
 
     -- MESSAGES
 
-    local groupKeys = {"party", "raid", "guild", "lfd", "lfr"}
-    local groupValues = {PARTY, RAID, GUILD_GROUP, LOOKING_FOR_DUNGEON_PVEFRAME, RAID_FINDER_PVEFRAME}
+    local groupKeys = {"party", "lfd", "guild", "raid", "lfr", "community"}
+    local groupValues = {PARTY, LOOKING_FOR_DUNGEON_PVEFRAME, GUILD_GROUP, RAID, RAID_FINDER_PVEFRAME, L["COMMUNITY_GROUP"]}
 
     local lang = Locale.GetRealmLanguage()
 
@@ -537,7 +537,7 @@ function Addon:RegisterOptions()
                 type = "group",
                 order = it(),
                 args = {
-                    ShouldChatDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_SHOULD_CHAT_DESC"] .. "\n"},
+                    -- ShouldChatDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_SHOULD_CHAT_DESC"] .. "\n"},
                     group = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
                     groupAnnounce = {
                         name = L["OPT_GROUPCHAT_ANNOUNCE"],
@@ -628,6 +628,7 @@ function Addon:RegisterOptions()
                         values = {
                             friend = FRIEND,
                             guild = GUILD,
+                            community = COMMUNITIES,
                             other = OTHER
                         },
                         set = function (_, key, val)
@@ -989,27 +990,34 @@ end
 function Addon:MigrateOptions()
     -- Profile
     local c = Addon.db.profile
-    if not c.version or c.version < 5 then -- TODO: Change for the next version
-        self:MigrateOption("echo", c, c.messages)
-        self:MigrateOption("announce", c, c.messages.group, true, "groupType")
-        self:MigrateOption("roll", c, c.messages.group)
-        c.messages.whisper.ask = true
-        self:MigrateOption("answer", c, c.messages.whisper)
-        self:MigrateOption("suppress", c, c.messages.whisper)
-        self:MigrateOption("group", c.whisper, c.messages.whisper, true, "groupType")
-        self:MigrateOption("target", c.whisper, c.messages.whisper, true)
-        c.whisper = nil
-        self:MigrateOption("messages", c, c.messages, true, "lines", "^%l%l%u%u$", true)
-        c.version = 5
+    if c.version then
+        if c.version < 5 then
+            self:MigrateOption("echo", c, c.messages)
+            self:MigrateOption("announce", c, c.messages.group, true, "groupType")
+            self:MigrateOption("roll", c, c.messages.group)
+            c.messages.whisper.ask = true
+            self:MigrateOption("answer", c, c.messages.whisper)
+            self:MigrateOption("suppress", c, c.messages.whisper)
+            self:MigrateOption("group", c.whisper, c.messages.whisper, true, "groupType")
+            self:MigrateOption("target", c.whisper, c.messages.whisper, true)
+            c.whisper = nil
+            self:MigrateOption("messages", c, c.messages, true, "lines", "^%l%l%u%u$", true)
+        end
+        if c.version < 6 then
+            c.messages.group.groupType.community = c.messages.group.groupType.guild
+            c.messages.whisper.groupType.community = c.messages.whisper.groupType.guild
+            c.messages.whisper.target.community = c.messages.whisper.target.guild
+        end
     end
+    c.version = 6
 
     -- Factionrealm
     local c = Addon.db.factionrealm
-    c.version = 3 -- TODO: Change for the next version
+    c.version = 3
     
     -- Char
     local c = Addon.db.char
-    c.version = 3 -- TODO: Change for the next version
+    c.version = 3
 end
 
 -- Migrate a single option

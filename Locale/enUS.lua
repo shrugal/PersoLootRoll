@@ -38,6 +38,7 @@ L["AWARD"] = "Award"
 L["AWARD_LOOT"] = "Award loot"
 L["AWARD_RANDOMLY"] = "Award randomly"
 L["BID"] = "Bid"
+L["COMMUNITY_GROUP"] = "Community Group"
 L["DISABLED"] = "Disabled"
 L["DOWN"] = "down"
 L["ENABLED"] = "Enabled"
@@ -189,7 +190,8 @@ L["OPT_MASTERLOOT_ALLOW_ALL"] = "Allow everbody"
 L["OPT_MASTERLOOT_ALLOW_ALL_DESC"] = "|cffff0000WARNING:|r This will allow everybody to request becoming your masterlooter and potentially scam you into giving away your loot! Only activate it if you know what you are doing."
 L["OPT_MASTERLOOT_ALLOW_DESC"] = [=[Choose who can request to become your masterlooter. You will still get a popup message asking you to confirm it, so you can decline a masterlooter request when it happens.
 
-|cffffff78Guild Group:|r Someone from a guild whose members make up 80% or more of the group.]=]
+|cffffff78Guild Group:|r Someone from a guild whose members make up 80% or more of the group.
+|cffffff78Community Group:|r Someone from one of your WoW-Communities whose members make up 80% or more of the group.]=]
 L["OPT_MASTERLOOT_APPROVAL"] = "Approval"
 L["OPT_MASTERLOOT_APPROVAL_DESC"] = "Here you can define who can become your masterlooter."
 L["OPT_MASTERLOOT_DESC"] = "When you (or someone else) becomes masterlooter, all loot will be distributed by that person. You will get a notice about who's items you won or who won your items, so you can trade them to the right person."
@@ -252,7 +254,8 @@ L["OPT_GROUPCHAT_DESC"] = "Change whether or not the addon will post things to t
 L["OPT_GROUPCHAT_GROUP_TYPE"] = "Announce by group type"
 L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[Post to group chat only if you are in one of these group types.
 
-|cffffff78Guild Group:|r Someone from a guild whose members make up 80% or more of the group.]=]
+|cffffff78Guild Group:|r The members of one guild make up 80% or more of the group.
+|cffffff78Community Group:|r The members of one of your WoW-Communities make up 80% or more of the group.]=]
 L["OPT_GROUPCHAT_ROLL"] = "Roll on loot in chat"
 L["OPT_GROUPCHAT_ROLL_DESC"] = "Roll on loot you want (/roll) if others post links in group chat."
 L["OPT_MESSAGES"] = "Messages"
@@ -306,11 +309,12 @@ L["OPT_WHISPER_GROUP_DESC"] = "Whisper others if they got loot you want, dependi
 L["OPT_WHISPER_GROUP_TYPE"] = "Ask by group type"
 L["OPT_WHISPER_GROUP_TYPE_DESC"] = [=[Ask for loot only if you are in one of these group types.
 
-|cffffff78Guild Group:|r Someone from a guild whose members make up 80% or more of the group.]=]
+|cffffff78Guild Group:|r The members of one guild make up 80% or more of the group.
+|cffffff78Community Group:|r The members of one of your WoW-Communities make up 80% or more of the group.]=]
 L["OPT_WHISPER_SUPPRESS"] = "Suppress requests"
 L["OPT_WHISPER_SUPPRESS_DESC"] = "Suppress incoming whisper messages from eligible players when giving away your loot."
 L["OPT_WHISPER_TARGET"] = "Ask by target"
-L["OPT_WHISPER_TARGET_DESC"] = "Ask for loot depending on whether the target is in your guild or on your friend list."
+L["OPT_WHISPER_TARGET_DESC"] = "Ask for loot depending on whether the target is in your guild, in one of your WoW-Communities or on your friend list."
 
 -- Roll
 L["BID_CHAT"] = "Asking %s for %s -> %s."
