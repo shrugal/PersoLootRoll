@@ -104,11 +104,15 @@ function Self.EnableGroupLootRoll()
             self.Player:Show()
 
             -- Buttons
-            if roll.item.isOwner and not Masterloot.GetMasterlooter() then
+            if roll.isOwner and roll.item.isOwner and not Masterloot.GetMasterlooter() then
                 self.NeedButton:SetNormalTexture("Interface\\AddOns\\PersoLootRoll\\Media\\Roll-Keep-Up")
                 self.NeedButton:SetHighlightTexture("Interface\\AddOns\\PersoLootRoll\\Media\\Roll-Keep-Highlight")
                 self.NeedButton:SetPushedTexture("Interface\\AddOns\\PersoLootRoll\\Media\\Roll-Keep-Down")
                 self.NeedButton.tooltipText = L["KEEP"]
+                self.PassButton:SetNormalTexture("Interface\\AddOns\\PersoLootRoll\\Media\\Roll-Pass-Up")
+                self.PassButton:SetHighlightTexture("Interface\\AddOns\\PersoLootRoll\\Media\\Roll-Pass-Highlight")
+                self.PassButton:SetPushedTexture("Interface\\AddOns\\PersoLootRoll\\Media\\Roll-Pass-Down")
+                self.PassButton.tooltipText = L["GIVE_AWAY"]
             end
 
             -- Highlight
@@ -141,6 +145,10 @@ function Self.EnableGroupLootRoll()
             self.NeedButton:SetHighlightTexture("Interface\\Buttons\\UI-GroupLoot-Dice-Highlight")
             self.NeedButton:SetPushedTexture("Interface\\Buttons\\UI-GroupLoot-Dice-Down")
             self.NeedButton.tooltipText = NEED
+            self.PassButton:SetNormalTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
+            self.PassButton:SetHighlightTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Highlight")
+            self.PassButton:SetPushedTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Down")
+            self.PassButton.tooltipText = PASS
 
             -- Highlight
             self.Highlight:Hide()
