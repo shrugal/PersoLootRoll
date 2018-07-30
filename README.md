@@ -2,47 +2,63 @@
 A World of Warcraft addon to share and roll on items when using personal loot.
 
 ## Features
-- Uses Blizzards build in group loot roll windows to roll on tradable personal loot.
-- Rolls on other player's loot by whispering/rolling in chat or (if the other person has the addon) in the background.
-- Offers loot you don't need to others, and handles accepting bids, picking a winner and trading automatically.
-- Figures out what you and others can use, so you only have to decide when it actually makes sense.
-- Masterloot mode including support for loot councils.
-- Most things (like whispers, announces etc.) can be turned on/off based on the type of group (raid/party, guildgroup, LFR) or target (friend, guildmember).
 
-### Rolling
-The idea of the addon is to use the build in roll frames (that are used for group loot etc.),
-and make them work for personal loot as well. This means that whenever someone in your party/raid
-gets an item the addon will figure out if you could use it (based on armor/weapon type, attributes,
-equipped ilvl etc.), and pop up a roll window for you to decide whether you want it or not. If
-you want it and the other person doesn't have the addon as well, then it ask for the item through
-whisper chat and rolls for it if the person posts it in group chat. If the other person also has the
-addon, then all this happens in the background without any chat messages.
+### Roll on tradable personal loot from others
+Whenever an item that might be an upgrade for you drops for someone in your group you will get a good old Need-Greed-Pass window (remember those? :P) to decide if you want the item or not. If you choose "Need" or "Greed", then it will send your bid to the item owner if he/she uses PLR as well, or add it to a list of all items you want (see below), so you can easily ask the owner and start trading. You can also enable whispering automatically whenever you roll on an item, with some restrictions to prevent spam.
 
-If you loot an item that someone else could use, then it will show you the same roll window, and
-offer it to your group if you don't roll "Need" on it. It then accepts bids via whispers, rolls
-in chat or in the background if the other person is also using the addon, and after a certain
-timeout (based on # or items looted) it will pick a winner and inform everybody about it. If you
-want to decide yourself you can also right-click on other player's unit frames to directly give
-them an item that is being rolled for, ending the roll instantly.
+<p align="center">
+  <img src="https://imgur.com/GzgQjvk.jpg">
+</p>
 
-### Trading
-Once you won loot from someone or someone won loot from you, the addon will give you a link in chat
-that you can click on to start following and trading the owner/winner of the item. It will then
-automatically put won items into the trade window, so you only have to click accept.
+### Give away loot you don't want
+You also get the same Need-Greed-Pass window when you loot something that your party members might be interested in. If you choose "Greed" or "Pass" then PLR offers the item to your group (if enabled), handles accepting bids via addon/roll/whisper and picking a winner, and assists you in trading the item.
 
-### Inspecting
-Whenever you join a group the addon will start inspecting the other group members, to figure out which
-items you loot would be interesting for them, and which items they looted should be tradable. The inspection
-process is done in a way that it shouldn't interfere with your gameplay (e.g. it pauses during boss fights),
-and there is a 30 ilvls (60 ilvls for trinkets) threshold in place so the addon doesn't ignore stuff that is
-lower than what you have but e.g. has better stats or a gem slot.
+<p align="center">
+  <img src="https://imgur.com/8CkGcVE.jpg">
+</p>
 
-### Masterloot
-When you (or someone else) becomes masterlooter, all loot will be distributed by that person. You will get
-a notice about who's items you won or who won your items, so you can trade them to the right person.
-The masterlooter will see an overview window off all rolls and can view bids and distribute loot from there.
-As the masterlooter you can also declare other players as your loot council, so they will see bids as you do
-and can vote on who should get the loot.
+### Shows and helps you with what you should do next
+You will get a handy list with pending actions (e.g. asking someone for loot you want, trading, awarding or voting on loot) and buttons for completing them. It will also show you recent chats with the owner or winner of an item when you hover over the "Chat" button, start following and trading the owner/winner when you click the "Trade" button and automatically put won items into the trade window.
+
+<p align="center">
+  <img src="https://imgur.com/3eXcSaX.jpg">
+</p>
+
+### Smart decisions about what items are useful
+PLR checks if you can equip an item, but it also decides if it should be an upgrade for you or not, based on ilvl, stats, trinket type, class restrictions etc. It will only ask you to decide when it actually makes sense, while still making sure that you don't miss any loot you might be interested in.
+
+### Works for PUGs, organized groups and even masterlooting
+PLR works great for randomly giving away loot in PUGs and organized groups, but it also has a masterloot mode where one person decides who should get which item. The masterlooter can also configure things like custom answers and a loot council.
+
+### Can be configured to your liking
+Just about everything can be easily tweaked in the options menu. This includes whether or not to send messages to other players and customizing them, what items are considered "useful" (e.g. only certain specs or transmog missing) and which parts of the UI you want to see.
+
+### Works with "Personal Loot Helper"
+The popular addon "Personal Loot Helper" recently added a very similar functionality to PLR, and starting with PLR v12 both addons are compatible with each other. That means PLR users can see and bid on rolls from PLH users and vice versa, so you are free to pick whichever you prefer!
+
+## Rolling on loot
+The core idea of PLR is to make sharing loot as easy as possible by reusing the group-loot roll windows that have been in WoW since Classic, and making them work for Personal Loot as well.
+
+Whenever someone in your group loots something PLR checks if it might be useful to you (e.g. it's an upgrade or you have "Check transmog appearance" enabled and don't have the transmog yet) and then shows you a roll window for it. If you choose "Need" or "Greed" for that item, then PLR will do the following things:
+
+- If the owner uses PLR as well, then it sends him/her your bid as an addon-message in the background, waits for the roll to end and adds a trade entry to your actions list if you win the item.
+- If the owner doesn't use PLR, then it checks whether the item link has been posted to group chat (e.g. "[item-link] roll") and /rolls for it if that is the case. If it hasn't been posted yet then PLR adds an entry to your actions list to ask the owner for the item, and if you enabled "Ask for loot" and the owner hasn't been asked by two other PLR users already then it will also send a whisper message to the owner reading "Do you need that [item-link]?".
+
+If you get something that others in your group might be interested in, then PLR will show you the same group-roll window (a bit highlighted so you can see that it's for one of your items). If you choose "Need" then PLR will let other PLR users know that your item is not for trade, and it will answer incoming whisper requests with "I need that myself". If you select "Greed" or "Pass" however, then PLR will do the following things:
+
+- Send an addon-message to other PLR users, so they know that the item is up for trade.
+- If there are players not using PLR in your group, then it will also post an advertisement to chat reading "Giving away [item-link] -> /w me or /roll 101." This number "101" at the end will count up for every item currently being given away by you or other PLR users, so the next item advertisement will be /roll 102, then 103 and so on. This way multiple rolls can happen in chat at the same time.
+
+PLR will then accept bids from other players in the form of addon-messages from other PLR users, whisper messages or /rolls in chat. Your party members can /roll 100 if your item was the last one being posted to chat, and they can also subtract 50 to indicate a "Greed" roll, so /roll 50 instead of 100, 51 instead of 101 and so on. You can also choose to automatically suppress and/or answer incoming whisper requests.
+
+After a few seconds (depending on the number of looted items) the roll ends and PLR picks a winner, posts the result to group chat, whispers the winner and adds a trade entry to your actions list. When you click the "Trade" button in that entry PLR will start following the winner (if in range), open a trade window and put the won item into the window, so you only have to click "Accept".
+
+## Masterloot
+You can open the overview window by clicking on the minimap icon, and then search for or become a masterlooter by clicking the button in the lower right corner. When you decide to become a masterlooter other PLR users in your group will get a message, asking them to accept you as their masterlooter.
+
+If they accept, then all loot they get will be distributed by you, so other players' bids on items will go to you, and once a roll has ended you can decide by hand who should get it. The item owner will get an entry on his/her actions list and a notice in chat, instructing him/her to trade the item to the winner. As a masterlooter you can also define custom bid answers and declare other players as your loot council, so they will see bids as you do and can vote on who should get the loot.
+
+![Masterloot](https://imgur.com/njPScmx.jpg)
 
 ## Commands
 Use /plr or /PersoLootRoll to open the rolls overview window, manually start rolling for items in your bag etc.
@@ -56,18 +72,37 @@ Use /plr or /PersoLootRoll to open the rolls overview window, manually start rol
 
 *Legend: `[..]` = item link, `*` = one or more times, `(..)` = optional*
 
+## Translation
+PLR is currently fully translated (incl. chat messages) to
+
+- English
+- German
+- Traditional Chinese (by [BNSSNB](https://wow.curseforge.com/members/BNSSNB))
+
+If you want to help translate it to your language or correct translation errors you found then please visit the [Curseforge Translation section](https://wow.curseforge.com/projects/persolootroll/localization).
+
 ## Development
-I would consider this a Beta release right now. I am using it myself and it works well, but there are probably some bugs left.
+The Addon should be quite stable by now. I am using it myself and it works well, but since it's a young project there are probably some bugs left. To test out new features there are also beta versions available. Please report any bugs you find with these versions should you be brave enough to install them, so the stable releases will be as bug-free as possible.
+
+- Live Beta-Version: -
 
 ### Roadmap
 These are the things I have planed currently:
 
-- More translations: Sadly I only speak German and English, so if you speak another language (or find errors in my
-  translations) and want to help then please create a pull request here on GitHub and I will gladly add your translation!
-- Only suggest items for specific specs
-- Transmog mode: Check appearance instead of stats, ilvl, ...
-- Block (and maybe answer) all trades, whispers etc. for a few seconds after looting an item
-- Customize messages the addon sends to other players
+- Import settings from guild info
+- Better trade tracking.
+- Disenchant support
+- Integrations with Pawn and DKP systems like EQDKP and EPGP.
+- Integration with RCLootCouncil
+- Test mode with dummy-data for the GUI
+- Maybe profile presets (e.g. Never send messages, never advertise, guild masterloot only, ...)
+- Maybe multiple different ask-for-loot messages, to make it less annoying
+- Create a separate addon that declines all loot requests and signals to PLR that the loot is not for trade
 
 ### Issues
 You can create an issue here on GitHub if you encounter any bugs or want to suggest a feature.
+
+### Donate
+Click on the "Donate" button if you want to support the development of this addon or just buy me a beer. Always appreciated, never required!
+
+[![Donate](http://www.wowinterface.com/images/paypalSM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=H3EE7MDA5XFCW)

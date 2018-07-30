@@ -175,23 +175,35 @@ function Self.Check(cond, a, b)
 end
 
 -- Iterate tables or parameter lists
+local Fn = function (t, i)
+    local i, v = next(t, i)
+    if not i and Self.TblIsTmp(t) then
+        Self.TblRelease(t)
+    end
+    return i, v
+end
 function Self.Each(...)
-    if ... and type(...) == "table" then
-        local t, i = ...
-        if not i then
-            return Self.Each, t, true
-        elseif i == true then
-            return next(t)
-        else
-            local i, v = next(t, i)
-            if i then
-                return i, v
-            elseif Self.TblIsTmp(t) then
-                Self.TblRelease(t)
-            end
-        end
+    if type(...) == "table" then
+        return Fn, ...
     else
-        return Self.Each, Self.TblTmp(false, ...), true
+        return Fn, Self.TblTmp(false, ...)
+    end
+end
+
+-- Iterate table, matching entries against a set of key/value pairs
+local Fn = function (u, i)
+    local i, v = next(u[1], i)
+    while i do
+        if Self.TblContains(v, u[2], u[3]) then return i, v end
+        i, v = next(u[1], i)
+    end
+    Self.TblReleaseTmp(u[1], u[2], u)
+ end
+function Self.EachWhere(t, ...)
+    if type(...) == "table" then
+        return Fn, Self.TblTmp(false, t, (...), (select(2, ...)))
+    else
+        return Fn, Self.TblTmp(false, t, Self.TblTmp(true, ...))
     end
 end
 
@@ -243,8 +255,14 @@ function Self.Tbl(isMap, ...)
 end
 
 -- Same as Self.Tbl, but the resulting table is marked as being temporary
-function Self.TblTmp(...) return setmetatable(Self.Tbl(...), Self.TBL_EMPTY) end
-function Self.TblIsTmp(t) return getmetatable(t) == Self.TBL_EMPTY end
+function Self.TblTmp(...)
+    return setmetatable(Self.Tbl(...), Self.TBL_EMPTY)
+end
+
+-- Check if a table is marked as temporary
+function Self.TblIsTmp(t)
+    return getmetatable(t) == Self.TBL_EMPTY
+end
 
 -- Add one or more tables to the cache, first parameter can define a recursive depth
 function Self.TblRelease(...)
@@ -267,6 +285,16 @@ function Self.TblRelease(...)
             else
                 break
             end
+        end
+    end
+end
+
+-- Same as Self.TblRelease, but only releases temporary tables
+function Self.TblReleaseTmp(...)
+    for i=1, select("#", ...) do
+        local t = select(i, ...)
+        if type(t) == "table" and Self.TblIsTmp(t) then
+            Self.TblRelease(t)
         end
     end
 end
