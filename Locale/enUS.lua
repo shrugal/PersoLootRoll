@@ -7,7 +7,11 @@ local L = {lang = lang}
 setmetatable(L, Locale.MT)
 Locale[lang] = L
 
-L["MSG_BID"] = "Do you need that %s?"
+L["MSG_BID_1"] = "Do you need that %s?"
+L["MSG_BID_2"] = "May I have %s, if you don't need it?"
+L["MSG_BID_3"] = "I could use %s if you don't want it."
+L["MSG_BID_4"] = "Do you need that %s?"
+L["MSG_BID_5"] = "Do you need that %s?"
 L["MSG_HER"] = "her"
 L["MSG_HIM"] = "him"
 L["MSG_ITEM"] = "item"
@@ -261,7 +265,7 @@ L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[Post to group chat only if you are in on
 L["OPT_GROUPCHAT_ROLL"] = "Roll on loot in chat"
 L["OPT_GROUPCHAT_ROLL_DESC"] = "Roll on loot you want (/roll) if others post links in group chat."
 L["OPT_MESSAGES"] = "Messages"
-L["OPT_MSG_BID"] = "Bidding on an item from another player"
+L["OPT_MSG_BID"] = "Ask for loot: Variant %d"
 L["OPT_MSG_BID_DESC"] = "1: Item link"
 L["OPT_MSG_ROLL_ANSWER_AMBIGUOUS"] = "Answer: Send me the item link"
 L["OPT_MSG_ROLL_ANSWER_AMBIGUOUS_DESC"] = ""

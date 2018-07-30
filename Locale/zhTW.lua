@@ -7,7 +7,11 @@ local L = {lang = lang}
 setmetatable(L, Locale.MT)
 Locale[lang] = L
 
-L["MSG_BID"] = "請問您有需要 %s 嗎？"
+L["MSG_BID_1"] = "請問您有需要 %s 嗎？"
+L["MSG_BID_2"] = "請問您有需要 %s 嗎？" -- Translation outdated
+L["MSG_BID_3"] = "請問您有需要 %s 嗎？" -- Translation outdated
+L["MSG_BID_4"] = "請問您有需要 %s 嗎？" -- Translation outdated
+L["MSG_BID_5"] = "請問您有需要 %s 嗎？" -- Translation outdated
 L["MSG_HER"] = "她"
 L["MSG_HIM"] = "他"
 L["MSG_ITEM"] = "物品"
@@ -258,7 +262,7 @@ L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[只有當你是處於以下團體類型�
 L["OPT_GROUPCHAT_ROLL"] = "在聊天中擲骰戰利品"
 L["OPT_GROUPCHAT_ROLL_DESC"] = "如果其他人在團體聊天中貼出連結，請擲骰你要的戰利品(/roll)。"
 L["OPT_MESSAGES"] = "訊息"
-L["OPT_MSG_BID"] = "競標來自其他玩家的物品"
+L["OPT_MSG_BID"] = "競標來自其他玩家的物品 (Variant %d)" -- Translation outdated
 L["OPT_MSG_BID_DESC"] = "1：物品連結"
 L["OPT_MSG_ROLL_ANSWER_AMBIGUOUS"] = "回答：發給我物品連結"
 L["OPT_MSG_ROLL_ANSWER_AMBIGUOUS_DESC"] = ""

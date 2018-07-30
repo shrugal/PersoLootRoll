@@ -280,7 +280,7 @@ function Self.RollBid(roll, bid, fromUnit, isImport)
                     elseif not Self.ShouldInitChat(owner) then
                         Addon:Info(L["BID_NO_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
                     else
-                        Self.ChatLine("MSG_BID", owner, link or Locale.GetChatLine('MSG_ITEM', owner))
+                        Self.ChatLine("MSG_BID_" .. random(5), owner, link or Locale.GetChatLine('MSG_ITEM', owner))
                         roll.whispers = roll.whispers + 1
 
                         Addon:Info(L["BID_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
