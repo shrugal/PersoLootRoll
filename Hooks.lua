@@ -103,6 +103,14 @@ function Self.EnableGroupLootRoll()
             self.Player:SetTextColor(color.r, color.g, color.b)
             self.Player:Show()
 
+            -- Buttons
+            if roll.item.isOwner and not Masterloot.GetMasterlooter() then
+                self.NeedButton:SetNormalTexture("Interface\\AddOns\\PersoLootRoll\\Media\\Roll-Keep-Up")
+                self.NeedButton:SetHighlightTexture("Interface\\AddOns\\PersoLootRoll\\Media\\Roll-Keep-Highlight")
+                self.NeedButton:SetPushedTexture("Interface\\AddOns\\PersoLootRoll\\Media\\Roll-Keep-Down")
+                self.NeedButton.tooltipText = L["KEEP"]
+            end
+
             -- Highlight
             if not self.Highlight then
                 local f = self:CreateTexture(nil, "BACKGROUND")
@@ -123,9 +131,18 @@ function Self.EnableGroupLootRoll()
 
     local onHide = function (self)
         if Roll.IsPlrId(self.rollID) then
+            -- Player name
             self.Name:SetMaxLines(0)
             self.Name:SetHeight(30)
             self.Player:Hide()
+
+            -- Buttons
+            self.NeedButton:SetNormalTexture("Interface\\Buttons\\UI-GroupLoot-Dice-Up")
+            self.NeedButton:SetHighlightTexture("Interface\\Buttons\\UI-GroupLoot-Dice-Highlight")
+            self.NeedButton:SetPushedTexture("Interface\\Buttons\\UI-GroupLoot-Dice-Down")
+            self.NeedButton.tooltipText = NEED
+
+            -- Highlight
             self.Highlight:Hide()
         end
     end
