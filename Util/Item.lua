@@ -473,13 +473,15 @@ function Self.GetOwnedForLocation(loc, allWeapons)
         isRelic = loc:sub(1, 7) ~= "INVTYPE"
     end
 
-    local slots = Self.SLOTS[allWeapons and Util.In(loc, Self.TYPES_WEAPON) and Self.TYPE_WEAPON or loc]
+    -- Only works for equippable items
+    if not isRelic and not Self.SLOTS[loc] then return end
 
     -- Get equipped item(s)
     if isRelic then
         local weapon = Self.GetEquippedArtifact()
         items = weapon and weapon:GetRelics(loc) or items
     else
+        local slots = Self.SLOTS[allWeapons and Util.In(loc, Self.TYPES_WEAPON) and Self.TYPE_WEAPON or loc]
         for i,slot in pairs(slots) do
             local link = GetInventoryItemLink("player", slot)
             if link and not Self.IsLegionLegendary(link) and Self.IsSameLocation(link, loc, allWeapons) then
@@ -599,10 +601,11 @@ function Self:GetLevelForLocation(unit)
             -- Everything else
             local cache = Self.playerCache[loc] or {}
             if not cache.ilvl or not cache.time or cache.time + Inspect.REFRESH < GetTime() then
+                local owned = self:GetOwnedForLocation()
                 cache.time = GetTime()
-                cache.ilvl = Util(self:GetOwnedForLocation())
+                cache.ilvl = owned and Util(owned)
                     .Map(Self.GetInfo, false, "maxLevel")
-                    .Sort(true)(self:GetSlotCountForLocation())
+                    .Sort(true)(self:GetSlotCountForLocation()) or 0
                 Self.playerCache[loc] = cache
             end
 
