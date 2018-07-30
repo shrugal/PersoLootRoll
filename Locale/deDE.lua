@@ -38,6 +38,7 @@ L["AWARD"] = "Zuweisen"
 L["AWARD_LOOT"] = "Beute zuweisen"
 L["AWARD_RANDOMLY"] = "Zufällig zuweisen"
 L["BID"] = "Gebot"
+L["COMMUNITY_GROUP"] = "Community Gruppe"
 L["DISABLED"] = "Deaktiviert"
 L["DOWN"] = "unten"
 L["ENABLED"] = "Aktiviert"
@@ -189,7 +190,8 @@ L["OPT_MASTERLOOT_ALLOW_ALL"] = "Jeden erlauben"
 L["OPT_MASTERLOOT_ALLOW_ALL_DESC"] = "|cffff0000WARNUNG:|r Diese Option erlaubt jedem dir eine Plündermeister-Anfrage zu schicken, es könnte also theoretisch passieren, dass du um deine Beute betrogen wirst. Aktiviere dies nur wenn du weißt was du tust."
 L["OPT_MASTERLOOT_ALLOW_DESC"] = [=[Entscheide wer dein Plündermeister werden kann. Du bekommst dann eine Popup-Nachricht die nach deiner Zustimmung verlangt, du kannst also Anfragen immer noch ablehnen.
 
-|cffffff78Gildengruppe:|r Jemand aus einer Gilde deren Mitglieder 80% oder mehr des Raids stellen.]=]
+|cffffff78Gildengruppe:|r Jemand aus einer Gilde deren Mitglieder 80% oder mehr der Gruppe stellen.
+|cffffff78Communitygruppe:|r Jemand aus einer deiner WoW-Communities deren Mitglieder 80% oder mehr der Gruppe stellen.]=]
 L["OPT_MASTERLOOT_APPROVAL"] = "Zustimmung"
 L["OPT_MASTERLOOT_APPROVAL_DESC"] = "Hier kannst du festlegen wer dein Plündermeister werden kann."
 L["OPT_MASTERLOOT_DESC"] = "Wenn du (oder jemand anderes) Plündermeister wird, dann wird jegliche Beute von diesem Spieler verteilt. Du wirst benachrichtigt wessen Items du gewinnst bzw. wer deine Items gewinnt, sodass du mit der entsprechenden Person handeln kannst."
@@ -252,7 +254,8 @@ L["OPT_GROUPCHAT_DESC"] = "Hier kannst du ändern wann das Addon Nachrichten im 
 L["OPT_GROUPCHAT_GROUP_TYPE"] = "Verkünde nach Gruppentyp"
 L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[Schreibe im Gruppen-Chat nur, wenn du in einer dieser Gruppentypen bist.
 
-|cffffff78Gildengruppe:|r Jemand aus einer Gilde deren Mitglieder 80% oder mehr der Gruppe stellen.]=]
+|cffffff78Gildengruppe:|r Die Mitglieder einer Gilde stellen 80% oder mehr der Gruppe.
+|cffffff78Gildengruppe:|r Die Mitglieder einer deiner WoW-Communities stellen 80% oder mehr der Gruppe.]=]
 L["OPT_GROUPCHAT_ROLL"] = "Auf Loot im Chat rollen"
 L["OPT_GROUPCHAT_ROLL_DESC"] = "Rolle auf Loot (/roll), der im Gruppen-Chat gepostet wurde."
 L["OPT_MESSAGES"] = "Nachrichten"
@@ -306,7 +309,8 @@ L["OPT_WHISPER_GROUP_DESC"] = "Flüstere andere an, abhängig von der Art von Gr
 L["OPT_WHISPER_GROUP_TYPE"] = "Frage nach Gruppentyp"
 L["OPT_WHISPER_GROUP_TYPE_DESC"] = [=[Frage nach Beute nur, wenn du in einer dieser Gruppentypen bist.
 
-|cffffff78Gildengruppe:|r Jemand aus einer Gilde deren Mitglieder 80% oder mehr der Gruppe stellen.]=]
+|cffffff78Gildengruppe:|r Die Mitglieder einer Gilde stellen 80% oder mehr der Gruppe.
+|cffffff78Gildengruppe:|r Die Mitglieder einer deiner WoW-Communities stellen 80% oder mehr der Gruppe.]=]
 L["OPT_WHISPER_SUPPRESS"] = "Anfragen unterdrücken"
 L["OPT_WHISPER_SUPPRESS_DESC"] = "Unterdrücke Anfragen von Gruppenmitgliedern während du deine Beute vergibst."
 L["OPT_WHISPER_TARGET"] = "Frage nach Ziel"

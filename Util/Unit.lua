@@ -96,7 +96,7 @@ function Self.ColoredName(name, unit)
 end
 
 -------------------------------------------------------
---                       Guild                       --
+--                      Social                       --
 -------------------------------------------------------
 
 -- Get the unit's guild name, incl. realm if from another realm
@@ -115,6 +115,45 @@ end
 function Self.IsGuildMember(unit)
     local guild = Self.GuildName("player")
     return guild ~= nil and Self.GuildName(unit) == guild
+end
+
+-- Check if the given unit is on our friend list
+function Self.IsFriend(unit)
+    local unit = Self.Name(unit)
+    for i=1, GetNumFriends() do
+        if GetFriendInfo(i) == unit then
+            return true
+        end
+    end
+end
+
+-- Check if the given unit is part of one of our character coummunities
+function Self.IsCommunityMember(unit)
+    local guid = UnitGUID(unit)
+    for _,info in pairs(C_Club.GetSubscribedClubs()) do
+        if info.clubType == Enum.ClubType.Character then
+            for _,memberId in pairs(C_Club.GetClubMembers(info.clubId)) do
+                if C_Club.GetMemberInfo(info.clubId, memberId).guid == guid then
+                    return true
+                end
+            end
+        end
+    end
+end
+
+-- Get common community ids
+function Self.CommonCommunities(unit)
+    local t, guid = Util.Tbl(), UnitGUID(unit)
+    for _,info in pairs(C_Club.GetSubscribedClubs()) do
+        if info.clubType == Enum.ClubType.Character then
+            for _,memberId in pairs(C_Club.GetClubMembers(info.clubId)) do
+                if C_Club.GetMemberInfo(info.clubId, memberId).guid == guid then
+                    tinsert(t, info.clubId)
+                end
+            end
+        end
+    end
+    return Util.TblUnique(t)
 end
 
 -------------------------------------------------------
@@ -163,22 +202,17 @@ function Self.IsFollowing(unit)
     return AutoFollowStatus:IsShown() and (not unit or unit == AutoFollowStatusText:GetText():match(Self.PATTERN_FOLLOW))
 end
 
-
--- Check if the given unit is on our friend list
-function Self.IsFriend(unit)
-    local unit = Self.Name(unit)
-
-    for i=1, GetNumFriends() do
-        if GetFriendInfo(i) == unit then
-            return true
-        end
-    end
-end
-
 -- Shortcut for checking whether a unit is in our party or raid
 function Self.InGroup(unit, onlyOthers)
     local isSelf = Self.IsSelf(unit)
     return not (isSelf and onlyOthers) and (isSelf or UnitInParty(unit) or UnitInRaid(unit))
+end
+
+-- Check if the player is an enchanter
+function Self.IsEnchanter()
+    for _,i in Util.Each(GetProfessions()) do
+        if select(7, GetProfessionInfo(i)) == 333 then return true end
+    end
 end
 
 setmetatable(Self, {
