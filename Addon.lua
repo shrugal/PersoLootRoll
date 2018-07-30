@@ -939,6 +939,13 @@ function Addon:GetCustomMessageOptions(isDefault)
     local lang = isDefault and Locale.DEFAULT or realm
     local locale = Locale.GetLocale(lang)
     local default = Locale.GetLocale(Locale.DEFAULT)
+    local it = Util.Iter()
+    local desc = isDefault and L["OPT_CUSTOM_MESSAGES_DEFAULT_DESC"]:format(Locale.GetLanguageName(Locale.DEFAULT), Locale.GetLanguageName(realm))
+                            or L["OPT_CUSTOM_MESSAGES_LOCALIZED_DESC"]:format(Locale.GetLanguageName(realm))
+    local t = {
+        desc = {type = "description", fontSize = "medium", order = it(), name = desc .. "\n"},
+        groupchat = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
+    }
 
     local set = function (info, val)
         local line, c = info[3], self.db.profile.messages.lines
@@ -956,30 +963,46 @@ function Addon:GetCustomMessageOptions(isDefault)
         end
         return (pcall(Util.StrFormat, val, unpack(args)))
     end
+    local add = function (line, i)
+        local iLine = i and line .. "_" .. i or line
+        desc = ("%s: %q%s"):format(DEFAULT, locale[iLine], Util.StrPrefix(L["OPT_" .. line .. "_DESC"], "\n\n"))
+        t[iLine] = {
+            name = L["OPT_" .. line]:format(i),
+            desc = desc:gsub("(%%.)", "|cffffff78%1|r"):gsub("%d:", "|cffffff78%1|r"),
+            type = "input",
+            order = it(),
+            validate = validate,
+            set = set,
+            get = get,
+            width = "full"
+        }
+    end
 
-    local it = Util.Iter()
-    local desc = isDefault and L["OPT_CUSTOM_MESSAGES_DEFAULT_DESC"]:format(Locale.GetLanguageName(Locale.DEFAULT), Locale.GetLanguageName(realm))
-                            or L["OPT_CUSTOM_MESSAGES_LOCALIZED_DESC"]:format(Locale.GetLanguageName(realm))
-    local t = {
-        desc = {type = "description", fontSize = "medium", order = it(), name = desc .. "\n"},
-        groupchat = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
-    }
-
-    for i,line in pairs({"MSG_ROLL_START", "MSG_ROLL_START_MASTERLOOT", "MSG_ROLL_WINNER", "MSG_ROLL_WINNER_MASTERLOOT", "whisper", "MSG_BID", "MSG_ROLL_WINNER_WHISPER", "MSG_ROLL_WINNER_WHISPER_MASTERLOOT", "MSG_ROLL_ANSWER_BID", "MSG_ROLL_ANSWER_YES", "MSG_ROLL_ANSWER_YES_MASTERLOOT", "MSG_ROLL_ANSWER_NO_SELF", "MSG_ROLL_ANSWER_NO_OTHER", "MSG_ROLL_ANSWER_NOT_TRADABLE", "MSG_ROLL_ANSWER_AMBIGUOUS"}) do
-        if line == "whisper" then
-            t[line] = {type = "header", order = it(), name = L["OPT_WHISPER"]}
+    for _,line in Util.Each(
+        "MSG_ROLL_START",
+        "MSG_ROLL_START_MASTERLOOT",
+        "MSG_ROLL_WINNER",
+        "MSG_ROLL_WINNER_MASTERLOOT",
+        "OPT_WHISPER",
+        "MSG_ROLL_WINNER_WHISPER",
+        "MSG_ROLL_WINNER_WHISPER_MASTERLOOT",
+        "OPT_WHISPER_ASK",
+        "MSG_BID",
+        "OPT_WHISPER_ANSWER",
+        "MSG_ROLL_ANSWER_BID",
+        "MSG_ROLL_ANSWER_YES",
+        "MSG_ROLL_ANSWER_YES_MASTERLOOT",
+        "MSG_ROLL_ANSWER_NO_SELF",
+        "MSG_ROLL_ANSWER_NO_OTHER",
+        "MSG_ROLL_ANSWER_NOT_TRADABLE",
+        "MSG_ROLL_ANSWER_AMBIGUOUS"
+    ) do
+        if line:sub(1, 3) == "OPT" then
+            t[line] = {type = "header", order = it(), name = L[line]}
+        elseif line == "MSG_BID" then
+            for i=1,5 do add(line, i) end
         else
-            desc = DEFAULT .. ": \"" .. locale[line] .. "\"" .. Util.StrPrefix(L["OPT_" .. line .. "_DESC"], "\n\n")
-            t[line] = {
-                name = L["OPT_" .. line],
-                desc = desc:gsub("(%%.)", "|cffffff78%1|r"):gsub("%d:", "|cffffff78%1|r"),
-                type = "input",
-                order = it(),
-                validate = validate,
-                set = set,
-                get = get,
-                width = "full"
-            }
+            add(line)
         end
     end
 
