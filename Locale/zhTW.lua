@@ -43,6 +43,7 @@ L["DOWN"] = "下"
 L["ENABLED"] = "啟用"
 L["EQUIPPED"] = "已裝備"
 L["GET_FROM"] = "得到自"
+L["GIVE_AWAY"] = "Give away" -- Translation missing
 L["GIVE_TO"] = "給予"
 L["GUILD_MASTER"] = "公會會長"
 L["GUILD_OFFICER"] = "公會幹部"
