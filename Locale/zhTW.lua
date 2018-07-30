@@ -50,6 +50,7 @@ L["HIDE"] = "隱藏"
 L["HIDE_ALL"] = "隱藏全部"
 L["ITEM"] = "物品"
 L["ITEM_LEVEL"] = "物品等級"
+L["KEEP"] = "Keep" -- Translation missing
 L["LEFT"] = "左"
 L["MASTERLOOTER"] = "負責分裝"
 L["MESSAGE"] = "訊息"
