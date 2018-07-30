@@ -7,7 +7,7 @@ local L = {lang = lang}
 setmetatable(L, Locale.MT)
 Locale[lang] = L
 
-L["MSG_BID"] = "請問你有需要 %s 嗎？"
+L["MSG_BID"] = "請問您有需要 %s 嗎？"
 L["MSG_HER"] = "她"
 L["MSG_HIM"] = "他"
 L["MSG_ITEM"] = "物品"
@@ -54,7 +54,7 @@ L["LEFT"] = "左"
 L["MASTERLOOTER"] = "負責分裝"
 L["MESSAGE"] = "訊息"
 L["ML"] = "分裝者"
-L["OPEN_ROLLS"] = "Open rolls window" -- Translation missing
+L["OPEN_ROLLS"] = "開啟擲骰視窗"
 L["OWNER"] = "提供者"
 L["PLAYER"] = "玩家"
 L["PRIVATE"] = "私人"
@@ -66,7 +66,7 @@ L["RIGHT"] = "右"
 L["ROLL"] = "擲骰"
 L["ROLLS"] = "骰裝"
 L["SECONDS"] = "%d秒"
-L["SET_ANCHOR"] = "設置定位點：延展%s 以及%s"
+L["SET_ANCHOR"] = "設置定位點：往%s以及%s延展"
 L["SHOW"] = "顯示"
 L["SHOW_HIDE"] = "顯示/隱藏"
 L["TRADE"] = "交易"
@@ -119,7 +119,7 @@ L["FILTER_AWARDED_DESC"] = "包含已經由其他人贏得的骰裝。"
 L["FILTER_DONE"] = "已完成"
 L["FILTER_DONE_DESC"] = "包含已經結束的擲骰。"
 L["FILTER_HIDDEN"] = "隱藏"
-L["FILTER_HIDDEN_DESC"] = "包含已取消、待決的、已放棄以及隱藏的骰裝。"
+L["FILTER_HIDDEN_DESC"] = "包含已取消、處理中、已放棄以及隱藏的骰裝。"
 L["FILTER_TRADED"] = "已交易"
 L["FILTER_TRADED_DESC"] = "包含物品已經交易的擲骰。"
 L["MENU_MASTERLOOT_SEARCH"] = "搜尋有人負責分裝的團體"
@@ -136,7 +136,7 @@ cffffff00競標:|r %s
 L["TIP_MASTERLOOT_START"] = "成為或搜尋負責分裝者"
 L["TIP_MASTERLOOT_STOP"] = "移除負責分裝者"
 L["TIP_MASTERLOOTING"] = "有分裝者的隊伍:"
-L["TIP_MINIMAP_ICON"] = [=[|cffffff00左鍵:|r 開分裝骰視窗 
+L["TIP_MINIMAP_ICON"] = [=[|cffffff00左鍵:|r 開關骰裝視窗 
 |cffffff00右鍵:|r 設定選項]=]
 L["TIP_PLH_USERS"] = "PLH使用者："
 L["TIP_VOTES"] = "表決來自:"
@@ -147,7 +147,7 @@ L["OPT_ACTIONS_WINDOW_DESC"] = "當有處理中的動作時顯示動作視窗，
 L["OPT_ACTIONS_WINDOW_MOVE"] = "移動"
 L["OPT_ACTIONS_WINDOW_MOVE_DESC"] = "移動動作視窗到一旁。"
 L["OPT_AUTHOR"] = "|cffffff00作者:|r Shrugal (EU-Mal'Ganis)"
-L["OPT_AWARD_SELF"] = "自行選擇贏家"
+L["OPT_AWARD_SELF"] = "自行選擇你的物品的獲勝者"
 L["OPT_AWARD_SELF_DESC"] = "自行選擇誰該得到你的戰利品，而非讓插件隨機選擇，當你是拾取分配者時，始終啟用此功能。"
 L["OPT_BID_PUBLIC"] = "公開競標"
 L["OPT_BID_PUBLIC_DESC"] = "你擲骰的競標是公開的，所有使用此插件的人都可以看見。"
@@ -190,7 +190,7 @@ L["OPT_MASTERLOOT_ALLOW_ALL_DESC"] = "|cffff0000警告:|r 這會允許每個人�
 L["OPT_MASTERLOOT_ALLOW_DESC"] = [=[選擇誰可以請求成為你的拾取分配者。你仍然會收到一個需要確認的彈出訊息，所以你可以在當時拒絕成為拾取分配者。
 
 |cffffff00公會團隊:|r 團隊的80%或更多的成員是來自一個公會。]=]
-L["OPT_MASTERLOOT_APPROVAL"] = "贊同"
+L["OPT_MASTERLOOT_APPROVAL"] = "認可"
 L["OPT_MASTERLOOT_APPROVAL_DESC"] = "在此你可以決定誰可以成為你的分裝者。"
 L["OPT_MASTERLOOT_DESC"] = "當你(或其他人)成為分裝者，所有戰利品都將由此人分發。你會收到你贏得什麼物品以及誰贏得你物品的通知，因此你可以交易物品給合適的人。"
 L["OPT_MASTERLOOT_SEARCH"] = "搜尋分裝者"
@@ -222,13 +222,13 @@ L["OPT_MASTERLOOTER_TIMEOUT_BASE"] = "骰裝時間(基本)"
 L["OPT_MASTERLOOTER_TIMEOUT_BASE_DESC"] = "無論掉落多少物品，骰裝的基本運行時間。"
 L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM"] = "骰裝時間(每項物品)"
 L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM_DESC"] = "將每個掉落的物品都加入到基本骰裝運行時間。"
-L["OPT_MASTERLOOTER_VOTE_PUBLIC"] = "議會表決公開"
+L["OPT_MASTERLOOTER_VOTE_PUBLIC"] = "議會投票公開"
 L["OPT_MASTERLOOTER_VOTE_PUBLIC_DESC"] = "你可以公開議會表決，所以每個人都可以看到誰有多少票。"
 
 -- Options - Messages
 L["OPT_CUSTOM_MESSAGES"] = "自訂訊息"
 L["OPT_CUSTOM_MESSAGES_DEFAULT"] = "預設語言 (%s)"
-L["OPT_CUSTOM_MESSAGES_DEFAULT_DESC"] = "當收訊息的人說英文或非你伺服器預設的語言時(%s)，將使用這些訊息。"
+L["OPT_CUSTOM_MESSAGES_DEFAULT_DESC"] = "當收訊息的人說%s或非你伺服器預設的語言時(%s)，將使用這些訊息。"
 L["OPT_CUSTOM_MESSAGES_DESC"] = "你可以重新排列佔位符(|cffffff00%s|r, |cffffff00%d|r)透過在中間添加它們的位置和$符號，例如：像第二個佔位符可以用|cffffff00%2$s|r取代|cffffff00%s|r，詳情請看工具提示。"
 L["OPT_CUSTOM_MESSAGES_LOCALIZED"] = "伺服器語言 (%s)"
 L["OPT_CUSTOM_MESSAGES_LOCALIZED_DESC"] = "當收訊人說你伺服器的預設語言時(%s)使用這些訊息。"
@@ -247,12 +247,12 @@ L["OPT_ECHO_NONE"] = "無"
 L["OPT_ECHO_VERBOSE"] = "詳細"
 L["OPT_GROUPCHAT"] = "團體聊天頻道"
 L["OPT_GROUPCHAT_ANNOUNCE"] = "公告骰裝以及贏家"
-L["OPT_GROUPCHAT_ANNOUNCE_DESC"] = "在隊伍/團隊/副本聊天中公告骰裝以及獲得者。"
+L["OPT_GROUPCHAT_ANNOUNCE_DESC"] = "在隊伍/團隊/副本聊天中公告你的擲骰以及擲骰的獲得者。"
 L["OPT_GROUPCHAT_DESC"] = "更改插件是否要將骰裝公告到團體聊天中。"
-L["OPT_GROUPCHAT_GROUP_TYPE"] = "Announce by group type" -- Translation missing
-L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[Post to group chat only if you are in one of these group types. -- Translation missing
+L["OPT_GROUPCHAT_GROUP_TYPE"] = "公告依據團體類型"
+L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[只有當你是處於以下團體類型時發送到團體聊天。
 
-|cffffff78Guild Group:|r Someone from a guild whose members make up 80% or more of the group.]=]
+|cffffff78公會團隊：|r團隊的80%或更多的成員是來自一個公會。]=]
 L["OPT_GROUPCHAT_ROLL"] = "在聊天中擲骰戰利品"
 L["OPT_GROUPCHAT_ROLL_DESC"] = "如果其他人在團體聊天中貼出連結，請擲骰你要的戰利品(/roll)。"
 L["OPT_MESSAGES"] = "訊息"
@@ -296,21 +296,21 @@ L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1：物品連結
 L["OPT_SHOULD_CHAT"] = "啟用/停用"
 L["OPT_SHOULD_CHAT_DESC"] = "決定插件何時發佈到隊伍/團隊聊天並密語其他玩家。"
 L["OPT_WHISPER"] = "聊天密語"
-L["OPT_WHISPER_ANSWER"] = "回應密語"
-L["OPT_WHISPER_ANSWER_DESC"] = "讓插件自動回應從隊伍/團隊成員來的關於你拾取物品的密語。"
-L["OPT_WHISPER_ASK"] = "Ask for loot" -- Translation missing
-L["OPT_WHISPER_ASK_DESC"] = "Whisper others if they got loot you want." -- Translation missing
+L["OPT_WHISPER_ANSWER"] = "回答詢問"
+L["OPT_WHISPER_ANSWER_DESC"] = "讓插件自動回答來自隊伍/團隊成員的關於你拾取物品的密語。"
+L["OPT_WHISPER_ASK"] = "詢問戰利品"
+L["OPT_WHISPER_ASK_DESC"] = "當他人拾取你想要的戰利品時密語他們。"
 L["OPT_WHISPER_DESC"] = "更改插件是否會密語其他玩家並且/或回應其他人的訊息。"
 L["OPT_WHISPER_GROUP"] = "密語根據團體類型"
 L["OPT_WHISPER_GROUP_DESC"] = "如果其他人拾取你想要的物品則密語他們，這取決於你目前所處的團體類型。"
-L["OPT_WHISPER_GROUP_TYPE"] = "Ask by group type" -- Translation missing
-L["OPT_WHISPER_GROUP_TYPE_DESC"] = [=[Ask for loot only if you are in one of these group types. -- Translation missing
+L["OPT_WHISPER_GROUP_TYPE"] = "訊問根據團體類型"
+L["OPT_WHISPER_GROUP_TYPE_DESC"] = [=[只有當你處於以下類型團體時才訊問戰利品。
 
-|cffffff78Guild Group:|r Someone from a guild whose members make up 80% or more of the group.]=]
-L["OPT_WHISPER_SUPPRESS"] = "阻擋密語"
-L["OPT_WHISPER_SUPPRESS_DESC"] = "當放棄你的戰利品時，阻擋來自符合條件玩家的密語訊息。"
-L["OPT_WHISPER_TARGET"] = "密語目標"
-L["OPT_WHISPER_TARGET_DESC"] = "如果其他人得到你想要的物品則密語他們，這取決於目標是否在你的公會或是好友名單上。"
+|cffffff78公會團隊：|r團隊的80%或更多的成員是來自一個公會。]=]
+L["OPT_WHISPER_SUPPRESS"] = "阻擋詢問"
+L["OPT_WHISPER_SUPPRESS_DESC"] = "當你放棄戰利品時，阻擋來自符合條件玩家的密語訊息。"
+L["OPT_WHISPER_TARGET"] = "詢問目標"
+L["OPT_WHISPER_TARGET_DESC"] = "是否詢問戰利品取決於目標是否在你的公會或是好友名單上。"
 
 -- Roll
 L["BID_CHAT"] = "詢問%s為了%s -> %s。"
@@ -326,7 +326,7 @@ L["ROLL_END"] = "由%2$s提供的 %1$s 擲骰結束。"
 L["ROLL_IGNORING_BID"] = "忽略%s對%s的競標，因為之前已經聊過了 -> 競標: %s 或 %s。"
 L["ROLL_LIST_EMPTY"] = "啟用的擲骰會顯示在此"
 L["ROLL_START"] = "開始骰由%2$s提供的 %1$s。"
-L["ROLL_STATUS_0"] = "待決中"
+L["ROLL_STATUS_0"] = "處理中"
 L["ROLL_STATUS_1"] = "執行中"
 L["ROLL_STATUS_-1"] = "已取消"
 L["ROLL_STATUS_2"] = "完成"
