@@ -42,6 +42,8 @@ Addon.plhUsers = {}
 
 -- Called when the addon is loaded
 function Addon:OnInitialize()
+    self:ToggleDebug(PersoLootRollDebug or self.DEBUG)
+    
     self.db = LibStub("AceDB-3.0"):New(Name .. "DB", {
         -- VERSION 5
         profile = {
@@ -187,11 +189,18 @@ function Addon:OnDisable()
     end
 end
 
-function Addon:ToggleDebug()
-    self.DEBUG = not self.DEBUG
+function Addon:ToggleDebug(debug)
+    if debug ~= nil then
+        self.DEBUG = debug
+    else
+        self.DEBUG = not self.DEBUG
+    end
+
     PersoLootRollDebug = self.DEBUG
 
-    self:Info("Debugging " .. (self.DEBUG and "en" or "dis") .. "abled")
+    if self.db then
+        self:Info("Debugging " .. (self.DEBUG and "en" or "dis") .. "abled")
+    end
 end
 
 -------------------------------------------------------
