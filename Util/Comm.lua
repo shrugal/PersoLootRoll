@@ -134,7 +134,7 @@ function Self.ShouldInitChat(target)
         return group.lfr
     elseif IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
         return group.lfd
-    elseif Util.IsGuildGroup() then
+    elseif Util.IsGuildGroup(Unit.GuildName("player") or "") then
         return group.guild
     elseif Util.IsCommunityGroup() then
         return group.community

@@ -554,7 +554,7 @@ function Addon:RegisterOptions()
                     },
                     groupGroupType = {
                         name = L["OPT_GROUPCHAT_GROUP_TYPE"],
-                        desc = L["OPT_GROUPCHAT_GROUP_TYPE_DESC"],
+                        desc = L["OPT_GROUPCHAT_GROUP_TYPE_DESC"]:format(Util.GROUP_THRESHOLD*100, Util.GROUP_THRESHOLD*100),
                         type = "multiselect",
                         order = it(),
                         values = groupValues,
@@ -609,7 +609,7 @@ function Addon:RegisterOptions()
                     },
                     whisperGroupType = {
                         name = L["OPT_WHISPER_GROUP_TYPE"],
-                        desc = L["OPT_WHISPER_GROUP_TYPE_DESC"],
+                        desc = L["OPT_WHISPER_GROUP_TYPE_DESC"]:format(Util.GROUP_THRESHOLD*100, Util.GROUP_THRESHOLD*100),
                         type = "multiselect",
                         order = it(),
                         values = groupValues,
@@ -712,7 +712,7 @@ function Addon:RegisterOptions()
                     desc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOT_APPROVAL_DESC"] .. "\n"},
                     allow = {
                         name = L["OPT_MASTERLOOT_ALLOW"],
-                        desc = L["OPT_MASTERLOOT_ALLOW_DESC"],
+                        desc = L["OPT_MASTERLOOT_ALLOW_DESC"]:format(Util.GROUP_THRESHOLD*100, Util.GROUP_THRESHOLD*100),
                         type = "multiselect",
                         order = it(),
                         values = allowValues,
