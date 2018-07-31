@@ -195,7 +195,7 @@ L["OPT_MASTERLOOT_ALLOW_ALL"] = "允許所有人"
 L["OPT_MASTERLOOT_ALLOW_ALL_DESC"] = "|cffff0000警告:|r 這會允許每個人請求成為分裝者，並可能騙你放棄戰利品！只有你知道自己在做什麼的情況下才可以啟用它。"
 L["OPT_MASTERLOOT_ALLOW_DESC"] = [=[選擇誰可以請求成為你的拾取分配者。你仍然會收到一個需要確認的彈出訊息，所以你可以在當時拒絕成為拾取分配者。
 
-|cffffff00公會團隊:|r 團隊的80%或更多的成員是來自一個公會。]=]
+|cffffff00公會團隊:|r 團隊的%d%%或更多的成員是來自一個公會。]=]
 L["OPT_MASTERLOOT_APPROVAL"] = "認可"
 L["OPT_MASTERLOOT_APPROVAL_DESC"] = "在此你可以決定誰可以成為你的分裝者。"
 L["OPT_MASTERLOOT_DESC"] = "當你(或其他人)成為分裝者，所有戰利品都將由此人分發。你會收到你贏得什麼物品以及誰贏得你物品的通知，因此你可以交易物品給合適的人。"
@@ -258,7 +258,7 @@ L["OPT_GROUPCHAT_DESC"] = "更改插件是否要將骰裝公告到團體聊天�
 L["OPT_GROUPCHAT_GROUP_TYPE"] = "公告依據團體類型"
 L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[只有當你是處於以下團體類型時發送到團體聊天。
 
-|cffffff78公會團隊：|r團隊的80%或更多的成員是來自一個公會。]=]
+|cffffff78公會團隊：|r團隊的%d%%或更多的成員是來自一個公會。]=]
 L["OPT_GROUPCHAT_ROLL"] = "在聊天中擲骰戰利品"
 L["OPT_GROUPCHAT_ROLL_DESC"] = "如果其他人在團體聊天中貼出連結，請擲骰你要的戰利品(/roll)。"
 L["OPT_MESSAGES"] = "訊息"
@@ -312,7 +312,7 @@ L["OPT_WHISPER_GROUP_DESC"] = "如果其他人拾取你想要的物品則密語�
 L["OPT_WHISPER_GROUP_TYPE"] = "訊問根據團體類型"
 L["OPT_WHISPER_GROUP_TYPE_DESC"] = [=[只有當你處於以下類型團體時才訊問戰利品。
 
-|cffffff78公會團隊：|r團隊的80%或更多的成員是來自一個公會。]=]
+|cffffff78公會團隊：|r團隊的%d%%或更多的成員是來自一個公會。]=]
 L["OPT_WHISPER_SUPPRESS"] = "阻擋詢問"
 L["OPT_WHISPER_SUPPRESS_DESC"] = "當你放棄戰利品時，阻擋來自符合條件玩家的密語訊息。"
 L["OPT_WHISPER_TARGET"] = "詢問目標"

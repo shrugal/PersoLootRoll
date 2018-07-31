@@ -6,45 +6,52 @@ local Self = Addon.Util
 --                        WoW                        --
 -------------------------------------------------------
 
+-- More than this much percent of players in the group must be from
+-- one guild/community for it to be considered a guild/community group
+Self.GROUP_THRESHOLD = 0.50
+
 -- Interaction distances
 Self.INTERACT_INSPECT = 1 -- 28 yards
 Self.INTERACT_TRADE = 2   -- 11.11 yards
 Self.INTERACT_DUEL = 3    -- 9.9 yards
 Self.INTERACT_FOLLOW = 4  -- 28 yards
 
--- Expac IDs
-Self.TIER_CLASSIC = 1
-Self.TIER_BC = 2
-Self.TIER_WOTLK = 3
-Self.TIER_CATA = 4
-Self.TIER_MOP = 5
-Self.TIER_WOD = 6
-Self.TIER_LEGION = 7
-Self.TIER_BFA = 8
+-- Expansions
+Self.EXP_CLASSIC = 1
+Self.EXP_BC = 2
+Self.EXP_WOTLK = 3
+Self.EXP_CATA = 4
+Self.EXP_MOP = 5
+Self.EXP_WOD = 6
+Self.EXP_LEGION = 7
+Self.EXP_BFA = 8
+Self.EXP_NEXT = 9
+Self.EXP_LEVELS = {60, 70, 80, 85, 90, 100, 110, 120, 130, 140}
 
-Self.TIER_LEVELS = {60, 70, 80, 85, 90, 100, 110, 120, 130, 140}
-
--- Check if the current group is a guild group (>=80% guild members)
+-- Check if the current group is a guild group
 function Self.IsGuildGroup(guild)
-    guild = guild or Unit.GuildName("player")
-    if not guild or not IsInGroup() then
+    if not IsInGroup() or guild == "" then
         return false
     end
 
-    local count = 0
+    local n, guilds = GetNumGroupMembers(), Util.Tbl()
 
-    for i=1, GetNumGroupMembers() do
-        if guild == Unit.GuildName(GetRaidRosterInfo(i)) then
-            count = count + 1
+    for i=1,n do
+        local g = Unit.GuildName(GetRaidRosterInfo(i))
+        if g then
+            guilds[g] = (guilds[g] or 0) + 1
+            if (not guild or g == guild) and guilds[g] / n > Self.GROUP_THRESHOLD then
+                Util.TblRelease(guilds)
+                return g
+            end
         end
     end
-
-    return count / GetNumGroupMembers() >= 0.8
+    Util.TblRelease(guilds)
 end
 
--- Check if the current group is a community group (>=80% members from one community)
-function Self.IsCommunityGroup()
-    if not IsInGroup() or not Self.TblFirstWhere(C_Club.GetSubscribedClubs(), "clubType", Enum.ClubType.Character) then
+-- Check if the current group is a community group
+function Self.IsCommunityGroup(commId)
+    if not IsInGroup() or not Self.TblFirstWhere(C_Club.GetSubscribedClubs(), "clubType", Enum.ClubType.Character, "clubId", commId) then
         return false
     end
 
@@ -53,9 +60,9 @@ function Self.IsCommunityGroup()
         local c = Unit.CommonCommunities(GetRaidRosterInfo(i))
         for _,clubId in pairs(c) do
             comms[clubId] = (comms[clubId] or 0) + 1
-            if comms[clubId] / n >= 0.8 then
+            if (not commId or commId == clubId) and comms[clubId] / n >= Self.GROUP_THRESHOLD then
                 Self.TblRelease(comms, c)
-                return true
+                return clubId
             end
         end
         Self.TblRelease(c)
@@ -73,8 +80,8 @@ function Self.GetGuildRanks()
     return t
 end
 
--- Get the tier for the current instance
-function Self.GetInstanceTier()
+-- Get the expansion for the current instance
+function Self.GetInstanceExp()
     if IsInInstance() then
         local mapID = C_Map.GetBestMapForUnit("player")
         return mapID and Self.INSTANCES[EJ_GetInstanceForMap(mapID)] or nil
@@ -84,10 +91,10 @@ end
 -- Check if the legacy loot mode is active
 function Self.IsLegacyLoot()
     if IsInInstance() and GetLootMethod() == "personalloot" then
-        local iTier = Self.GetInstanceTier()
-        local pTier = Self.TblFindFn(Self.TIER_LEVELS, function (v) return v >= UnitLevel("player") end, true)
+        local iExp = Self.GetInstanceExp()
+        local pExp = Self.TblFindFn(Self.EXP_LEVELS, function (v) return v >= UnitLevel("player") end, true)
 
-        return iTier and pTier and iTier < pTier - 1
+        return iExp and pExp and iExp < pExp - 1
     end
 end
 
