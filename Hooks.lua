@@ -1,6 +1,6 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Comm, GUI, Masterloot, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+local Comm, GUI, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.Hooks
 
 -------------------------------------------------------
@@ -104,7 +104,7 @@ function Self.EnableGroupLootRoll()
             self.Player:Show()
 
             -- Buttons
-            if roll.isOwner and roll.item.isOwner and not Masterloot.GetMasterlooter() then
+            if roll.isOwner and roll.item.isOwner and not Session.GetMasterlooter() then
                 self.NeedButton:SetNormalTexture("Interface\\AddOns\\PersoLootRoll\\Media\\Roll-Keep-Up")
                 self.NeedButton:SetHighlightTexture("Interface\\AddOns\\PersoLootRoll\\Media\\Roll-Keep-Highlight")
                 self.NeedButton:SetPushedTexture("Interface\\AddOns\\PersoLootRoll\\Media\\Roll-Keep-Down")
@@ -159,8 +159,8 @@ function Self.EnableGroupLootRoll()
         if button == "RightButton" then
             local rollId, bid = self:GetParent().rollID, self:GetID()
             local roll = Roll.IsPlrId(rollId) and Roll.Get(rollId)
-            if roll and roll.owner == Masterloot.GetMasterlooter() then
-                local answers = Masterloot.session["answers" .. bid]
+            if roll and roll.owner == Session.GetMasterlooter() then
+                local answers = Session.rules["answers" .. bid]
                 if answers and #answers > 0 then
                     GUI.ToggleAnswersDropdown(roll, bid, answers, "TOPLEFT", self, "CENTER")
                 end

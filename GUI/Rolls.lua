@@ -1,7 +1,7 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local AceGUI = LibStub("AceGUI-3.0")
-local GUI, Inspect, Item, Masterloot, Roll, Trade, Unit, Util = Addon.GUI, Addon.Inspect, Addon.Item, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+local GUI, Inspect, Item, Session, Roll, Trade, Unit, Util = Addon.GUI, Addon.Inspect, Addon.Item, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = GUI.Rolls
 
 Self.frames = {}
@@ -11,7 +11,7 @@ Self.open = {}
 
 -- Register for roll changes
 Roll.On(Self, Roll.EVENT_START, function (_, roll)
-    if roll.isOwner and Masterloot.IsMasterlooter() or Addon.db.profile.ui.showRollsWindow and (roll.item.isOwner or roll.item:ShouldBeBidOn()) then
+    if roll.isOwner and Session.IsMasterlooter() or Addon.db.profile.ui.showRollsWindow and (roll.item.isOwner or roll.item:ShouldBeBidOn()) then
         Self.Show()
     end
 end)
@@ -21,7 +21,7 @@ Roll.On(Self, Roll.EVENT_CLEAR, function (_, roll)
 end)
 
 -- Register for ML changes
-Masterloot.On(Self, Masterloot.EVENT_CHANGE, function () Self.Update() end)
+Session.On(Self, Session.EVENT_CHANGE, function () Self.Update() end)
 
 -------------------------------------------------------
 --                     Show/Hide                     --
@@ -154,14 +154,14 @@ function Self.Show()
                 .AddTo(Self.frames.filter)
                 .SetCallback("OnEnter", function (self)
                     GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
-                    GameTooltip:SetText(L["TIP_MASTERLOOT_" .. (Masterloot.GetMasterlooter() and "STOP" or "START")])
+                    GameTooltip:SetText(L["TIP_MASTERLOOT_" .. (Session.GetMasterlooter() and "STOP" or "START")])
                     GameTooltip:Show()
                 end)
                 .SetCallback("OnLeave", GUI.TooltipHide)
                 .SetCallback("OnClick", function (self)
-                    local ml = Masterloot.GetMasterlooter()
+                    local ml = Session.GetMasterlooter()
                     if ml then
-                        Masterloot.SetMasterlooter(nil)
+                        Session.SetMasterlooter(nil)
                     else 
                         GUI.ToggleMasterlootDropdown("TOPLEFT", self.frame, "CENTER")
                     end
@@ -178,10 +178,10 @@ function Self.Show()
                 .AddTo(Self.frames.filter)
                 .SetText()
                 .SetCallback("OnEnter", function (self)
-                    local ml = Masterloot.GetMasterlooter()
+                    local ml = Session.GetMasterlooter()
                     if ml then
                         -- Info
-                        local s = Masterloot.session
+                        local s = Session.rules
                         local timeoutBase, timeoutPerItem = s.timeoutBase or Roll.TIMEOUT, s.timeoutPerItem or Roll.TIMEOUT_PER_ITEM
                         local council = not s.council and "-" or Util(s.council).Keys().Map(function (unit)
                             return Unit.ColoredName(Unit.ShortenedName(unit), unit)
@@ -196,7 +196,7 @@ function Self.Show()
                         -- Players
                         GameTooltip:AddLine("\n" .. L["TIP_MASTERLOOTING"])
                         local units = Unit.ColoredName(UnitName("player"))
-                        for unit,unitMl in pairs(Masterloot.masterlooting) do
+                        for unit,unitMl in pairs(Session.masterlooting) do
                             if ml == unitMl then
                                 units = units .. ", " .. Unit.ColoredName(Unit.ShortenedName(unit), unit)
                             end
@@ -359,8 +359,8 @@ function Self.Update()
                     local roll, bid = self:GetUserData("roll"), self:GetUserData("bid")
                     if button == "LeftButton" then
                         roll:Bid(bid)
-                    elseif button == "RightButton" and roll.owner == Masterloot.GetMasterlooter() then
-                        local answers = Masterloot.session["answers" .. bid]
+                    elseif button == "RightButton" and roll.owner == Session.GetMasterlooter() then
+                        local answers = Session.rules["answers" .. bid]
                         if answers and #answers > 0 then
                             GUI.ToggleAnswersDropdown(roll, bid, answers, "TOPLEFT", self.frame, "CENTER")
                         end
@@ -607,7 +607,7 @@ function Self.Update()
     filter.children[it()]:SetValue(Self.filter.hidden)
 
     -- ML action
-    local ml = Masterloot.GetMasterlooter()
+    local ml = Session.GetMasterlooter()
     filter.children[it()]:SetImage(ml and "Interface\\Buttons\\UI-StopButton" or "Interface\\GossipFrame\\WorkOrderGossipIcon")
 
     -- ML

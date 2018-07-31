@@ -1,7 +1,7 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local AceGUI = LibStub("AceGUI-3.0")
-local Comm, Inspect, Item, Masterloot, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Item, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+local Comm, Inspect, Item, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Item, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.GUI
 
 Self.Rolls = {}
@@ -94,11 +94,11 @@ function Self.ToggleMasterlootDropdown(...)
         dropdown = Self("Dropdown-Pullout").Hide()()
         Self("Dropdown-Item-Execute")
             .SetText(L["MENU_MASTERLOOT_START"])
-            .SetCallback("OnClick", function () Masterloot.SetMasterlooter("player") end)
+            .SetCallback("OnClick", function () Session.SetMasterlooter("player") end)
             .AddTo(dropdown)
         Self("Dropdown-Item-Execute")
             .SetText(L["MENU_MASTERLOOT_SEARCH"])
-            .SetCallback("OnClick", function () Masterloot.SendRequest() end)
+            .SetCallback("OnClick", function () Session.SendRequest() end)
             .AddTo(dropdown)
         Self.dropdownMasterloot = dropdown
     end

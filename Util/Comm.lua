@@ -1,6 +1,6 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Events, Locale, Masterloot, Roll, Unit, Util = Addon.Events, Addon.Locale, Addon.Masterloot, Addon.Roll, Addon.Unit, Addon.Util
+local Events, Locale, Session, Roll, Unit, Util = Addon.Events, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
 local Self = Addon.Comm
 
 Self.PREFIX = Addon.ABBR
@@ -245,16 +245,16 @@ function Self.RollBid(roll, bid, fromUnit, isImport)
             local data = Util.Tbl(true, "ownerId", roll.ownerId, "bid", bid, "fromUnit", Unit.FullName(fromUnit))
 
             -- Send to all or the council
-            if Util.Check(Masterloot.GetMasterlooter(), Addon.db.profile.masterlooter.bidPublic, Addon.db.profile.bidPublic) then
+            if Util.Check(Session.GetMasterlooter(), Addon.db.profile.masterlooter.bidPublic, Addon.db.profile.bidPublic) then
                 Self.SendData(Self.EVENT_BID, data)
-            elseif Masterloot.IsMasterlooter() then
-                for target,_ in pairs(Masterloot.session.council or {}) do
+            elseif Session.IsMasterlooter() then
+                for target,_ in pairs(Session.rules.council or {}) do
                     Self.SendData(Self.EVENT_BID, data, target)
                 end
             end
 
             -- Send message to PLH users
-            if fromSelf and bid == Roll.BID_NEED and not Masterloot.GetMasterlooter() then
+            if fromSelf and bid == Roll.BID_NEED and not Session.GetMasterlooter() then
                 Self.SendPlh(Self.PLH_ACTION_KEEP, roll)
             end
         -- Send bid to owner
@@ -306,14 +306,14 @@ function Self.RollVote(roll, vote, fromUnit, isImport)
             -- Send to all or the council
             if Addon.db.profile.masterlooter.votePublic then
                 Self.SendData(Self.EVENT_VOTE, data)
-            elseif Masterloot.IsMasterlooter() then
-                for target,_ in pairs(Masterloot.session.council or {}) do
+            elseif Session.IsMasterlooter() then
+                for target,_ in pairs(Session.rules.council or {}) do
                     Self.SendData(Self.EVENT_VOTE, data, target)
                 end
             end
         elseif fromSelf then
             -- Send to owner
-            Self.SendData(Self.EVENT_VOTE, {ownerId = roll.ownerId, vote = Unit.FullName(vote)}, Masterloot.GetMasterlooter())
+            Self.SendData(Self.EVENT_VOTE, {ownerId = roll.ownerId, vote = Unit.FullName(vote)}, Session.GetMasterlooter())
         end
     end
 end
@@ -324,7 +324,7 @@ end
 function Self.RollEnd(roll)
     -- We won the item
     if roll.isWinner then
-        if Masterloot.GetMasterlooter() or not (roll.item.isOwner and roll.bid and floor(roll.bid) == Roll.BID_NEED) then
+        if Session.GetMasterlooter() or not (roll.item.isOwner and roll.bid and floor(roll.bid) == Roll.BID_NEED) then
             if roll.item.isOwner then
                 Addon:Info(L["ROLL_WINNER_OWN"], roll.item.link)
             else

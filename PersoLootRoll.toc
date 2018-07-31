@@ -27,7 +27,7 @@ Data\Instances.lua
 
 # Application logic
 Addon.lua
-Masterloot.lua
+Session.lua
 Roll.lua
 Trade.lua
 Inspect.lua
