@@ -1,10 +1,11 @@
 local Name, Addon = ...
+local Version = GetAddOnMetadata("PersoLootRoll", "Version")
 LibStub("AceAddon-3.0"):NewAddon(Addon, Name, "AceConsole-3.0", "AceComm-3.0", "AceSerializer-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceHook-3.0")
 
 -- Constants
 Addon.ABBR = "PLR"
-Addon.VERSION = GetAddOnMetadata("PersoLootRoll", "Version")
-Addon.DEBUG = PersoLootRollDebug or false
+Addon.VERSION = tonumber(Version) or Version
+Addon.DEBUG = false
 
 -- Modules
 Addon.Comm = {}
