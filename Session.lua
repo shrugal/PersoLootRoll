@@ -214,7 +214,7 @@ function Self.SetRules(rules, silent)
 end
 
 -- Refresh the session rules
-function Self.RefreshSession()
+function Self.RefreshRules()
     if Self.IsMasterlooter() then Self.SetRules() end
 end
 

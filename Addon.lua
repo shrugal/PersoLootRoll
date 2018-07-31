@@ -259,7 +259,7 @@ function Addon:HandleChatCommand(msg)
             
             for i,item in pairs(items) do
                 item = Item.FromLink(item, owner or "player")
-                local roll = Roll.Add(item, owner or RulesGetMasterlooter() or "player", timeout)
+                local roll = Roll.Add(item, owner or Session.GetMasterlooter() or "player", timeout)
                 if roll.isOwner then
                     roll:Start()
                 else
@@ -696,13 +696,13 @@ function Addon:RegisterOptions()
                 name = L["OPT_MASTERLOOT_START"],
                 type = "execute",
                 order = it(),
-                func = function () RulesSetMasterlooter("player") end
+                func = function () Session.SetMasterlooter("player") end
             },
             stop = {
                 name = L["OPT_MASTERLOOT_STOP"],
                 type = "execute",
                 order = it(),
-                func = function () RulesSetMasterlooter(nil) end
+                func = function () Session.SetMasterlooter(nil) end
             },
             approval = {
                 name = L["OPT_MASTERLOOT_APPROVAL"],
@@ -772,7 +772,7 @@ function Addon:RegisterOptions()
                         order = it(),
                         set = function (_, val)
                             self.db.profile.masterlooter.timeoutBase = val
-                            RulesRefreshSession()
+                            Session.RefreshRules()
                         end,
                         get = function () return self.db.profile.masterlooter.timeoutBase end,
                         width = half
@@ -787,7 +787,7 @@ function Addon:RegisterOptions()
                         order = it(),
                         set = function (_, val)
                             self.db.profile.masterlooter.timeoutPerItem = val
-                            RulesRefreshSession()
+                            Session.RefreshRules()
                         end,
                         get = function () return self.db.profile.masterlooter.timeoutPerItem end,
                         width = half
@@ -806,7 +806,7 @@ function Addon:RegisterOptions()
                                     tinsert(t, v == NEED and Roll.ANSWER_NEED or v)
                                 end
                             end
-                            RulesRefreshSession()
+                            Session.RefreshRules()
                         end,
                         get = function ()
                             local s = ""
@@ -830,7 +830,7 @@ function Addon:RegisterOptions()
                                     tinsert(t, v == GREED and Roll.ANSWER_GREED or v)
                                 end
                             end
-                            RulesRefreshSession()
+                            Session.RefreshRules()
                         end,
                         get = function ()
                             local s = ""
@@ -850,7 +850,7 @@ function Addon:RegisterOptions()
                         order = it(),
                         set = function (_, val)
                             self.db.profile.masterlooter.bidPublic = val
-                            RulesRefreshSession()
+                            Session.RefreshRules()
                         end,
                         get = function () return self.db.profile.masterlooter.bidPublic end,
                         width = "full"
@@ -871,7 +871,7 @@ function Addon:RegisterOptions()
                         values = councilValues,
                         set = function (_, key, val)
                             self.db.profile.masterlooter.council[councilKeys[key]] = val
-                            RulesRefreshSession()
+                            Session.RefreshRules()
                         end,
                         get = function (_, key) return self.db.profile.masterlooter.council[councilKeys[key]] end
                     },
@@ -889,7 +889,7 @@ function Addon:RegisterOptions()
                         end,
                         set = function (_, val)
                             self.db.char.masterloot.guildRank = val
-                            RulesRefreshSession()
+                            Session.RefreshRules()
                         end,
                         get = function () return self.db.char.masterloot.guildRank end
                     },
@@ -903,7 +903,7 @@ function Addon:RegisterOptions()
                             for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do
                                 t[v] = true
                             end
-                            RulesRefreshSession()
+                            Session.RefreshRules()
                         end,
                         get = function () return Util(self.db.factionrealm.masterlooter.councilWhitelist).Keys().Sort().Concat(", ")() end,
                         width = "full"
@@ -917,7 +917,7 @@ function Addon:RegisterOptions()
                         order = it(),
                         set = function (_, val)
                             self.db.profile.masterlooter.votePublic = val
-                            RulesRefreshSession()
+                            Session.RefreshRules()
                         end,
                         get = function () return self.db.profile.masterlooter.votePublic end,
                         width = "full"
@@ -1107,7 +1107,7 @@ end
 function Addon:IsTracking(unit)
     if not unit or Unit.IsSelf(unit) then
         return self.db.profile.enabled
-           and (not self.db.profile.onlyMasterloot or RulesGetMasterlooter())
+           and (not self.db.profile.onlyMasterloot or Session.GetMasterlooter())
            and IsInGroup()
            and Util.In(GetLootMethod(), "freeforall", "roundrobin", "personalloot", "group")
     else
