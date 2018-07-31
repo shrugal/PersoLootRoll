@@ -1,6 +1,6 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Comm, GUI, Inspect, Item, Locale, Masterloot, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Inspect, Addon.Item, Addon.Locale, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+local Comm, GUI, Inspect, Item, Locale, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Inspect, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.Events
 
 -- Message patterns
@@ -41,7 +41,7 @@ function Self.GROUP_JOINED()
     Comm.SendPlh(Comm.PLH_ACTION_CHECK, nil, Unit.FullName("player"))
     
     -- Restore or ask for masterlooter
-    Masterloot.Restore()
+    Session.Restore()
 
     -- Start tracking process
     Addon:OnTrackingChanged(true)
@@ -52,8 +52,8 @@ function Self.GROUP_LEFT()
     Addon:OnTrackingChanged(true)
 
     -- Clear masterlooter
-    Masterloot.SetMasterlooter(nil)
-    wipe(Masterloot.masterlooting)
+    Session.SetMasterlooter(nil)
+    wipe(Session.masterlooting)
 
     -- Clear versions and disabled
     wipe(Addon.versions)
@@ -214,11 +214,11 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
             Inspect.Clear(unit)
 
             -- Clear masterlooter
-            if unit == Masterloot.GetMasterlooter() then
-                Masterloot.SetMasterlooter(nil, nil, true)
+            if unit == Session.GetMasterlooter() then
+                Session.SetMasterlooter(nil, nil, true)
             end
-            Masterloot.SetMasterlooting(unit, nil)
-            Masterloot.ClearMasterlooting(unit)
+            Session.SetMasterlooting(unit, nil)
+            Session.ClearMasterlooting(unit)
 
             -- Clear version and disabled
             Addon:SetVersion(unit, nil)
@@ -242,7 +242,7 @@ function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
         if item.isOwner then
             item:SetPosition(Self.lastLootedBag, 0)
 
-            local owner = Masterloot.GetMasterlooter() or unit
+            local owner = Session.GetMasterlooter() or unit
             local isOwner = Unit.IsSelf(owner)
 
             item:OnFullyLoaded(function ()
@@ -555,7 +555,7 @@ Comm.Listen(Comm.EVENT_SYNC, function (event, msg, channel, sender, unit)
         end
 
         -- As masterlooter we send another update a bit later to inform them about bids and votes
-        if Masterloot.IsMasterlooter() then
+        if Session.IsMasterlooter() then
             Addon:ScheduleTimer(function ()
                 for _,roll in pairs(Addon.rolls) do
                     if roll.isOwner and not roll.item.isOwner and (roll:UnitCanBid(unit) or roll:UnitCanVote(unit)) then
@@ -625,29 +625,29 @@ end)
 
 -- Masterlooter
 Comm.Listen(Comm.EVENT_MASTERLOOT_ASK, function (event, msg, channel, sender, unit)
-    if Masterloot.IsMasterlooter() then
-        Masterloot.SetMasterlooting(unit, nil)
-        Masterloot.SendOffer(unit)
+    if Session.IsMasterlooter() then
+        Session.SetMasterlooting(unit, nil)
+        Session.SendOffer(unit)
     elseif channel == Comm.TYPE_WHISPER then
-        Masterloot.SendCancellation(nil, unit)
-    elseif Masterloot.GetMasterlooter() then
-        Masterloot.SendConfirmation(unit)
+        Session.SendCancellation(nil, unit)
+    elseif Session.GetMasterlooter() then
+        Session.SendConfirmation(unit)
     end
 end)
 Comm.ListenData(Comm.EVENT_MASTERLOOT_OFFER, function (event, data, channel, sender, unit)
-    Masterloot.SetMasterlooting(unit, unit)
+    Session.SetMasterlooting(unit, unit)
 
-    if Masterloot.IsMasterlooter(unit) then
-        Masterloot.SendConfirmation()
-        Masterloot.SetSession(data.session)
-    elseif Masterloot.UnitAllow(unit) then
-        if Masterloot.UnitAccept(unit) then
-            Masterloot.SetMasterlooter(unit, data.session)
+    if Session.IsMasterlooter(unit) then
+        Session.SendConfirmation()
+        Session.SetRules(data.session)
+    elseif Session.UnitAllow(unit) then
+        if Session.UnitAccept(unit) then
+            Session.SetMasterlooter(unit, data.session)
         elseif not data.silent then
             local dialog = StaticPopupDialogs[GUI.DIALOG_MASTERLOOT_ASK]
             dialog.text = Util.StrFormat(L["DIALOG_MASTERLOOT_ASK"], unit)
             dialog.OnAccept = function ()
-                Masterloot.SetMasterlooter(unit, data.session)
+                Session.SetMasterlooter(unit, data.session)
             end
             StaticPopup_Show(GUI.DIALOG_MASTERLOOT_ASK)
         end
@@ -656,10 +656,10 @@ end)
 Comm.Listen(Comm.EVENT_MASTERLOOT_ACK, function (event, ml, channel, sender, unit)
     ml = Unit(ml)
     if ml then
-        if UnitIsUnit(ml, "player") and not Masterloot.IsMasterlooter() then
-            Masterloot.SendCancellation(nil, channel == Comm.TYPE_WHISPER and unit or nil)
+        if UnitIsUnit(ml, "player") and not Session.IsMasterlooter() then
+            Session.SendCancellation(nil, channel == Comm.TYPE_WHISPER and unit or nil)
         else
-            Masterloot.SetMasterlooting(unit, ml)
+            Session.SetMasterlooting(unit, ml)
         end
     end
 end)
@@ -667,15 +667,15 @@ Comm.Listen(Comm.EVENT_MASTERLOOT_DEC, function (event, player, channel, sender,
     player = Unit(player)
 
     -- Clear the player's masterlooter
-    if Masterloot.IsMasterlooter(unit) and (Util.StrIsEmpty(player) or UnitIsUnit(player, "player")) then
-        Masterloot.SetMasterlooter(nil, nil, true)
-    elseif player == unit or Masterloot.masterlooting[player] == unit then
-        Masterloot.SetMasterlooting(player, nil)
+    if Session.IsMasterlooter(unit) and (Util.StrIsEmpty(player) or UnitIsUnit(player, "player")) then
+        Session.SetMasterlooter(nil, nil, true)
+    elseif player == unit or Session.masterlooting[player] == unit then
+        Session.SetMasterlooting(player, nil)
     end
 
     -- Clear everybody who has the sender as masterlooter
     if Util.StrIsEmpty(player) then
-        Masterloot.ClearMasterlooting(unit)
+        Session.ClearMasterlooting(unit)
     end
 end)
 

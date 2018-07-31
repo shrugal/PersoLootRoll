@@ -1,7 +1,7 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local CB = LibStub("CallbackHandler-1.0")
-local Comm, Events, GUI, Item, Locale, Masterloot, Trade, Unit, Util = Addon.Comm, Addon.Events, Addon.GUI, Addon.Item, Addon.Locale, Addon.Masterloot, Addon.Trade, Addon.Unit, Addon.Util
+local Comm, Events, GUI, Item, Locale, Session, Trade, Unit, Util = Addon.Comm, Addon.Events, Addon.GUI, Addon.Item, Addon.Locale, Addon.Session, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.Roll
 
 -- Default schedule delay
@@ -166,10 +166,10 @@ function Self.Update(data, unit)
     -- Get or create the roll
     local roll = Self.Find(data.ownerId, data.owner, data.item, data.itemOwnerId, data.item.owner)
     if not roll then
-        local ml = Masterloot.GetMasterlooter()
+        local ml = Session.GetMasterlooter()
 
         -- Only the item owner or his/her masterlooter can create rolls
-        if not Util.In(unit, data.item.owner, Masterloot.GetMasterlooter(data.item.owner)) then
+        if not Util.In(unit, data.item.owner, Session.GetMasterlooter(data.item.owner)) then
             return
         -- Only accept items from our masterlooter if enabled
         elseif Addon.db.profile.onlyMasterloot and not (ml and ml == data.owner) then
@@ -291,8 +291,8 @@ function Self.FromPlrId(id) return -id end
 
 -- Calculate the optimal timeout
 function Self.GetTimeout()
-    local items, ml = 0, Masterloot.GetMasterlooter()
-    local base, perItem = ml and Masterloot.session.timeoutBase or Self.TIMEOUT, ml and Masterloot.session.timeoutPerItem or Self.TIMEOUT_PER_ITEM
+    local items, ml = 0, Session.GetMasterlooter()
+    local base, perItem = ml and Session.rules.timeoutBase or Self.TIMEOUT, ml and Session.rules.timeoutPerItem or Self.TIMEOUT_PER_ITEM
     local difficulty, _, maxPlayers = select(3, GetInstanceInfo())
 
     if difficulty == DIFFICULTY_DUNGEON_CHALLENGE then
@@ -320,8 +320,8 @@ function Self.GetBidName(roll, bid)
     if not bid then
         return "-"
     else
-        local bid, i, answers = floor(bid), 10*bid - 10*floor(bid), Masterloot.session["answers" .. floor(bid)]
-        if i == 0 or not Masterloot.IsMasterlooter(roll.owner) or not answers or not answers[i] or Util.In(answers[i], Self.ANSWER_NEED, Self.ANSWER_GREED) then
+        local bid, i, answers = floor(bid), 10*bid - 10*floor(bid), Session.rules["answers" .. floor(bid)]
+        if i == 0 or not Session.IsMasterlooter(roll.owner) or not answers or not answers[i] or Util.In(answers[i], Self.ANSWER_NEED, Self.ANSWER_GREED) then
             return L["ROLL_BID_" .. bid]
         else
             return answers[i]
@@ -441,8 +441,8 @@ function Self:Bid(bid, fromUnit, rollOrImport)
     local rollResult, isImport = type(rollOrImport) == "number" and rollOrImport, rollOrImport == true
 
     -- Handle custom answers
-    local answer, answers = 10*bid - 10*floor(bid), Masterloot.session["answers" .. floor(bid)]
-    if bid == floor(bid) and answers and Masterloot.IsMasterlooter(self.owner) then
+    local answer, answers = 10*bid - 10*floor(bid), Session.rules["answers" .. floor(bid)]
+    if bid == floor(bid) and answers and Session.IsMasterlooter(self.owner) then
         local i = Util.TblFind(answers, bid == Self.BID_NEED and Self.ANSWER_NEED or Self.ANSWER_GREED)
         if i then bid, answer = bid + (i / 10), i end
     end
@@ -511,7 +511,7 @@ function Self:ShouldEnd()
     elseif not self.isOwner then
         return false
     -- We voted need on our own item
-    elseif not Masterloot.GetMasterlooter() and self.item.isOwner and floor(self.bid) == Self.BID_NEED then
+    elseif not Session.GetMasterlooter() and self.item.isOwner and floor(self.bid) == Self.BID_NEED then
         return true
     end
 
@@ -568,9 +568,9 @@ function Self:End(winner, cleanup, force)
 
     -- Determine a winner
     if self.isOwner and not winner or winner == true then
-        if not Masterloot.GetMasterlooter() and self.item.isOwner and self.bid and floor(self.bid) == Self.BID_NEED then
+        if not Session.GetMasterlooter() and self.item.isOwner and self.bid and floor(self.bid) == Self.BID_NEED then
             winner = UnitName("player")
-        elseif self.isOwner and (winner or not Addon.db.profile.awardSelf and not Masterloot.IsMasterlooter()) then
+        elseif self.isOwner and (winner or not Addon.db.profile.awardSelf and not Session.IsMasterlooter()) then
             winner = self:DetermineWinner()
         end
     end
@@ -727,7 +727,7 @@ end
 
 function Self:ShouldAdvertise(manually)
     return not self.posted and self:CanBeAwarded() and not self:ShouldEnd() and (
-        manually or Comm.ShouldInitChat() and (self.bid or Masterloot.GetMasterlooter())
+        manually or Comm.ShouldInitChat() and (self.bid or Session.GetMasterlooter())
     )
 end
 
@@ -789,11 +789,11 @@ function Self:SendStatus(noCheck, target, full)
         data.item = Util.Tbl(true, "link", self.item.link, "owner", Unit.FullName(self.item.owner))
 
         if full then
-            if Addon.db.profile.bidPublic or Masterloot.session.bidPublic or Masterloot.IsOnCouncil(target) then
+            if Addon.db.profile.bidPublic or Session.rules.bidPublic or Session.IsOnCouncil(target) then
                 data.bids = Util.TblMapKeys(self.bids, Unit.FullName)
             end
 
-            if Masterloot.session.votePublic or Masterloot.IsOnCouncil(target) then
+            if Session.rules.votePublic or Session.IsOnCouncil(target) then
                 data.votes = Util(self.votes).MapKeys(Unit.FullName).Map(Unit.FullName)()
             end
         end
@@ -884,7 +884,7 @@ function Self:ValidateBid(bid, answer, fromUnit, isImport)
     elseif isImport then
         return true
     -- Check if it's a valid bid
-    elseif not Util.TblFind(Self.BIDS, floor(bid)) or Masterloot.GetMasterlooter(self.owner) and answer > 0 and not (answers and answers[answer]) then
+    elseif not Util.TblFind(Self.BIDS, floor(bid)) or Session.GetMasterlooter(self.owner) and answer > 0 and not (answers and answers[answer]) then
         if Unit.IsSelf(fromUnit) then
             Addon:Err(L["ERROR_ROLL_BID_UNKNOWN_SELF"])
         else
@@ -1001,7 +1001,7 @@ end
 
 -- Check if the given unit can vote on this roll
 function Self:UnitCanVote(unit)
-    return self:CanBeVotedOn() and Masterloot.IsOnCouncil(unit or "player")
+    return self:CanBeVotedOn() and Session.IsOnCouncil(unit or "player")
 end
 
 -- Check if the given unit can pass on this roll
@@ -1017,7 +1017,7 @@ end
 
 -- Check if the roll is handled by a masterlooter
 function Self:HasMasterlooter()
-    return self.owner ~= self.item.owner or self.owner == Masterloot.GetMasterlooter(self.item.owner)
+    return self.owner ~= self.item.owner or self.owner == Session.GetMasterlooter(self.item.owner)
 end
 
 -- Check if the player has to take an action to complete the roll (e.g. trade)

@@ -1088,6 +1088,25 @@ function Self.StrColor(r, g, b, a)
     return ("%.2x%.2x%.2x%.2x"):format((a or 1) * 255, r * 255, g * 255, b * 255)
 end
 
+function Self.StrReplace(str, from, len, sub)
+    from, len, sub = from or 1, len or str:len(), sub or ""
+    local to = from < 0 and str:len() + from + len + 1 or from + len
+    return str:sub(1, from - 1) .. sub .. str:sub(to)
+end
+
+function Self.StrToCamelCase(str, del)
+    local s = ""
+    for v in str:gmatch("[^" .. (del or "%p%s") .. "]+") do
+        s = s .. Self.StrUcFirst(v:lower())
+    end
+    return Self.StrLcFirst(s)
+end
+
+function Self.StrFromCamelCase(str, del, case)
+    local s = str:gsub("%u", (del or " ") .. "%1")
+    return case == true and s:upper() or case == false and s:lower() or s
+end
+
 -------------------------------------------------------
 --                       Number                      --
 -------------------------------------------------------

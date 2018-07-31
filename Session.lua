@@ -2,7 +2,7 @@ local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local CB = LibStub("CallbackHandler-1.0")
 local Comm, GUI, Unit, Util = Addon.Comm, Addon.GUI, Addon.Unit, Addon.Util
-local Self = Addon.Masterloot
+local Self = Addon.Session
 
 Self.EVENT_SET = "SET"
 Self.EVENT_CLEAR = "CLEAR"
@@ -18,7 +18,7 @@ for _,ev in pairs(Self.EVENTS) do
 end
 
 Self.masterlooter = nil
-Self.session = {}
+Self.rules = {}
 Self.masterlooting = {}
 
 -------------------------------------------------------
@@ -38,7 +38,7 @@ function Self.SetMasterlooter(unit, session, silent)
             Self.SendCancellation("player")
         end
         Self.masterlooter = nil
-        wipe(Self.session)
+        wipe(Self.rules)
     end
     
     PersoLootRollML = unit
@@ -48,7 +48,7 @@ function Self.SetMasterlooter(unit, session, silent)
 
     -- Let others know
     if unit then
-        Self.SetSession(session)
+        Self.SetRules(session)
 
         local isSelf = UnitIsUnit(Self.masterlooter, "player")
         Addon:Info(isSelf and L["MASTERLOOTER_SELF"] or L["MASTERLOOTER_OTHER"], Comm.GetPlayerLink(unit))
@@ -84,7 +84,7 @@ function Self.SetMasterlooting(unit, ml)
     Self.masterlooting[unit] = ml
 
     if Self.IsMasterlooter() and Self.IsOnCouncil(unit) ~= Self.IsOnCouncil(unit, true) then
-        Self.SetSession()
+        Self.SetRules()
     end
 end
 
@@ -100,7 +100,7 @@ end
 --                     Permission                    --
 -------------------------------------------------------
 
--- Check if the given unit can become our masterlooter
+-- Check if the given unit can send us a ruleset
 function Self.UnitAllow(unit)
     unit = Unit.Name(unit)
     local config = Addon.db.profile.masterloot
@@ -143,7 +143,7 @@ function Self.UnitAllow(unit)
     return false
 end
 
--- Check if we should auto-accept masterlooter requests from this unit
+-- Check if we should auto-accept rulesets from this unit
 function Self.UnitAccept(unit)
     local config = Addon.db.profile.masterloot.accept
 
@@ -171,8 +171,8 @@ function Self.Restore()
     Self.SendRequest(PersoLootRollML)
 end
 
--- Set the masterloot session
-function Self.SetSession(session, silent)
+-- Set the session rules
+function Self.SetRules(rules, silent)
     if Self.IsMasterlooter() then
         local config = Addon.db.profile.masterlooter
 
@@ -185,33 +185,37 @@ function Self.SetSession(session, silent)
             end
         end
 
-        Self.session = {
+        Self.rules = {
+            clubId = nil, -- TODO
+            guild = nil, -- TODO
+            masterlooter = nil, -- TODO
             bidPublic = config.bidPublic,
             timeoutBase = config.timeoutBase or Roll.TIMEOUT,
             timeoutPerItem = config.timeoutPerItem or Roll.TIMEOUT_PER_ITEM,
             council = Util.TblCount(council) > 0 and council or nil,
             votePublic = config.votePublic,
             answers1 = config.answers1,
-            answers2 = config.answers2
+            answers2 = config.answers2,
+            answers3 = nil -- TODO
         }
 
         if not silent then
             Self.SendOffer(nil, true)
         end
-    elseif session then
-        Self.session = session
+    elseif rules then
+        Self.rules = rules
     else
-        wipe(Self.session)
+        wipe(Self.rules)
     end
 
-    Self.events:Fire(Self.EVENT_SESSION, Self.session, silent)
+    Self.events:Fire(Self.EVENT_SESSION, Self.rules, silent)
 
-    return Self.session
+    return Self.rules
 end
 
--- Refresh the masterloot session
+-- Refresh the session rules
 function Self.RefreshSession()
-    if Self.IsMasterlooter() then Self.SetSession() end
+    if Self.IsMasterlooter() then Self.SetRules() end
 end
 
 -- Check if the unit is on the loot council
@@ -220,7 +224,7 @@ function Self.IsOnCouncil(unit, refresh, groupRank)
     local fullName = Unit.FullName(unit)
 
     if not refresh then
-        return Self.session.council and Self.session.council[fullName] or false
+        return Self.rules.council and Self.rules.council[fullName] or false
     else
         -- Check if unit is part of our masterlooting group
         if not (Self.masterlooting[unit] == Self.masterlooter and Unit.InGroup(unit)) then
@@ -258,7 +262,136 @@ function Self.IsOnCouncil(unit, refresh, groupRank)
 end
 
 -------------------------------------------------------
---                         Comm                      --
+--                     Communities                   --
+-------------------------------------------------------
+
+-- Read session rule(s) from community description
+function Self.ReadFromCommunity(clubId, key)
+    local info = C_Club.GetClubInfo(clubId)
+    if info and not Util.StrIsEmpty(info.description) then
+        local t, found = not key and Util.Tbl() or nil, false
+
+        for i,line in Util.Each(("\n"):split(info.description)) do
+            local name, val = line:match("^PLR%-(.-): ?(.*)")
+            if name then
+                name = Util.StrToCamelCase(name)
+                if not key then
+                    t[name] = Self.DecodeRule(name, val)
+                elseif key == name then
+                    return Self.DecodeRule(name, val)
+                end
+            end
+        end
+
+        return t
+    end
+end
+
+-- Write session rule(s) do community description. We can only write to 
+function Self.WriteToCommunity(clubId, keyOrTbl, val)
+    local isKey = type(keyOrTbl) ~= "table"
+
+    local info = C_Club.GetClubInfo(clubId)
+    if info then
+        local desc, found = Util.StrSplit(info.description, "\n"), Util.Tbl()
+
+        -- Update or delete existing entries
+        for i,line in ipairs(desc) do
+            local name = line:match("^PLR%-(.-):")
+            if name then
+                name = Util.StrToCamelCase(name)
+                found[name] = true
+
+                if not isKey or isKey == name then
+                    local v
+                    if isKey then v = val else v = keyOrTbl[name] end
+
+                    if v ~= nil then
+                        desc[i] = ("PLR-%s: %s"):format(Util.StrFromCamelCase(name, "-", true), Self.EncodeRule(name, v))
+                    else
+                        tremove(desc, i)
+                    end
+
+                    if isKey then break end
+                end
+            end
+        end
+
+        -- Add new entries
+        for name,v in Util.Each(keyOrTbl) do
+            if isKey then name, v = v, val end
+
+            if not found[name] and v ~= nil then
+                if not next(found) then
+                    tinsert(desc, "\n------ PersoLootRoll ------")
+                end
+
+                found[name] = true
+                tinsert(desc, ("PLR-%s: %s"):format(Util.StrFromCamelCase(name, "-", true), Self.EncodeRule(name, v)))
+            end
+        end
+
+        local str = Util.TblConcat(desc, "\n")
+        Util.TblRelease(desc, found)
+
+        -- We can only write to guild communities, and only when we have the rights to do so
+        local priv = C_Club.GetClubPrivileges(clubId)
+        if priv and priv.canSetDescription and info.clubType == Enum.ClubType.Guild then
+            SetGuildInfoText(str)
+            return true
+        else
+            return str
+        end
+    end
+end
+
+-- Encode a session rule to its string representation
+function Self.EncodeRule(name, val)
+    local t = type(val)
+    if Util.In(t, "string", "number") then
+        return val
+    elseif t == "boolean" then
+        return val and "true" or "false"
+    elseif t == "table" then
+        local s
+        for i,v in pairs(val) do
+            v = Util.Select(true,
+                name == "answers1" and v == NEED,   Roll.ANSWER_NEED,
+                name == "answers2" and v == GREED,  Roll.ANSWER_GREED,
+                v
+            )
+            s = (s and s .. ", " or "") .. v
+        end
+        return s or ""
+    else
+        return ""
+    end
+end
+
+-- Decode a session rule from its string representation
+function Self.DecodeRule(name, str)
+    if Util.In(name, "bidPublic", "votePublic") then
+        return Util.In(str:lower(), "true", "1", "yes")
+    elseif Util.In(name, "timeoutBase", "timeoutPerItem", "councilRank") then
+        return tonumber(str)
+    elseif Util.In(name, "masterlooter", "council", "answers1", "answers2", "answers3") then
+        local val = Util.Tbl()
+        for v in str:gmatch("[^,]+") do
+            v = v:gsub("^%s*(.*)%s*$", "%1")
+            if name == "answers1" and v == NEED then
+                v = Roll.ANSWER_NEED
+            elseif name == "answers2" and v == GREED then
+                v = Roll.ANSWER_GREED
+            end
+            tinsert(val, v) end
+        return val
+    elseif str ~= "" then
+        return str
+    end
+end
+
+-------------------------------------------------------
+--                        Comm                       --
 -------------------------------------------------------
 
 -- Ask someone to be your masterlooter
@@ -269,7 +402,7 @@ end
 -- Send masterlooter offer to unit
 function Self.SendOffer(target, silent)
     if Self.IsMasterlooter() then
-        Comm.SendData(Comm.EVENT_MASTERLOOT_OFFER, {session = Self.session, silent = silent}, target)
+        Comm.SendData(Comm.EVENT_MASTERLOOT_OFFER, {session = Self.rules, silent = silent}, target)
     end
 end
 
