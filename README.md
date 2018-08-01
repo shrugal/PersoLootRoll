@@ -1,6 +1,8 @@
 # PersoLootRoll
 A World of Warcraft addon to share and roll on items when using personal loot.
 
+Get it from [Curse](https://www.curseforge.com/wow/addons/persolootroll) or [WoWInterface](http://www.wowinterface.com/downloads/info24667-PersoLootRoll.html)!
+
 ## Features
 
 ### Roll on tradable personal loot from others

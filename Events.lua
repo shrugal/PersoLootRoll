@@ -5,7 +5,7 @@ local Self = Addon.Events
 
 -- Message patterns
 Self.PATTERN_BONUS_LOOT = LOOT_ITEM_BONUS_ROLL:gsub("%%s", ".+")
-Self.PATTERN_ROLL_RESULT = RANDOM_ROLL_RESULT:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%s", "(.+)"):gsub("%%d", "(%%d+)")
+Self.PATTERN_ROLL_RESULT = RANDOM_ROLL_RESULT:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%%d%$", "%%"):gsub("%%s", "(.+)"):gsub("%%d", "(%%d+)")
 
 -- Version check
 Self.VERSION_CHECK_DELAY = 5
@@ -132,10 +132,15 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
     do
         local unit, result, from, to = msg:match(Self.PATTERN_ROLL_RESULT)
         if unit and result and from and to then
-            result, from, to = tonumber(result), tonumber(from), tonumber(to)
+            -- The roll result is the first return value in some locales
+            if tonumber(unit) then
+                unit, result, from, to = result, tonumber(unit), tonumber(from), tonumber(to)
+            else
+                result, from, to = tonumber(result), tonumber(from), tonumber(to)
+            end
 
             -- Rolls lower than 50 will screw with the result scaling
-            if to < 50 then
+            if not (unit and result and from and to) or to < 50 then
                 return
             end
 
