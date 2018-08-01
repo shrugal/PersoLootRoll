@@ -1069,21 +1069,6 @@ function Self.StrAbbr(str, length)
     return str:len() <= length and str or str:sub(1, length) .. "..."
 end
 
--- String format with argument reordering support (%#$x)
-function Self.StrFormat(str, ...)
-    local p = "%%(%d+)%$"
-    
-    if str:match(p) then
-        local args, order = Self.Tbl(false, ...), Self.Tbl()
-        str = str:gsub(p, function(i) tinsert(order, args[tonumber(i)]) return "%" end):format(unpack(order))
-        Self.TblRelease(args, order)
-    else
-        str = str:format(...)
-    end
-
-    return str
-end
-
 function Self.StrColor(r, g, b, a)
     return ("%.2x%.2x%.2x%.2x"):format((a or 1) * 255, r * 255, g * 255, b * 255)
 end
