@@ -93,6 +93,6 @@ Self.MT = {
         return table == Self[Self.FALLBACK] and key or Self[Self.FALLBACK][key]
     end,
     __call = function (table, line, ...)
-        return Util.StrFormat(table[line], ...)
+        return table[line]:format(...)
     end
 }

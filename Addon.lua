@@ -337,7 +337,7 @@ function Addon:RegisterOptions()
                 type = "description",
                 fontSize = "medium",
                 order = it(),
-                name = Util.StrFormat(L["OPT_VERSION"], Addon.VERSION) .. "  |cff999999-|r  " .. L["OPT_AUTHOR"] .. "  |cff999999-|r  " .. L["OPT_TRANSLATION"] .. "\n"
+                name = L["OPT_VERSION"]:format(Addon.VERSION) .. "  |cff999999-|r  " .. L["OPT_AUTHOR"] .. "  |cff999999-|r  " .. L["OPT_TRANSLATION"] .. "\n"
             },
             enable = {
                 name = L["OPT_ENABLE"],
@@ -392,7 +392,7 @@ function Addon:RegisterOptions()
                 width = half
             },
             ui = {type = "header", order = it(), name = L["OPT_UI"]},
-            uiDesc = {type = "description", fontSize = "medium", order = it(), name = Util.StrFormat(L["OPT_UI_DESC"], Name) .. "\n"},
+            uiDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_UI_DESC"]:format(Name) .. "\n"},
             minimapIcon = {
                 name = L["OPT_MINIMAP_ICON"],
                 desc = L["OPT_MINIMAP_ICON_DESC"],
@@ -648,14 +648,14 @@ function Addon:RegisterOptions()
                 args = {
                     desc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_CUSTOM_MESSAGES_DESC"] .. "\n"},
                     localized = {
-                        name = Util.StrFormat(L["OPT_CUSTOM_MESSAGES_LOCALIZED"], Locale.GetLanguageName(lang)),
+                        name = L["OPT_CUSTOM_MESSAGES_LOCALIZED"]:format(Locale.GetLanguageName(lang)),
                         type = "group",
                         order = it(),
                         hidden = Locale.GetRealmLanguage() == Locale.DEFAULT,
                         args = Addon:GetCustomMessageOptions(false)
                     },
                     default = {
-                        name = Util.StrFormat(L["OPT_CUSTOM_MESSAGES_DEFAULT"], Locale.GetLanguageName(Locale.DEFAULT)),
+                        name = L["OPT_CUSTOM_MESSAGES_DEFAULT"]:format(Locale.GetLanguageName(Locale.DEFAULT)),
                         type = "group",
                         order = it(),
                         args = Addon:GetCustomMessageOptions(true)
@@ -795,7 +795,7 @@ function Addon:RegisterOptions()
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
                     needAnswers = {
                         name = L["OPT_MASTERLOOTER_NEED_ANSWERS"],
-                        desc = Util.StrFormat(L["OPT_MASTERLOOTER_NEED_ANSWERS_DESC"], NEED),
+                        desc = L["OPT_MASTERLOOTER_NEED_ANSWERS_DESC"]:format(NEED),
                         type = "input",
                         order = it(),
                         set = function (_, val)
@@ -819,7 +819,7 @@ function Addon:RegisterOptions()
                     },
                     greedAnswers = {
                         name = L["OPT_MASTERLOOTER_GREED_ANSWERS"],
-                        desc = Util.StrFormat(L["OPT_MASTERLOOTER_GREED_ANSWERS_DESC"], GREED),
+                        desc = L["OPT_MASTERLOOTER_GREED_ANSWERS_DESC"]:format(GREED),
                         type = "input",
                         order = it(),
                         set = function (_, val)
@@ -961,7 +961,7 @@ function Addon:GetCustomMessageOptions(isDefault)
         for v in line:gmatch("%%[sd]") do
             tinsert(args, v == "%s" and "a" or 1)
         end
-        return (pcall(Util.StrFormat, val, unpack(args)))
+        return (pcall(string.format, val, unpack(args)))
     end
     local add = function (line, i)
         local iLine = i and line .. "_" .. i or line
@@ -1212,7 +1212,7 @@ function Addon:Echo(lvl, line, ...)
             self:Print(unpack(args))
             Util.TblRelease(args)
         else
-            self:Print(Util.StrFormat(line, ...))
+            self:Print(line:format(...))
         end
     end
 end

@@ -645,7 +645,7 @@ Comm.ListenData(Comm.EVENT_MASTERLOOT_OFFER, function (event, data, channel, sen
             Session.SetMasterlooter(unit, data.session)
         elseif not data.silent then
             local dialog = StaticPopupDialogs[GUI.DIALOG_MASTERLOOT_ASK]
-            dialog.text = Util.StrFormat(L["DIALOG_MASTERLOOT_ASK"], unit)
+            dialog.text = L["DIALOG_MASTERLOOT_ASK"]:format(unit)
             dialog.OnAccept = function ()
                 Session.SetMasterlooter(unit, data.session)
             end

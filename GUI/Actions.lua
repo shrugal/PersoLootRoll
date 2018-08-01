@@ -314,7 +314,7 @@ function Self.UpdateButtons()
                     .SetCallback("OnClick", function () Self.SavePosition(name) end)
                     .SetCallback("OnEnter", GUI.TooltipText)
                     .SetCallback("OnLeave", GUI.TooltipHide)
-                    .SetUserData("text", Util.StrFormat(L["SET_ANCHOR"], 
+                    .SetUserData("text", L["SET_ANCHOR"]:format(
                         name:sub(-4) == "LEFT" and L["RIGHT"] or name:sub(-5) == "RIGHT" and L["LEFT"] or L["LEFT"] .. "/" .. L["RIGHT"],
                         name:sub(1, 6) == "BOTTOM" and L["UP"] or name:sub(1, 3) == "TOP" and L["DOWN"] or L["UP"] .. "/" .. L["DOWN"]
                     ))

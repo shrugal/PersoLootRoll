@@ -867,7 +867,7 @@ function Self:Validate(status, ...)
     else
         for _,unit in pairs({self.owner, ...}) do
             if not UnitExists(unit) or not Unit.InGroup(unit) then
-                return false, Util.StrFormat(L["ERROR_PLAYER_NOT_FOUND"], unit)
+                return false, L["ERROR_PLAYER_NOT_FOUND"]:format(unit)
             end
         end
 
