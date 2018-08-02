@@ -186,17 +186,13 @@ function Self.SetRules(rules, silent)
         end
 
         Self.rules = {
-            clubId = nil, -- TODO
-            guild = nil, -- TODO
-            masterlooter = nil, -- TODO
             bidPublic = config.bidPublic,
             timeoutBase = config.timeoutBase or Roll.TIMEOUT,
             timeoutPerItem = config.timeoutPerItem or Roll.TIMEOUT_PER_ITEM,
             council = Util.TblCount(council) > 0 and council or nil,
             votePublic = config.votePublic,
             answers1 = config.answers1,
-            answers2 = config.answers2,
-            answers3 = nil -- TODO
+            answers2 = config.answers2
         }
 
         if not silent then
