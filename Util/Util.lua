@@ -34,19 +34,19 @@ function Self.IsGuildGroup(guild)
         return false
     end
 
-    local n, guilds = GetNumGroupMembers(), Util.Tbl()
+    local n, guilds = GetNumGroupMembers(), Self.Tbl()
 
     for i=1,n do
         local g = Unit.GuildName(GetRaidRosterInfo(i))
         if g then
             guilds[g] = (guilds[g] or 0) + 1
             if (not guild or g == guild) and guilds[g] / n > Self.GROUP_THRESHOLD then
-                Util.TblRelease(guilds)
+                Self.TblRelease(guilds)
                 return g
             end
         end
     end
-    Util.TblRelease(guilds)
+    Self.TblRelease(guilds)
 end
 
 -- Check if the current group is a community group
@@ -159,7 +159,10 @@ end
 
 -- Compare two values, returns -1 for a < b, 0 for a == b and 1 for a > b
 function Self.Compare(a, b)
-    return a == b and 0 or a > b and 1 or -1
+    return a == b and 0
+    or a == nil and 1
+    or b == nil and -1
+    or a > b and 1 or -1
 end
 
 -- Create an iterator
@@ -190,8 +193,10 @@ local Fn = function (t, i)
     return i, v
 end
 function Self.Each(...)
-    if type(...) == "table" then
+    if ... and type(...) == "table" then
         return Fn, ...
+    elseif select("#", ...) == 0 then
+        return Self.FnNoop
     else
         return Fn, Self.TblTmp(false, ...)
     end
@@ -336,8 +341,16 @@ function Self.TblSet(t, ...)
         end
     end
 
-    for i=1,n-1 do t = Self.Default(t[select(i, ...)], {}) end
-    t[select(n, ...)] = val
+    local u = t
+    for i=1,n do
+        local k = select(i, ...)
+        if i == n then
+            u[k] = val
+        else
+            if u[k] == nil then u[k] = {} end
+            u = u[k]
+        end
+    end
 
     return t
 end
@@ -410,6 +423,11 @@ function Self.TblList(t)
         i, v = nextI, nextV
     end
     return t
+end
+
+-- Check if the table is a continuesly indexed list
+function Self.TblIsList(t)
+    return #t == Self.TblCount(t)
 end
 
 -- SUB
@@ -594,22 +612,30 @@ end
 -- FILTER
 
 -- Filter by a function
-function Self.TblFilter(t, fn, k, ...)
+function Self.TblFilter(t, fn, index, k, ...)
     fn = Self.Fn(fn) or Self.FnId
-    for i,v in pairs(t) do
-        if not fn(v, i, ...) then
-            if k then t[i] = nil else tremove(t, i) end
+
+    if not k and Self.TblIsList(t) then
+        for i=#t,1,-1 do
+            if index and not fn(t[i], i, ...) or not index and not fn(t[i], ...) then
+                tremove(t, i)
+            end
+        end
+    else
+        for i,v in pairs(t) do
+            if index and not fn(v, i, ...) or not index and not fn(v, ...) then
+                if k then t[i] = nil else tremove(t, i) end
+            end
         end
     end
+
     return t
 end
 
 -- Pick specific keys from a table
 function Self.TblSelect(t, ...)
     for i,v in pairs(t) do
-        if not Util.In(i, ...) then
-            t[i] = nil
-        end
+        if not Util.In(i, ...) then t[i] = nil end
     end
     return t
 end
@@ -622,42 +648,24 @@ end
 
 -- Filter by a value
 function Self.TblOnly(t, val, k)
-    for i,v in pairs(t) do
-        if v ~= val then
-            if k then t[i] = nil else tremove(t, i) end
-        end
-    end
-    return t
+    return Self.TblFilter(t, Self.Equals, false, k, val)
 end
 
 -- Filter by not being a value
+local Fn = function (v, val) return v ~= val end
 function Self.TblExcept(t, val, k)
-    for i,v in pairs(t) do
-        if v == val then
-            if k then t[i] = nil else tremove(t, i) end
-        end
-    end
-    return t
+    return Self.TblFilter(t, Fn, false, k, val)
 end
 
 -- Filter by a set of key/value pairs in a table
 function Self.TblWhere(t, k, ...)
-    for i,v in pairs(t) do
-        if not Self.TblFindWhere(v, ...) then
-            if k then t[i] = nil else tremove(t, i) end
-        end
-    end
-    return t
+    return Self.TblFilter(t, Self.TblMatches, false, k, ...)
 end
 
 -- Filter by not having a set of key/value pairs in a table
+local Fn = function (...) return not Self.TblMatches(...) end
 function Self.TblExceptWhere(t, k, ...)
-    for i,v in pairs(t) do
-        if Self.TblFindWhere(t, ...) then
-            if k then t[i] = nil else tremove(t, i) end
-        end
-    end
-    return t
+    return Self.TblFilter(t, Fn, false, k, ...)
 end
 
 -- COPY
@@ -931,20 +939,16 @@ function Self.TblSort(t, fn)
 end
 
 -- Sort a table of tables by given table keys and default values
-local Fn = function (a, b) return -Self.Compare(a, b) end
+local Fn = function (a, b) return Self.Compare(b, a) end
 function Self.TblSortBy(t, ...)
     local args = type(...) == "table" and (...) or {...}
     return Self.TblSort(t, function (a, b)
         for i=1, #args, 3 do
-            local key, default, fn = args[i], args[i+1], args[i+2]
+            local key, default, fn = args[i], args[i+1], args[i+2]            
             fn = fn == true and Fn or Self.Fn(fn) or Self.Compare
-            local cmp = fn(a[key] or default, b[key] or default)
 
-            if cmp == 1 then
-                return false
-            elseif cmp == -1 or i+2 >= #args then
-                return true
-            end
+            local cmp = fn(a and a[key] or default, b and b[key] or default)
+            if cmp ~= 0 then return cmp == -1 end
         end
     end)
 end

@@ -113,6 +113,7 @@ L["ERROR_ROLL_STATUS_NOT_1"] = "The roll is not running."
 L["ERROR_ROLL_UNKNOWN"] = "That roll doesn't exist."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"] = "%s has send a vote for %s but is not allowed to do so right now."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"] = "You cannot vote on that item right now."
+L["ERROR_OPT_RULES_SAVE_FAILED"] = "Saving rules for %q failed!"
 
 -- GUI
 L["DIALOG_MASTERLOOT_ASK"] = "<%s> wants to become your masterlooter."
@@ -187,51 +188,54 @@ L["OPT_UI"] = "User interface"
 L["OPT_UI_DESC"] = "Customize %s's look and feel to your liking."
 L["OPT_VERSION"] = "|cffffd100Version:|r %s"
 
--- Options - Masterloot
-L["OPT_MASTERLOOT"] = "Masterloot"
-L["OPT_MASTERLOOT_ACCEPT"] = "Automatically accept masterlooter"
-L["OPT_MASTERLOOT_ACCEPT_DESC"] = "Automatically accept masterlooter requests from these players."
-L["OPT_MASTERLOOT_ALLOW"] = "Allow becoming masterlooter"
-L["OPT_MASTERLOOT_ALLOW_ALL"] = "Allow everbody"
-L["OPT_MASTERLOOT_ALLOW_ALL_DESC"] = "|cffff0000WARNING:|r This will allow everybody to request becoming your masterlooter and potentially scam you into giving away your loot! Only activate it if you know what you are doing."
-L["OPT_MASTERLOOT_ALLOW_DESC"] = [=[Choose who can request to become your masterlooter. You will still get a popup message asking you to confirm it, so you can decline a masterlooter request when it happens.
+-- Options - Rules
+L["OPT_RULES_ACCEPT"] = "Automatically accept masterlooter"
+L["OPT_RULES_ACCEPT_DESC"] = "Automatically accept masterlooter requests from these players."
+L["OPT_RULES_ALLOW"] = "Allow becoming masterlooter"
+L["OPT_RULES_ALLOW_ALL"] = "Allow everbody"
+L["OPT_RULES_ALLOW_ALL_DESC"] = "|cffff0000WARNING:|r This will allow everybody to request becoming your masterlooter and potentially scam you into giving away your loot! Only activate it if you know what you are doing."
+L["OPT_RULES_ALLOW_DESC"] = [=[Choose who can request to become your masterlooter. You will still get a popup message asking you to confirm it, so you can decline a masterlooter request when it happens.
 
 |cffffff78Guild Group:|r Someone from a guild whose members make up %d%% or more of the group.
 |cffffff78Community Group:|r Someone from one of your WoW-Communities whose members make up %d%% or more of the group.]=]
-L["OPT_MASTERLOOT_APPROVAL"] = "Approval"
-L["OPT_MASTERLOOT_APPROVAL_DESC"] = "Here you can define who can become your masterlooter."
-L["OPT_MASTERLOOT_DESC"] = "When you (or someone else) becomes masterlooter, all loot will be distributed by that person. You will get a notice about who's items you won or who won your items, so you can trade them to the right person."
-L["OPT_MASTERLOOT_SEARCH"] = "Search masterlooter"
-L["OPT_MASTERLOOT_START"] = "Become masterlooter"
-L["OPT_MASTERLOOT_STOP"] = "Stop masterloot"
-L["OPT_MASTERLOOT_WHITELIST"] = "Masterlooter Whitelist"
-L["OPT_MASTERLOOT_WHITELIST_DESC"] = "You can also name specific players who should be able to become your masterlooter. Separate multiple names with spaces or commas."
-L["OPT_MASTERLOOTER"] = "Rules"
-L["OPT_MASTERLOOTER_BID_PUBLIC"] = "Bids public"
-L["OPT_MASTERLOOTER_BID_PUBLIC_DESC"] = "You can make bids public, so everybody can see who bid on what."
-L["OPT_MASTERLOOTER_COUNCIL"] = "Council"
-L["OPT_MASTERLOOTER_COUNCIL_ALLOW"] = "Council members"
-L["OPT_MASTERLOOTER_COUNCIL_ALLOW_DESC"] = "Which players should automatically become part of your council."
-L["OPT_MASTERLOOTER_COUNCIL_DESC"] = "Players on your loot council can vote on who should get the loot."
-L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK"] = "Council guild rank"
-L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK_DESC"] = "Add members of this guild rank to you council, in addition to the options above."
-L["OPT_MASTERLOOTER_COUNCIL_WHITELIST"] = "Council whitelist"
-L["OPT_MASTERLOOTER_COUNCIL_WHITELIST_DESC"] = "You can also name specific players to be on your council. Separate multiple names with spaces or commas."
-L["OPT_MASTERLOOTER_DESC"] = "These options apply to everybody when you are the masterlooter."
-L["OPT_MASTERLOOTER_GREED_ANSWERS"] = "Custom 'Greed' answers"
-L["OPT_MASTERLOOTER_GREED_ANSWERS_DESC"] = [=[Specify up to 9 custom answers when rolling 'Greed', with decreasing priority. You can also insert '%s' itself to lower its priority below the prior answers. Separate multiple entries with Commas.
+L["OPT_RULES_APPROVAL"] = "Approval"
+L["OPT_RULES_APPROVAL_DESC"] = "Here you can define who can become your masterlooter."
+L["OPT_RULES_MASTERLOOTER"] = "Masterlooter"
+L["OPT_RULES_MASTERLOOTER_DESC"] = "When you (or someone else) becomes masterlooter, all loot will be distributed by that person. You will get a notice about who's items you won or who won your items, so you can trade them to the right person."
+L["OPT_RULES_WHITELIST"] = "Masterlooter Whitelist"
+L["OPT_RULES_WHITELIST_DESC"] = "You can also name specific players who should be able to become your masterlooter. Separate multiple names with spaces or commas."
+L["OPT_RULES"] = "Rules"
+L["OPT_RULES_DESC"] = "TODO" -- TODO
+L["OPT_RULES_BID_PUBLIC"] = "Bids public"
+L["OPT_RULES_BID_PUBLIC_DESC"] = "You can make bids public, so everybody can see who bid on what."
+L["OPT_RULES_COUNCIL"] = "Council"
+L["OPT_RULES_COUNCIL_ALLOW"] = "Council members"
+L["OPT_RULES_COUNCIL_ALLOW_DESC"] = "Which players should automatically become part of your council."
+L["OPT_RULES_COUNCIL_DESC"] = "Players on your loot council can vote on who should get the loot."
+L["OPT_RULES_COUNCIL_GUILD_RANK"] = "Council guild rank"
+L["OPT_RULES_COUNCIL_GUILD_RANK_DESC"] = "Add members of this guild rank to you council, in addition to the options above."
+L["OPT_RULES_COUNCIL_WHITELIST"] = "Council whitelist"
+L["OPT_RULES_COUNCIL_WHITELIST_DESC"] = "You can also name specific players to be on your council. Separate multiple names with spaces or commas."
+L["OPT_RULES_MASTERLOOT"] = "Masterloot"
+L["OPT_RULES_MASTERLOOT_DESC"] = "These options apply to everybody when you are the masterlooter."
+L["OPT_RULES_GREED_ANSWERS"] = "Custom 'Greed' answers"
+L["OPT_RULES_GREED_ANSWERS_DESC"] = [=[Specify up to 9 custom answers when rolling 'Greed', with decreasing priority. You can also insert '%s' itself to lower its priority below the prior answers. Separate multiple entries with Commas.
 
 They can be accessed by right-clicking on the 'Greed' button when rolling on loot.]=]
-L["OPT_MASTERLOOTER_NEED_ANSWERS"] = "Custom 'Need' answers"
-L["OPT_MASTERLOOTER_NEED_ANSWERS_DESC"] = [=[Specify up to 9 custom answers when rolling 'Need', with decreasing priority. You can also insert '%s' itself to lower its priority below the prior answers. Separate multiple entries with Commas.
+L["OPT_RULES_NEED_ANSWERS"] = "Custom 'Need' answers"
+L["OPT_RULES_NEED_ANSWERS_DESC"] = [=[Specify up to 9 custom answers when rolling 'Need', with decreasing priority. You can also insert '%s' itself to lower its priority below the prior answers. Separate multiple entries with Commas.
 
 They can be accessed by right-clicking on the 'Need' button when rolling on loot.]=]
-L["OPT_MASTERLOOTER_TIMEOUT_BASE"] = "Roll time (base)"
-L["OPT_MASTERLOOTER_TIMEOUT_BASE_DESC"] = "The base running time for rolls, regardless of how many items have dropped."
-L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM"] = "Roll time (per item)"
-L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM_DESC"] = "Will be added to the base roll running time for each item that dropped."
-L["OPT_MASTERLOOTER_VOTE_PUBLIC"] = "Council votes public"
-L["OPT_MASTERLOOTER_VOTE_PUBLIC_DESC"] = "You can make council votes public, so everybody can see who has how many votes."
+L["OPT_RULES_TIMEOUT_BASE"] = "Roll time (base)"
+L["OPT_RULES_TIMEOUT_BASE_DESC"] = "The base running time for rolls, regardless of how many items have dropped."
+L["OPT_RULES_TIMEOUT_PER_ITEM"] = "Roll time (per item)"
+L["OPT_RULES_TIMEOUT_PER_ITEM_DESC"] = "Will be added to the base roll running time for each item that dropped."
+L["OPT_RULES_VOTE_PUBLIC"] = "Council votes public"
+L["OPT_RULES_VOTE_PUBLIC_DESC"] = "You can make council votes public, so everybody can see who has how many votes."
+L["OPT_RULES_COMMUNITIES"] = "Guild/Communities"
+L["OPT_RULES_COMMUNITIES_DESC"] = "TODO" -- TODO
+L["OPT_RULES_SAVE_DESC"] = "Save these rules to the guild/community description."
+L["OPT_RULES_REFRESH_DESC"] = "Load the current rules from the guild/community description."
 
 -- Options - Messages
 L["OPT_CUSTOM_MESSAGES"] = "Custom messages"
@@ -348,6 +352,9 @@ L["ROLL_WINNER_OWN"] = "You have won your own %s."
 L["ROLL_WINNER_SELF"] = "You have won %s from %s -> %s."
 L["TRADE_CANCEL"] = "Canceling trade with %s."
 L["TRADE_START"] = "Starting trade with %s."
+
+-- Info messages
+L["INFO_OPT_RULES_SAVED"] = "Rules for %q saved!"
 
 -- Globals
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "The owner of this item doesn't use the PersoLootRoll addon."

@@ -15,6 +15,7 @@ Addon.Hooks = {}
 Addon.Inspect = {}
 Addon.Item = {}
 Addon.Locale = {}
+Addon.Options = {}
 Addon.Session = {}
 Addon.Roll = {}
 Addon.Trade = {}

@@ -34,3 +34,4 @@ Inspect.lua
 GUI\GUI.xml
 Events.lua
 Hooks.lua
+Options.lua
