@@ -218,21 +218,24 @@ function Self.EnableChatLinks()
     -- CLICK
 
     if not Addon:IsHooked("SetItemRef") then
-        Addon:RawHook("SetItemRef", function (link, text, button, frame)
+        Addon:SecureHook("SetItemRef", function (link, text, button, frame)
             local linkType, args = link:match("^([^:]+):(.*)$")
 
-            if linkType == "plrtrade" then
-                Trade.Initiate(args)
-            elseif linkType == "plrbid" then
-                local id, unit, bid = args:match("(%d+):([^:]+):(%d)")
-                local roll = id and Roll.Get(tonumber(id))
-                if roll and unit and bid and roll:CanBeAwardedTo(unit) then
-                    roll:Bid(tonumber(bid), unit)
+            if linkType:sub(1, 3) == "plr" then
+                if linkType == "plrtrade" then
+                    Trade.Initiate(args)
+                elseif linkType == "plrbid" then
+                    local id, unit, bid = args:match("(%d+):([^:]+):(%d)")
+                    local roll = id and Roll.Get(tonumber(id))
+                    if roll and unit and bid and roll:CanBeAwardedTo(unit) then
+                        roll:Bid(tonumber(bid), unit)
+                    end
                 end
-            else
-                return Addon.hooks.SetItemRef(link, text, button, frame)
+
+                -- The default handler will show it, so we have to hide it again
+                HideUIPanel(ItemRefTooltip)
             end
-        end, true)
+        end)
     end
 
     -- HOVER
