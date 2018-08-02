@@ -1,7 +1,7 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local CB = LibStub("CallbackHandler-1.0")
-local Comm, GUI, Unit, Util = Addon.Comm, Addon.GUI, Addon.Unit, Addon.Util
+local Comm, GUI, Roll, Unit, Util = Addon.Comm, Addon.GUI, Addon.Roll, Addon.Unit, Addon.Util
 local Self = Addon.Session
 
 Self.EVENT_SET = "SET"
@@ -267,10 +267,10 @@ end
 
 -- Read session rule(s) from community description
 function Self.ReadFromCommunity(clubId, key)
+    local t, found = not key and Util.Tbl() or nil, false
+
     local info = C_Club.GetClubInfo(clubId)
     if info and not Util.StrIsEmpty(info.description) then
-        local t, found = not key and Util.Tbl() or nil, false
-
         for i,line in Util.Each(("\n"):split(info.description)) do
             local name, val = line:match("^PLR%-(.-): ?(.*)")
             if name then
@@ -282,9 +282,9 @@ function Self.ReadFromCommunity(clubId, key)
                 end
             end
         end
-
-        return t
     end
+
+    return t
 end
 
 -- Write session rule(s) do community description. We can only write to 
