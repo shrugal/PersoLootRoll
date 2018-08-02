@@ -1,7 +1,7 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local AceGUI = LibStub("AceGUI-3.0")
-local GUI, Inspect, Item, Session, Roll, Trade, Unit, Util = Addon.GUI, Addon.Inspect, Addon.Item, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+local GUI, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.GUI, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = GUI.Rolls
 
 Self.frames = {}
@@ -58,7 +58,7 @@ function Self.Show()
                 .SetImage("Interface\\Buttons\\UI-OptionsButton")
                 .SetImageSize(14, 14).SetHeight(16).SetWidth(16)
                 .SetCallback("OnClick", function (self)
-                    Addon:ShowOptions()
+                    Options.Show()
                     GameTooltip:Hide()
                 end)
                 .SetCallback("OnEnter", GUI.TooltipText)

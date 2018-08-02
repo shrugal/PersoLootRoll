@@ -70,9 +70,15 @@ function Addon:OnInitialize()
 
             -- Masterloot
             masterloot = {
-                allow = {friend = true, guild = true, community = false, guildgroup = true, raidleader = false, raidassistant = false},
+                allow = {friend = true, community = true, guild = true, raidleader = false, raidassistant = false, guildgroup = true},
                 accept = {friend = false, guildmaster = false, guildofficer = false},
-                allowAll = false
+                allowAll = false,
+                rules = {
+                    -- TODO: Move "masterlooter" options over here
+                },
+                council = {
+                    -- TODO: Move "masterlooter" options over here
+                }
             },
             masterlooter = {
                 timeoutBase = Roll.TIMEOUT,
@@ -81,7 +87,10 @@ function Addon:OnInitialize()
                 answers1 = {}, -- Need
                 answers2 = {}, -- Greed
                 council = {guildmaster = false, guildofficer = false, raidleader = false, raidassistant = false},
-                votePublic = false
+                votePublic = false,
+                autoAward = false,
+                autoAwardTimeout = Roll.TIMEOUT,
+                autoAwardTimeoutPerItem = Roll.TIMEOUT_PER_ITEM
             },
 
             -- GUI status
@@ -102,7 +111,8 @@ function Addon:OnInitialize()
         char = {
             specs = {true, true, true, true},
             masterloot = {
-                guildRank = 0
+                guildRank = 0,
+                guildRankUp = false
             }
         }
     }, true)
@@ -213,7 +223,7 @@ function Addon:HandleChatCommand(msg)
         local name, pre, line = Name, "plr config", msg:sub(cmd:len() + 2)
 
         -- Handle submenus
-        local subs = Util.Tbl(false, "messages", "rules", "profiles")
+        local subs = Util.Tbl(false, "messages", "masterloot", "profiles")
         if Util.In(args[2], subs) then
             name, pre, line = name .. " " .. Util.StrUcFirst(args[2]), pre .. " " .. args[2], line:sub(args[2]:len() + 2)
         end

@@ -1,7 +1,7 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local AceGUI = LibStub("AceGUI-3.0")
-local Comm, Inspect, Item, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Item, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+local Comm, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.GUI
 
 Self.Rolls = {}
@@ -99,6 +99,10 @@ function Self.ToggleMasterlootDropdown(...)
         Self("Dropdown-Item-Execute")
             .SetText(L["MENU_MASTERLOOT_SEARCH"])
             .SetCallback("OnClick", function () Session.SendRequest() end)
+            .AddTo(dropdown)
+        Self("Dropdown-Item-Execute")
+            .SetText(CLOSE)
+            .SetCallback("OnClick", function () dropdown:Close() end)
             .AddTo(dropdown)
         Self.dropdownMasterloot = dropdown
     end
@@ -400,7 +404,7 @@ end
 
 function Self.ChatClick(self, event, button)
     if button == "RightButton" and not Addon.db.profile.messages.whisper.ask then
-        Addon:ShowOptions("Messages")
+        Options.Show("Messages")
     else
         Self.UnitClick(self, event, button)
     end
