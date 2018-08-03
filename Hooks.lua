@@ -207,14 +207,13 @@ function Self.EnableGroupLootRoll()
     -- GameTooltip:SetLootRollItem
     if not Addon:IsHooked(GameTooltip, "SetLootRollItem") then
         Addon:RawHook(GameTooltip, "SetLootRollItem", function (self, id)
-            --Util.dump(id)
             if Roll.IsPlrId(id) then
                 local roll = Roll.Get(id)
                 if roll then
                     self:SetHyperlink(roll.item.link)
                 end
             else
-                return Addon.hooks[self].SetLootRollItem(id)
+                return Addon.hooks[self].SetLootRollItem(self, id)
             end
         end, true)
     end
