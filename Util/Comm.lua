@@ -245,7 +245,7 @@ function Self.RollBid(roll, bid, fromUnit, isImport)
             local data = Util.Tbl(true, "ownerId", roll.ownerId, "bid", bid, "fromUnit", Unit.FullName(fromUnit))
 
             -- Send to all or the council
-            if Util.Check(Session.GetMasterlooter(), Addon.db.profile.masterlooter.bidPublic, Addon.db.profile.bidPublic) then
+            if Util.Check(Session.GetMasterlooter(), Session.rules.bidPublic, Addon.db.profile.bidPublic) then
                 Self.SendData(Self.EVENT_BID, data)
             elseif Session.IsMasterlooter() then
                 for target,_ in pairs(Session.rules.council or {}) do
@@ -304,7 +304,7 @@ function Self.RollVote(roll, vote, fromUnit, isImport)
             local data = Util.Tbl(true, "ownerId", roll.ownerId, "vote", Unit.FullName(vote), "fromUnit", Unit.FullName(fromUnit))
 
             -- Send to all or the council
-            if Addon.db.profile.masterlooter.votePublic then
+            if Session.rules.votePublic then
                 Self.SendData(Self.EVENT_VOTE, data)
             elseif Session.IsMasterlooter() then
                 for target,_ in pairs(Session.rules.council or {}) do

@@ -7,10 +7,12 @@ local LDBIcon = LibStub("LibDBIcon-1.0")
 local Comm, GUI, Inspect, Item, Locale, Session, Roll, Unit, Util = Addon.Comm, Addon.GUI, Addon.Inspect, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
 local Self = Addon.Options
 
-Self.WIDTH_FULL = 3.4
-Self.WIDTH_HALF = Self.WIDTH_FULL / 2
-Self.WIDTH_THIRD = Self.WIDTH_FULL / 3
-Self.WIDTH_QUARTER = Self.WIDTH_FULL / 4
+Self.WIDTH_FULL = "full"
+Self.WIDTH_HALF = 1.7
+Self.WIDTH_THIRD = 1.1
+Self.WIDTH_QUARTER = 0.85
+
+Self.DIVIDER = "------ PersoLootRoll ------"
 
 Self.it = Util.Iter()
 Self.registered = false
@@ -25,8 +27,8 @@ Self.allowValues = {FRIEND, L["COMMUNITY_MEMBER"], LFG_LIST_GUILD_MEMBER, L["RAI
 Self.acceptKeys = {"friend", "guildmaster", "guildofficer"}
 Self.acceptValues = {FRIEND, L["GUILD_MASTER"], L["GUILD_OFFICER"]}
 
-Self.councilKeys = {"guildmaster", "guildofficer", "raidleader", "raidassistant"}
-Self.councilValues = {L["GUILD_MASTER"], L["GUILD_OFFICER"], L["RAID_LEADER"], L["RAID_ASSISTANT"]}
+Self.councilKeys = {"raidleader", "raidassistant"}
+Self.councilValues = {L["RAID_LEADER"], L["RAID_ASSISTANT"]}
 
 -- Register options
 function Self.Register()
@@ -34,7 +36,7 @@ function Self.Register()
 
     Self.RegisterGeneral()
     Self.RegisterMessages()
-    Self.RegisterRules()
+    Self.RegisterMasterloot()
 
     -- Profiles
     C:RegisterOptionsTable(Name .. " Profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(Addon.db))
@@ -134,7 +136,7 @@ function Self.RegisterGeneral()
                     end
                 end,
                 get = function (_) return not PersoLootRollIconDB.hide end,
-                width = "full"
+                width = Self.WIDTH_FULL
             },
             showRollFrames = {
                 name = L["OPT_ROLL_FRAMES"],
@@ -143,7 +145,7 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.ui.showRollFrames = val end,
                 get = function (_) return Addon.db.profile.ui.showRollFrames end,
-                width = "full"
+                width = Self.WIDTH_FULL
             },
             showActionsWindow = {
                 name = L["OPT_ACTIONS_WINDOW"],
@@ -171,7 +173,7 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.ui.showRollsWindow = val end,
                 get = function (_) return Addon.db.profile.ui.showRollsWindow end,
-                width = "full"
+                width = Self.WIDTH_FULL
             },
             itemFilter = {type = "header", order = it(), name = L["OPT_ITEM_FILTER"]},
             itemFilterDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_ITEM_FILTER_DESC"] .. "\n"},
@@ -224,7 +226,7 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.transmog = val end,
                 get = function () return Addon.db.profile.transmog end,
-                width = "full"
+                width = Self.WIDTH_FULL
             }
         }
     })
@@ -279,7 +281,7 @@ function Self.RegisterMessages()
                             local _ = not val or Util.TblFind(c.groupType, true) or Util.TblMap(c.groupType, Util.FnTrue)
                         end,
                         get = function () return Addon.db.profile.messages.group.announce end,
-                        width = "full"
+                        width = Self.WIDTH_FULL
                     },
                     groupGroupType = {
                         name = L["OPT_GROUPCHAT_GROUP_TYPE"],
@@ -301,7 +303,7 @@ function Self.RegisterMessages()
                         order = it(),
                         set = function (_, val) Addon.db.profile.messages.group.roll = val end,
                         get = function () return Addon.db.profile.messages.group.roll end,
-                        width = "full"
+                        width = Self.WIDTH_FULL
                     },
                     whisper = {type = "header", order = it(), name = L["OPT_WHISPER"]},
                     whisperAsk = {
@@ -438,7 +440,7 @@ function Self.GetCustomMessageOptions(isDefault)
             validate = validate,
             set = set,
             get = get,
-            width = "full"
+            width = Self.WIDTH_FULL
         }
     end
 
@@ -474,41 +476,55 @@ function Self.GetCustomMessageOptions(isDefault)
 end
 
 -------------------------------------------------------
---                      Rules                        --
+--                    Masterloot                     --
 -------------------------------------------------------
 
-function Self.RegisterRules()
+function Self.RegisterMasterloot()
     local it = Self.it
     
-    local guild = Util.TblFirstWhere(C_Club.GetSubscribedClubs(), "clubType", Enum.ClubType.Guild)
-    local canSave = guild and C_Club.GetClubPrivileges(guild.clubId).canSetDescription
+    -- Clubs
+    local clubs = Util(C_Club.GetSubscribedClubs())
+        .ExceptWhere("clubType", Enum.ClubType.Other).SortBy("clubType", nil, true)
+        .SortBy("clubType", nil, true)()
+    local clubValues = Util(clubs).Copy()
+        .Map(function (info) return info.name .. (info.clubType == Enum.ClubType.Guild and " (" .. GUILD .. ")" or "") end)()
+    Addon.db.char.masterloot.council.clubId = Addon.db.char.masterloot.council.clubId or clubs[1] and clubs[1].clubId
     
-    local options = {
+    Self.masterloot = {
         name = L["OPT_MASTERLOOT"],
         type = "group",
         childGroups = "tab",
         args = {
             desc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOT_DESC"] .. "\n"},
-            save = {
-                name = L["OPT_MASTERLOOT_SAVE"],
-                desc = L["OPT_MASTERLOOT_SAVE_DESC"],
-                type = "execute",
+            club = {
+                name = L["OPT_MASTERLOOT_CLUB"],
+                desc = L["OPT_MASTERLOOT_CLUB_DESC"],
+                type = "select",
                 order = it(),
-                func = function ()
-                    print("saving") -- TODO
+                values = clubValues,
+                set = function (_, val)
+                    Addon.db.char.masterloot.council.clubId = clubs[val].clubId
                 end,
-                hidden = not guild,
-                disabled = not canSave
+                get = function ()
+                    return Util.TblFindWhere(clubs, "clubId", Addon.db.char.masterloot.council.clubId)
+                end,
+                width = Self.WIDTH_HALF
             },
             load = {
                 name = L["OPT_MASTERLOOT_LOAD"],
                 desc = L["OPT_MASTERLOOT_LOAD_DESC"],
                 type = "execute",
                 order = it(),
-                func = function ()
-                    print("loading") -- TODO
-                end,
-                hidden = not guild
+                func = function () Self.ImportRules() end,
+                width = Self.WIDTH_QUARTER
+            },
+            save = {
+                name = L["OPT_MASTERLOOT_SAVE"],
+                desc = L["OPT_MASTERLOOT_SAVE_DESC"],
+                type = "execute",
+                order = it(),
+                func = function () Self.ExportRules() end,
+                width = Self.WIDTH_QUARTER
             },
             approval = {
                 name = L["OPT_MASTERLOOT_APPROVAL"],
@@ -537,7 +553,7 @@ function Self.RegisterRules()
                             end
                         end,
                         get = function () return Util(Addon.db.factionrealm.masterloot.whitelist).Keys().Sort().Concat(", ")() end,
-                        width = "full"
+                        width = Self.WIDTH_FULL
                     },
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
                     allowAll = {
@@ -548,7 +564,7 @@ function Self.RegisterRules()
                         order = it(),
                         set = function (_, val) Addon.db.profile.masterloot.allowAll = val end,
                         get = function () return Addon.db.profile.masterloot.allowAll end,
-                        width = "full"
+                        width = Self.WIDTH_FULL
                     },
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
                     accept = {
@@ -577,10 +593,9 @@ function Self.RegisterRules()
                         max = 120,
                         step = 5,
                         set = function (_, val)
-                            Addon.db.profile.masterlooter.timeoutBase = val
-                            Session.Refresh()
+                            Addon.db.profile.masterloot.rules.timeoutBase = val
                         end,
-                        get = function () return Addon.db.profile.masterlooter.timeoutBase end,
+                        get = function () return Addon.db.profile.masterloot.rules.timeoutBase end,
                         width = Self.WIDTH_HALF
                     },
                     timeoutPerItem = {
@@ -592,10 +607,9 @@ function Self.RegisterRules()
                         max = 30,
                         step = 1,
                         set = function (_, val)
-                            Addon.db.profile.masterlooter.timeoutPerItem = val
-                            Session.Refresh()
+                            Addon.db.profile.masterloot.rules.timeoutPerItem = val
                         end,
-                        get = function () return Addon.db.profile.masterlooter.timeoutPerItem end,
+                        get = function () return Addon.db.profile.masterloot.rules.timeoutPerItem end,
                         width = Self.WIDTH_HALF
                     },
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
@@ -605,23 +619,22 @@ function Self.RegisterRules()
                         type = "input",
                         order = it(),
                         set = function (_, val)
-                            local t = wipe(Addon.db.profile.masterlooter.answers1)
+                            local t = wipe(Addon.db.profile.masterloot.rules.needAnswers)
                             for v in val:gmatch("[^,]+") do
                                 v = v:gsub("^%s*(.*)%s*$", "%1")
                                 if #t < 9 and not Util.StrIsEmpty(v) then
                                     tinsert(t, v == NEED and Roll.ANSWER_NEED or v)
                                 end
                             end
-                            Session.Refresh()
                         end,
                         get = function ()
                             local s = ""
-                            for i,v in pairs(Addon.db.profile.masterlooter.answers1) do
+                            for i,v in pairs(Addon.db.profile.masterloot.rules.needAnswers) do
                                 s = s .. (i > 1 and ", " or "") .. (v == Roll.ANSWER_NEED and NEED or v)
                             end
                             return s
                         end,
-                        width = "full"
+                        width = Self.WIDTH_FULL
                     },
                     greedAnswers = {
                         name = L["OPT_MASTERLOOT_RULES_GREED_ANSWERS"],
@@ -629,23 +642,22 @@ function Self.RegisterRules()
                         type = "input",
                         order = it(),
                         set = function (_, val)
-                            local t = wipe(Addon.db.profile.masterlooter.answers2)
+                            local t = wipe(Addon.db.profile.masterloot.rules.greedAnswers)
                             for v in val:gmatch("[^,]+") do
                                 v = v:gsub("^%s*(.*)%s*$", "%1")
                                 if #t < 9 and not Util.StrIsEmpty(v) then
                                     tinsert(t, v == GREED and Roll.ANSWER_GREED or v)
                                 end
                             end
-                            Session.Refresh()
                         end,
                         get = function ()
                             local s = ""
-                            for i,v in pairs(Addon.db.profile.masterlooter.answers2) do
+                            for i,v in pairs(Addon.db.profile.masterloot.rules.greedAnswers) do
                                 s = s .. (i > 1 and ", " or "") .. (v == Roll.ANSWER_GREED and GREED or v)
                             end
                             return s
                         end,
-                        width = "full"
+                        width = Self.WIDTH_FULL
                     },
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
                     bidPublic = {
@@ -654,22 +666,32 @@ function Self.RegisterRules()
                         type = "toggle",
                         order = it(),
                         set = function (_, val)
-                            Addon.db.profile.masterlooter.bidPublic = val
-                            Session.Refresh()
+                            Addon.db.profile.masterloot.rules.bidPublic = val
                         end,
-                        get = function () return Addon.db.profile.masterlooter.bidPublic end,
-                        width = "full"
+                        get = function () return Addon.db.profile.masterloot.rules.bidPublic end,
+                        width = Self.WIDTH_FULL
+                    },
+                    votePublic = {
+                        name = L["OPT_MASTERLOOT_RULES_VOTE_PUBLIC"],
+                        desc = L["OPT_MASTERLOOT_RULES_VOTE_PUBLIC_DESC"],
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val)
+                            Addon.db.profile.masterloot.rules.votePublic = val
+                        end,
+                        get = function () return Addon.db.profile.masterloot.rules.votePublic end,
+                        width = Self.WIDTH_FULL
                     },
                     autoAward = {
                         name = L["OPT_MASTERLOOT_RULES_AUTO_AWARD"],
                         desc = L["OPT_MASTERLOOT_RULES_AUTO_AWARD_DESC"],
                         type = "toggle",
                         order = it(),
-                        set = function (_, val) Addon.db.profile.masterlooter.autoAward = val end,
-                        get = function () return Addon.db.profile.masterlooter.autoAward end,
-                        width = "full"
+                        set = function (_, val) Addon.db.profile.masterloot.rules.autoAward = val end,
+                        get = function () return Addon.db.profile.masterloot.rules.autoAward end,
+                        width = Self.WIDTH_FULL
                     },
-                    autoAwardVoteTimeout = {
+                    autoAwardTimeout = {
                         name = L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT"],
                         desc = L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_DESC"],
                         type = "range",
@@ -677,11 +699,11 @@ function Self.RegisterRules()
                         min = 5,
                         max = 120,
                         step = 5,
-                        set = function (_, val) Addon.db.profile.masterlooter.autoAwardTimeout = val end,
-                        get = function () return Addon.db.profile.masterlooter.autoAwardTimeout end,
+                        set = function (_, val) Addon.db.profile.masterloot.rules.autoAwardTimeout = val end,
+                        get = function () return Addon.db.profile.masterloot.rules.autoAwardTimeout end,
                         width = Self.WIDTH_HALF
                     },
-                    autoAwardVoteTimeoutPerItem = {
+                    autoAwardTimeoutPerItem = {
                         name = L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM"],
                         desc = L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM_DESC"],
                         type = "range",
@@ -689,8 +711,8 @@ function Self.RegisterRules()
                         min = 0,
                         max = 30,
                         step = 1,
-                        set = function (_, val) Addon.db.profile.masterlooter.autoAwardTimeoutPerItem = val end,
-                        get = function () return Addon.db.profile.masterlooter.autoAwardTimeoutPerItem end,
+                        set = function (_, val) Addon.db.profile.masterloot.rules.autoAwardTimeoutPerItem = val end,
+                        get = function () return Addon.db.profile.masterloot.rules.autoAwardTimeoutPerItem end,
                         width = Self.WIDTH_HALF
                     },
                 }
@@ -701,43 +723,33 @@ function Self.RegisterRules()
                 order = it(),
                 args = {
                     desc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOT_COUNCIL_DESC"] .. "\n"},
-                    allow = {
-                        name = L["OPT_MASTERLOOT_COUNCIL_ALLOW"],
-                        desc = L["OPT_MASTERLOOT_COUNCIL_ALLOW_DESC"],
+                    roles = {
+                        name = L["OPT_MASTERLOOT_COUNCIL_ROLES"],
+                        desc = L["OPT_MASTERLOOT_COUNCIL_ROLES_DESC"],
                         type = "multiselect",
                         order = it(),
                         values = Self.councilValues,
                         set = function (_, key, val)
-                            Addon.db.profile.masterlooter.council[Self.councilKeys[key]] = val
-                            Session.Refresh()
+                            Addon.db.profile.masterloot.council.roles[Self.councilKeys[key]] = val
                         end,
-                        get = function (_, key) return Addon.db.profile.masterlooter.council[Self.councilKeys[key]] end
+                        get = function (_, key) return Addon.db.profile.masterloot.council.roles[Self.councilKeys[key]] end
                     },
-                    guildRank = {
-                        name = L["OPT_MASTERLOOT_COUNCIL_GUILD_RANK"],
-                        desc = L["OPT_MASTERLOOT_COUNCIL_GUILD_RANK_DESC"],
-                        type = "select",
+                    ranks = {
+                        name = L["OPT_MASTERLOOT_COUNCIL_CLUB_RANK"],
+                        desc = L["OPT_MASTERLOOT_COUNCIL_CLUB_RANK_DESC"],
+                        type = "multiselect",
                         order = it(),
                         values = function ()
-                            if not Self.guildRanks then
-                                Self.guildRanks = Util.GetGuildRanks()
-                                Self.guildRanks[0], Self.guildRanks[1], Self.guildRanks[2] = "(" .. NONE .. ")", nil, nil
-                            end
-                            return Self.guildRanks
+                            return Util.GetClubRanks(Addon.db.char.masterloot.council.clubId)
                         end,
-                        set = function (_, val)
-                            Addon.db.char.masterloot.guildRank = val
-                            Session.Refresh()
+                        set = function (_, key, val)
+                            local clubId = Addon.db.char.masterloot.council.clubId
+                            Util.TblSet(Addon.db.profile.masterloot.council.clubs, clubId, "ranks", key, val)
                         end,
-                        get = function () return Addon.db.char.masterloot.guildRank end
-                    },
-                    guildRankUp = {
-                        name = L["OPT_MASTERLOOT_COUNCIL_GUILD_RANK_UP"],
-                        desc = L["OPT_MASTERLOOT_COUNCIL_GUILD_RANK_UP_DESC"],
-                        type = "toggle",
-                        order = it(),
-                        set = function (_, val) Addon.db.char.masterloot.guildRankUp = val end,
-                        get = function () return Addon.db.char.masterloot.guildRankUp end,
+                        get = function (_, key)
+                            local clubId = Addon.db.char.masterloot.council.clubId
+                            return Util.TblGet(Addon.db.profile.masterloot.council.clubs, clubId, "ranks", key)
+                        end
                     },
                     whitelist = {
                         name = L["OPT_MASTERLOOT_COUNCIL_WHITELIST"],
@@ -745,35 +757,193 @@ function Self.RegisterRules()
                         type = "input",
                         order = it(),
                         set = function (_, val)
-                            local t = wipe(Addon.db.factionrealm.masterlooter.councilWhitelist)
+                            local t = wipe(Addon.db.profile.masterloot.council.whitelist)
                             for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do
                                 t[v] = true
                             end
-                            Session.Refresh()
                         end,
-                        get = function () return Util(Addon.db.factionrealm.masterlooter.councilWhitelist).Keys().Sort().Concat(", ")() end,
-                        width = "full"
-                    },
-                    ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
-                    votePublic = {
-                        name = L["OPT_MASTERLOOT_COUNCIL_VOTE_PUBLIC"],
-                        desc = L["OPT_MASTERLOOT_COUNCIL_VOTE_PUBLIC_DESC"],
-                        type = "toggle",
-                        order = it(),
-                        set = function (_, val)
-                            Addon.db.profile.masterlooter.votePublic = val
-                            Session.Refresh()
-                        end,
-                        get = function () return Addon.db.profile.masterlooter.votePublic end,
-                        width = "full"
+                        get = function () return Util(Addon.db.profile.masterloot.council.whitelist).Keys().Sort().Concat(", ")() end,
+                        width = Self.WIDTH_FULL
                     }
                 }
             }
         }
     }
 
-    C:RegisterOptionsTable(Name .. " Masterloot", options)
-    Self.frames["Rules"] = CD:AddToBlizOptions(Name .. " Masterloot", L["OPT_MASTERLOOT"], Name)
+    C:RegisterOptionsTable(Name .. " Masterloot", Self.masterloot)
+    Self.frames["Masterloot"] = CD:AddToBlizOptions(Name .. " Masterloot", L["OPT_MASTERLOOT"], Name)
+end
+
+function Self.ImportRules()
+    local clubId = Addon.db.char.masterloot.council.clubId
+    local s = Self.ReadFromCommunity(clubId)
+
+    -- Rules
+    for i in pairs(Addon.db.profile.masterloot.rules) do
+        Addon.db.profile.masterloot.rules[i] = Util.Default(s[i], Addon.db.defaults.profile.masterloot.rules[i])
+    end
+
+    -- Council
+    local ranks = Util.GetClubRanks(clubId)
+    Util.TblSet(Addon.db.profile.masterloot.council.clubs, clubId, "ranks", Util(s.councilRanks or Util.TBL_EMPTY).Map(function (v)
+        return tonumber(v) or Util.TblFind(ranks, v)
+    end).Flip(true)())
+
+    Addon.db.profile.masterloot.council.roles = Util.TblFlip(s.councilRoles or Util.TBL_EMPTY, true)
+    Addon.db.profile.masterloot.council.whitelist = Util.TblFlip(s.councilWhitelist or Util.TBL_EMPTY, true)
+end
+
+function Self.ExportRules()
+    local clubId = Addon.db.char.masterloot.council.clubId
+    local c = Addon.db.profile.masterloot
+    local s = Util.Tbl()
+
+    -- Rules
+    for i,v in pairs(c.rules) do
+        local d = Addon.db.defaults.profile.masterloot.rules[i]
+        if v ~= d and not (type(v) == "table" and Util.TblEquals(v, d)) then
+            s[i] = v
+        end
+    end
+
+    -- Council
+    local ranks = Util(Util.TblGet(c.council.clubs, clubId, "ranks") or Util.TBL_EMPTY).CopyOnly(true, true).Keys()()
+    if next(ranks) then s.councilRanks = ranks end
+    local roles = Util(c.council.roles).CopyOnly(true, true).Keys()()
+    if next(roles) then s.councilRoles = roles end
+    local wl = Util.TblKeys(c.council.whitelist)
+    if next(wl) then s.councilWhitelist = wl end
+
+    local r = Self.WriteToCommunity(clubId, s)
+    if r and type(r) == "string" then
+        print(r)
+    else
+        return r
+    end
+end
+
+-------------------------------------------------------
+--             Community import/export               --
+-------------------------------------------------------
+
+-- Read one or all params from a communities' description
+function Self.ReadFromCommunity(clubId, key)
+    local t, found = not key and Util.Tbl() or nil, false
+
+    local info = C_Club.GetClubInfo(clubId)
+    if info and not Util.StrIsEmpty(info.description) then
+        for i,line in Util.Each(("\n"):split(info.description)) do
+            local name, val = line:match("^PLR%-(.-): ?(.*)")
+            if name then
+                name = Util.StrToCamelCase(name)
+                if not key then
+                    t[name] = Self.DecodeParam(name, val)
+                elseif key == name then
+                    return Self.DecodeParam(name, val)
+                end
+            end
+        end
+    end
+
+    return t
+end
+
+-- Read one or all params to a communities' description
+function Self.WriteToCommunity(clubId, keyOrTbl, val)
+    local isKey = type(keyOrTbl) ~= "table"
+
+    local info = C_Club.GetClubInfo(clubId)
+    if info then
+        local desc, i, found = Util.StrSplit(info.description, "\n"), 1, Util.Tbl()
+
+        -- Update or delete existing entries
+        while desc[i] do
+            local line = desc[i]
+
+            local param = line:match("^PLR%-(.-):")
+            if param then
+                local name = Util.StrToCamelCase(param)
+                found[name] = true
+
+                if not isKey or isKey == name then
+                    local v
+                    if isKey then v = val else v = keyOrTbl[name] end
+
+                    if v ~= nil then
+                        desc[i] = ("PLR-%s: %s"):format(param, Self.EncodeParam(name, v))
+                    else
+                        tremove(desc, i)
+                        i = i - 1
+                    end
+
+                    if isKey then break end
+                end
+            elseif line == Self.DIVIDER then
+                found[Self.DIVIDER] = i
+            end
+
+            i = i + 1
+        end
+
+        -- Add new entries
+        for name,v in Util.Each(keyOrTbl) do
+            if isKey then name, v = v, val end
+
+            if not found[name] and v ~= nil then
+                if not found[Self.DIVIDER] then
+                    tinsert(desc, "\n" .. Self.DIVIDER)
+                    found[Self.DIVIDER] = #desc
+                end
+
+                found[name] = true
+                tinsert(desc, found[Self.DIVIDER] + 1, ("PLR-%s: %s"):format(Util.StrFromCamelCase(name, "-", true), Self.EncodeParam(name, v)))
+            end
+        end
+
+        local str = Util.TblConcat(desc, "\n")
+        Util.TblRelease(desc, found)
+
+        -- We can only write to guild communities, and only when we have the rights to do so
+        local priv = C_Club.GetClubPrivileges(clubId)
+        if priv and priv.canSetDescription and info.clubType == Enum.ClubType.Guild then
+            SetGuildInfoText(str)
+            return true
+        else
+            return str
+        end
+    end
+end
+
+-- Encode a param to its string representation
+function Self.EncodeParam(name, val)
+    local t = type(val)
+    if Util.In(t, "string", "number") then
+        return val
+    elseif t == "boolean" then
+        return val and "true" or "false"
+    elseif t == "table" then
+        return table.concat(val, ", ")
+    else
+        return ""
+    end
+end
+
+-- Decode a param from its string representation
+function Self.DecodeParam(name, str)
+    if Util.In(name, "bidPublic", "votePublic", "autoAward") then
+        return Util.In(str:lower(), "true", "1", "yes")
+    elseif Util.In(name, "timeoutBase", "timeoutPerItem", "autoAwardTimeout", "autoAwardTimeoutPerItem") then
+        return tonumber(str)
+    elseif Util.In(name, "needAnswers", "greedAnswers", "disenchanter", "councilRoles", "councilRanks", "councilWhitelist") then
+        local val = Util.Tbl()
+        for v in str:gmatch("[^,]+") do
+            v = v:gsub("^%s*(.*)%s*$", "%1")
+            tinsert(val, tonumber(v) or v)
+        end
+        return val
+    elseif str ~= "" then
+        return str
+    end
 end
 
 -------------------------------------------------------
@@ -782,36 +952,62 @@ end
 
 -- Migrate options from an older version to the current one
 function Self.Migrate()
+    local p, f, c = Addon.db.profile, Addon.db.factionrealm, Addon.db.char
+
     -- Profile
-    local c = Addon.db.profile
-    if c.version then
-        if c.version < 5 then
-            Self.MigrateOption("echo", c, c.messages)
-            Self.MigrateOption("announce", c, c.messages.group, true, "groupType")
-            Self.MigrateOption("roll", c, c.messages.group)
-            c.messages.whisper.ask = true
-            Self.MigrateOption("answer", c, c.messages.whisper)
-            Self.MigrateOption("suppress", c, c.messages.whisper)
-            Self.MigrateOption("group", c.whisper, c.messages.whisper, true, "groupType")
-            Self.MigrateOption("target", c.whisper, c.messages.whisper, true)
-            c.whisper = nil
-            Self.MigrateOption("messages", c, c.messages, true, "lines", "^%l%l%u%u$", true)
+    if p.version then
+        if p.version < 5 then
+            Self.MigrateOption("echo", p, p.messages)
+            Self.MigrateOption("announce", p, p.messages.group, true, "groupType")
+            Self.MigrateOption("roll", p, p.messages.group)
+            p.messages.whisper.ask = true
+            Self.MigrateOption("answer", p, p.messages.whisper)
+            Self.MigrateOption("suppress", p, p.messages.whisper)
+            Self.MigrateOption("group", p.whisper, p.messages.whisper, true, "groupType")
+            Self.MigrateOption("target", p.whisper, p.messages.whisper, true)
+            p.whisper = nil
+            Self.MigrateOption("messages", p, p.messages, true, "lines", "^%l%l%u%u$", true)
         end
-        if c.version < 6 then
-            c.messages.group.groupType.community = c.messages.group.groupType.guild
-            c.messages.whisper.groupType.community = c.messages.whisper.groupType.guild
-            c.messages.whisper.target.community = c.messages.whisper.target.guild
+        if p.version < 6 then
+            p.messages.group.groupType.community = p.messages.group.groupType.guild
+            p.messages.whisper.groupType.community = p.messages.whisper.groupType.guild
+            p.messages.whisper.target.community = p.messages.whisper.target.guild
+            if p.masterlooter then
+                Self.MigrateOption("timeoutBase", p.masterlooter, p.masterloot.rules)
+                Self.MigrateOption("timeoutPerItem", p.masterlooter, p.masterloot.rules)
+                Self.MigrateOption("bidPublic", p.masterlooter, p.masterloot.rules)
+                Self.MigrateOption("votePublic", p.masterlooter, p.masterloot.rules)
+                Self.MigrateOption("answers1", p.masterlooter, p.masterloot.rules, nil, "needAnswers")
+                Self.MigrateOption("answers2", p.masterlooter, p.masterloot.rules, nil, "greedAnswers")
+                Self.MigrateOption("raidleader", p.masterlooter.council, p.masterloot.council.roles)
+                Self.MigrateOption("raidassistant", p.masterlooter.council, p.masterloot.council.roles)
+                -- TODO: Guildleader, Guildofficer, Guildrank, Whitelist
+                p.masterlooter = nil
+            end
         end
     end
-    c.version = 6
+    p.version = 6
 
     -- Factionrealm
     local c = Addon.db.factionrealm
-    c.version = 3
+    if c.version then
+        if c.version < 4 then
+            Self.MigrateOption("councilWhitelist", c.masterlooter, c.masterloot.council, nil, "whitelist")
+        end
+    end
+    c.version = 4
     
     -- Char
     local c = Addon.db.char
-    c.version = 3
+    if c.version then
+        if c.version < 4 then
+            if p.masterloot.council.rank == 0 and c.masterloot.council.guildRank then
+                p.masterloot.council.rank = c.masterloot.council.guildRank
+            end
+            c.masterloot = nil
+        end
+    end
+    c.version = 4
 end
 
 -- Migrate a single option

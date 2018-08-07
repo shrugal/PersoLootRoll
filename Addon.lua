@@ -74,23 +74,22 @@ function Addon:OnInitialize()
                 accept = {friend = false, guildmaster = false, guildofficer = false},
                 allowAll = false,
                 rules = {
-                    -- TODO: Move "masterlooter" options over here
+                    timeoutBase = Roll.TIMEOUT,
+                    timeoutPerItem = Roll.TIMEOUT_PER_ITEM,
+                    bidPublic = false,
+                    votePublic = false,
+                    needAnswers = {}, -- Need
+                    greedAnswers = {}, -- Greed
+                    disenchanter = {},
+                    autoAward = false,
+                    autoAwardTimeout = Roll.TIMEOUT,
+                    autoAwardTimeoutPerItem = Roll.TIMEOUT_PER_ITEM,
                 },
                 council = {
-                    -- TODO: Move "masterlooter" options over here
+                    roles = {raidleader = false, raidassistant = false},
+                    clubs = {},
+                    whitelist = {}
                 }
-            },
-            masterlooter = {
-                timeoutBase = Roll.TIMEOUT,
-                timeoutPerItem = Roll.TIMEOUT_PER_ITEM,
-                bidPublic = false,
-                answers1 = {}, -- Need
-                answers2 = {}, -- Greed
-                council = {guildmaster = false, guildofficer = false, raidleader = false, raidassistant = false},
-                votePublic = false,
-                autoAward = false,
-                autoAwardTimeout = Roll.TIMEOUT,
-                autoAwardTimeoutPerItem = Roll.TIMEOUT_PER_ITEM
             },
 
             -- GUI status
@@ -98,21 +97,22 @@ function Addon:OnInitialize()
                 actions = {anchor = "LEFT", v = 10, h = 0}
             }
         },
-        -- VERSION 3
+        -- VERSION 4
         factionrealm = {
             masterloot = {
-                whitelist = {}
-            },
-            masterlooter = {
-                councilWhitelist = {},
+                whitelist = {},
+                council = {
+                    whitelist = {}
+                }
             }
         },
-        -- VERSION 3
+        -- VERSION 4
         char = {
             specs = {true, true, true, true},
             masterloot = {
-                guildRank = 0,
-                guildRankUp = false
+                council = {
+                    clubId = nil
+                }
             }
         }
     }, true)

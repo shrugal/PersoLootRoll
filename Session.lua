@@ -174,7 +174,7 @@ end
 -- Set the session rules
 function Self.SetRules(rules, silent)
     if Self.IsMasterlooter() then
-        local config = Addon.db.profile.masterlooter
+        local c = Addon.db.profile.masterloot
 
         -- Council
         local council = {}
@@ -186,13 +186,13 @@ function Self.SetRules(rules, silent)
         end
 
         Self.rules = {
-            bidPublic = config.bidPublic,
-            timeoutBase = config.timeoutBase or Roll.TIMEOUT,
-            timeoutPerItem = config.timeoutPerItem or Roll.TIMEOUT_PER_ITEM,
-            council = Util.TblCount(council) > 0 and council or nil,
-            votePublic = config.votePublic,
-            answers1 = config.answers1,
-            answers2 = config.answers2
+            timeoutBase = c.rules.timeoutBase or Roll.TIMEOUT,
+            timeoutPerItem = c.rules.timeoutPerItem or Roll.TIMEOUT_PER_ITEM,
+            bidPublic = c.rules.bidPublic,
+            answers1 = c.rules.needAnswers,
+            answers2 = c.rules.greedAnswers,
+            council = next(council) and council or nil,
+            votePublic = c.council.votePublic,
         }
 
         if not silent then
@@ -226,163 +226,36 @@ function Self.IsOnCouncil(unit, refresh, groupRank)
         if not (Self.masterlooting[unit] == Self.masterlooter and Unit.InGroup(unit)) then
             return false
         -- Check whitelist
-        elseif Addon.db.factionrealm.masterlooter.councilWhitelist[unit] or Addon.db.factionrealm.masterlooter.councilWhitelist[fullName] then
+        elseif Addon.db.factionrealm.masterloot.council.whitelist[unit] or Addon.db.factionrealm.masterloot.council.whitelist[fullName] then
             return true
         end
 
-        local config = Addon.db.profile.masterlooter
+        local c = Addon.db.profile.masterloot
 
         -- Check guild rank
-        if config.council.guildleader or config.council.guildofficer or Addon.db.char.masterloot.guildRank > 0 then
+        if c.council.roles.guildleader or c.council.roles.guildofficer or Addon.db.char.masterloot.council.rank > 0 then
             local guildRank = Unit.GuildRank(unit)
-            if config.council.guildleader and guildRank == 1 or config.council.guildofficer and guildRank == 2 then
+            if c.council.roles.guildleader and guildRank == 1 or c.council.coles.guildofficer and guildRank == 2 then
                 return true
-            elseif guildRank == Addon.db.char.masterloot.guildRank then
+            elseif guildRank == c.council.rank then
+                return true
+            elseif c.council.rankUp and guildRank > c.council.rank then
                 return true
             end
         end
 
         -- Check group rank
-        if config.council.raidleader or config.council.raidassistant then
+        if c.council.roles.raidleader or c.council.roles.raidassistant then
             if not groupRank then
                 for i=1,GetNumGroupMembers() do
                     local unitGroup, rank = GetRaidRosterInfo(i)
                     if unitGroup == unit then groupRank = rank break end
                 end
             end
-            if config.council.raidleader and groupRank == 2 or config.council.raidassistant and groupRank == 1 then
+            if c.council.roles.raidleader and groupRank == 2 or c.council.roles.raidassistant and groupRank == 1 then
                 return true
             end
         end
-    end
-end
-
--------------------------------------------------------
---                     Communities                   --
--------------------------------------------------------
-
--- Read session rule(s) from community description
-function Self.ReadFromCommunity(clubId, key)
-    local t, found = not key and Util.Tbl() or nil, false
-
-    local info = C_Club.GetClubInfo(clubId)
-    if info and not Util.StrIsEmpty(info.description) then
-        for i,line in Util.Each(("\n"):split(info.description)) do
-            local name, val = line:match("^PLR%-(.-): ?(.*)")
-            if name then
-                name = Util.StrToCamelCase(name)
-                if not key then
-                    t[name] = Self.DecodeRule(name, val)
-                elseif key == name then
-                    return Self.DecodeRule(name, val)
-                end
-            end
-        end
-    end
-
-    return t
-end
-
--- Write session rule(s) do community description. We can only write to 
-function Self.WriteToCommunity(clubId, keyOrTbl, val)
-    local isKey = type(keyOrTbl) ~= "table"
-
-    local info = C_Club.GetClubInfo(clubId)
-    if info then
-        local desc, found = Util.StrSplit(info.description, "\n"), Util.Tbl()
-
-        -- Update or delete existing entries
-        for i,line in ipairs(desc) do
-            local name = line:match("^PLR%-(.-):")
-            if name then
-                name = Util.StrToCamelCase(name)
-                found[name] = true
-
-                if not isKey or isKey == name then
-                    local v
-                    if isKey then v = val else v = keyOrTbl[name] end
-
-                    if v ~= nil then
-                        desc[i] = ("PLR-%s: %s"):format(Util.StrFromCamelCase(name, "-", true), Self.EncodeRule(name, v))
-                    else
-                        tremove(desc, i)
-                    end
-
-                    if isKey then break end
-                end
-            end
-        end
-
-        -- Add new entries
-        for name,v in Util.Each(keyOrTbl) do
-            if isKey then name, v = v, val end
-
-            if not found[name] and v ~= nil then
-                if not next(found) then
-                    tinsert(desc, "\n------ PersoLootRoll ------")
-                end
-
-                found[name] = true
-                tinsert(desc, ("PLR-%s: %s"):format(Util.StrFromCamelCase(name, "-", true), Self.EncodeRule(name, v)))
-            end
-        end
-
-        local str = Util.TblConcat(desc, "\n")
-        Util.TblRelease(desc, found)
-
-        -- We can only write to guild communities, and only when we have the rights to do so
-        local priv = C_Club.GetClubPrivileges(clubId)
-        if priv and priv.canSetDescription and info.clubType == Enum.ClubType.Guild then
-            SetGuildInfoText(str)
-            return true
-        else
-            return str
-        end
-    end
-end
-
--- Encode a session rule to its string representation
-function Self.EncodeRule(name, val)
-    local t = type(val)
-    if Util.In(t, "string", "number") then
-        return val
-    elseif t == "boolean" then
-        return val and "true" or "false"
-    elseif t == "table" then
-        local s
-        for i,v in pairs(val) do
-            v = Util.Select(true,
-                name == "answers1" and v == NEED,   Roll.ANSWER_NEED,
-                name == "answers2" and v == GREED,  Roll.ANSWER_GREED,
-                v
-            )
-            s = (s and s .. ", " or "") .. v
-        end
-        return s or ""
-    else
-        return ""
-    end
-end
-
--- Decode a session rule from its string representation
-function Self.DecodeRule(name, str)
-    if Util.In(name, "bidPublic", "votePublic") then
-        return Util.In(str:lower(), "true", "1", "yes")
-    elseif Util.In(name, "timeoutBase", "timeoutPerItem", "councilRank") then
-        return tonumber(str)
-    elseif Util.In(name, "masterlooter", "council", "answers1", "answers2", "answers3") then
-        local val = Util.Tbl()
-        for v in str:gmatch("[^,]+") do
-            v = v:gsub("^%s*(.*)%s*$", "%1")
-            if name == "answers1" and v == NEED then
-                v = Roll.ANSWER_NEED
-            elseif name == "answers2" and v == GREED then
-                v = Roll.ANSWER_GREED
-            end
-            tinsert(val, v) end
-        return val
-    elseif str ~= "" then
-        return str
     end
 end
 
