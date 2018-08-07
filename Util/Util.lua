@@ -80,6 +80,17 @@ function Self.GetGuildRanks()
     return t
 end
 
+function Self.GetClubRanks(clubId)
+    local info = C_Club.GetClubInfo(clubId)
+    if not info then
+        return
+    elseif info.clubType == Enum.ClubType.Guild then
+        return Self.GetGuildRanks()
+    else
+        return Self.TblFlip(Enum.ClubRoleIdentifier)
+    end
+end
+
 -- Get the expansion for the current instance
 function Self.GetInstanceExp()
     if IsInInstance() then
