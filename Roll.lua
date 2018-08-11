@@ -124,6 +124,13 @@ function Self.Add(item, owner, timeout, ownerId, itemOwnerId)
     owner = Unit.Name(owner or "player")
     item = Item.FromLink(item, owner)
 
+    -- Determine the timeout
+    if not timeout then
+        local ml = Session.GetMasterlooter()
+        local base, perItem = ml and Session.rules.timeoutBase or Self.TIMEOUT, ml and Session.rules.timeoutPerItem or Self.TIMEOUT_PER_ITEM
+        timeout = base + Util.GetNumDroppedItems() * perItem
+    end
+
     -- Create the roll entry
     local roll = {
         created = time(),
@@ -132,11 +139,12 @@ function Self.Add(item, owner, timeout, ownerId, itemOwnerId)
         owner = owner,
         ownerId = ownerId,
         itemOwnerId = itemOwnerId,
-        timeout = timeout or Self.GetTimeout(),
+        timeout = timeout,
         status = Self.STATUS_PENDING,
         bids = {},
         rolls = {},
         votes = {},
+        timers = {},
         whispers = 0,
         shown = nil,
         hidden = nil,
@@ -289,28 +297,6 @@ function Self.IsPlrId(id) return id < 0 end
 function Self.ToPlrId(id) return -id end
 function Self.FromPlrId(id) return -id end
 
--- Calculate the optimal timeout
-function Self.GetTimeout()
-    local items, ml = 0, Session.GetMasterlooter()
-    local base, perItem = ml and Session.rules.timeoutBase or Self.TIMEOUT, ml and Session.rules.timeoutPerItem or Self.TIMEOUT_PER_ITEM
-    local difficulty, _, maxPlayers = select(3, GetInstanceInfo())
-
-    if difficulty == DIFFICULTY_DUNGEON_CHALLENGE then
-        -- In M+ we get 2 items at the end of the dungeon, +1 if in time, +0.4 per keystone level above 15
-        local _, level, _, onTime = C_ChallengeMode.GetCompletionInfo();
-        items = 2 + (onTime and 1 or 0) + (level > 15 and math.ceil(0.4 * (level - 15)) or 0)
-    else
-        -- Normally we get about 1 item per 5 players in the group
-        local players = GetNumGroupMembers()
-        if Util.IsLegacyLoot() then
-            players = Util.In(difficulty, DIFFICULTY_RAID_LFR, DIFFICULTY_PRIMARYRAID_LFR, DIFFICULTY_PRIMARYRAID_NORMAL, DIFFICULTY_PRIMARYRAID_HEROIC) and 20 or maxPlayers
-        end
-        items = math.ceil(players / 5)
-    end
-
-    return base + items * perItem
-end
-
 -- Get the name for a bid
 function Self.GetBidName(roll, bid)
     if type(bid) == "string" then
@@ -360,7 +346,7 @@ function Self:Start(started)
             end
 
             -- Schedule timer to end the roll and hide the frame
-            self.timer = Addon:ScheduleTimer(Self.End, self:GetTimeLeft(), self, nil, true)
+            self.timers.bid = Addon:ScheduleTimer(Self.End, self:GetTimeLeft(), self, true)
 
             -- Let everyone know
             Self.events:Fire(Self.EVENT_START, self)
@@ -379,16 +365,16 @@ end
 
 -- Add a roll now and start it later
 function Self:Schedule()
-    if self.timer then
+    if self.timers.bid then
         return
     end
 
     self.item:GetBasicInfo()
 
-    self.timer = Addon:ScheduleTimer(function ()
+    self.timers.bid = Addon:ScheduleTimer(function ()
         -- Start the roll if it hasn't been started after the waiting period
         if self.status == Self.STATUS_PENDING then
-            self.timer = nil
+            self.timers.bid = nil
 
             if self.isOwner and self.item:ShouldBeRolledFor() or not self.isOwner and self.item:ShouldBeBidOn() then
                 self:Start()
@@ -423,9 +409,9 @@ function Self:Restart(started)
 
     self:HideRollFrame()
 
-    if self.timer then
-        Addon:CancelTimer(self.timer)
-        self.timer = nil
+    for i,v in pairs(self.timers) do
+        Addon:CancelTimer(v)
+        self.timers[i] = nil
     end
 
     return self:Start(started)
@@ -558,25 +544,32 @@ function Self:End(winner, cleanup, force)
 
     -- Hide UI elements etc.
     if cleanup then
-        if self.timer then
-            Addon:CancelTimer(self.timer)
-            self.timer = nil
+        if self.timers.bid then
+            Addon:CancelTimer(self.timers.bid)
+            self.timers.bid = nil
         end
 
         self:HideRollFrame()
     end
 
     -- Determine a winner
-    if self.isOwner and not winner or winner == true then
-        if not Session.GetMasterlooter() and self.item.isOwner and self.bid and floor(self.bid) == Self.BID_NEED then
+    if self.isOwner and (not winner or winner == true) then
+        if not Session.GetMasterlooter() and self.bid and floor(self.bid) == Self.BID_NEED then
+            -- Give it to ourselfs
             winner = UnitName("player")
-        elseif self.isOwner and (winner or not Addon.db.profile.awardSelf and not Session.IsMasterlooter()) then
+        elseif winner == true or not (Addon.db.profile.awardSelf or Session.IsMasterlooter()) then
+            -- Pick a winner now
             winner = self:DetermineWinner()
+        elseif Session.IsMasterlooter() and Addon.db.profile.masterloot.autoAward then
+            -- Schedule a timer to pick a winner
+            local base = Addon.db.profile.masterloot.autoAwardTimeout or Self.TIMEOUT
+            local perItem = Addon.db.profile.masterloot.autoAwardTimeoutPerItem or Self.TIMEOUT_PER_ITEM
+            self.timers.award = Addon:ScheduleTimer(Self.End, base + Util.GetNumDroppedItems() * perItem, self, true)
         end
     end
 
     -- Set winner or just send status
-    if winner ~= self.winner then
+    if not Util.In(winner, self.winner, true) then
         self.winner = winner
         self.isWinner = Unit.IsSelf(self.winner)
         
@@ -584,6 +577,12 @@ function Self:End(winner, cleanup, force)
         self:SendStatus()
 
         if self.winner then
+            -- Cancel auto award timer
+            if self.timers.award then
+                Addon:CancelTimer(self.timers.award)
+                self.timers.award = nil
+            end
+
             -- It has already been traded
             if self.winner == self.item.owner then
                 self:OnTraded(self.winner)
@@ -605,9 +604,9 @@ function Self:Cancel()
     Addon:Verbose(L["ROLL_CANCEL"], self.item.link, Comm.GetPlayerLink(self.item.owner))
 
     -- Cancel a pending timer
-    if self.timer then
-        Addon:CancelTimer(self.timer)
-        self.timer = nil
+    for i,v in pairs(self.timers) do
+        Addon:CancelTimer(v)
+        self.timers[i] = nil
     end
 
     -- Update status
@@ -823,7 +822,7 @@ function Self:ExtendTimeout(to)
     if self.status < Self.STATUS_DONE and self.timeout < to then
         -- Extend a running timer
         if self.status == Self.STATUS_RUNNING then
-            self.timer = Addon:ExtendTimerBy(self.timer, to - self.timeout)
+            self.timers.bid = Addon:ExtendTimerBy(self.timers.bid, to - self.timeout)
         end
 
         self.timeout = to
@@ -926,36 +925,40 @@ end
 --                      Helper                       --
 -------------------------------------------------------
 
--- Figure out a random winner
-local countFn = function (val, bid) return floor(val) == bid and 1 or 0 end
+-- Figure out a winner
 function Self:DetermineWinner()
-    for i,bid in pairs(Self.BIDS) do
-        if bid ~= Self.BID_PASS then
-            local n = Util.TblCountFn(self.bids, countFn, bid)
-            if n > 0 then
-                n = math.random(n)
-                for unit,unitBid in pairs(self.bids) do
-                    if floor(unitBid) == bid then
-                        n = n - 1
-                    end
-                    if n == 0 then
-                        -- We have a winner, now let's check if someone rolled higher in chat
-                        if not self.rolls[unit] then
-                            return unit
-                        else
-                            local winner, maxRoll = unit, self.rolls[unit]
-                            for unitRoll,rollResult in pairs(self.rolls) do
-                                if rollResult > maxRoll and floor(self.bids[unitRoll]) == bid then
-                                    winner, maxRoll = unitRoll, rollResult
-                                end
-                            end
-                            return winner
-                        end
-                    end
-                end
-            end
+    local candidates = Util.TblCopyExcept(Self.bids, Self.BID_PASS)
+
+    -- Narrow down by votes
+    if next(self.votes) then
+        Util.TblMap(candidates, Util.FnZero)
+        for _,to in pairs(self.votes) do candidates[to] = (candidates[to] or 0) + 1 end
+        Util.TblOnly(candidates, Util.TblMax(candidates))
+        if Util.TblCount(candidates) == 1 then
+            return next(candidates), Util.TblRelease(candidates)
         end
     end
+
+    -- Narrow down by bids
+    if next(self.bids) then
+        Util.TblMap(candidates, function (_, i) return self.bids[i] or Self.BID_PASS end, true)
+        Util.TblOnly(candidates, Util.TblMin(candidates))
+        if Util.TblCount(candidates) == 1 then
+            return next(candidates), Util.TblRelease(candidates)
+        end
+    end
+
+    -- Narrow down by roll result
+    if next(self.rolls) then
+        Util.TblMap(candidates, function (_, i) return self.rolls[i] or random(100) end, true)
+        Util.TblOnly(candidates, Util.TblMax(candidates))
+        if Util.TblCount(candidates) == 1 then
+            return next(candidates), Util.TblRelease(candidates)
+        end
+    end
+
+    -- Pick one at random
+    return Util.TblRandomKey(candidates), Util.TblRelease(candidates)
 end
 
 -- Check if the given unit is eligible
