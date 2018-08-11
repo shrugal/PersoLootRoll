@@ -114,6 +114,23 @@ function Self.IsTimewalking()
     return Self.In(select(3, GetInstanceInfo()), 24, 33)
 end
 
+function Self.GetNumDroppedItems()
+    local difficulty, _, maxPlayers = select(3, GetInstanceInfo())
+
+    if difficulty == DIFFICULTY_DUNGEON_CHALLENGE then
+        -- In M+ we get 2 items at the end of the dungeon, +1 if in time, +0.4 per keystone level above 15
+        local _, level, _, onTime = C_ChallengeMode.GetCompletionInfo();
+        return 2 + (onTime and 1 or 0) + (level > 15 and math.ceil(0.4 * (level - 15)) or 0)
+    else
+        -- Normally we get about 1 item per 5 players in the group
+        local players = GetNumGroupMembers()
+        if Self.IsLegacyLoot() then
+            players = Self.In(difficulty, DIFFICULTY_RAID_LFR, DIFFICULTY_PRIMARYRAID_LFR, DIFFICULTY_PRIMARYRAID_NORMAL, DIFFICULTY_PRIMARYRAID_HEROIC) and 20 or maxPlayers
+        end
+        return math.ceil(players / 5)
+    end
+end
+
 -- Get hidden tooltip for scanning
 function Self.GetHiddenTooltip()
     if not Self.hiddenTooltip then
@@ -1145,6 +1162,7 @@ function Self.Fn(fn, obj) return type(fn) == "string" and (obj and obj[fn] or _G
 function Self.FnId(...) return ... end
 function Self.FnTrue() return true end
 function Self.FnFalse() return false end
+function Self.FnZero() return 0 end
 function Self.FnNoop() end
 
 -- Some math

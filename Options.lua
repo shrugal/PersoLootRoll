@@ -1035,6 +1035,7 @@ function Self.Migrate()
                         Util.TblSet(p.masterloot.council.clubs, guildId, "ranks", 2, true)
                     end
                 end
+
                 p.masterlooter = nil
             end
         end
