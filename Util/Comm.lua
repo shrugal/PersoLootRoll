@@ -242,7 +242,7 @@ function Self.RollBid(roll, bid, fromUnit, isImport)
     if not isImport then
         -- Inform others
         if roll.isOwner then
-            local data = Util.Tbl(true, "ownerId", roll.ownerId, "bid", bid, "fromUnit", Unit.FullName(fromUnit))
+            local data = Util.TblHash("ownerId", roll.ownerId, "bid", bid, "fromUnit", Unit.FullName(fromUnit))
 
             -- Send to all or the council
             if Util.Check(Session.GetMasterlooter(), Session.rules.bidPublic, Addon.db.profile.bidPublic) then
@@ -301,7 +301,7 @@ function Self.RollVote(roll, vote, fromUnit, isImport)
     -- Inform others
     if not isImport then
         if roll.isOwner then
-            local data = Util.Tbl(true, "ownerId", roll.ownerId, "vote", Unit.FullName(vote), "fromUnit", Unit.FullName(fromUnit))
+            local data = Util.TblHash("ownerId", roll.ownerId, "vote", Unit.FullName(vote), "fromUnit", Unit.FullName(fromUnit))
 
             -- Send to all or the council
             if Session.rules.votePublic then

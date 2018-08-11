@@ -209,7 +209,7 @@ function Self.Each(...)
     elseif select("#", ...) == 0 then
         return Self.FnNoop
     else
-        return Fn, Self.TblTmp(false, ...)
+        return Fn, Self.TblTmp(...)
     end
 end
 
@@ -224,9 +224,9 @@ local Fn = function (u, i)
  end
 function Self.EachWhere(t, ...)
     if type(...) == "table" then
-        return Fn, Self.TblTmp(false, t, (...), (select(2, ...)))
+        return Fn, Self.TblTmp(t, (...), (select(2, ...)))
     else
-        return Fn, Self.TblTmp(false, t, Self.TblTmp(true, ...))
+        return Fn, Self.TblTmp(t, Self.TblTmpHash(...))
     end
 end
 
@@ -263,28 +263,22 @@ Self.tblPoolSize = 10
 -- For when we need an empty table as noop
 Self.TBL_EMPTY = {}
 
--- Get a table (newly created or from the cache), and fill it with values or key/value pairs
-function Self.Tbl(isMap, ...)
+-- Get a table (newly created or from the cache), and fill it with values
+function Self.Tbl(...)
     local t = tremove(Self.tblPool) or {}
-    
-    for i=1, select("#", ...), isMap and 2 or 1 do
-        if isMap then
-            t[select(i, ...)] = select(i+1, ...)
-        else
-            t[i] = select(i, ...)
-        end
+    for i=1, select("#", ...) do
+        t[i] = select(i, ...)
     end
     return t
 end
 
--- Same as Self.Tbl, but the resulting table is marked as being temporary
-function Self.TblTmp(...)
-    return setmetatable(Self.Tbl(...), Self.TBL_EMPTY)
-end
-
--- Check if a table is marked as temporary
-function Self.TblIsTmp(t)
-    return getmetatable(t) == Self.TBL_EMPTY
+-- Get a table (newly created or from the cache), and fill it with key/value pairs
+function Self.TblHash(...)
+    local t = tremove(Self.tblPool) or {}
+    for i=1, select("#", ...), 2 do
+        t[select(i, ...)] = select(i + 1, ...)
+    end
+    return t
 end
 
 -- Add one or more tables to the cache, first parameter can define a recursive depth
@@ -312,13 +306,15 @@ function Self.TblRelease(...)
     end
 end
 
--- Same as Self.TblRelease, but only releases temporary tables
+-- Temporary tables: Same as above, but tables are marked as temporary and only those are released
+
+function Self.TblTmp(...) return setmetatable(Self.Tbl(...), Self.TBL_EMPTY) end
+function Self.TblTmpHash(...) return setmetatable(Self.TblHash(...), Self.TBL_EMPTY) end
+function Self.TblIsTmp(t) return getmetatable(t) == Self.TBL_EMPTY end
 function Self.TblReleaseTmp(...)
     for i=1, select("#", ...) do
         local t = select(i, ...)
-        if type(t) == "table" and Self.TblIsTmp(t) then
-            Self.TblRelease(t)
-        end
+        if type(t) == "table" and Self.TblIsTmp(t) then Self.TblRelease(t) end
     end
 end
 
@@ -569,12 +565,16 @@ end
 function Self.TblMatches(t, ...)
     for i=1, select("#", ...), 2 do
         local key, val = select(i, ...)
-        if t[key] == nil or val ~= nil and t[key] ~= val then
+        local v = Self.TblGet(t, key)
+        if v == nil or val ~= nil and v ~= val then
             return false
         end
     end
     return true
 end
+
+-- Check a table's existence and content
+function Self.TblIsFilled(t) return t and next(t) and t or nil end
 
 -- Find a value in a table
 function Self.TblFind(t, val)
@@ -1061,7 +1061,7 @@ end
 
 -- Split string on delimiter
 function Self.StrSplit(str, del)
-    return Self.Tbl(false, del:split(str))
+    return Self.Tbl(del:split(str))
 end
 
 -- Uppercase first char

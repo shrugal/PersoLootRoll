@@ -45,7 +45,7 @@ end
 function Self.Update(unit)
     unit = Unit.Name(unit)
 
-    local info = Self.cache[unit] or Util.Tbl(true, "levels", Util.Tbl(), "links", Util.Tbl())
+    local info = Self.cache[unit] or Util.TblHash("levels", Util.Tbl(), "links", Util.Tbl())
     local isValid = Self.IsValid(unit)
 
     -- Remember when we did this

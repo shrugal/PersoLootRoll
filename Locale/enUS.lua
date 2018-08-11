@@ -114,12 +114,14 @@ L["ERROR_ROLL_STATUS_NOT_1"] = "The roll is not running."
 L["ERROR_ROLL_UNKNOWN"] = "That roll doesn't exist."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"] = "%s has send a vote for %s but is not allowed to do so right now."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"] = "You cannot vote on that item right now."
-L["ERROR_OPT_RULES_SAVE_FAILED"] = "Saving rules for %q failed!"
+L["ERROR_OPT_MASTERLOOT_EXPORT_FAILED"] = "Exporting masterloot settings to <%s> failed!"
 
 -- GUI
 L["DIALOG_MASTERLOOT_ASK"] = "<%s> wants to become your masterlooter."
 L["DIALOG_ROLL_CANCEL"] = "Do you want to cancel this roll?"
 L["DIALOG_ROLL_RESTART"] = "Do you want to restart this roll?"
+L["DIALOG_OPT_MASTERLOOT_LOAD"] = "This will replace your current masterloot settings with those stored in the guild/community info, are you sure you want to proceed?"
+L["DIALOG_OPT_MASTERLOOT_SAVE"] = "This will replace any masterloot settings in the guild/community info with your current settings, are you sure you want to proceed?"
 L["FILTER"] = "Filter"
 L["FILTER_ALL"] = "For all players"
 L["FILTER_ALL_DESC"] = "Include rolls for all players, not just yours or those with items that might interest you."
@@ -248,6 +250,10 @@ L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM"] = "Auto award time (per it
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM_DESC"] = "Will be added to the base auto award time for each item that dropped."
 L["OPT_MASTERLOOT_CLUB"] = "Guild/Community"
 L["OPT_MASTERLOOT_CLUB_DESC"] = "Select the Guild/Community to import/export settings from."
+L["OPT_MASTERLOOT_EXPORT_WINDOW"] = "Export masterloot settings"
+L["OPT_MASTERLOOT_EXPORT_GUILD_ONLY"] = "Please replace the community's current info with this text, because automatically replacing it is only possible for guilds."
+L["OPT_MASTERLOOT_EXPORT_NO_PRIV"] = "Please ask a leader to replace the guild's info with this text, because you don't have the right to do so yourself."
+L["OPT_MASTERLOOT_EXPORT_DONE"] = "Masterloot settings successfully exported to <%s>."
 
 -- Options - Messages
 L["OPT_CUSTOM_MESSAGES"] = "Custom messages"
