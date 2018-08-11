@@ -59,6 +59,28 @@ StaticPopupDialogs[Self.DIALOG_MASTERLOOT_ASK] = {
     preferredIndex = 3
 }
 
+Self.DIALOG_OPT_MASTERLOOT_LOAD = "PLR_OPT_MASTERLOOT_LOAD"
+StaticPopupDialogs[Self.DIALOG_OPT_MASTERLOOT_LOAD] = {
+    text = L["DIALOG_OPT_MASTERLOOT_LOAD"],
+    button1 = YES,
+    button2 = NO,
+    OnAccept = function () Options.ImportRules() end,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3
+}
+
+Self.DIALOG_OPT_MASTERLOOT_SAVE = "PLR_OPT_MASTERLOOT_SAVE"
+StaticPopupDialogs[Self.DIALOG_OPT_MASTERLOOT_SAVE] = {
+    text = L["DIALOG_OPT_MASTERLOOT_SAVE"],
+    button1 = YES,
+    button2 = NO,
+    OnAccept = function () Options.ExportRules() end,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3
+}
+
 -------------------------------------------------------
 --                 LootAlertSystem                   --
 -------------------------------------------------------

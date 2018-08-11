@@ -24,7 +24,7 @@ if Addon.DEBUG then
         txt = txt .. "\n}"
 
         local f = GUI("Frame").SetLayout("Fill").SetTitle(Name .. " - Export instances").Show()()
-        GUI("MultiLineEditBox"):DisableButton(true).SetLabel().SetText(txt).AddTo(f)
+        GUI("MultiLineEditBox").DisableButton(true).SetLabel().SetText(txt).AddTo(f)
     end
 end
 

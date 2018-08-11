@@ -73,13 +73,14 @@ function Addon:OnInitialize()
                 allow = {friend = true, community = true, guild = true, raidleader = false, raidassistant = false, guildgroup = true},
                 accept = {friend = false, guildmaster = false, guildofficer = false},
                 allowAll = false,
+                whitelists = {},
                 rules = {
                     timeoutBase = Roll.TIMEOUT,
                     timeoutPerItem = Roll.TIMEOUT_PER_ITEM,
                     bidPublic = false,
                     votePublic = false,
-                    needAnswers = {}, -- Need
-                    greedAnswers = {}, -- Greed
+                    needAnswers = {},
+                    greedAnswers = {},
                     disenchanter = {},
                     autoAward = false,
                     autoAwardTimeout = Roll.TIMEOUT,
@@ -88,7 +89,7 @@ function Addon:OnInitialize()
                 council = {
                     roles = {raidleader = false, raidassistant = false},
                     clubs = {},
-                    whitelist = {}
+                    whitelists = {}
                 }
             },
 
@@ -98,14 +99,7 @@ function Addon:OnInitialize()
             }
         },
         -- VERSION 4
-        factionrealm = {
-            masterloot = {
-                whitelist = {},
-                council = {
-                    whitelist = {}
-                }
-            }
-        },
+        factionrealm = {},
         -- VERSION 4
         char = {
             specs = {true, true, true, true},
@@ -223,7 +217,7 @@ function Addon:HandleChatCommand(msg)
         local name, pre, line = Name, "plr config", msg:sub(cmd:len() + 2)
 
         -- Handle submenus
-        local subs = Util.Tbl(false, "messages", "masterloot", "profiles")
+        local subs = Util.Tbl("messages", "masterloot", "profiles")
         if Util.In(args[2], subs) then
             name, pre, line = name .. " " .. Util.StrUcFirst(args[2]), pre .. " " .. args[2], line:sub(args[2]:len() + 2)
         end
@@ -412,7 +406,7 @@ end
 function Addon:Echo(lvl, line, ...)
     if self.db.profile.messages.echo >= lvl then
         if lvl == self.ECHO_DEBUG then
-            local args = Util.Tbl(false, line, ...)
+            local args = Util.Tbl(line, ...)
             for i,v in pairs(args) do
                 if Util.In(type(v), "table", "function") then args[i] = Util.ToString(v) end
             end

@@ -116,10 +116,8 @@ function Self.UnitAllow(unit)
     end
 
     -- Check whitelist
-    for i,v in pairs(Addon.db.factionrealm.masterloot.whitelist) do
-        if UnitIsUnit(unit, i) then
-            return true
-        end
+    for i,v in pairs(Addon.db.profile.masterloot.whitelists[GetRealmName()] or Util.TBL_EMPTY) do
+        if UnitIsUnit(unit, i) then return true end
     end
     
     local guild = Unit.GuildName(unit)
@@ -218,6 +216,8 @@ end
 function Self.IsOnCouncil(unit, refresh, groupRank)
     unit = Unit(unit or "player")
     local fullName = Unit.FullName(unit)
+    local c = Addon.db.profile.masterloot
+    local r = GetRealmName()
 
     if not refresh then
         return Self.rules.council and Self.rules.council[fullName] or false
@@ -226,11 +226,10 @@ function Self.IsOnCouncil(unit, refresh, groupRank)
         if not (Self.masterlooting[unit] == Self.masterlooter and Unit.InGroup(unit)) then
             return false
         -- Check whitelist
-        elseif Addon.db.factionrealm.masterloot.council.whitelist[unit] or Addon.db.factionrealm.masterloot.council.whitelist[fullName] then
+        elseif c.council.whitelists[r] and (c.council.whitelists[r][unit] or c.council.whitelists[r][fullName]) then
             return true
         end
 
-        local c = Addon.db.profile.masterloot
 
         -- Check guild rank
         if c.council.roles.guildleader or c.council.roles.guildofficer or Addon.db.char.masterloot.council.rank > 0 then

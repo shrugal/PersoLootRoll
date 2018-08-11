@@ -2,6 +2,7 @@ local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local C = LibStub("AceConfig-3.0")
 local CD = LibStub("AceConfigDialog-3.0")
+local CR = LibStub("AceConfigRegistry-3.0")
 local LDB = LibStub("LibDataBroker-1.1")
 local LDBIcon = LibStub("LibDBIcon-1.0")
 local Comm, GUI, Inspect, Item, Locale, Session, Roll, Unit, Util = Addon.Comm, Addon.GUI, Addon.Inspect, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
@@ -34,9 +35,17 @@ Self.councilValues = {L["RAID_LEADER"], L["RAID_ASSISTANT"]}
 function Self.Register()
     Self.registered = true
 
-    Self.RegisterGeneral()
-    Self.RegisterMessages()
-    Self.RegisterMasterloot()
+    -- General
+    C:RegisterOptionsTable(Name, Self.RegisterGeneral)
+    Self.frames.General = CD:AddToBlizOptions(Name)
+
+    -- Messages
+    C:RegisterOptionsTable(Name .. " Messages", Self.RegisterMessages)
+    Self.frames.Messages = CD:AddToBlizOptions(Name .. " Messages", L["OPT_MESSAGES"], Name)
+    
+    -- Masterloot
+    C:RegisterOptionsTable(Name .. " Masterloot", Self.RegisterMasterloot)
+    Self.frames.Masterloot = CD:AddToBlizOptions(Name .. " Masterloot", L["OPT_MASTERLOOT"], Name)
 
     -- Profiles
     C:RegisterOptionsTable(Name .. " Profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(Addon.db))
@@ -59,7 +68,7 @@ end
 function Self.RegisterGeneral()
     local it = Self.it
 
-    C:RegisterOptionsTable(Name, {
+    return {
         type = "group",
         args = {
             info = {
@@ -229,8 +238,7 @@ function Self.RegisterGeneral()
                 width = Self.WIDTH_FULL
             }
         }
-    })
-    Self.frames["General"] = CD:AddToBlizOptions(Name)
+    }
 end
 
 -------------------------------------------------------
@@ -241,8 +249,7 @@ function Self.RegisterMessages()
     local it = Self.it
     local lang = Locale.GetRealmLanguage()
 
-    it(1, true)
-    C:RegisterOptionsTable(Name .. " Messages", {
+    return {
         name = L["OPT_MESSAGES"],
         type = "group",
         childGroups = "tab",
@@ -394,8 +401,7 @@ function Self.RegisterMessages()
                 }
             }
         }
-    })
-    Self.frames["Messages"] = CD:AddToBlizOptions(Name .. " Messages", L["OPT_MESSAGES"], Name)
+    }
 end
 
 -- Build options structure for custom messages
@@ -490,7 +496,7 @@ function Self.RegisterMasterloot()
         .Map(function (info) return info.name .. (info.clubType == Enum.ClubType.Guild and " (" .. GUILD .. ")" or "") end)()
     Addon.db.char.masterloot.council.clubId = Addon.db.char.masterloot.council.clubId or clubs[1] and clubs[1].clubId
     
-    Self.masterloot = {
+    return {
         name = L["OPT_MASTERLOOT"],
         type = "group",
         childGroups = "tab",
@@ -515,7 +521,7 @@ function Self.RegisterMasterloot()
                 desc = L["OPT_MASTERLOOT_LOAD_DESC"],
                 type = "execute",
                 order = it(),
-                func = function () Self.ImportRules() end,
+                func = function () StaticPopup_Show(GUI.DIALOG_OPT_MASTERLOOT_LOAD) end,
                 width = Self.WIDTH_QUARTER
             },
             save = {
@@ -523,7 +529,13 @@ function Self.RegisterMasterloot()
                 desc = L["OPT_MASTERLOOT_SAVE_DESC"],
                 type = "execute",
                 order = it(),
-                func = function () Self.ExportRules() end,
+                func = function ()
+                    if Self.CanWriteToClub(Addon.db.char.masterloot.council.clubId) then
+                        StaticPopup_Show(GUI.DIALOG_OPT_MASTERLOOT_SAVE)
+                    else
+                        Self.ExportRules()
+                    end
+                end,
                 width = Self.WIDTH_QUARTER
             },
             approval = {
@@ -547,12 +559,13 @@ function Self.RegisterMasterloot()
                         type = "input",
                         order = it(),
                         set = function (_, val)
-                            local t = wipe(Addon.db.factionrealm.masterloot.whitelist)
-                            for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do
-                                t[v] = true
-                            end
+                            local r, w, t = GetRealmName(), Addon.db.profile.masterloot.whitelists
+                            if w[r] then t = wipe(w[r]) else t = Util.Tbl() w[r] = t end
+                            for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do t[v] = true end
                         end,
-                        get = function () return Util(Addon.db.factionrealm.masterloot.whitelist).Keys().Sort().Concat(", ")() end,
+                        get = function ()
+                            return Util(Addon.db.profile.masterloot.whitelists[GetRealmName()] or Util.TBL_EMPTY).Keys().Sort().Concat(", ")()
+                        end,
                         width = Self.WIDTH_FULL
                     },
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
@@ -669,7 +682,7 @@ function Self.RegisterMasterloot()
                             Addon.db.profile.masterloot.rules.bidPublic = val
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.bidPublic end,
-                        width = Self.WIDTH_FULL
+                        width = Self.WIDTH_HALF
                     },
                     votePublic = {
                         name = L["OPT_MASTERLOOT_RULES_VOTE_PUBLIC"],
@@ -680,7 +693,7 @@ function Self.RegisterMasterloot()
                             Addon.db.profile.masterloot.rules.votePublic = val
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.votePublic end,
-                        width = Self.WIDTH_FULL
+                        width = Self.WIDTH_HALF
                     },
                     autoAward = {
                         name = L["OPT_MASTERLOOT_RULES_AUTO_AWARD"],
@@ -757,26 +770,24 @@ function Self.RegisterMasterloot()
                         type = "input",
                         order = it(),
                         set = function (_, val)
-                            local t = wipe(Addon.db.profile.masterloot.council.whitelist)
-                            for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do
-                                t[v] = true
-                            end
+                            local r, w, t = GetRealmName(), Addon.db.profile.masterloot.council.whitelists
+                            if w[r] then t = wipe(w[r]) else t = Util.Tbl() w[r] = t end
+                            for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do t[v] = true end
                         end,
-                        get = function () return Util(Addon.db.profile.masterloot.council.whitelist).Keys().Sort().Concat(", ")() end,
+                        get = function ()
+                            return Util(Addon.db.profile.masterloot.council.whitelists[GetRealmName()] or Util.TBL_EMPTY).Keys().Sort().Concat(", ")()
+                        end,
                         width = Self.WIDTH_FULL
                     }
                 }
             }
         }
     }
-
-    C:RegisterOptionsTable(Name .. " Masterloot", Self.masterloot)
-    Self.frames["Masterloot"] = CD:AddToBlizOptions(Name .. " Masterloot", L["OPT_MASTERLOOT"], Name)
 end
 
 function Self.ImportRules()
     local clubId = Addon.db.char.masterloot.council.clubId
-    local s = Self.ReadFromCommunity(clubId)
+    local s = Self.ReadFromClub(clubId)
 
     -- Rules
     for i in pairs(Addon.db.profile.masterloot.rules) do
@@ -790,11 +801,14 @@ function Self.ImportRules()
     end).Flip(true)())
 
     Addon.db.profile.masterloot.council.roles = Util.TblFlip(s.councilRoles or Util.TBL_EMPTY, true)
-    Addon.db.profile.masterloot.council.whitelist = Util.TblFlip(s.councilWhitelist or Util.TBL_EMPTY, true)
+    Addon.db.profile.masterloot.council.whitelists[GetRealmName()] = Util.TblIsFilled(s.councilWhitelist) and Util.TblFlip(s.councilWhitelist, true)
+
+    CR:NotifyChange(Name .. " Masterloot")
 end
 
 function Self.ExportRules()
     local clubId = Addon.db.char.masterloot.council.clubId
+    local info = C_Club.GetClubInfo(clubId)
     local c = Addon.db.profile.masterloot
     local s = Util.Tbl()
 
@@ -811,14 +825,25 @@ function Self.ExportRules()
     if next(ranks) then s.councilRanks = ranks end
     local roles = Util(c.council.roles).CopyOnly(true, true).Keys()()
     if next(roles) then s.councilRoles = roles end
-    local wl = Util.TblKeys(c.council.whitelist)
+    local wl = Util.TblKeys(c.council.whitelists[GetRealmName()] or Util.TBL_EMPTY)
     if next(wl) then s.councilWhitelist = wl end
 
-    local r = Self.WriteToCommunity(clubId, s)
+    local r, canWrite = Self.WriteToClub(clubId, s)
     if r and type(r) == "string" then
-        print(r)
+        local f = GUI("Frame")
+            .SetLayout("Fill")
+            .SetTitle(Name .. " - " .. L["OPT_MASTERLOOT_EXPORT_WINDOW"])
+            .SetCallback("OnClose", function (self) self:Release() end)
+            .Show()()
+        GUI("MultiLineEditBox")
+            .DisableButton(true)
+            .SetLabel(canWrite and L["OPT_MASTERLOOT_EXPORT_GUILD_ONLY"] or L["OPT_MASTERLOOT_EXPORT_NO_PRIV"])
+            .SetText(r)
+            .AddTo(f)
+    elseif r then
+        Addon:Info(L["OPT_MASTERLOOT_EXPORT_DONE"]:format(info.name))
     else
-        return r
+        Addon:Error(L["ERROR_OPT_MASTERLOOT_EXPORT_FAILED"]:format(info.name))
     end
 end
 
@@ -827,7 +852,7 @@ end
 -------------------------------------------------------
 
 -- Read one or all params from a communities' description
-function Self.ReadFromCommunity(clubId, key)
+function Self.ReadFromClub(clubId, key)
     local t, found = not key and Util.Tbl() or nil, false
 
     local info = C_Club.GetClubInfo(clubId)
@@ -848,8 +873,24 @@ function Self.ReadFromCommunity(clubId, key)
     return t
 end
 
+-- Check if we can write to the given club
+function Self.CanWriteToClub(clubId)
+    local info = C_Club.GetClubInfo(clubId)
+    local priv = info and C_Club.GetClubPrivileges(clubId)
+
+    if not info or not priv then
+        return
+    elseif not priv.canSetDescription then
+        return false, false
+    elseif info.clubType ~= Enum.ClubType.Guild then
+        return false, true
+    else
+        return true, true
+    end
+end
+
 -- Read one or all params to a communities' description
-function Self.WriteToCommunity(clubId, keyOrTbl, val)
+function Self.WriteToClub(clubId, keyOrTbl, val)
     local isKey = type(keyOrTbl) ~= "table"
 
     local info = C_Club.GetClubInfo(clubId)
@@ -904,12 +945,15 @@ function Self.WriteToCommunity(clubId, keyOrTbl, val)
         Util.TblRelease(desc, found)
 
         -- We can only write to guild communities, and only when we have the rights to do so
-        local priv = C_Club.GetClubPrivileges(clubId)
-        if priv and priv.canSetDescription and info.clubType == Enum.ClubType.Guild then
+        if str == info.description then
+            return true
+        elseif not C_Club.GetClubPrivileges(clubId).canSetDescription then
+            return str, false
+        elseif info.clubType ~= Enum.ClubType.Guild then
+            return str, true
+        else
             SetGuildInfoText(str)
             return true
-        else
-            return str
         end
     end
 end
@@ -981,7 +1025,16 @@ function Self.Migrate()
                 Self.MigrateOption("answers2", p.masterlooter, p.masterloot.rules, nil, "greedAnswers")
                 Self.MigrateOption("raidleader", p.masterlooter.council, p.masterloot.council.roles)
                 Self.MigrateOption("raidassistant", p.masterlooter.council, p.masterloot.council.roles)
-                -- TODO: Guildleader, Guildofficer, Guildrank, Whitelist
+
+                local guildId = C_Club.GetGuildClubId()
+                if guildId and Util.TblGet(p, "masterlooter.council") then
+                    if p.masterlooter.council.guildmaster then
+                        Util.TblSet(p.masterloot.council.clubs, guildId, "ranks", 1, true)
+                    end
+                    if p.masterlooter.council.guildofficer then
+                        Util.TblSet(p.masterloot.council.clubs, guildId, "ranks", 2, true)
+                    end
+                end
                 p.masterlooter = nil
             end
         end
@@ -989,22 +1042,35 @@ function Self.Migrate()
     p.version = 6
 
     -- Factionrealm
-    local c = Addon.db.factionrealm
-    if c.version then
-        if c.version < 4 then
-            Self.MigrateOption("councilWhitelist", c.masterlooter, c.masterloot.council, nil, "whitelist")
+    if f.version then
+        if f.version < 4 then
+            if Util.TblGet(f, "masterloot.whitelist") then
+                for i in pairs(f.masterloot.whitelist) do
+                    Util.TblSet(p.masterloot.whitelists, GetRealmName(), i, true)
+                end
+            end
+            if Util.TblGet(f, "masterlooter.councilWhitelist") then
+                for i in pairs(f.masterlooter.councilWhitelist) do
+                    Util.TblSet(p.masterloot.council.whitelists, GetRealmName(), i, true)
+                end
+            end
+            f.masterloot, f.masterlooter = nil
         end
     end
-    c.version = 4
+    f.version = 4
     
     -- Char
-    local c = Addon.db.char
     if c.version then
         if c.version < 4 then
-            if p.masterloot.council.rank == 0 and c.masterloot.council.guildRank then
-                p.masterloot.council.rank = c.masterloot.council.guildRank
+            local guildId = C_Club.GetGuildClubId()
+            if guildId then
+                local guildRank = Util.TblGet(c, "masterloot.council.guildRank")
+                if guildRank and guildRank > 0 then
+                    Util.TblSet(p.masterloot.council.clubs, guildId, ranks, guildRank, true)
+                end
+                c.masterloot.council.clubId = guildId
             end
-            c.masterloot = nil
+            c.masterloot.council.guildRank = nil
         end
     end
     c.version = 4
@@ -1065,3 +1131,7 @@ function Self.RegisterMinimapIcon()
     if not PersoLootRollIconDB then PersoLootRollIconDB = {} end
     LDBIcon:Register(Name, plugin, PersoLootRollIconDB)
 end
+
+-------------------------------------------------------
+--                      Helper                       --
+-------------------------------------------------------

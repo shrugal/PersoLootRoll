@@ -786,7 +786,7 @@ function Self:SendStatus(noCheck, target, full)
         data.posted = self.posted
         data.winner = self.winner and Unit.FullName(self.winner)
         data.traded = self.traded and Unit.FullName(self.traded)
-        data.item = Util.Tbl(true, "link", self.item.link, "owner", Unit.FullName(self.item.owner))
+        data.item = Util.TblHash("link", self.item.link, "owner", Unit.FullName(self.item.owner))
 
         if full then
             if Addon.db.profile.bidPublic or Session.rules.bidPublic or Session.IsOnCouncil(target) then
