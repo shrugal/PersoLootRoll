@@ -43,6 +43,7 @@ L["AWARD_LOOT"] = "Beute zuweisen"
 L["AWARD_RANDOMLY"] = "Zufällig zuweisen"
 L["BID"] = "Gebot"
 L["COMMUNITY_GROUP"] = "Community Gruppe"
+L["COMMUNITY_MEMBER"] = "Community Mitglied"
 L["DISABLED"] = "Deaktiviert"
 L["DOWN"] = "unten"
 L["ENABLED"] = "Aktiviert"
@@ -103,6 +104,7 @@ L["USAGE_ROLL"] = "Benutzung: /plr roll [Item]* (<Zeit> <Spieler>)"
 L["ERROR_CMD_UNKNOWN"] = "Unbekannter Befehl '%s'"
 L["ERROR_ITEM_NOT_TRADABLE"] = "Du kannst dieses Item nicht handeln."
 L["ERROR_NOT_IN_GROUP"] = "Du bist nicht in einer Gruppe/Raid."
+L["ERROR_OPT_MASTERLOOT_EXPORT_FAILED"] = "Export der Plündermeister-Einstellungen zu <%s> ist fehlgeschlagen!"
 L["ERROR_PLAYER_NOT_FOUND"] = "Kann Spieler %s nicht finden."
 L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"] = "%s hat ein Gebot für %s gesendet, aber hat dazu gerade keine Berechtigung."
 L["ERROR_ROLL_BID_IMPOSSIBLE_SELF"] = "Du kannst für dieses Item gerade nicht bieten."
@@ -116,6 +118,8 @@ L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"] = "Du kannst für dieses Item gerade nicht 
 
 -- GUI
 L["DIALOG_MASTERLOOT_ASK"] = "<%s> möchte dein Plündermeister werden."
+L["DIALOG_OPT_MASTERLOOT_LOAD"] = "Deine aktuellen Plündermeister-Einstellugen werden durch die in der Gilden/Community-Info gespeicherten ersetzt, bist du sicher dass du fortfahren möchtest?"
+L["DIALOG_OPT_MASTERLOOT_SAVE"] = "Jegliche Plündermeister-Einstellugen in der Gilden/Community-Info werden durch deine aktuellen Einstellungen ersetzt, bist du sicher dass du fortfahren möchtest?"
 L["DIALOG_ROLL_CANCEL"] = "Möchtest du diese Verlosung abbrechen?"
 L["DIALOG_ROLL_RESTART"] = "Möchtest du diese Verlosung neu starten?"
 L["FILTER"] = "Filter"
@@ -189,49 +193,63 @@ L["OPT_VERSION"] = "|cffffd100Version:|r %s"
 
 -- Options - Masterloot
 L["OPT_MASTERLOOT"] = "Plündermeister"
-L["OPT_MASTERLOOT_ACCEPT"] = "Plündermeister automatisch akzeptieren"
-L["OPT_MASTERLOOT_ACCEPT_DESC"] = "Akzeptiere Plündermeister-Anfragen von diesen Spielern automatisch."
-L["OPT_MASTERLOOT_ALLOW"] = "Plündermeister erlauben"
-L["OPT_MASTERLOOT_ALLOW_ALL"] = "Jeden erlauben"
-L["OPT_MASTERLOOT_ALLOW_ALL_DESC"] = "|cffff0000WARNUNG:|r Diese Option erlaubt jedem dir eine Plündermeister-Anfrage zu schicken, es könnte also theoretisch passieren, dass du um deine Beute betrogen wirst. Aktiviere dies nur wenn du weißt was du tust."
-L["OPT_MASTERLOOT_ALLOW_DESC"] = [=[Entscheide wer dein Plündermeister werden kann. Du bekommst dann eine Popup-Nachricht die nach deiner Zustimmung verlangt, du kannst also Anfragen immer noch ablehnen.
-
-|cffffff78Gildengruppe:|r Jemand aus einer Gilde deren Mitglieder %d%% oder mehr der Gruppe stellen.
-|cffffff78Communitygruppe:|r Jemand aus einer deiner WoW-Communities deren Mitglieder %d%% oder mehr der Gruppe stellen.]=]
 L["OPT_MASTERLOOT_APPROVAL"] = "Zustimmung"
+L["OPT_MASTERLOOT_APPROVAL_ACCEPT"] = "Plündermeister automatisch akzeptieren"
+L["OPT_MASTERLOOT_APPROVAL_ACCEPT_DESC"] = "Akzeptiere Plündermeister-Anfragen von diesen Spielern automatisch."
+L["OPT_MASTERLOOT_APPROVAL_ALLOW"] = "Plündermeister erlauben"
+L["OPT_MASTERLOOT_APPROVAL_ALLOW_ALL"] = "Jeden erlauben"
+L["OPT_MASTERLOOT_APPROVAL_ALLOW_ALL_DESC"] = "|cffff0000WARNUNG:|r Diese Option erlaubt jedem dir eine Plündermeister-Anfrage zu schicken, es könnte also theoretisch passieren, dass du um deine Beute betrogen wirst. Aktiviere dies nur wenn du weißt was du tust."
+L["OPT_MASTERLOOT_APPROVAL_ALLOW_DESC"] = [=[Entscheide wer dein Plündermeister werden kann. Du bekommst dann eine Popup-Nachricht die nach deiner Zustimmung verlangt, du kannst also Anfragen immer noch ablehnen.
+
+|cffffff78Gildengruppe:|r Jemand aus einer Gilde deren Mitglieder %d%% oder mehr des Raids stellen.]=]
 L["OPT_MASTERLOOT_APPROVAL_DESC"] = "Hier kannst du festlegen wer dein Plündermeister werden kann."
+L["OPT_MASTERLOOT_APPROVAL_WHITELIST"] = "Plündermeister Whitelist"
+L["OPT_MASTERLOOT_APPROVAL_WHITELIST_DESC"] = "Du kannst hier Namen von Spielern eintragen, die zusätzlich dein Plündermeister werden können sollen. Trenne mehrere Namen mit Leerzeichen oder Kommas."
+L["OPT_MASTERLOOT_CLUB"] = "Gilde/Community"
+L["OPT_MASTERLOOT_CLUB_DESC"] = "Wähle die Gilde/Community aus, von der du die Einstellungen im-/exportieren möchtest."
+L["OPT_MASTERLOOT_COUNCIL"] = "Rat"
+L["OPT_MASTERLOOT_COUNCIL_CLUB_RANK"] = "Rat Gilden/Community Rang"
+L["OPT_MASTERLOOT_COUNCIL_CLUB_RANK_DESC"] = "Füge Gilden/Community Mitglieder mit diesem Rang deinem Rat hinzu, zusätzlich zu der obigen Option."
+L["OPT_MASTERLOOT_COUNCIL_DESC"] = "Spieler in deinem Rat können darüber abstimmen, wer welche Beute bekommen soll."
+L["OPT_MASTERLOOT_COUNCIL_ROLES"] = "Rat Rollen"
+L["OPT_MASTERLOOT_COUNCIL_ROLES_DESC"] = "Welche Spieler sollen automatisch Teil deines Beute-Rats werden."
+L["OPT_MASTERLOOT_COUNCIL_WHITELIST"] = "Rat Whitelist"
+L["OPT_MASTERLOOT_COUNCIL_WHITELIST_DESC"] = "Du kannst hier Namen von Spielern eintragen, die zusätzlich in deinem Rat sein sollen. Trenne mehrere Namen mit Leerzeichen oder Kommas."
 L["OPT_MASTERLOOT_DESC"] = "Wenn du (oder jemand anderes) Plündermeister wird, dann wird jegliche Beute von diesem Spieler verteilt. Du wirst benachrichtigt wessen Items du gewinnst bzw. wer deine Items gewinnt, sodass du mit der entsprechenden Person handeln kannst."
-L["OPT_MASTERLOOT_SEARCH"] = "Plündermeister suchen"
-L["OPT_MASTERLOOT_START"] = "Plündermeister werden"
-L["OPT_MASTERLOOT_STOP"] = "Plündermeister stoppen"
-L["OPT_MASTERLOOT_WHITELIST"] = "Plündermeister Whitelist"
-L["OPT_MASTERLOOT_WHITELIST_DESC"] = "Du kannst hier Namen von Spielern eintragen, die zusätzlich dein Plündermeister werden können sollen. Trenne mehrere Namen mit Leerzeichen oder Kommas."
-L["OPT_MASTERLOOTER"] = "Regeln"
-L["OPT_MASTERLOOTER_BID_PUBLIC"] = "Gebote öffentlich"
-L["OPT_MASTERLOOTER_BID_PUBLIC_DESC"] = "Du kannst Gebote öffentlich machen, sodass jeder sehen kann wer für was gestimmt hat."
-L["OPT_MASTERLOOTER_COUNCIL"] = "Rat"
-L["OPT_MASTERLOOTER_COUNCIL_ALLOW"] = "Ratsmitglieder"
-L["OPT_MASTERLOOTER_COUNCIL_ALLOW_DESC"] = "Welche Spieler automatisch Teil deines Beute-Rats werden sollen."
-L["OPT_MASTERLOOTER_COUNCIL_DESC"] = "Spieler in deinem Rat können darüber abstimmen, wer welche Beute bekommen soll."
-L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK"] = "Rat Gildenrank"
-L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK_DESC"] = "Füge Gildenmitglieder mit diesem Rang deinem Rat hinzu, zusätzlich zu der obrigen Option."
-L["OPT_MASTERLOOTER_COUNCIL_WHITELIST"] = "Rat Whitelist"
-L["OPT_MASTERLOOTER_COUNCIL_WHITELIST_DESC"] = "Du kannst hier Namen von Spielern eintragen, die zusätzlich in deinem Rat sein sollen. Trenne mehrere Namen mit Leerzeichen oder Kommas."
-L["OPT_MASTERLOOTER_DESC"] = "Diese Optionen betreffen jeden der dich als Plündermeister akzeptiert."
-L["OPT_MASTERLOOTER_GREED_ANSWERS"] = "Eigene 'Gier' Antworten"
-L["OPT_MASTERLOOTER_GREED_ANSWERS_DESC"] = [=[Lege bis zu 9 eigene Antworten für das 'Gier' Gebot fest, in absteigender Priorität. Du kannst auch '%s' selbst hinzufügen, um dessen Priorität unter die der vorherigen Antworten zu senken Trenne mehrer Einträge mit Kommas.
+L["OPT_MASTERLOOT_EXPORT_DONE"] = "Plündermeister-Einstellungen wurden erfolgreich nach <%s> exportiert."
+L["OPT_MASTERLOOT_EXPORT_GUILD_ONLY"] = "Bitte ersetze die Community-Beschreibung mit diesem Text, da das automatische Überschreiben nur bei Gilden funktioniert."
+L["OPT_MASTERLOOT_EXPORT_NO_PRIV"] = "Bitte einen Gildenoffizier die Gilden-Beschreibung durch diesen Text zu ersetzen, da du nicht die Berechtigungen hast es selber zu tun."
+L["OPT_MASTERLOOT_EXPORT_WINDOW"] = "Plündermeister-Einstellungen exportieren"
+L["OPT_MASTERLOOT_LOAD"] = "Laden"
+L["OPT_MASTERLOOT_LOAD_DESC"] = "Lade Plündermeister-Einstellungen von der Gilden/Community-Beschreibung."
+L["OPT_MASTERLOOT_RULES"] = "Regeln"
+L["OPT_MASTERLOOT_RULES_AUTO_AWARD"] = "Beute automatisch vergeben"
+L["OPT_MASTERLOOT_RULES_AUTO_AWARD_DESC"] = "Lass das Addon automatisch entscheiden wer die Beute bekommen soll, basierend auf Faktoren wie Rat Stimmen, Gebote, ausgerüstetes Itemlevel etc."
+L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT"] = "Automatsch vergeben Basis Laufzeit"
+L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_DESC"] = "Die Basis Wartezeit bevor Beute automatisch vergeben wird, sodass du Zeit hast Ratsstimmen zu sammeln und evtl. doch selbst zu entscheiden."
+L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM"] = "Automatisch vergeben zusätzliche Laufzeit pro Item"
+L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM_DESC"] = "Für jedes gedroppte Item wird so viel zur Wartezeit für automatische Vergabe hinzugefügt."
+L["OPT_MASTERLOOT_RULES_BID_PUBLIC"] = "Gebote öffentlich"
+L["OPT_MASTERLOOT_RULES_BID_PUBLIC_DESC"] = "Du kannst Gebote öffentlich machen, sodass jeder sehen kann wer für was gestimmt hat."
+L["OPT_MASTERLOOT_RULES_DESC"] = "Diese Optionen betreffen jeden der dich als Plündermeister akzeptiert."
+L["OPT_MASTERLOOT_RULES_DISENCHANTER"] = "Entzauberer"
+L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "Gib Beute die niemand haben möchte an Spieler zum Entzaubern."
+L["OPT_MASTERLOOT_RULES_GREED_ANSWERS"] = "Eigene 'Gier' Antworten"
+L["OPT_MASTERLOOT_RULES_GREED_ANSWERS_DESC"] = [=[Lege bis zu 9 eigene Antworten für das 'Gier' Gebot fest, in absteigender Priorität. Du kannst auch '%s' selbst hinzufügen, um dessen Priorität unter die der vorherigen Antworten zu senken Trenne mehrer Einträge mit Kommas.
 
 Beim Rollen erreichst du sie per Rechtsklick auf den 'Gier' Button.]=]
-L["OPT_MASTERLOOTER_NEED_ANSWERS"] = "Eigene 'Bedarf' Antworten"
-L["OPT_MASTERLOOTER_NEED_ANSWERS_DESC"] = [=[Lege bis zu 9 eigene Antworten für das 'Bedarf' Gebot fest, in absteigender Priorität. Du kannst auch '%s' selbst hinzufügen, um dessen Priorität unter die der vorherigen Antworten zu senken. Trenne mehrer Einträge mit Kommas.
+L["OPT_MASTERLOOT_RULES_NEED_ANSWERS"] = "Eigene 'Bedarf' Antworten"
+L["OPT_MASTERLOOT_RULES_NEED_ANSWERS_DESC"] = [=[Lege bis zu 9 eigene Antworten für das 'Bedarf' Gebot fest, in absteigender Priorität. Du kannst auch '%s' selbst hinzufügen, um dessen Priorität unter die der vorherigen Antworten zu senken. Trenne mehrer Einträge mit Kommas.
 
 Beim Rollen erreichst du sie per Rechtsklick auf den 'Bedarf' Button.]=]
-L["OPT_MASTERLOOTER_TIMEOUT_BASE"] = "Verlosung Basis Laufzeit"
-L["OPT_MASTERLOOTER_TIMEOUT_BASE_DESC"] = "Die Basis Laufzeit von Verlosungen, unabhängig davon wieviele Items gedropped sind."
-L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM"] = "Zusätzliche Laufzeit pro Item"
-L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM_DESC"] = "Für jedes gedroppte Item wird so viel zur Laufzeit von Verlosungen hinzugefügt."
-L["OPT_MASTERLOOTER_VOTE_PUBLIC"] = "Rat Abstimmung öffentlich"
-L["OPT_MASTERLOOTER_VOTE_PUBLIC_DESC"] = "Du kannst Rat Stimmen öffentlich machen, sodass jeder sehen kann wer wieviele Stimmen bekommen hat."
+L["OPT_MASTERLOOT_RULES_TIMEOUT_BASE"] = "Verlosung Basis Laufzeit"
+L["OPT_MASTERLOOT_RULES_TIMEOUT_BASE_DESC"] = "Die Basis Laufzeit von Verlosungen, unabhängig davon wieviele Items gedropped sind."
+L["OPT_MASTERLOOT_RULES_TIMEOUT_PER_ITEM"] = "Zusätzliche Laufzeit pro Item"
+L["OPT_MASTERLOOT_RULES_TIMEOUT_PER_ITEM_DESC"] = "Für jedes gedroppte Item wird so viel zur Laufzeit von Verlosungen hinzugefügt."
+L["OPT_MASTERLOOT_RULES_VOTE_PUBLIC"] = "Abstimmung öffentlich"
+L["OPT_MASTERLOOT_RULES_VOTE_PUBLIC_DESC"] = "Du kannst Rat Stimmen öffentlich machen, sodass jeder sehen kann wer wieviele Stimmen bekommen hat."
+L["OPT_MASTERLOOT_SAVE"] = "Speichern"
+L["OPT_MASTERLOOT_SAVE_DESC"] = "Speichere deine aktuellen Plündermeister-Einstellungen in der Gilden/Community-Beschreibung."
 
 -- Options - Messages
 L["OPT_CUSTOM_MESSAGES"] = "Nachrichten anpassen"
@@ -260,8 +278,8 @@ L["OPT_GROUPCHAT_DESC"] = "Hier kannst du ändern wann das Addon Nachrichten im 
 L["OPT_GROUPCHAT_GROUP_TYPE"] = "Verkünde nach Gruppentyp"
 L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[Schreibe im Gruppen-Chat nur, wenn du in einer dieser Gruppentypen bist.
 
-|cffffff78Gildengruppe:|r Die Mitglieder einer Gilde stellen %d%% oder mehr der Gruppe.
-|cffffff78Gildengruppe:|r Die Mitglieder einer deiner WoW-Communities stellen %d%% oder mehr der Gruppe.]=]
+|cffffff78Gildengruppe:|r Jemand aus einer Gilde deren Mitglieder %d%% oder mehr der Gruppe stellen.
+|cffffff78Community Gruppe:|r Die Mitglieder einer deiner WoW-Communities stellen %d%% oder mehr der Gruppe.]=]
 L["OPT_GROUPCHAT_ROLL"] = "Auf Loot im Chat rollen"
 L["OPT_GROUPCHAT_ROLL_DESC"] = "Rolle auf Loot (/roll), der im Gruppen-Chat gepostet wurde."
 L["OPT_MESSAGES"] = "Nachrichten"
@@ -316,11 +334,11 @@ L["OPT_WHISPER_GROUP_TYPE"] = "Frage nach Gruppentyp"
 L["OPT_WHISPER_GROUP_TYPE_DESC"] = [=[Frage nach Beute nur, wenn du in einer dieser Gruppentypen bist.
 
 |cffffff78Gildengruppe:|r Die Mitglieder einer Gilde stellen %d%% oder mehr der Gruppe.
-|cffffff78Gildengruppe:|r Die Mitglieder einer deiner WoW-Communities stellen %d%% oder mehr der Gruppe.]=]
+|cffffff78Community Gruppe:|r Die Mitglieder einer deiner WoW-Communities stellen %d%% oder mehr der Gruppe.]=]
 L["OPT_WHISPER_SUPPRESS"] = "Anfragen unterdrücken"
 L["OPT_WHISPER_SUPPRESS_DESC"] = "Unterdrücke Anfragen von Gruppenmitgliedern während du deine Beute vergibst."
 L["OPT_WHISPER_TARGET"] = "Frage nach Ziel"
-L["OPT_WHISPER_TARGET_DESC"] = "Frage nach Beute, abhängig davon ob sie auf deiner Freundesliste oder in deiner Gilde sind."
+L["OPT_WHISPER_TARGET_DESC"] = "Frage nach Beute, abhängig davon ob das Ziel in deiner Gilde, einer deiner WoW-Communities oder auf deiner Freundesliste ist."
 
 -- Roll
 L["BID_CHAT"] = "Frage %s nach %s -> %s."
@@ -331,6 +349,7 @@ L["BID_START"] = "Biete auf %s von %s."
 L["MASTERLOOTER_OTHER"] = "%s ist jetzt dein Plündermeister."
 L["MASTERLOOTER_SELF"] = "Du bist jetzt der Plündermeister."
 L["ROLL_AWARDED"] = "Zugewiesen"
+L["ROLL_AWARDING"] = "Zuweisen"
 L["ROLL_CANCEL"] = "Breche Verlosung für %s von %s ab."
 L["ROLL_END"] = "Beende Verlosung für %s von %s."
 L["ROLL_IGNORING_BID"] = "Ignoriere Gebot von %s für %s, weil ihr zuvor gechattet habt -> Gebot: %s oder %s."
