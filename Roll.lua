@@ -346,7 +346,7 @@ function Self:Start(started)
             end
 
             -- Schedule timer to end the roll and hide the frame
-            self.timers.bid = Addon:ScheduleTimer(Self.End, self:GetTimeLeft(), self, true)
+            self.timers.bid = Addon:ScheduleTimer(Self.End, self:GetTimeLeft(), self, nil, true)
 
             -- Let everyone know
             Self.events:Fire(Self.EVENT_START, self)
@@ -560,21 +560,20 @@ function Self:End(winner, cleanup, force)
         elseif winner == true or not (Addon.db.profile.awardSelf or Session.IsMasterlooter()) then
             -- Pick a winner now
             winner = self:DetermineWinner()
-        elseif Session.IsMasterlooter() and Addon.db.profile.masterloot.autoAward then
+        elseif Session.IsMasterlooter() and Addon.db.profile.masterloot.rules.autoAward and not self.timers.award then
             -- Schedule a timer to pick a winner
-            local base = Addon.db.profile.masterloot.autoAwardTimeout or Self.TIMEOUT
-            local perItem = Addon.db.profile.masterloot.autoAwardTimeoutPerItem or Self.TIMEOUT_PER_ITEM
+            local base = Addon.db.profile.masterloot.rules.autoAwardTimeout or Self.TIMEOUT
+            local perItem = Addon.db.profile.masterloot.rules.autoAwardTimeoutPerItem or Self.TIMEOUT_PER_ITEM
             self.timers.award = Addon:ScheduleTimer(Self.End, base + Util.GetNumDroppedItems() * perItem, self, true)
         end
     end
 
-    -- Set winner or just send status
+    local statusSend = false
+
+    -- Set winner
     if not Util.In(winner, self.winner, true) then
         self.winner = winner
         self.isWinner = Unit.IsSelf(self.winner)
-        
-        Self.events:Fire(Self.EVENT_AWARD, self)
-        self:SendStatus()
 
         if self.winner then
             -- Cancel auto award timer
@@ -586,14 +585,16 @@ function Self:End(winner, cleanup, force)
             -- It has already been traded
             if self.winner == self.item.owner then
                 self:OnTraded(self.winner)
+                statusSend = true
             end
 
             -- Let everyone know
             Comm.RollEnd(self)
         end
-    else
-        self:SendStatus()
     end
+
+    Self.events:Fire(Self.EVENT_AWARD, self)
+    if not statusSend then self:SendStatus() end
 
     return self
 end
@@ -927,7 +928,7 @@ end
 
 -- Figure out a winner
 function Self:DetermineWinner()
-    local candidates = Util.TblCopyExcept(Self.bids, Self.BID_PASS)
+    local candidates = Util.TblCopyExcept(self.bids, Self.BID_PASS, true)
 
     -- Narrow down by votes
     if next(self.votes) then
