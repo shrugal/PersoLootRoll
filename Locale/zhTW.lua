@@ -8,10 +8,10 @@ setmetatable(L, Locale.MT)
 Locale[lang] = L
 
 L["MSG_BID_1"] = "請問您有需要 %s 嗎？"
-L["MSG_BID_2"] = "請問您有需要 %s 嗎？" -- Translation outdated
-L["MSG_BID_3"] = "請問您有需要 %s 嗎？" -- Translation outdated
-L["MSG_BID_4"] = "請問您有需要 %s 嗎？" -- Translation outdated
-L["MSG_BID_5"] = "請問您有需要 %s 嗎？" -- Translation outdated
+L["MSG_BID_2"] = "如果您無需求，請問可以讓 %s 給我嗎？"
+L["MSG_BID_3"] = "如果您不想要 %s 的話我可以使用。"
+L["MSG_BID_4"] = "如果您根本不想要 %s 我可以幫拿。"
+L["MSG_BID_5"] = "請問您有需要 %s 嗎？或是我有榮幸可以得到它嗎？"
 L["MSG_HER"] = "她"
 L["MSG_HIM"] = "他"
 L["MSG_ITEM"] = "物品"
@@ -42,12 +42,14 @@ L["AWARD"] = "給予"
 L["AWARD_LOOT"] = "給予戰利品"
 L["AWARD_RANDOMLY"] = "隨機給予"
 L["BID"] = "競標"
+L["COMMUNITY_GROUP"] = "Community Group" -- Translation missing
+L["COMMUNITY_MEMBER"] = "Community Member" -- Translation missing
 L["DISABLED"] = "停用"
 L["DOWN"] = "下"
 L["ENABLED"] = "啟用"
 L["EQUIPPED"] = "已裝備"
 L["GET_FROM"] = "得到自"
-L["GIVE_AWAY"] = "Give away" -- Translation missing
+L["GIVE_AWAY"] = "放棄"
 L["GIVE_TO"] = "給予"
 L["GUILD_MASTER"] = "公會會長"
 L["GUILD_OFFICER"] = "公會幹部"
@@ -55,7 +57,7 @@ L["HIDE"] = "隱藏"
 L["HIDE_ALL"] = "隱藏全部"
 L["ITEM"] = "物品"
 L["ITEM_LEVEL"] = "物品等級"
-L["KEEP"] = "Keep" -- Translation missing
+L["KEEP"] = "保留"
 L["LEFT"] = "左"
 L["MASTERLOOTER"] = "負責分裝"
 L["MESSAGE"] = "訊息"
@@ -102,6 +104,7 @@ L["USAGE_ROLL"] = "使用：/plr roll [item]* (<持續時間> <提供者>)"
 L["ERROR_CMD_UNKNOWN"] = "未知指令'%s'"
 L["ERROR_ITEM_NOT_TRADABLE"] = "你無法交易這項物品。"
 L["ERROR_NOT_IN_GROUP"] = "你不在隊伍或團隊中。"
+L["ERROR_OPT_MASTERLOOT_EXPORT_FAILED"] = "Exporting masterloot settings to <%s> failed!" -- Translation missing
 L["ERROR_PLAYER_NOT_FOUND"] = "找不到玩家 %s。"
 L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"] = "%s已發送了%s的競標，但現在不允許這樣做。"
 L["ERROR_ROLL_BID_IMPOSSIBLE_SELF"] = "你現在無法競標該物品。"
@@ -115,6 +118,8 @@ L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"] = "你現在無法對該物品進行投票�
 
 -- GUI
 L["DIALOG_MASTERLOOT_ASK"] = "<%s>想成為你的分裝者。"
+L["DIALOG_OPT_MASTERLOOT_LOAD"] = "This will replace your current masterloot settings with those stored in the guild/community info, are you sure you want to proceed?" -- Translation missing
+L["DIALOG_OPT_MASTERLOOT_SAVE"] = "This will replace any masterloot settings in the guild/community info with your current settings, are you sure you want to proceed?" -- Translation missing
 L["DIALOG_ROLL_CANCEL"] = "你想要取消這次擲骰嗎？"
 L["DIALOG_ROLL_RESTART"] = "你想要重新開始擲骰嗎？"
 L["FILTER"] = "過濾"
@@ -188,48 +193,63 @@ L["OPT_VERSION"] = "|cffffff00版本:|r "
 
 -- Options - Masterloot
 L["OPT_MASTERLOOT"] = "拾取分配"
-L["OPT_MASTERLOOT_ACCEPT"] = "自動接受分裝者"
-L["OPT_MASTERLOOT_ACCEPT_DESC"] = "自動接受來自其他玩家的分裝者請求。"
-L["OPT_MASTERLOOT_ALLOW"] = "允許成為分裝者"
-L["OPT_MASTERLOOT_ALLOW_ALL"] = "允許所有人"
-L["OPT_MASTERLOOT_ALLOW_ALL_DESC"] = "|cffff0000警告:|r 這會允許每個人請求成為分裝者，並可能騙你放棄戰利品！只有你知道自己在做什麼的情況下才可以啟用它。"
-L["OPT_MASTERLOOT_ALLOW_DESC"] = [=[選擇誰可以請求成為你的拾取分配者。你仍然會收到一個需要確認的彈出訊息，所以你可以在當時拒絕成為拾取分配者。
+L["OPT_MASTERLOOT_APPROVAL"] = "認可"
+L["OPT_MASTERLOOT_APPROVAL_ACCEPT"] = "自動接受分裝者"
+L["OPT_MASTERLOOT_APPROVAL_ACCEPT_DESC"] = "自動接受來自其他玩家的分裝者請求。"
+L["OPT_MASTERLOOT_APPROVAL_ALLOW"] = "允許成為分裝者"
+L["OPT_MASTERLOOT_APPROVAL_ALLOW_ALL"] = "允許所有人"
+L["OPT_MASTERLOOT_APPROVAL_ALLOW_ALL_DESC"] = "|cffff0000警告:|r 這會允許每個人請求成為分裝者，並可能騙你放棄戰利品！只有你知道自己在做什麼的情況下才可以啟用它。"
+L["OPT_MASTERLOOT_APPROVAL_ALLOW_DESC"] = [=[選擇誰可以請求成為你的拾取分配者。你仍然會收到一個需要確認的彈出訊息，所以你可以在當時拒絕成為拾取分配者。
 
 |cffffff00公會團隊:|r 團隊的%d%%或更多的成員是來自一個公會。]=]
-L["OPT_MASTERLOOT_APPROVAL"] = "認可"
 L["OPT_MASTERLOOT_APPROVAL_DESC"] = "在此你可以決定誰可以成為你的分裝者。"
+L["OPT_MASTERLOOT_APPROVAL_WHITELIST"] = "分裝者白名單"
+L["OPT_MASTERLOOT_APPROVAL_WHITELIST_DESC"] = "如果上述選項某人並非真正適宜，但你仍希望該玩家能成為你的分裝者，那麼請在此輸入名稱，用空格或逗號在名稱中分隔。"
+L["OPT_MASTERLOOT_CLUB"] = "Guild/Community" -- Translation missing
+L["OPT_MASTERLOOT_CLUB_DESC"] = "Select the Guild/Community to import/export settings from." -- Translation missing
+L["OPT_MASTERLOOT_COUNCIL"] = "議會"
+L["OPT_MASTERLOOT_COUNCIL_CLUB_RANK"] = "議會公會階級"
+L["OPT_MASTERLOOT_COUNCIL_CLUB_RANK_DESC"] = "除了上面的選項之外，想要加入這個公會階級的成員進入議會。"
+L["OPT_MASTERLOOT_COUNCIL_DESC"] = "議會的玩家可以投票表決誰該得到戰利品。"
+L["OPT_MASTERLOOT_COUNCIL_ROLES"] = "Council roles" -- Translation missing
+L["OPT_MASTERLOOT_COUNCIL_ROLES_DESC"] = "那些玩家會自動成為議會的一份子。"
+L["OPT_MASTERLOOT_COUNCIL_WHITELIST"] = "議會白名單"
+L["OPT_MASTERLOOT_COUNCIL_WHITELIST_DESC"] = "你還可以在議會中命名特定的玩家。用空格或逗號分隔多個人。"
 L["OPT_MASTERLOOT_DESC"] = "當你(或其他人)成為分裝者，所有戰利品都將由此人分發。你會收到你贏得什麼物品以及誰贏得你物品的通知，因此你可以交易物品給合適的人。"
-L["OPT_MASTERLOOT_SEARCH"] = "搜尋分裝者"
-L["OPT_MASTERLOOT_START"] = "成為分裝者"
-L["OPT_MASTERLOOT_STOP"] = "停止拾取分配"
-L["OPT_MASTERLOOT_WHITELIST"] = "分裝者白名單"
-L["OPT_MASTERLOOT_WHITELIST_DESC"] = "如果上述選項某人並非真正適宜，但你仍希望該玩家能成為你的分裝者，那麼請在此輸入名稱，用空格或逗號在名稱中分隔。"
-L["OPT_MASTERLOOTER"] = "規則"
-L["OPT_MASTERLOOTER_BID_PUBLIC"] = "公開競標"
-L["OPT_MASTERLOOTER_BID_PUBLIC_DESC"] = "你可以公開競標，這樣每個人都可以看到誰出價。"
-L["OPT_MASTERLOOTER_COUNCIL"] = "議會"
-L["OPT_MASTERLOOTER_COUNCIL_ALLOW"] = "議會成員"
-L["OPT_MASTERLOOTER_COUNCIL_ALLOW_DESC"] = "那些玩家會自動成為議會的一份子。"
-L["OPT_MASTERLOOTER_COUNCIL_DESC"] = "議會的玩家可以投票表決誰該得到戰利品。"
-L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK"] = "議會公會階級"
-L["OPT_MASTERLOOTER_COUNCIL_GUILD_RANK_DESC"] = "除了上面的選項之外，想要加入這個公會階級的成員進入議會。"
-L["OPT_MASTERLOOTER_COUNCIL_WHITELIST"] = "議會白名單"
-L["OPT_MASTERLOOTER_COUNCIL_WHITELIST_DESC"] = "你還可以在議會中命名特定的玩家。用空格或逗號分隔多個人。"
-L["OPT_MASTERLOOTER_DESC"] = "當你是分裝者時，這些選項適用於每個人。"
-L["OPT_MASTERLOOTER_GREED_ANSWERS"] = "自訂 '貪婪' 的應答"
-L["OPT_MASTERLOOTER_GREED_ANSWERS_DESC"] = [=[當擲骰'貪婪'時最多可依據優先等級指定9個自訂回答。你還可以插入'%s'本身讓優先級降低到先前回答之下。使用逗號分隔多個條目。
+L["OPT_MASTERLOOT_EXPORT_DONE"] = "Masterloot settings successfully exported to <%s>." -- Translation missing
+L["OPT_MASTERLOOT_EXPORT_GUILD_ONLY"] = "Please replace the community's current info with this text, because automatically replacing it is only possible for guilds." -- Translation missing
+L["OPT_MASTERLOOT_EXPORT_NO_PRIV"] = "Please ask a leader to replace the guild's info with this text, because you don't have the right to do so yourself." -- Translation missing
+L["OPT_MASTERLOOT_EXPORT_WINDOW"] = "Export masterloot settings" -- Translation missing
+L["OPT_MASTERLOOT_LOAD"] = "Load" -- Translation missing
+L["OPT_MASTERLOOT_LOAD_DESC"] = "Load masterloot settings from your guild/community's description." -- Translation missing
+L["OPT_MASTERLOOT_RULES"] = "規則"
+L["OPT_MASTERLOOT_RULES_AUTO_AWARD"] = "Award loot automatically" -- Translation missing
+L["OPT_MASTERLOOT_RULES_AUTO_AWARD_DESC"] = "Let the addon decide who should get the loot, based on factors like council votes, bids and equipped ilvl." -- Translation missing
+L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT"] = "Auto award time (base)" -- Translation missing
+L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_DESC"] = "The base time to wait before auto-awarding loot, so you have time to collect votes and maybe decide for yourself." -- Translation missing
+L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM"] = "Auto award time (per item)" -- Translation missing
+L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM_DESC"] = "Will be added to the base auto award time for each item that dropped." -- Translation missing
+L["OPT_MASTERLOOT_RULES_BID_PUBLIC"] = "公開競標"
+L["OPT_MASTERLOOT_RULES_BID_PUBLIC_DESC"] = "你可以公開競標，這樣每個人都可以看到誰出價。"
+L["OPT_MASTERLOOT_RULES_DESC"] = "當你是分裝者時，這些選項適用於每個人。"
+L["OPT_MASTERLOOT_RULES_DISENCHANTER"] = "Disenchanter" -- Translation missing
+L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "Give loot nobody wants to these players for disenchanting." -- Translation missing
+L["OPT_MASTERLOOT_RULES_GREED_ANSWERS"] = "自訂 '貪婪' 的應答"
+L["OPT_MASTERLOOT_RULES_GREED_ANSWERS_DESC"] = [=[當擲骰'貪婪'時最多可依據優先等級指定9個自訂回答。你還可以插入'%s'本身讓優先級降低到先前回答之下。使用逗號分隔多個條目。
 
 當擲骰戰利品時，可以透由右鍵點擊'貪婪'按鈕來查閱。]=]
-L["OPT_MASTERLOOTER_NEED_ANSWERS"] = "自訂 '需求' 的應答"
-L["OPT_MASTERLOOTER_NEED_ANSWERS_DESC"] = [=[當擲骰'需求'時最多可依據優先等級指定9個自訂回答。你還可以插入'%s'本身讓優先級降低到先前回答之下。使用逗號分隔多個條目。
+L["OPT_MASTERLOOT_RULES_NEED_ANSWERS"] = "自訂 '需求' 的應答"
+L["OPT_MASTERLOOT_RULES_NEED_ANSWERS_DESC"] = [=[當擲骰'需求'時最多可依據優先等級指定9個自訂回答。你還可以插入'%s'本身讓優先級降低到先前回答之下。使用逗號分隔多個條目。
 
 當擲骰戰利品時，可以透由右鍵點擊'需求'按鈕來查閱。]=]
-L["OPT_MASTERLOOTER_TIMEOUT_BASE"] = "骰裝時間(基本)"
-L["OPT_MASTERLOOTER_TIMEOUT_BASE_DESC"] = "無論掉落多少物品，骰裝的基本運行時間。"
-L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM"] = "骰裝時間(每項物品)"
-L["OPT_MASTERLOOTER_TIMEOUT_PER_ITEM_DESC"] = "將每個掉落的物品都加入到基本骰裝運行時間。"
-L["OPT_MASTERLOOTER_VOTE_PUBLIC"] = "議會投票公開"
-L["OPT_MASTERLOOTER_VOTE_PUBLIC_DESC"] = "你可以公開議會表決，所以每個人都可以看到誰有多少票。"
+L["OPT_MASTERLOOT_RULES_TIMEOUT_BASE"] = "骰裝時間(基本)"
+L["OPT_MASTERLOOT_RULES_TIMEOUT_BASE_DESC"] = "無論掉落多少物品，骰裝的基本運行時間。"
+L["OPT_MASTERLOOT_RULES_TIMEOUT_PER_ITEM"] = "骰裝時間(每項物品)"
+L["OPT_MASTERLOOT_RULES_TIMEOUT_PER_ITEM_DESC"] = "將每個掉落的物品都加入到基本骰裝運行時間。"
+L["OPT_MASTERLOOT_RULES_VOTE_PUBLIC"] = "議會投票公開"
+L["OPT_MASTERLOOT_RULES_VOTE_PUBLIC_DESC"] = "你可以公開議會表決，所以每個人都可以看到誰有多少票。"
+L["OPT_MASTERLOOT_SAVE"] = "Save" -- Translation missing
+L["OPT_MASTERLOOT_SAVE_DESC"] = "Save your current masterloot settings to your guild/community's description." -- Translation missing
 
 -- Options - Messages
 L["OPT_CUSTOM_MESSAGES"] = "自訂訊息"
@@ -258,11 +278,12 @@ L["OPT_GROUPCHAT_DESC"] = "更改插件是否要將骰裝公告到團體聊天�
 L["OPT_GROUPCHAT_GROUP_TYPE"] = "公告依據團體類型"
 L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[只有當你是處於以下團體類型時發送到團體聊天。
 
-|cffffff78公會團隊：|r團隊的%d%%或更多的成員是來自一個公會。]=]
+|cffffff78公會團隊：|r團隊的%d%%或更多的成員是來自一個公會。
+|cffffff78Community Group:|r The members of one of your WoW-Communities make up %d%% or more of the group.]=] -- Translation missing
 L["OPT_GROUPCHAT_ROLL"] = "在聊天中擲骰戰利品"
 L["OPT_GROUPCHAT_ROLL_DESC"] = "如果其他人在團體聊天中貼出連結，請擲骰你要的戰利品(/roll)。"
 L["OPT_MESSAGES"] = "訊息"
-L["OPT_MSG_BID"] = "競標來自其他玩家的物品 (Variant %d)" -- Translation outdated
+L["OPT_MSG_BID"] = "詢問戰利品：異色版 %d"
 L["OPT_MSG_BID_DESC"] = "1：物品連結"
 L["OPT_MSG_ROLL_ANSWER_AMBIGUOUS"] = "回答：發給我物品連結"
 L["OPT_MSG_ROLL_ANSWER_AMBIGUOUS_DESC"] = ""
@@ -312,7 +333,8 @@ L["OPT_WHISPER_GROUP_DESC"] = "如果其他人拾取你想要的物品則密語�
 L["OPT_WHISPER_GROUP_TYPE"] = "訊問根據團體類型"
 L["OPT_WHISPER_GROUP_TYPE_DESC"] = [=[只有當你處於以下類型團體時才訊問戰利品。
 
-|cffffff78公會團隊：|r團隊的%d%%或更多的成員是來自一個公會。]=]
+|cffffff78公會團隊：|r團隊的%d%%或更多的成員是來自一個公會。
+|cffffff78Community Group:|r The members of one of your WoW-Communities make up %d%% or more of the group.]=] -- Translation missing
 L["OPT_WHISPER_SUPPRESS"] = "阻擋詢問"
 L["OPT_WHISPER_SUPPRESS_DESC"] = "當你放棄戰利品時，阻擋來自符合條件玩家的密語訊息。"
 L["OPT_WHISPER_TARGET"] = "詢問目標"
@@ -327,6 +349,7 @@ L["BID_START"] = "競標%q 在%s 來自%s。"
 L["MASTERLOOTER_OTHER"] = "%s 現在負責分裝。"
 L["MASTERLOOTER_SELF"] = "你現在負責分裝。"
 L["ROLL_AWARDED"] = "已給予"
+L["ROLL_AWARDING"] = "Awading" -- Translation missing
 L["ROLL_CANCEL"] = "取消骰由%2$s提供的 %1$s。"
 L["ROLL_END"] = "由%2$s提供的 %1$s 擲骰結束。"
 L["ROLL_IGNORING_BID"] = "忽略%s對%s的競標，因為之前已經聊過了 -> 競標: %s 或 %s。"

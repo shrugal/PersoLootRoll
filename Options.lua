@@ -495,6 +495,9 @@ function Self.RegisterMasterloot()
     local clubValues = Util(clubs).Copy()
         .Map(function (info) return info.name .. (info.clubType == Enum.ClubType.Guild and " (" .. GUILD .. ")" or "") end)()
     Addon.db.char.masterloot.council.clubId = Addon.db.char.masterloot.council.clubId or clubs[1] and clubs[1].clubId
+
+    -- This fixes the spacing bug with AceConfigDialog
+    CD:ConfigTableChanged("ConfigTableChanged", Name .. " Masterloot")
     
     return {
         name = L["OPT_MASTERLOOT"],
@@ -626,6 +629,29 @@ function Self.RegisterMasterloot()
                         width = Self.WIDTH_HALF
                     },
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+                    bidPublic = {
+                        name = L["OPT_MASTERLOOT_RULES_BID_PUBLIC"],
+                        desc = L["OPT_MASTERLOOT_RULES_BID_PUBLIC_DESC"] .. "\n",
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val)
+                            Addon.db.profile.masterloot.rules.bidPublic = val
+                        end,
+                        get = function () return Addon.db.profile.masterloot.rules.bidPublic end,
+                        width = Self.WIDTH_HALF
+                    },
+                    votePublic = {
+                        name = L["OPT_MASTERLOOT_RULES_VOTE_PUBLIC"],
+                        desc = L["OPT_MASTERLOOT_RULES_VOTE_PUBLIC_DESC"],
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val)
+                            Addon.db.profile.masterloot.rules.votePublic = val
+                        end,
+                        get = function () return Addon.db.profile.masterloot.rules.votePublic end,
+                        width = Self.WIDTH_HALF
+                    },
+                    ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
                     needAnswers = {
                         name = L["OPT_MASTERLOOT_RULES_NEED_ANSWERS"],
                         desc = L["OPT_MASTERLOOT_RULES_NEED_ANSWERS_DESC"]:format(NEED),
@@ -672,29 +698,24 @@ function Self.RegisterMasterloot()
                         end,
                         width = Self.WIDTH_FULL
                     },
+                    --[[
+                    disenchanter = {
+                        name = L["OPT_MASTERLOOT_RULES_DISENCHANTER"],
+                        desc = L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"],
+                        type = "input",
+                        order = it(),
+                        set = function (_, val)
+                            local r, w, t = GetRealmName(), Addon.db.profile.masterloot.rules.disenchanter
+                            if w[r] then t = wipe(w[r]) else t = Util.Tbl() w[r] = t end
+                            for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do t[v] = true end
+                        end,
+                        get = function ()
+                            return Util(Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()] or Util.TBL_EMPTY).Keys().Sort().Concat(", ")()
+                        end,
+                        width = Self.WIDTH_FULL
+                    },
+                    --]]
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
-                    bidPublic = {
-                        name = L["OPT_MASTERLOOT_RULES_BID_PUBLIC"],
-                        desc = L["OPT_MASTERLOOT_RULES_BID_PUBLIC_DESC"] .. "\n",
-                        type = "toggle",
-                        order = it(),
-                        set = function (_, val)
-                            Addon.db.profile.masterloot.rules.bidPublic = val
-                        end,
-                        get = function () return Addon.db.profile.masterloot.rules.bidPublic end,
-                        width = Self.WIDTH_HALF
-                    },
-                    votePublic = {
-                        name = L["OPT_MASTERLOOT_RULES_VOTE_PUBLIC"],
-                        desc = L["OPT_MASTERLOOT_RULES_VOTE_PUBLIC_DESC"],
-                        type = "toggle",
-                        order = it(),
-                        set = function (_, val)
-                            Addon.db.profile.masterloot.rules.votePublic = val
-                        end,
-                        get = function () return Addon.db.profile.masterloot.rules.votePublic end,
-                        width = Self.WIDTH_HALF
-                    },
                     autoAward = {
                         name = L["OPT_MASTERLOOT_RULES_AUTO_AWARD"],
                         desc = L["OPT_MASTERLOOT_RULES_AUTO_AWARD_DESC"],
@@ -787,21 +808,26 @@ end
 
 function Self.ImportRules()
     local clubId = Addon.db.char.masterloot.council.clubId
+    local c = Addon.db.profile.masterloot
     local s = Self.ReadFromClub(clubId)
 
     -- Rules
-    for i in pairs(Addon.db.profile.masterloot.rules) do
-        Addon.db.profile.masterloot.rules[i] = Util.Default(s[i], Addon.db.defaults.profile.masterloot.rules[i])
+    for i in pairs(c.rules) do
+        if i ~= "disenchanter" then
+            c.rules[i] = Util.Default(s[i], Addon.db.defaults.profile.masterloot.rules[i])
+        end
     end
+
+    c.rules.disenchanter[GetRealmName()] = Util.TblIsFilled(s.disenchanter) and Util.TblFlip(s.disenchanter, true)
 
     -- Council
     local ranks = Util.GetClubRanks(clubId)
-    Util.TblSet(Addon.db.profile.masterloot.council.clubs, clubId, "ranks", Util(s.councilRanks or Util.TBL_EMPTY).Map(function (v)
+    Util.TblSet(c.council.clubs, clubId, "ranks", Util(s.councilRanks or Util.TBL_EMPTY).Map(function (v)
         return tonumber(v) or Util.TblFind(ranks, v)
     end).Flip(true)())
 
-    Addon.db.profile.masterloot.council.roles = Util.TblFlip(s.councilRoles or Util.TBL_EMPTY, true)
-    Addon.db.profile.masterloot.council.whitelists[GetRealmName()] = Util.TblIsFilled(s.councilWhitelist) and Util.TblFlip(s.councilWhitelist, true)
+    c.council.roles = Util.TblFlip(s.councilRoles or Util.TBL_EMPTY, true)
+    c.council.whitelists[GetRealmName()] = Util.TblIsFilled(s.councilWhitelist) and Util.TblFlip(s.councilWhitelist, true)
 
     CR:NotifyChange(Name .. " Masterloot")
 end
@@ -815,10 +841,13 @@ function Self.ExportRules()
     -- Rules
     for i,v in pairs(c.rules) do
         local d = Addon.db.defaults.profile.masterloot.rules[i]
-        if v ~= d and not (type(v) == "table" and Util.TblEquals(v, d)) then
+        if i ~= "disenchanter" and v ~= d and not (type(v) == "table" and Util.TblEquals(v, d)) then
             s[i] = v
         end
     end
+
+    local dis = Util.TblKeys(c.rules.disenchanter[GetRealmName()] or Util.TBL_EMPTY)
+    if next(dis) then s.disenchanter = dis end
 
     -- Council
     local ranks = Util(Util.TblGet(c.council.clubs, clubId, "ranks") or Util.TBL_EMPTY).CopyOnly(true, true).Keys()()
@@ -828,6 +857,7 @@ function Self.ExportRules()
     local wl = Util.TblKeys(c.council.whitelists[GetRealmName()] or Util.TBL_EMPTY)
     if next(wl) then s.councilWhitelist = wl end
 
+    -- Export
     local r, canWrite = Self.WriteToClub(clubId, s)
     if r and type(r) == "string" then
         local f = GUI("Frame")
