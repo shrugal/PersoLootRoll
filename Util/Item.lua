@@ -822,9 +822,25 @@ function Self:IsUseful(unit, ...)
     end
 end
 
+-- Check if the item is an upgrade according to Pawn
+function Self:IsPawnUpgrade(unit, ...)
+    if unit and not Util.IsSelf(unit) or not (IsAddOnLoaded("Pawn") and PawnGetItemData and PawnIsItemAnUpgrade and PawnCommon and PawnCommon.Scales) then
+        return false
+    else
+        local data = PawnGetItemData(self.link)
+        if data then
+            for i,scale in pairs(PawnIsItemAnUpgrade(data) or Util.TBL_EMPTY) do
+                if not ... or Util.In(PawnCommon.Scales[scale.ScaleName].specID, ...) then
+                    return true
+                end
+            end
+        end
+    end
+end
+
 -- Check if we need the transmog appearance
-function Self:IsTransmogNeeded(unit)
-    return (not unit or Unit.IsSelf(unit)) and Addon.db.profile.transmog and self:GetFullInfo().isTransmogKnown == false
+function Self:IsTransmogMissing(unit)
+    return (not unit or Unit.IsSelf(unit)) and self:GetFullInfo().isTransmogKnown == false
 end
 
 -- Register an eligible unit's interest
@@ -837,15 +853,24 @@ end
 function Self:GetEligible(unit)
     if not self.eligible then
         if unit then
-            if not self.isSoulbound and self:IsTransmogNeeded(unit) then
+            if not self.isSoulbound and Addon.db.profile.transmog and self:IsTransmogMissing(unit) then
                 return true
             elseif not self:CanBeEquipped(unit) then
                 return nil
+            elseif not self:HasSufficientLevel(unit) then
+                return false
+            elseif Addon.db.profile.transmog and self:IsTransmogMissing(unit) then
+                return true
             else
-                local specs = Unit.IsSelf(unit) and Util(Addon.db.char.specs).CopyOnly(true, true).Keys()() or nil
-                local result = self:IsTransmogNeeded(unit) or self:HasSufficientLevel(unit) and self:IsUseful(unit, specs)
-                Util.TblRelease(specs)
-                return result
+                local isSelf = Util.IsSelf(unit)
+                local specs = isSelf and Util(Addon.db.char.specs).CopyOnly(true, true).Keys()() or nil
+                local isUseful = self:IsUseful(unit, specs)
+
+                if isUseful and isSelf and Addon.db.profile.pawn and IsAddOnLoaded("Pawn") then
+                    isUseful = self:IsPawnUpgrade(unit, specs)
+                end
+
+                return isUseful or false, Util.TblRelease(specs)
             end
         else
             local eligible = Util.Tbl()

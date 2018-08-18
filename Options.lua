@@ -228,6 +228,16 @@ function Self.RegisterGeneral()
                 get = function (_, key) return Addon.db.char.specs[key] end
             },
             ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+            pawn = {
+                name = L["OPT_PAWN"],
+                desc = L["OPT_PAWN_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.pawn = val end,
+                get = function () return Addon.db.profile.pawn end,
+                width = Self.WIDTH_HALF,
+                hidden = function () return not IsAddOnLoaded("Pawn") end
+            },
             transmog = {
                 name = L["OPT_TRANSMOG"],
                 desc = L["OPT_TRANSMOG_DESC"],
@@ -235,7 +245,7 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.transmog = val end,
                 get = function () return Addon.db.profile.transmog end,
-                width = Self.WIDTH_FULL
+                width = function () return IsAddOnLoaded("Pawn") and Self.WIDTH_HALF or Self.WIDTH_FULL end
             }
         }
     }

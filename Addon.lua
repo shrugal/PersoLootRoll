@@ -48,6 +48,7 @@ function Addon:OnInitialize()
             -- Item filter
             ilvlThreshold = 30,
             ilvlThresholdTrinkets = true,
+            pawn = false,
             transmog = false,
 
             -- Messages
