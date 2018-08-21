@@ -325,11 +325,11 @@ function Self.EnableUnitMenus()
 
                         if placed then
                             local x, y = select(4, f:GetPoint(1))
-                            f:SetPoint("TOPLEFT", x, y - UIDROPDOWNMENU_BUTTON_HEIGHT)
+                            f:SetPoint("TOPLEFT", x or 0, (y or 0) - UIDROPDOWNMENU_BUTTON_HEIGHT)
                         elseif Util.In(f.value, "LOOT_SUBSECTION_TITLE", "INTERACT_SUBSECTION_TITLE") then
                             local x, y = select(4, f:GetPoint(1))
                             GUI(button).SetParent(parent).ClearAllPoints()
-                                .SetPoint("TOPLEFT", x, y - UIDROPDOWNMENU_BUTTON_HEIGHT)
+                                .SetPoint("TOPLEFT", x or 0, (y or 0) - UIDROPDOWNMENU_BUTTON_HEIGHT)
                                 .SetWidth(parent.maxWidth)
                                 .Show()
                             button.unit = unit

@@ -171,7 +171,7 @@ function Self.ToggleAwardOrVoteDropdown(roll, ...)
         for i,player in pairs(players) do
             local f = Self("Dropdown-Item-Execute")
                 .SetText(("%s: |c%s%s|r (%s: %s, %s: %s)"):format(
-                    Unit.ColoredName(Unit.ShortenedName(player.unit), player.unit),
+                    Unit.ColoredShortenedName(player.unit),
                     Util.StrColor(Self.GetBidColor(player.bid)), roll:GetBidName(player.bid),
                     L["VOTES"], player.votes,
                     L["ITEM_LEVEL"], player.ilvl

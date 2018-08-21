@@ -95,6 +95,11 @@ function Self.ColoredName(name, unit)
     return ("|c%s%s|r"):format(color.colorStr, name)
 end
 
+-- It's just such a common usecase
+function Self.ColoredShortenedName(unit)
+    return Self.ColoredName(Self.ShortenedName(unit), unit)
+end
+
 -------------------------------------------------------
 --                      Social                       --
 -------------------------------------------------------

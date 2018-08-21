@@ -87,7 +87,7 @@ function Self.Show()
                         if count > 0 then
                             GameTooltip:SetText(L["TIP_ADDON_VERSIONS"])                        
                             for unit,version in pairs(Addon.versions) do
-                                local name = Unit.ColoredName(Unit.ShortenedName(unit), unit)
+                                local name = Unit.ColoredShortenedName(unit)
                                 local versionColor = Util.Select(Addon:CompareVersion(version), -1, "ff0000", 1, "00ff00", "ffffff")
                                 local line = ("%s: |cff%s%s|r"):format(name, versionColor, version) .. (Addon.disabled[unit] and " (" .. OFF .. ")" or "")
                                 GameTooltip:AddLine(line, 1, 1, 1, false)
@@ -98,7 +98,7 @@ function Self.Show()
                         if next(Addon.plhUsers) then
                             GameTooltip:AddLine((count > 0 and "\n" or "") .. L["TIP_PLH_USERS"])
                             for unit,version in pairs(Addon.plhUsers) do
-                                GameTooltip:AddLine(Unit.ColoredName(Unit.ShortenedName(unit), unit) .. ": " .. version, 1, 1, 1, false)
+                                GameTooltip:AddLine(Unit.ColoredShortenedName(unit) .. ": " .. version, 1, 1, 1, false)
                             end
                         end
 
@@ -109,7 +109,7 @@ function Self.Show()
                             for i=1,GetNumGroupMembers() do
                                 local unit = GetRaidRosterInfo(i)
                                 if unit and not Addon.versions[unit] and not Unit.IsSelf(unit) then
-                                    s = Util.StrPostfix(s, ", ") .. Unit.ColoredName(Unit.ShortenedName(unit), unit)
+                                    s = Util.StrPostfix(s, ", ") .. Unit.ColoredShortenedName(unit)
                                 end
                             end
                             GameTooltip:AddLine(s, 1, 1, 1, true)
@@ -184,7 +184,7 @@ function Self.Show()
                         local s = Session.rules
                         local timeoutBase, timeoutPerItem = s.timeoutBase or Roll.TIMEOUT, s.timeoutPerItem or Roll.TIMEOUT_PER_ITEM
                         local council = not s.council and "-" or Util(s.council).Keys().Map(function (unit)
-                            return Unit.ColoredName(Unit.ShortenedName(unit), unit)
+                            return Unit.ColoredShortenedName(unit)
                         end).Concat(", ")()
                         local bids = L[s.bidPublic and "PUBLIC" or "PRIVATE"]
                         local votes = L[s.votePublic and "PUBLIC" or "PRIVATE"]
@@ -198,7 +198,7 @@ function Self.Show()
                         local units = Unit.ColoredName(UnitName("player"))
                         for unit,unitMl in pairs(Session.masterlooting) do
                             if ml == unitMl then
-                                units = units .. ", " .. Unit.ColoredName(Unit.ShortenedName(unit), unit)
+                                units = units .. ", " .. Unit.ColoredShortenedName(unit)
                             end
                         end
                         GameTooltip:AddLine(units, 1, 1, 1, 1)
@@ -490,13 +490,13 @@ function Self.Update()
 
         -- Owner
         GUI(children[it()])
-            .SetText(Unit.ColoredName(Unit.ShortenedName(roll.item.owner), roll.item.owner))
+            .SetText(Unit.ColoredShortenedName(roll.item.owner))
             .SetUserData("unit", roll.item.owner)
             .Show()
 
         -- ML
         GUI(children[it()])
-            .SetText(roll:HasMasterlooter() and Unit.ColoredName(Unit.ShortenedName(roll.owner), roll.owner) or "-")
+            .SetText(roll:HasMasterlooter() and Unit.ColoredShortenedName(roll.owner) or "-")
             .SetUserData("unit", roll:HasMasterlooter() and roll.owner or nil)
             .Show()
 
@@ -520,7 +520,7 @@ function Self.Update()
 
         -- Winner
         GUI(children[it()])
-            .SetText(roll.winner and Unit.ColoredName(Unit.ShortenedName(roll.winner), roll.winner) or "-")
+            .SetText(roll.winner and Unit.ColoredShortenedName(roll.winner) or "-")
             .SetUserData("unit", roll.winner or nil)
             .Show()
 
@@ -615,7 +615,7 @@ function Self.Update()
 
     -- ML
     GUI(filter.children[it()])
-        .SetText(L["ML"] .. ": " .. (ml and Unit.ColoredName(Unit.ShortenedName(ml)) or ""))
+        .SetText(L["ML"] .. ": " .. (ml and Unit.ColoredShortenedName(ml)) or ""))
         .SetUserData("unit", ml)
 end
 
@@ -712,7 +712,7 @@ function Self.UpdateDetails(details, roll)
 
         -- Unit
         GUI(children[it()])
-            .SetText(Unit.ColoredName(Unit.ShortenedName(player.unit), player.unit))
+            .SetText(Unit.ColoredShortenedName(player.unit))
             .SetUserData("unit", player.unit)
             .Show()
 
