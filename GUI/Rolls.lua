@@ -534,6 +534,7 @@ function Self.Update()
             local canBid = not roll.bid and roll:UnitCanBid()
             local canPass = roll:UnitCanPass()
             local canBeAwarded = roll:CanBeAwarded(true)
+            local canTrade = roll.ownerId or roll.chat
             local actionTarget = roll:GetActionTarget()
 
             -- Need
@@ -554,7 +555,11 @@ function Self.Update()
                 .SetUserData("unit", actionTarget)
                 .Toggle(actionTarget)
             -- Trade
-            GUI(children[it()]).SetUserData("roll", roll).Toggle(actionTarget)
+            GUI(children[it()])
+                .SetUserData("roll", roll)
+                .SetUserData("text", canTrade and TRADE or L["TIP_CHAT_TO_TRADE"])
+                .Toggle(actionTarget)
+                .SetDisabled(not canTrade)
             -- Restart
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeRestarted())
             -- Cancel

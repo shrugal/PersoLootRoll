@@ -138,6 +138,7 @@ L["MENU_MASTERLOOT_START"] = "成為分裝者"
 L["TIP_ADDON_MISSING"] = "插件缺少："
 L["TIP_ADDON_VERSIONS"] = "插件版本："
 L["TIP_ENABLE_WHISPER_ASK"] = "提示：右鍵點擊啟用戰利品自動詢問"
+L["TIP_CHAT_TO_TRADE"] = "Please ask the owner first before trading" -- Translation missing
 L["TIP_MASTERLOOT"] = "隊長分配是啟用的"
 L["TIP_MASTERLOOT_INFO"] = [=[|cffffff00分裝者:|r %s 
 |cffffff00擲骰時間:|r %ds (+ %ds 每項物品) 
