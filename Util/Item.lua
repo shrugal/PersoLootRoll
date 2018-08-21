@@ -7,7 +7,7 @@ local Self = Addon.Item
 -------------------------------------------------------
 
 -- Item level threshold
-Self.ILVL_THRESHOLD = 30
+Self.ILVL_THRESHOLD = 15
 
 -- For editor auto-completion:
 -- Quality: LE_ITEM_QUALITY_POOR, LE_ITEM_QUALITY_COMMON, LE_ITEM_QUALITY_UNCOMMON, LE_ITEM_QUALITY_RARE, LE_ITEM_QUALITY_EPIC, LE_ITEM_QUALITY_LEGENDARY, LE_ITEM_QUALITY_ARTIFACT, LE_ITEM_QUALITY_HEIRLOOM, LE_ITEM_QUALITY_WOW_TOKEN
@@ -862,7 +862,7 @@ function Self:GetEligible(unit)
             elseif Addon.db.profile.transmog and self:IsTransmogMissing(unit) then
                 return true
             else
-                local isSelf = Util.IsSelf(unit)
+                local isSelf = Unit.IsSelf(unit)
                 local specs = isSelf and Util(Addon.db.char.specs).CopyOnly(true, true).Keys()() or nil
                 local isUseful = self:IsUseful(unit, specs)
 
