@@ -716,8 +716,12 @@ end
 -- Log a chat message about the roll
 function Self:AddChat(msg, unit)
     unit = unit or "player"
+    local c = ChatTypeInfo[Unit.IsSelf(unit) and "WHISPER_INFORM" or "WHISPER"] or Util.TBL_EMPTY
+    msg = ("|c%s[%s]: %s|r"):format(Util.StrColor(c.r, c.g, c.b), Unit.ColoredShortenedName(unit), msg)
+
     self.chat = self.chat or Util.Tbl()
-    tinsert(self.chat, "[" .. Unit.ColoredName(Unit.ShortenedName(unit), unit) .. "]: " .. msg)    
+    tinsert(self.chat, msg)
+    
     Self.events:Fire(Self.EVENT_CHAT, self)
 end
 

@@ -199,7 +199,7 @@ function Self.Update()
 
         -- Target
         GUI(children[it()])
-            .SetText(target and Unit.ColoredName(Unit.ShortenedName(target), target) or "-")
+            .SetText(target and Unit.ColoredShortenedName(target) or "-")
             .SetUserData("unit", target)
             .Show()
 

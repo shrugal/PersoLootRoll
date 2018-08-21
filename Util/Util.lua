@@ -1102,7 +1102,7 @@ function Self.StrAbbr(str, length)
 end
 
 function Self.StrColor(r, g, b, a)
-    return ("%.2x%.2x%.2x%.2x"):format((a or 1) * 255, r * 255, g * 255, b * 255)
+    return ("%.2x%.2x%.2x%.2x"):format((a or 1) * 255, (r or 1) * 255, (g or 1) * 255, (b or 1) * 255)
 end
 
 function Self.StrReplace(str, from, len, sub)
