@@ -138,6 +138,7 @@ L["MENU_MASTERLOOT_START"] = "Become masterlooter"
 L["TIP_ADDON_MISSING"] = "Addon missing:"
 L["TIP_ADDON_VERSIONS"] = "Addon versions:"
 L["TIP_ENABLE_WHISPER_ASK"] = "Tip: Right-Click to enable asking for loot automatically"
+L["TIP_CHAT_TO_TRADE"] = "Please ask the owner first before trading"
 L["TIP_MASTERLOOT"] = "Masterloot is active"
 L["TIP_MASTERLOOT_INFO"] = [=[|cffffff78Masterlooter:|r %s
 |cffffff78Roll time:|r %ds (+ %ds per item)

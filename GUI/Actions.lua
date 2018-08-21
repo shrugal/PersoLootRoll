@@ -182,6 +182,7 @@ function Self.Update()
         
         local action = roll:GetActionRequired()
         local target = roll:GetActionTarget()
+        local canTrade = roll.ownerId or roll.chat
 
         -- ID
         GUI(children[it()]).SetText(roll.id).Show()
@@ -218,7 +219,11 @@ function Self.Update()
                 .SetImageSize(13, 13).SetWidth(13).SetHeight(13)
                 .Toggle(target)
             -- Trade
-            GUI(children[it()]).SetUserData("roll", roll).Toggle(target)
+            GUI(children[it()])
+                .SetUserData("roll", roll)
+                .SetUserData("text", canTrade and TRADE or L["TIP_CHAT_TO_TRADE"])
+                .Toggle(target)
+                .SetDisabled(not canTrade)
             -- Award or vote
             GUI(children[it()])
                 .SetUserData("roll", roll)

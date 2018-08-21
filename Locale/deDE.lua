@@ -138,6 +138,7 @@ L["MENU_MASTERLOOT_START"] = "Werde Plündermeister"
 L["TIP_ADDON_MISSING"] = "Addon fehlt:"
 L["TIP_ADDON_VERSIONS"] = "Addon Versionen:"
 L["TIP_ENABLE_WHISPER_ASK"] = "Tipp: Rechts-Klick um das automatische Fragen nach Loot zu aktivieren"
+L["TIP_CHAT_TO_TRADE"] = "Bitte frag das Ziel erst bevor zu handelst"
 L["TIP_MASTERLOOT"] = "Plündermeister ist aktiv"
 L["TIP_MASTERLOOT_INFO"] = [=[|cffffff78Plündermeister:|r %s
 |cffffff78Roll Zeit:|r %ds (+ %ds pro Item)
