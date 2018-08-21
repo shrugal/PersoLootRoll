@@ -191,10 +191,8 @@ function Self.RegisterGeneral()
                 desc = L["OPT_ILVL_THRESHOLD_DESC"],
                 type = "range",
                 order = it(),
-                min = -2 * Item.ILVL_THRESHOLD,
-                max = 2 * Item.ILVL_THRESHOLD,
-                softMin = 0,
-                softMax = Item.ILVL_THRESHOLD,
+                min = -4 * Item.ILVL_THRESHOLD,
+                max = 4 * Item.ILVL_THRESHOLD,
                 step = 5,
                 set = function (_, val) Addon.db.profile.ilvlThreshold = val end,
                 get = function () return Addon.db.profile.ilvlThreshold end,
@@ -245,7 +243,7 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.transmog = val end,
                 get = function () return Addon.db.profile.transmog end,
-                width = function () return IsAddOnLoaded("Pawn") and Self.WIDTH_HALF or Self.WIDTH_FULL end
+                width = IsAddOnLoaded("Pawn") and Self.WIDTH_HALF or Self.WIDTH_FULL
             }
         }
     }
