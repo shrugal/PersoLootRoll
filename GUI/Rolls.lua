@@ -534,7 +534,7 @@ function Self.Update()
             local canBid = not roll.bid and roll:UnitCanBid()
             local canPass = roll:UnitCanPass()
             local canBeAwarded = roll:CanBeAwarded(true)
-            local canTrade = roll.ownerId or roll.chat
+            local canTrade = Trade.ShouldInitTrade(roll)
             local actionTarget = roll:GetActionTarget()
 
             -- Need
@@ -615,7 +615,7 @@ function Self.Update()
 
     -- ML
     GUI(filter.children[it()])
-        .SetText(L["ML"] .. ": " .. (ml and Unit.ColoredShortenedName(ml)) or ""))
+        .SetText(L["ML"] .. ": " .. (ml and Unit.ColoredShortenedName(ml)) or "")
         .SetUserData("unit", ml)
 end
 

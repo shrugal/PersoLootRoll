@@ -146,3 +146,13 @@ function Self.OnClose()
         Self.timers.onClose = Addon:ScheduleTimer(Self.End, 1)
     end
 end
+
+-------------------------------------------------------
+--                       Helper                      --
+-------------------------------------------------------
+
+-- Check if the user should be allowed to initiate trade with a roll owner or winner
+function Self.ShouldInitTrade(roll)
+    local target = roll:GetActionTarget()
+    return target and (roll.ownerId or roll.chat or IsGuildMember(target) or Unit.IsFriend(target) or Unit.IsCommunityMember(target))
+end
