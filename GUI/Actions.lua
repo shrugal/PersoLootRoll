@@ -182,7 +182,7 @@ function Self.Update()
         
         local action = roll:GetActionRequired()
         local target = roll:GetActionTarget()
-        local canTrade = roll.ownerId or roll.chat
+        local canTrade = Trade.ShouldInitTrade(roll)
 
         -- ID
         GUI(children[it()]).SetText(roll.id).Show()

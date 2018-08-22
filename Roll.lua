@@ -978,7 +978,7 @@ function Self:CanBeWon(includeDone)
 end
 
 -- Check if the given unit can win this roll
-function Self:CanBeWonBy(unit, includeDone, checkIlvl)
+function Self:UnitCanWin(unit, includeDone, checkIlvl)
     return self:CanBeWon(includeDone) and self:UnitIsEligible(unit, checkIlvl)
 end
 
@@ -989,7 +989,7 @@ end
 
 -- Check if we can still award the roll to the given unit
 function Self:CanBeAwardedTo(unit, includeDone, checkIlvl)
-    return self.isOwner and self:CanBeWonBy(unit, includeDone, checkIlvl)
+    return self.isOwner and self:UnitCanWin(unit, includeDone, checkIlvl)
 end
 
 -- Check if the roll can be bid on
@@ -999,7 +999,7 @@ end
 
 -- Check if the given unit can bid on this roll
 function Self:UnitCanBid(unit, checkIlvl)
-    return not (Addon.db.profile.dontShare and Unit.IsSelf(unit or "player")) and self:CanBeBidOn() and self:CanBeWonBy(unit, nil, checkIlvl)
+    return not (Addon.db.profile.dontShare and Unit.IsSelf(unit or "player")) and self:CanBeBidOn() and self:UnitCanWin(unit, nil, checkIlvl)
 end
 
 -- Check if the roll can be voted on
