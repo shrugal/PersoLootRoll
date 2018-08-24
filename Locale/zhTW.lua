@@ -138,7 +138,7 @@ L["MENU_MASTERLOOT_START"] = "成為分裝者"
 L["TIP_ADDON_MISSING"] = "插件缺少："
 L["TIP_ADDON_VERSIONS"] = "插件版本："
 L["TIP_ENABLE_WHISPER_ASK"] = "提示：右鍵點擊啟用戰利品自動詢問"
-L["TIP_CHAT_TO_TRADE"] = "Please ask the owner first before trading" -- Translation missing
+L["TIP_CHAT_TO_TRADE"] = "交易前請先詢問提供者"
 L["TIP_MASTERLOOT"] = "隊長分配是啟用的"
 L["TIP_MASTERLOOT_INFO"] = [=[|cffffff00分裝者:|r %s 
 |cffffff00擲骰時間:|r %ds (+ %ds 每項物品) 
@@ -181,8 +181,8 @@ L["OPT_MINIMAP_ICON"] = "顯示小地圖圖示"
 L["OPT_MINIMAP_ICON_DESC"] = "顯示或隱藏小地圖圖示"
 L["OPT_ONLY_MASTERLOOT"] = "只有拾取分配"
 L["OPT_ONLY_MASTERLOOT_DESC"] = "只有使用拾取分配時才啟用此插件(例如跟你的公會一起)"
-L["OPT_PAWN"] = "Check \"Pawn\"" -- Translation missing
-L["OPT_PAWN_DESC"] = "Only roll on items that are an upgrade according to the \"Pawn\" addon." -- Translation missing
+L["OPT_PAWN"] = "檢查 \"Pawn\" 提供的數值"
+L["OPT_PAWN_DESC"] = "只骰裝備屬性比較插件 \"Pawn\" 標示為提升的物品。"
 L["OPT_ROLL_FRAMES"] = "顯示擲骰框架"
 L["OPT_ROLL_FRAMES_DESC"] = "當某人拾取你感興趣的戰利品時顯示擲骰框架，這樣你就可以骰它。"
 L["OPT_ROLLS_WINDOW"] = "顯示擲骰視窗"
