@@ -18,6 +18,7 @@ Util\Locale.lua
 Locale\enUS.lua
 Locale\deDE.lua
 Locale\zhTW.lua
+Locale\ruRU.lua
 Util\Comm.lua
 Util\Item.lua
 
