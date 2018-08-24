@@ -615,7 +615,7 @@ function Self.Update()
 
     -- ML
     GUI(filter.children[it()])
-        .SetText(L["ML"] .. ": " .. (ml and Unit.ColoredShortenedName(ml)) or "")
+        .SetText(L["ML"] .. ": " .. (ml and Unit.ColoredShortenedName(ml) or ""))
         .SetUserData("unit", ml)
 end
 
