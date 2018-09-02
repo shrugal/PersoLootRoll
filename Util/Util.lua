@@ -652,7 +652,7 @@ function Self.TblFilter(t, fn, index, k, ...)
     else
         for i,v in pairs(t) do
             if index and not fn(v, i, ...) or not index and not fn(v, ...) then
-                if k then t[i] = nil else tremove(t, i) end
+                Self.TblRemove(t, i, k)
             end
         end
     end
@@ -717,7 +717,7 @@ function Self.TblCopyFilter(t, fn, k, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if fn(v, i, ...) then
-            if k then u[i] = v else tinsert(u, v) end
+            Self.TblInsert(u, i, v, k)
         end
     end
     return u
@@ -746,7 +746,7 @@ function Self.TblCopyOnly(t, val, k)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if v == val then
-            if k then u[i] = v else tinsert(u, v) end
+            Self.TblInsert(u, i, v, k)
         end
     end
     return u
@@ -757,7 +757,7 @@ function Self.TblCopyExcept(t, val, k)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if v ~= val then
-            if k then u[i] = v else tinsert(u, v) end
+            Self.TblInsert(u, i, v, k)
         end
     end
     return u
@@ -768,7 +768,7 @@ function Self.TblCopyWhere(t, k, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if Self.TblFindWhere(u, ...) then
-            if k then u[i] = v else tinsert(u, v) end
+            Self.TblInsert(u, i, v, k)
         end
     end
     return u
@@ -779,7 +779,7 @@ function Self.TblCopyExceptWhere(t, k, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if not Self.TblFindWhere(u, ...) then
-            if k then u[i] = v else tinsert(u, v) end
+            Self.TblInsert(u, i, v, k)
         end
     end
     return u
@@ -880,7 +880,7 @@ function Self.TblUnique(t, k)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if u[v] ~= nil then
-            if k then t[i] = nil else tremove(t, i) end
+            Self.TblRemove(t, i, k)
         else
             u[v] = true
         end
@@ -896,7 +896,7 @@ function Self.TblDiff(t, ...)
     for i,v in pairs(t) do
         for i=1, select("#", ...) - (k and 1 or 0) do
             if Self.In(v, (select(i, ...))) then
-                if k then t[i] = nil else tremove(t, i) end
+                Self.TblRemove(t, i, k)
                 break
             end
         end
@@ -911,7 +911,7 @@ function Self.TblIntersect(t, ...)
     for i,v in pairs(t) do
         for i=1, select("#", ...) - (k and 1 or 0) do
             if not Self.In(v, (select(i, ...))) then
-                if k then t[i] = nil else tremove(t, i) end
+                Self.TblRemove(t, i, k)
                 break
             end
         end
@@ -939,6 +939,8 @@ end
 
 -- CHANGE
 
+function Self.TblInsert(t, i, v, k) if k or type(i) ~= "number" then t[i] = v else tinsert(t, v) end end
+function Self.TblRemove(t, i, k) if k or type(i) ~= "number" then t[i] = nil else tremove(t, i) end end
 function Self.TblPush(t, v) tinsert(t, v) return t end
 function Self.TblPop(t) return tremove(t) end
 function Self.TblDrop(t) tremove(t) return t end
