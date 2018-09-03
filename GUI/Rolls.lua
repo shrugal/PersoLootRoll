@@ -681,14 +681,14 @@ function Self.UpdateDetails(details, roll)
             GUI("Label").SetFontObject(GameFontNormal).AddTo(details)
         
             -- Votes
-            GUI("Label")
+            GUI("InteractiveLabel")
                 .SetFontObject(GameFontNormal)
                 .SetCallback("OnEnter", function (self)
                     local roll, unit = self:GetUserData("roll"), self:GetUserData("unit")
                     if Util.TblCountOnly(roll.votes, unit) > 0 then
                         GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOM")
                         GameTooltip:SetText(L["TIP_VOTES"])
-                        for toUnit,fromUnit in pairs(roll.votes) do
+                        for fromUnit,toUnit in pairs(roll.votes) do
                             if unit == toUnit then
                                 local c = Unit.Color(fromUnit)
                                 GameTooltip:AddLine(Unit.ShortenedName(fromUnit), c.r, c.g, c.b, false)

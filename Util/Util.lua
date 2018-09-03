@@ -57,7 +57,7 @@ function Self.IsCommunityGroup(commId)
 
     local n, comms = GetNumGroupMembers(), Self.Tbl()
     for i=1,n do
-        local c = Unit.CommonCommunities(GetRaidRosterInfo(i))
+        local c = Unit.CommonClubs(GetRaidRosterInfo(i))
         for _,clubId in pairs(c) do
             comms[clubId] = (comms[clubId] or 0) + 1
             if (not commId or commId == clubId) and comms[clubId] / n >= Self.GROUP_THRESHOLD then
@@ -1177,26 +1177,43 @@ function Self.FnDiv(a, b) return a/b end
 
 -- MODIFY
 
--- Throttle a function, so it is called at most every n seconds
-function Self.FnThrottle(fn, n)
-    local timer
-    return function (...)
+-- Throttle a function, so it is executed at most every n seconds
+function Self.FnThrottle(fn, n, leading)
+    local Fn, timer, called
+    Fn = function (...)
         if not timer then
+            if leading then fn(...) end
             timer = Addon:ScheduleTimer(function (...)
                 timer = nil
-                fn(...)
+                if not leading then fn(...) end
+                if called then
+                    called = nil
+                    Fn(...)
+                end
             end, n, ...)
+        else
+            called = true
         end
     end
+    return Fn
 end
 
--- Debounce a function, so it doesn't get called again for n seconds after it has been called
-function Self.FnDebounce(fn, n)
-    local called
+-- Debounce a function, so it is executed only n seconds after the last call
+function Self.FnDebounce(fn, n, leading)
+    local timer, called
     return function (...)
-        if not called or called + n < GetTime() then
-            called = GetTime()
-            fn(...)
+        if not timer then
+            if leading then fn(...) end
+            timer = Addon:ScheduleTimer(function (...)
+                timer = nil
+                if not leading or called then
+                    called = nil
+                    fn(...)
+                end
+            end, n, ...)
+        else
+            called = true
+            Addon:ExtendTimerTo(timer, n)
         end
     end
 end

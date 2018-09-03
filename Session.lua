@@ -211,6 +211,7 @@ end
 function Self.RefreshRules()
     if Self.IsMasterlooter() then Self.SetRules() end
 end
+Self.RefreshRules = Util.FnDebounce(Self.RefreshRules, 1, true)
 
 -- Check if the unit is on the loot council
 function Self.IsOnCouncil(unit, refresh, groupRank)
@@ -230,16 +231,18 @@ function Self.IsOnCouncil(unit, refresh, groupRank)
             return true
         end
 
-
-        -- Check guild rank
-        if c.council.roles.guildleader or c.council.roles.guildofficer or Addon.db.char.masterloot.council.rank > 0 then
-            local guildRank = Unit.GuildRank(unit)
-            if c.council.roles.guildleader and guildRank == 1 or c.council.coles.guildofficer and guildRank == 2 then
-                return true
-            elseif guildRank == c.council.rank then
-                return true
-            elseif c.council.rankUp and guildRank > c.council.rank then
-                return true
+        -- Check club rank
+        local clubId = Addon.db.char.masterloot.council.clubId
+        if clubId then
+            local club = c.council.clubs[clubId]
+            if club and club.ranks and next(club.ranks) then
+                local info = Unit.ClubMemberInfo(unit, clubId)
+                if info then
+                    local rank = info.guildRankOrder or info.role
+                    if rank and club.ranks[rank] then
+                        return true
+                    end
+                end
             end
         end
 

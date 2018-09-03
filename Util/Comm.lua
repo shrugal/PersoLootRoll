@@ -113,7 +113,7 @@ function Self.ShouldInitChat(target)
         -- Check target
         local target = c.whisper.target
         local guild = Unit.GuildName(unit)
-        local isGuild, isCommunity, isFriend = Unit.IsGuildMember(unit), Unit.IsCommunityMember(unit), Unit.IsFriend(unit)
+        local isGuild, isCommunity, isFriend = Unit.IsGuildMember(unit), Unit.IsClubMember(unit), Unit.IsFriend(unit)
 
         if isGuild or isCommunity or isFriend then
             if isGuild and not target.guild or isCommunity and not target.community or isFriend and not target.friend then
