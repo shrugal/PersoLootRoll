@@ -168,10 +168,10 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
             
             -- Get the correct bid and scaled roll result
             local bid = to < 100 and Roll.BID_GREED or Roll.BID_NEED
-            result = result * 100 / to
+            result = Util.NumRound(result * 100 / to)
             
             -- Register the unit's bid
-            if roll and not roll.bids[unit] and Unit.InGroup(unit) and (Unit.IsSelf(unit) and roll:CanBeWon(unit) or roll:CanBeAwardedTo(unit)) then
+            if roll and (roll.isOwner or Unit.IsSelf(unit)) and roll:UnitCanBid(unit, bid) then
                 roll:Bid(bid, unit, result)
             end
 
@@ -583,12 +583,13 @@ end)
 Comm.ListenData(Comm.EVENT_BID, function (event, data, channel, sender, unit)
     if not Addon:IsTracking() then return end
 
-    local owner = data.fromUnit and unit or nil
+    local isImport = data.fromUnit ~= nil
+    local owner = isImport and unit or nil
     local fromUnit = data.fromUnit or unit
 
     local roll = Roll.Find(data.ownerId, owner)
     if roll then
-        roll:Bid(data.bid, fromUnit, owner ~= nil)
+        roll:Bid(data.bid, fromUnit, isImport and data.roll, isImport)
     end
 end)
 Comm.ListenData(Comm.EVENT_BID_WHISPER, function (event, item)

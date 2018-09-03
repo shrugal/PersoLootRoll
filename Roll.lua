@@ -232,7 +232,7 @@ function Self.Update(data, unit)
                     wipe(roll.bids)
 
                     for fromUnit,bid in pairs(data.bids or {}) do
-                        roll:Bid(bid, fromUnit, true)
+                        roll:Bid(bid, fromUnit, data.rolls and data.rolls[fromUnit], true)
                     end
                 end
 
@@ -418,13 +418,11 @@ function Self:Restart(started)
 end
 
 -- Bid on a roll
-function Self:Bid(bid, fromUnit, rollOrImport)
+function Self:Bid(bid, fromUnit, roll, isImport)
     bid = bid or Self.BID_NEED
     fromUnit = Unit.Name(fromUnit or "player")
+    roll = roll or self.isOwner and bid ~= Self.BID_PASS and random(100) or nil
     local fromSelf = Unit.IsSelf(fromUnit)
-
-    -- It might be a roll in chat or an import operation
-    local rollResult, isImport = type(rollOrImport) == "number" and rollOrImport, rollOrImport == true
 
     -- Handle custom answers
     local answer, answers = 10*bid - 10*floor(bid), Session.rules["answers" .. floor(bid)]
@@ -438,16 +436,18 @@ function Self:Bid(bid, fromUnit, rollOrImport)
         self:HideRollFrame()
     end
     
-    if self:ValidateBid(bid, answer, fromUnit, isImport) then
+    if self:ValidateBid(bid, answer, fromUnit, roll, isImport) then
         self.bids[fromUnit] = bid
+        self.rolls[fromUnit] = roll
 
-        if rollResult then self.rolls[fromUnit] = rollResult end
-        if fromSelf then self.bid = bid end        
+        if fromSelf then
+            self.bid = bid
+        end        
 
-        Self.events:Fire(Self.EVENT_BID, self, bid, fromUnit, rollOrImport)
+        Self.events:Fire(Self.EVENT_BID, self, bid, fromUnit, roll, isImport)
 
         -- Let everyone know
-        Comm.RollBid(self, bid, fromUnit, isImport)
+        Comm.RollBid(self, bid, fromUnit, roll, isImport)
 
         -- Check if we should end the roll
         if not (self:ShouldEnd() and self:End()) and self.isOwner then
@@ -795,6 +795,7 @@ function Self:SendStatus(noCheck, target, full)
         if full then
             if Addon.db.profile.bidPublic or Session.rules.bidPublic or Session.IsOnCouncil(target) then
                 data.bids = Util.TblMapKeys(self.bids, Unit.FullName)
+                data.rolls = Util.TblMapKeys(self.rolls, Unit.FullName)
             end
 
             if Session.rules.votePublic or Session.IsOnCouncil(target) then
@@ -880,7 +881,7 @@ function Self:Validate(status, ...)
 end
 
 -- Validate an incoming bid
-function Self:ValidateBid(bid, answer, fromUnit, isImport)
+function Self:ValidateBid(bid, answer, fromUnit, roll, isImport)
     local valid, msg = self:Validate(nil, fromUnit)
     if not valid then
         Addon:Err(msg)
@@ -895,7 +896,7 @@ function Self:ValidateBid(bid, answer, fromUnit, isImport)
             Addon:Verbose(L["ERROR_ROLL_BID_UNKNOWN_OTHER"], fromUnit, self.item.link)
         end
     -- Check if the unit can bid
-    elseif not (self:CanBeBidOn() or Util.In(self.status, Self.STATUS_RUNNING, Self.STATUS_DONE) and self.bids[fromUnit] and bid == Self.BID_PASS) then
+    elseif not self:UnitCanBid(unit, bid) then
         if Unit.IsSelf(fromUnit) then
             Addon:Err(L["ERROR_ROLL_BID_IMPOSSIBLE_SELF"])
         else
@@ -992,14 +993,20 @@ function Self:CanBeAwardedTo(unit, includeDone, checkIlvl)
     return self.isOwner and self:UnitCanWin(unit, includeDone, checkIlvl)
 end
 
--- Check if the roll can be bid on
 function Self:CanBeBidOn()
-    return self.status == Self.STATUS_RUNNING
+    return not self.traded and Util.In(self.status, Self.STATUS_RUNNING, Self.STATUS_DONE)
 end
 
 -- Check if the given unit can bid on this roll
-function Self:UnitCanBid(unit, checkIlvl)
-    return not (Addon.db.profile.dontShare and Unit.IsSelf(unit or "player")) and self:CanBeBidOn() and self:UnitCanWin(unit, nil, checkIlvl)
+function Self:UnitCanBid(unit, bid, checkIlvl)
+    unit = Unit.Name(unit or "player")
+
+    return not (Addon.db.profile.dontShare and Unit.IsSelf(unit))
+        and Unit.InGroup(unit)
+        and self:CanBeBidOn()
+        and (self.status == Self.STATUS_RUNNING and not self.bids[unit] or bid and self.bids[unit] and bid > self.bids[unit])
+        and (self.ownerId or self.itemOwnerId or Util.In(bid, nil, Self.BID_NEED, Self.BID_PASS))
+        and self:UnitCanWin(unit, false, checkIlvl)
 end
 
 -- Check if the roll can be voted on
@@ -1010,12 +1017,6 @@ end
 -- Check if the given unit can vote on this roll
 function Self:UnitCanVote(unit)
     return self:CanBeVotedOn() and Session.IsOnCouncil(unit or "player")
-end
-
--- Check if the given unit can pass on this roll
-function Self:UnitCanPass(unit)
-    unit = Unit.Name(unit or "player")
-    return not self.traded and self.bids[unit] and self.bids[unit] ~= Self.BID_PASS
 end
 
 -- Check if we can restart a roll
