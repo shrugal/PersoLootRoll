@@ -1001,7 +1001,7 @@ function Self:UnitCanBid(unit, bid, checkIlvl)
         and (self.ownerId or self.itemOwnerId or Util.In(bid, nil, Self.BID_NEED, Self.BID_PASS))
         and not (Addon.db.profile.dontShare and Unit.IsSelf(unit))
         and Unit.InGroup(unit)
-        and (self.bids[unit] and bid == Self.BID_PASS or not self.bids[unit] and self:UnitCanWin(unit, true, checkIlvl))
+        and (self.bids[unit] and self.bids[unit] ~= bid and bid == Self.BID_PASS or not self.bids[unit] and self:UnitCanWin(unit, true, checkIlvl))
 end
 
 -- Check if the given unit can vote on this roll
