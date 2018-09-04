@@ -196,7 +196,7 @@ function Self.RegisterGeneral()
                 step = 5,
                 set = function (_, val) Addon.db.profile.ilvlThreshold = val end,
                 get = function () return Addon.db.profile.ilvlThreshold end,
-                width = Self.WIDTH_HALF
+                width = Self.WIDTH_THIRD
             },
             ilvlThresholdTrinkets = {
                 name = L["OPT_ILVL_THRESHOLD_TRINKETS"],
@@ -205,7 +205,16 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.ilvlThresholdTrinkets = val end,
                 get = function () return Addon.db.profile.ilvlThresholdTrinkets end,
-                width = Self.WIDTH_HALF
+                width = Self.WIDTH_THIRD
+            },
+            ilvlThresholdRings = {
+                name = L["OPT_ILVL_THRESHOLD_RINGS"],
+                desc = L["OPT_ILVL_THRESHOLD_RINGS_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.ilvlThresholdRings = val end,
+                get = function () return Addon.db.profile.ilvlThresholdRings end,
+                width = Self.WIDTH_THIRD
             },
             ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             specs = {
