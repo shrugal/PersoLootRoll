@@ -1,7 +1,7 @@
 ## Interface: 80000
 ## Title: PersoLootRoll
 ## Notes: A loot roll addon for personal loot.
-## Version: 14.01
+## Version: 14.02
 ## SavedVariables: PersoLootRollDB, PersoLootRollIconDB, PersoLootRollML, PersoLootRollDebug
 
 # Libs
