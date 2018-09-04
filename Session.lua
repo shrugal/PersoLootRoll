@@ -259,6 +259,8 @@ function Self.IsOnCouncil(unit, refresh, groupRank)
             end
         end
     end
+
+    return false
 end
 
 -------------------------------------------------------

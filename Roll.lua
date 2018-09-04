@@ -111,14 +111,6 @@ function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner, status)
     return id and Addon.rolls[id]
 end
 
--- Find rolls that the given unit can win from us
-function Self.ForUnit(unit, includeDone, k)
-    unit = Unit.Name(unit)
-    return Util.TblCopyFilter(Addon.rolls, function (roll)
-        return roll:CanBeAwardedTo(unit, includeDone)
-    end, k)
-end
-
 -- Add a roll to the list
 function Self.Add(item, owner, timeout, ownerId, itemOwnerId)
     owner = Unit.Name(owner or "player")
@@ -997,11 +989,29 @@ end
 function Self:UnitCanBid(unit, bid, checkIlvl)
     unit = Unit.Name(unit or "player")
 
-    return not self.traded
-        and (self.ownerId or self.itemOwnerId or Util.In(bid, nil, Self.BID_NEED, Self.BID_PASS))
-        and not (Addon.db.profile.dontShare and Unit.IsSelf(unit))
-        and Unit.InGroup(unit)
-        and (self.bids[unit] and self.bids[unit] ~= bid and bid == Self.BID_PASS or not self.bids[unit] and self:UnitCanWin(unit, true, checkIlvl))
+    -- Obvious stuff
+    if self.traded or not Unit.InGroup(unit) then
+        return false
+    -- Only need+pass for rolls from non-users
+    elseif not (self.ownerId or self.itemOwnerId or Util.In(bid, nil, Self.BID_NEED, Self.BID_PASS)) then
+        return false
+    -- Can't bid if "Don't share" is enabled
+    elseif Addon.db.profile.dontShare and Unit.IsSelf(unit) then
+        return false
+    -- We can always convert a previous non-pass bid into a pass
+    elseif bid == Self.BID_PASS and not Util.In(self.bids[unit], nil, Self.BID_PASS) then
+        return true
+    -- Hasn't bid but could win
+    elseif not self.bids[unit] and self:UnitCanWin(unit, true, checkIlvl) then
+        if self.status == Self.STATUS_DONE then
+            -- Only non-pass bids on done rolls, and only if there are no non-pass bids
+            return bid ~= Self.BID_PASS and Util.TblCountExcept(self.rolls, Self.BID_PASS) == 0
+        else
+            return true
+        end
+    else
+        return false
+    end
 end
 
 -- Check if the given unit can vote on this roll

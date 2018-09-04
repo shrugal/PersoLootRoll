@@ -218,7 +218,7 @@ local Fn = function (t, i)
     if not i and Self.TblIsTmp(t) then
         Self.TblRelease(t)
     end
-    return i, v
+    return i, Self.Check(v == Self.TBL_EMPTY, nil, v)
 end
 function Self.Each(...)
     if ... and type(...) == "table" then
@@ -234,7 +234,7 @@ end
 local Fn = function (u, i)
     local i, v = next(u[1], i)
     while i do
-        if Self.TblContains(v, u[2], u[3]) then return i, v end
+        if Self.TblContains(v, u[2], u[3]) then return i, Self.Check(v == Self.TBL_EMPTY, nil, v) end
         i, v = next(u[1], i)
     end
     Self.TblReleaseTmp(u[1], u[2], u)
@@ -243,7 +243,7 @@ function Self.EachWhere(t, ...)
     if type(...) == "table" then
         return Fn, Self.TblTmp(t, (...), (select(2, ...)))
     else
-        return Fn, Self.TblTmp(t, Self.TblTmpHash(...))
+        return Fn, Self.TblTmp(t, Self.TblHashTmp(...))
     end
 end
 
@@ -273,11 +273,35 @@ end
 --                       Table                       --
 -------------------------------------------------------
 
+-- Create a table that tracks the highest numerical index and offers count+newIndex fields and Add function
+function Self.TblCounter(t)
+    t = t or {}
+    local count = 0
+    
+    setmetatable(t, {
+        __index = function (t, k)
+            return k == "count" and count
+                or k == "nextIndex" and count+1
+                or k == "Add" and function (v) t[count+1] = v return count end
+                or rawget(t, k)
+        end,
+        __newindex = function (t, k, v)
+            if v ~= nil and type(k) == "number" and k > count then
+                count = k
+            end
+            rawset(t, k, v)
+        end
+    })
+    return t
+end
+
+-- REUSABLE TABLES: Store unused tables in a cache to reuse them later
+
 -- A cache for temp tables
 Self.tblPool = {}
 Self.tblPoolSize = 10
 
--- For when we need an empty table as noop
+-- For when we need an empty table as noop or special marking
 Self.TBL_EMPTY = {}
 
 -- Get a table (newly created or from the cache), and fill it with values
@@ -304,7 +328,7 @@ function Self.TblRelease(...)
 
     for i=1, select("#", ...) do
         local t = select(i, ...)
-        if type(t) == "table" then
+        if type(t) == "table" and t ~= Self.TBL_EMPTY then
             if #Self.tblPool < Self.tblPoolSize then
                 tinsert(Self.tblPool, t)
 
@@ -323,17 +347,28 @@ function Self.TblRelease(...)
     end
 end
 
--- Temporary tables: Same as above, but tables are marked as temporary and only those are released
+-- TEMPORARY TABLES: Tables that are automatically released after certain operations (such as loops)
 
-function Self.TblTmp(...) return setmetatable(Self.Tbl(...), Self.TBL_EMPTY) end
-function Self.TblTmpHash(...) return setmetatable(Self.TblHash(...), Self.TBL_EMPTY) end
+function Self.TblTmp(...)
+    local t = tremove(Self.tblPool) or {}
+    for i=1, select("#", ...) do
+        local v = select(i, ...)
+        t[i] = v == nil and Self.TBL_EMPTY or v
+    end
+    return setmetatable(t, Self.TBL_EMPTY)
+end
+
+function Self.TblHashTmp(...) return setmetatable(Self.TblHash(...), Self.TBL_EMPTY) end
 function Self.TblIsTmp(t) return getmetatable(t) == Self.TBL_EMPTY end
+
 function Self.TblReleaseTmp(...)
     for i=1, select("#", ...) do
         local t = select(i, ...)
         if type(t) == "table" and Self.TblIsTmp(t) then Self.TblRelease(t) end
     end
 end
+
+-- GET/SET
 
 -- Get a value from a table
 function Self.TblGet(t, ...)
@@ -391,28 +426,6 @@ end
 function Self.TblRandom(t)
     local key = Self.TblRandomKey(t)
     return key and t[key]
-end
-
--- Create a table that tracks the highest numerical index and offers count+newIndex fields and Add function
-function Self.TblCounter(t)
-    t = t or {}
-    local count = 0
-    
-    setmetatable(t, {
-        __index = function (t, k)
-            return k == "count" and count
-                or k == "nextIndex" and count+1
-                or k == "Add" and function (v) t[count+1] = v return count end
-                or rawget(t, k)
-        end,
-        __newindex = function (t, k, v)
-            if v ~= nil and type(k) == "number" and k > count then
-                count = k
-            end
-            rawset(t, k, v)
-        end
-    })
-    return t
 end
 
 -- Get table keys

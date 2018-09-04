@@ -311,7 +311,7 @@ function Self.Update()
     GUI(Self.frames.empty).Toggle(Util.TblCount(rolls) == 0)
 
     local it = Util.Iter(#header + 1)
-    for _,roll in pairs(rolls) do
+    for _,roll in ipairs(rolls) do
         -- Create the row
         if not children[it(0) + 1] then
             -- ID
