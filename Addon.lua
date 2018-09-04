@@ -307,7 +307,7 @@ end
 -------------------------------------------------------
 
 -- Check if we should currently track loot etc.
-function Addon:IsTracking(unit)
+function Addon:IsTracking(unit, inclCompAddons)
     if not unit or Unit.IsSelf(unit) then
         return self.db.profile.enabled
            and (not self.db.profile.onlyMasterloot or Session.GetMasterlooter())
@@ -315,7 +315,7 @@ function Addon:IsTracking(unit)
            and Util.In(GetLootMethod(), "freeforall", "roundrobin", "personalloot", "group")
     else
         unit = Unit.Name(unit)
-        return self.versions[unit] and not self.disabled[unit]
+        return self.versions[unit] and not self.disabled[unit] or inclCompAddons and self.plhUsers[unit]
     end
 end
 
@@ -324,7 +324,7 @@ function Addon:OnTrackingChanged(sync)
     local isTracking = self:IsTracking()
 
     -- Let others know
-    if not Util.BoolXor(isTracking, self.disabled[UnitName("player")]) then
+    if not Util.BoolXOR(isTracking, self.disabled[UnitName("player")]) then
         Comm.Send(Comm["EVENT_" .. (isTracking and "ENABLE" or "DISABLE")])
     end
 

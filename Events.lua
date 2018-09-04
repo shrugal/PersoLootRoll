@@ -231,10 +231,9 @@ end
 
 function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
     local unit = Unit(sender)
-    if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
+    if not Unit.InGroup(unit) or Util.BoolXOR(Unit.IsSelf(unit), Addon:IsTracking(unit, true)) then return end
 
     local item = Item.GetLink(msg)
-    local dontShare = Addon.db.profile.dontShare
 
     if not msg:match(Self.PATTERN_BONUS_LOOT) and Item.ShouldBeChecked(item, unit) then
         item = Item.FromLink(item, unit)
@@ -248,7 +247,7 @@ function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
             item:OnFullyLoaded(function ()
                 if isOwner and item:ShouldBeRolledFor() then
                     Roll.Add(item, owner):Start()
-                elseif not dontShare and item:GetFullInfo().isTradable then
+                elseif not Addon.db.profile.dontShare and item:GetFullInfo().isTradable then
                     local roll = Roll.Add(item, owner)
                     if isOwner then
                         roll:Schedule()

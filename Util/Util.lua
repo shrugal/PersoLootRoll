@@ -1161,12 +1161,15 @@ end
 --                      Boolean                      --
 -------------------------------------------------------
 
-function Self.BoolXor(...)
-    local u = false
-    for i,v in Self.Each(...) do
-        if u and v then return false else u = u or v end
-    end
-    return u
+function Self.Bool(v)
+    return not not v
+end
+
+-- True if an uneven # of inputs are true
+function Self.BoolXOR(...)
+    local n = 0
+    for _,v in Self.Each(...) do if v then n = n + 1 end end
+    return n % 2 == 1
 end
 
 -------------------------------------------------------
