@@ -126,7 +126,7 @@ function Self.Add(item, owner, timeout, ownerId, itemOwnerId)
     -- Create the roll entry
     local roll = {
         created = time(),
-        isOwner = UnitIsUnit(owner, "player"),
+        isOwner = Unit.IsSelf(owner),
         item = item,
         owner = owner,
         ownerId = ownerId,
