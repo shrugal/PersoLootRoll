@@ -245,7 +245,7 @@ function Self.EnableChatLinks()
         Addon:SecureHook("SetItemRef", function (link, text, button, frame)
             local linkType, args = link:match("^([^:]+):(.*)$")
 
-            if linkType:sub(1, 3) == "plr" then
+            if linkType and linkType:sub(1, 3) == "plr" then
                 if linkType == "plrtrade" then
                     Trade.Initiate(args)
                 elseif linkType == "plrbid" then

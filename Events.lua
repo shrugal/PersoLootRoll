@@ -548,7 +548,7 @@ Comm.Listen(Comm.EVENT_SYNC, function (event, msg, channel, sender, unit)
     if Addon:IsTracking() then
         -- Send rolls for items that we own
         for _,roll in pairs(Addon.rolls) do
-            if roll.item.isOwner and (roll:UnitCanBid(unit) or roll:UnitCanVote(unit)) then
+            if roll.item.isOwner and not roll.traded and roll:UnitIsInvolved(unit) then
                 roll:SendStatus(true, unit, roll.isOwner)
             end
         end
@@ -557,7 +557,7 @@ Comm.Listen(Comm.EVENT_SYNC, function (event, msg, channel, sender, unit)
         if Session.IsMasterlooter() then
             Addon:ScheduleTimer(function ()
                 for _,roll in pairs(Addon.rolls) do
-                    if roll.isOwner and not roll.item.isOwner and (roll:UnitCanBid(unit) or roll:UnitCanVote(unit)) then
+                    if roll.isOwner and not roll.item.isOwner and not roll.traded and roll:UnitIsInvolved(unit) then
                         roll:SendStatus(nil, unit, true)
                     end
                 end

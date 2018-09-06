@@ -214,36 +214,28 @@ end
 
 -- Iterate tables or parameter lists
 local Fn = function (t, i)
-    local i, v = next(t, i)
-    if not i and Self.TblIsTmp(t) then
-        Self.TblRelease(t)
+    i = (i or 0) + 1
+    if i > #t then
+        Self.TblReleaseTmp(t)
+    else
+        local v = t[i]
+        return i, Self.Check(v == Self.TBL_EMPTY, nil, v)
     end
-    return i, Self.Check(v == Self.TBL_EMPTY, nil, v)
 end
 function Self.Each(...)
     if ... and type(...) == "table" then
-        return Fn, ...
+        return next, ...
     elseif select("#", ...) == 0 then
         return Self.FnNoop
     else
         return Fn, Self.TblTmp(...)
     end
 end
-
--- Iterate table, matching entries against a set of key/value pairs
-local Fn = function (u, i)
-    local i, v = next(u[1], i)
-    while i do
-        if Self.TblContains(v, u[2], u[3]) then return i, Self.Check(v == Self.TBL_EMPTY, nil, v) end
-        i, v = next(u[1], i)
-    end
-    Self.TblReleaseTmp(u[1], u[2], u)
- end
-function Self.EachWhere(t, ...)
-    if type(...) == "table" then
-        return Fn, Self.TblTmp(t, (...), (select(2, ...)))
+function Self.IEach(...)
+    if ... and type(...) == "table" then
+        return Fn, ...
     else
-        return Fn, Self.TblTmp(t, Self.TblHashTmp(...))
+        return Self.Each(...)
     end
 end
 

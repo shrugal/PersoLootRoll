@@ -709,7 +709,8 @@ end
 function Self:AddChat(msg, unit)
     unit = unit or "player"
     local c = ChatTypeInfo[Unit.IsSelf(unit) and "WHISPER_INFORM" or "WHISPER"] or Util.TBL_EMPTY
-    msg = ("|c%s[%s]: %s|r"):format(Util.StrColor(c.r, c.g, c.b), Unit.ColoredShortenedName(unit), msg)
+    c = Util.StrColor(c.r, c.g, c.b)
+    msg = ("|c%s[|r%s|c%s]: %s|r"):format(c, Unit.ColoredShortenedName(unit), c, msg)
 
     self.chat = self.chat or Util.Tbl()
     tinsert(self.chat, msg)
@@ -1017,6 +1018,12 @@ end
 -- Check if the given unit can vote on this roll
 function Self:UnitCanVote(unit)
     return self.status > Self.STATUS_CANCELED and not self.winner and Session.IsOnCouncil(unit or "player")
+end
+
+-- Check if the unit could have interest in the roll
+function Self:UnitIsInvolved(unit)
+    unit = Unit.Name(unit or "player")
+    return self.owner == unit or self.winner == unit or self:UnitCanBid(unit) or self:UnitCanVote(unit)
 end
 
 -- Check if we can restart a roll
