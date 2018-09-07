@@ -194,7 +194,7 @@ function Self.Show()
                         GameTooltip:AddLine(L["TIP_MASTERLOOT_INFO"]:format(Unit.ColoredName(ml), timeoutBase, timeoutPerItem, council, bids, votes), 1, 1, 1)
 
                         -- Players
-                        GameTooltip:AddLine("\n" .. L["TIP_MASTERLOOTING"])
+                        GameTooltip:AddLine("\n" .. L["TIP_MASTERLOOTING"]:format(1 + Util.TblCountOnly(Session.masterlooting, ml)))
                         local units = Unit.ColoredName(UnitName("player"))
                         for unit,unitMl in pairs(Session.masterlooting) do
                             if ml == unitMl then

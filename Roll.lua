@@ -165,14 +165,19 @@ end
 function Self.Update(data, unit)
     -- Get or create the roll
     local roll = Self.Find(data.ownerId, data.owner, data.item, data.itemOwnerId, data.item.owner)
+
+    Addon:Debug("Roll.Update", data, unit, roll)
+
     if not roll then
         local ml = Session.GetMasterlooter()
 
-        -- Only the item owner or his/her masterlooter can create rolls
-        if not Util.In(unit, data.item.owner, Session.GetMasterlooter(data.item.owner)) then
+        -- Only the item owner can create rolls
+        if unit ~= data.item.owner then
+            Addon:Debug("Roll.Update.Reject.SenderNotItemOwner")
             return
-        -- Only accept items from our masterlooter if enabled
+        -- Only accept items owned by our masterlooter if enabled
         elseif Addon.db.profile.onlyMasterloot and not (ml and ml == data.owner) then
+            Addon:Debug("Roll.Update.Reject.OwnerNotML")
             return
         end
 
@@ -180,11 +185,16 @@ function Self.Update(data, unit)
 
         if roll.isOwner then roll.item:OnLoaded(function ()
             if roll.item:ShouldBeRolledFor() or roll.item:ShouldBeBidOn() then
+                Addon:Debug("Roll.Update.Start")
                 roll:Start()
-            elseif roll.item.isEquippable then
-                roll:Schedule():SendStatus()
             else
-                roll:Cancel()
+                Addon:Debug("Roll.Update.NotStart", Addon.db.profile.dontShare, roll.owner, roll.isOwner, roll.item.owner, roll.item.isOwner, roll.item:HasSufficientQuality(), roll.item.isEquippable, roll.item:GetFullInfo().isTradable, roll.item:GetNumEligible(true))
+                
+                if roll.item.isEquippable then
+                    roll:Schedule():SendStatus()
+                else
+                    roll:Cancel()
+                end
             end
         end) end
     end
@@ -364,16 +374,23 @@ function Self:Schedule()
     self.item:GetBasicInfo()
 
     self.timers.bid = Addon:ScheduleTimer(function ()
+        Addon:Debug("Roll.Schedule", self)
+
         -- Start the roll if it hasn't been started after the waiting period
         if self.status == Self.STATUS_PENDING then
             self.timers.bid = nil
 
             if self.isOwner and self.item:ShouldBeRolledFor() or not self.isOwner and self.item:ShouldBeBidOn() then
+                Addon:Debug("Roll.Schedule.Start")
                 self:Start()
-            elseif self.item.isEquippable then
-                self:Cancel()
             else
-                self:Clear()
+                Addon:Debug("Roll.Schedule.NotStart", Addon.db.profile.dontShare, self.owner, self.isOwner, self.item.owner, self.item.isOwner, self.item:HasSufficientQuality(), self.item:GetBasicInfo().isEquippable, self.item:GetFullInfo().isTradable, self.item:GetNumEligible(true))
+                
+                if self.item.isEquippable then
+                    self:Cancel()
+                else
+                    self:Clear()
+                end
             end
         end
     end, Self.DELAY)

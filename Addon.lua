@@ -2,29 +2,32 @@ local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Comm, GUI, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 
--- Echo levels
+-- Logging
 Addon.ECHO_NONE = 0
 Addon.ECHO_ERROR = 1
 Addon.ECHO_INFO = 2
 Addon.ECHO_VERBOSE = 3
 Addon.ECHO_DEBUG = 4
+Addon.ECHO_LEVELS = {"ERROR", "INFO", "VERBOSE", "DEBUG"}
 
--- Channels
+Addon.LOG_MAX_ENTRIES = 1000
+
+Addon.log = {}
+
+-- Versioning
 Addon.CHANNEL_ALPHA = "alpha"
 Addon.CHANNEL_BETA = "beta"
 Addon.CHANNEL_STABLE = "stable"
 Addon.CHANNELS = Util.TblFlip({Addon.CHANNEL_ALPHA, Addon.CHANNEL_BETA, Addon.CHANNEL_STABLE})
 
-Addon.rolls = Util.TblCounter()
-Addon.timers = {}
-
--- Versions
 Addon.versions = {}
 Addon.versionNoticeShown = false
 Addon.disabled = {}
-
--- Remember who uses PLH so we can send PLH events to them
 Addon.plhUsers = {}
+
+-- Other
+Addon.rolls = Util.TblCounter()
+Addon.timers = {}
 
 -------------------------------------------------------
 --                    Addon stuff                    --
@@ -286,6 +289,9 @@ function Addon:HandleChatCommand(msg)
     -- Toggle debug mode
     elseif cmd == "debug" then
         self:ToggleDebug()
+    -- Export debug log
+    elseif cmd == "log" then
+        self:LogExport()
     -- Update and export trinket list
     elseif cmd == "trinkets" and Item.UpdateTrinkets then
         Item.UpdateTrinkets()
@@ -402,21 +408,25 @@ function Addon:GetNumAddonUsers(inclCompAddons)
 end
 
 -------------------------------------------------------
---                      Console                      --
+--                      Logging                      --
 -------------------------------------------------------
 
 function Addon:Echo(lvl, line, ...)
-    if self.db.profile.messages.echo >= lvl then
-        if lvl == self.ECHO_DEBUG then
-            local args = Util.Tbl(line, ...)
-            for i,v in pairs(args) do
-                if Util.In(type(v), "table", "function") then args[i] = Util.ToString(v) end
-            end
-            self:Print(unpack(args))
-            Util.TblRelease(args)
-        else
-            self:Print(line:format(...))
+    if lvl == self.ECHO_DEBUG then
+        local args = Util.Tbl(line, ...)
+        for i,v in pairs(args) do
+            if type(v) ~= "string" then args[i] = Util.ToString(v) end
         end
+        line = strjoin(", ", unpack(args))
+        Util.TblRelease(args)
+    else
+        line = line:format(...)
+    end
+
+    self:Log(lvl, line)
+
+    if self.db.profile.messages.echo >= lvl then
+        self:Print(line)
     end
 end
 
@@ -444,6 +454,20 @@ function Addon:Assert(cond, ...)
             self:Echo(self.ECHO_DEBUG, ...)
         end
     end
+end
+
+-- Add an entry to the debug log
+function Addon:Log(lvl, line)
+    tinsert(self.log, ("[%f] %s: %s"):format(GetTime(), self.ECHO_LEVELS[lvl or self.ECHO_INFO], line or "-"))
+    while #self.log > self.LOG_MAX_ENTRIES do
+        Util.TblShift(self.log)
+    end
+end
+
+-- Export the debug log
+function Addon:LogExport()
+    local f = GUI("Frame").SetLayout("Fill").SetTitle(Name .. " - Export log").Show()()
+    GUI("MultiLineEditBox").DisableButton(true).SetLabel().SetText(Util.TblConcat(self.log, "\n")).AddTo(f)
 end
 
 -------------------------------------------------------

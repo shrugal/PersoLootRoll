@@ -147,7 +147,7 @@ cffffff00競標:|r %s
 |cffffff00表決:|r %s]=]
 L["TIP_MASTERLOOT_START"] = "成為或搜尋負責分裝者"
 L["TIP_MASTERLOOT_STOP"] = "移除負責分裝者"
-L["TIP_MASTERLOOTING"] = "有分裝者的隊伍:"
+L["TIP_MASTERLOOTING"] = "有分裝者的隊伍 (%d):"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff00左鍵:|r 開關骰裝視窗 
 |cffffff00右鍵:|r 設定選項]=]
 L["TIP_PLH_USERS"] = "PLH使用者："

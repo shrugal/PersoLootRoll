@@ -147,7 +147,7 @@ L["TIP_MASTERLOOT_INFO"] = [=[|cffffff78Plündermeister:|r %s
 |cffffff78Stimmen:|r %s]=]
 L["TIP_MASTERLOOT_START"] = "Werde oder suche einen Plündermeister"
 L["TIP_MASTERLOOT_STOP"] = "Plündermeister entfernen"
-L["TIP_MASTERLOOTING"] = "Plündermeister Gruppe:"
+L["TIP_MASTERLOOTING"] = "Plündermeister Gruppe (%d):"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff78Links-Klick:|r Verlosung-Übersicht umschalten
 |cffffff78Rechts-Klick:|r Optionen öffnen]=]
 L["TIP_PLH_USERS"] = "PLH Nutzer:"

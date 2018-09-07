@@ -147,7 +147,7 @@ L["TIP_MASTERLOOT_INFO"] = [=[|cffffff78Masterlooter:|r %s
 |cffffff78Votes:|r %s]=]
 L["TIP_MASTERLOOT_START"] = "Become or search for a masterlooter"
 L["TIP_MASTERLOOT_STOP"] = "Remove masterlooter"
-L["TIP_MASTERLOOTING"] = "Masterlooting group:"
+L["TIP_MASTERLOOTING"] = "Masterlooting group (%d):"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff78Left-Click:|r Toggle rolls window
 |cffffff78Right-Click:|r Show Options]=]
 L["TIP_PLH_USERS"] = "PLH users:"
