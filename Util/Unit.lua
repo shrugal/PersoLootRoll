@@ -133,7 +133,7 @@ function Self.IsFriend(unit)
 end
 
 -- Check if the given unit is part of one of our character coummunities
-function Self.IsCommunityMember(unit)
+function Self.IsClubMember(unit)
     local guid = UnitGUID(unit)
     for _,info in pairs(C_Club.GetSubscribedClubs()) do
         if info.clubType == Enum.ClubType.Character then
@@ -147,7 +147,7 @@ function Self.IsCommunityMember(unit)
 end
 
 -- Get common community ids
-function Self.CommonCommunities(unit)
+function Self.CommonClubs(unit)
     local t, guid = Util.Tbl(), UnitGUID(unit)
     for _,info in pairs(C_Club.GetSubscribedClubs()) do
         if info.clubType == Enum.ClubType.Character then
@@ -159,6 +159,17 @@ function Self.CommonCommunities(unit)
         end
     end
     return Util.TblUnique(t)
+end
+
+function Self.ClubMemberInfo(unit, clubId)
+    unit = Self.Name(unit)
+
+    for _,memberId in pairs(C_Club.GetClubMembers(clubId)) do
+        local info = C_Club.GetMemberInfo(clubId, memberId)
+        if info.name == unit then
+            return info
+        end
+    end
 end
 
 -------------------------------------------------------

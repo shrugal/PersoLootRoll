@@ -553,6 +553,7 @@ end
 -- Get the threshold for the item's slot
 function Self:GetThresholdForLocation(unit, upper)
     local unit = Unit(unit or "player")
+    local p = Addon.db.profile
 
     -- Relics have a lower threshold of -1, meaning they have to be higher in ilvl to be worth considering
     if not upper and self:GetBasicInfo().isRelic then
@@ -560,15 +561,15 @@ function Self:GetThresholdForLocation(unit, upper)
     end
 
     -- Use DB option only for the player and only for the lower threshold
-    local applyCustomThresholds = not upper and Unit.IsSelf(unit)
-    local threshold = applyCustomThresholds and Addon.db.profile.ilvlThreshold or Self.ILVL_THRESHOLD
+    local custom = not upper and Unit.IsSelf(unit)
+    local threshold = custom and p.ilvlThreshold or Self.ILVL_THRESHOLD
 
     -- Scale threshold for lower level chars
     local level = UnitLevel(unit)
     threshold = ceil(threshold * (level and level > 0 and level / MAX_PLAYER_LEVEL or 1))
 
-    -- Trinkets have double the normal threshold
-    if (not applyCustomThresholds or Addon.db.profile.ilvlThresholdTrinkets) and self:GetBasicInfo().equipLoc == Self.TYPE_TRINKET then
+    -- Trinkets and rings might have double the normal threshold
+    if Util.Select(self:GetBasicInfo().equipLoc, Self.TYPE_TRINKET, p.ilvlThresholdTrinkets or not custom, Self.TYPE_FINGER, p.ilvlThresholdRings and custom) then
         threshold = threshold * 2
     end
 

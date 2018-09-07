@@ -165,13 +165,16 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
             else
                 roll = Util.TblFirstWhere(Addon.rolls, "status", Roll.STATUS_RUNNING, "posted", i)
             end
+
             
             -- Get the correct bid and scaled roll result
             local bid = to < 100 and Roll.BID_GREED or Roll.BID_NEED
-            result = result * 100 / to
+            result = Util.NumRound(result * 100 / to)
+            
+            Addon:Debug("Events.RandomRoll", msg, unit, result, from, to, bid, result, roll, roll and (roll.isOwner or Unit.IsSelf(unit)), roll and roll:UnitCanBid(unit, bid))
             
             -- Register the unit's bid
-            if roll and not roll.bids[unit] and Unit.InGroup(unit) and (Unit.IsSelf(unit) and roll:CanBeWon(unit) or roll:CanBeAwardedTo(unit)) then
+            if roll and (roll.isOwner or Unit.IsSelf(unit)) and roll:UnitCanBid(unit, bid) then
                 roll:Bid(bid, unit, result)
             end
 
@@ -231,12 +234,13 @@ end
 
 function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
     local unit = Unit(sender)
-    if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
+    if not Unit.InGroup(unit) or Util.BoolXOR(Unit.IsSelf(unit), Addon:IsTracking(unit, true)) then return end
 
     local item = Item.GetLink(msg)
-    local dontShare = Addon.db.profile.dontShare
 
     if not msg:match(Self.PATTERN_BONUS_LOOT) and Item.ShouldBeChecked(item, unit) then
+        Addon:Debug("Event.Loot", msg, item, unit, Unit.IsSelf(unit))
+
         item = Item.FromLink(item, unit)
 
         if item.isOwner then
@@ -247,19 +251,25 @@ function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
 
             item:OnFullyLoaded(function ()
                 if isOwner and item:ShouldBeRolledFor() then
+                    Addon:Debug("Events.Loot.Start", owner)
                     Roll.Add(item, owner):Start()
-                elseif not dontShare and item:GetFullInfo().isTradable then
+                elseif not Addon.db.profile.dontShare and item:GetFullInfo().isTradable then
+                    Addon:Debug("Events.Loot.Status", owner, isOwner)
                     local roll = Roll.Add(item, owner)
                     if isOwner then
                         roll:Schedule()
                     end
                     roll:SendStatus(true)
                 else
+                    Addon:Debug("Events.Loot.Cancel", Addon.db.profile.dontShare, owner, isOwner, unit, item.isOwner, item:HasSufficientQuality(), item:GetBasicInfo().isEquippable, item:GetFullInfo().isTradable, item:GetNumEligible(true))
                     Roll.Add(item, unit):Cancel()
                 end
             end)
-        elseif not Roll.Find(nil, unit, item) then
+        elseif not Roll.Find(nil, nil, item, nil, unit) then
+            Addon:Debug("Events.Loot.Schedule")
             Roll.Add(item, unit):Schedule()
+        else
+            Addon:Debug("Events.Loot.Duplicate")
         end
     end
 end
@@ -299,10 +309,10 @@ function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender, _, _, _, _, _, _
     if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
 
     -- Log the conversation
-    -- print(event, unit) -- TODO: DEBUG
     for i,roll in pairs(Addon.rolls) do
         if roll:IsRecent() and unit == roll:GetActionTarget() then
-            -- print("->", roll.id) -- TODO: DEBUG
+            Addon:Debug("Events.Whisper", msg, unit, lineId)
+
             roll:AddChat(msg, unit)
         end
     end
@@ -405,10 +415,9 @@ function Self.CHAT_MSG_WHISPER_INFORM_FILTER(self, event, msg, receiver, _, _, _
     if not Addon:IsTracking() or not Unit.InGroup(unit) then return end
 
     -- Log the conversation
-    -- print(event, unit) -- TODO: DEBUG
     for i,roll in pairs(Addon.rolls) do
         if roll:IsRecent() and unit == roll:GetActionTarget() then
-            -- print("->", roll.id) -- TODO: DEBUG
+            Addon:Debug("Events.WhisperInform", msg, unit, lineId)
             roll:AddChat(msg)
         end
     end
@@ -549,7 +558,7 @@ Comm.Listen(Comm.EVENT_SYNC, function (event, msg, channel, sender, unit)
     if Addon:IsTracking() then
         -- Send rolls for items that we own
         for _,roll in pairs(Addon.rolls) do
-            if roll.item.isOwner and (roll:UnitCanBid(unit) or roll:UnitCanVote(unit)) then
+            if roll.item.isOwner and not roll.traded and roll:UnitIsInvolved(unit) then
                 roll:SendStatus(true, unit, roll.isOwner)
             end
         end
@@ -558,7 +567,7 @@ Comm.Listen(Comm.EVENT_SYNC, function (event, msg, channel, sender, unit)
         if Session.IsMasterlooter() then
             Addon:ScheduleTimer(function ()
                 for _,roll in pairs(Addon.rolls) do
-                    if roll.isOwner and not roll.item.isOwner and (roll:UnitCanBid(unit) or roll:UnitCanVote(unit)) then
+                    if roll.isOwner and not roll.item.isOwner and not roll.traded and roll:UnitIsInvolved(unit) then
                         roll:SendStatus(nil, unit, true)
                     end
                 end
@@ -583,12 +592,13 @@ end)
 Comm.ListenData(Comm.EVENT_BID, function (event, data, channel, sender, unit)
     if not Addon:IsTracking() then return end
 
-    local owner = data.fromUnit and unit or nil
+    local isImport = data.fromUnit ~= nil
+    local owner = isImport and unit or nil
     local fromUnit = data.fromUnit or unit
 
     local roll = Roll.Find(data.ownerId, owner)
     if roll then
-        roll:Bid(data.bid, fromUnit, owner ~= nil)
+        roll:Bid(data.bid, fromUnit, isImport and data.roll, isImport)
     end
 end)
 Comm.ListenData(Comm.EVENT_BID_WHISPER, function (event, item)
@@ -699,11 +709,12 @@ Comm.Listen(Comm.PLH_EVENT, function (event, msg, channel, _, unit)
                 Addon.plhUsers[unit] = param
             end
         else
-            local roll = Roll.Find(nil, owner, itemId, nil, nil, Roll.STATUS_RUNNING) or Roll.Find(nil, owner, itemId)
+            local roll = Roll.Find(nil, nil, itemId, nil, owner, Roll.STATUS_RUNNING) or Roll.Find(nil, nil, itemId, nil, owner)
             
             -- Trade: The owner offers the item up for requests
             if action == Comm.PLH_ACTION_TRADE and not roll and fromOwner and Item.IsLink(param) then
-                roll = Roll.Add(param, owner):Start()
+                Addon:Debug("Events.PLH.Trade", msg, itemId, owner, param)
+                Roll.Add(param, owner):Start()
             elseif roll and (roll.isOwner or not roll.ownerId) then
                 -- Keep: The owner wants to keep the item
                 if action == Comm.PLH_ACTION_KEEP and fromOwner then

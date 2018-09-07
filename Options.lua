@@ -196,7 +196,7 @@ function Self.RegisterGeneral()
                 step = 5,
                 set = function (_, val) Addon.db.profile.ilvlThreshold = val end,
                 get = function () return Addon.db.profile.ilvlThreshold end,
-                width = Self.WIDTH_HALF
+                width = Self.WIDTH_THIRD
             },
             ilvlThresholdTrinkets = {
                 name = L["OPT_ILVL_THRESHOLD_TRINKETS"],
@@ -205,7 +205,16 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.ilvlThresholdTrinkets = val end,
                 get = function () return Addon.db.profile.ilvlThresholdTrinkets end,
-                width = Self.WIDTH_HALF
+                width = Self.WIDTH_THIRD
+            },
+            ilvlThresholdRings = {
+                name = L["OPT_ILVL_THRESHOLD_RINGS"],
+                desc = L["OPT_ILVL_THRESHOLD_RINGS_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.ilvlThresholdRings = val end,
+                get = function () return Addon.db.profile.ilvlThresholdRings end,
+                width = Self.WIDTH_THIRD
             },
             ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             specs = {
@@ -521,6 +530,7 @@ function Self.RegisterMasterloot()
                 values = clubValues,
                 set = function (_, val)
                     Addon.db.char.masterloot.council.clubId = clubs[val].clubId
+                    Session.RefreshRules()
                 end,
                 get = function ()
                     return Util.TblFindWhere(clubs, "clubId", Addon.db.char.masterloot.council.clubId)
@@ -618,6 +628,7 @@ function Self.RegisterMasterloot()
                         step = 5,
                         set = function (_, val)
                             Addon.db.profile.masterloot.rules.timeoutBase = val
+                            Session.RefreshRules()
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.timeoutBase end,
                         width = Self.WIDTH_HALF
@@ -632,6 +643,7 @@ function Self.RegisterMasterloot()
                         step = 1,
                         set = function (_, val)
                             Addon.db.profile.masterloot.rules.timeoutPerItem = val
+                            Session.RefreshRules()
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.timeoutPerItem end,
                         width = Self.WIDTH_HALF
@@ -644,6 +656,7 @@ function Self.RegisterMasterloot()
                         order = it(),
                         set = function (_, val)
                             Addon.db.profile.masterloot.rules.bidPublic = val
+                            Session.RefreshRules()
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.bidPublic end,
                         width = Self.WIDTH_HALF
@@ -655,6 +668,7 @@ function Self.RegisterMasterloot()
                         order = it(),
                         set = function (_, val)
                             Addon.db.profile.masterloot.rules.votePublic = val
+                            Session.RefreshRules()
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.votePublic end,
                         width = Self.WIDTH_HALF
@@ -673,6 +687,7 @@ function Self.RegisterMasterloot()
                                     tinsert(t, v == NEED and Roll.ANSWER_NEED or v)
                                 end
                             end
+                            Session.RefreshRules()
                         end,
                         get = function ()
                             local s = ""
@@ -696,6 +711,7 @@ function Self.RegisterMasterloot()
                                     tinsert(t, v == GREED and Roll.ANSWER_GREED or v)
                                 end
                             end
+                            Session.RefreshRules()
                         end,
                         get = function ()
                             local s = ""
@@ -773,6 +789,7 @@ function Self.RegisterMasterloot()
                         values = Self.councilValues,
                         set = function (_, key, val)
                             Addon.db.profile.masterloot.council.roles[Self.councilKeys[key]] = val
+                            Session.RefreshRules()
                         end,
                         get = function (_, key) return Addon.db.profile.masterloot.council.roles[Self.councilKeys[key]] end
                     },
@@ -787,6 +804,7 @@ function Self.RegisterMasterloot()
                         set = function (_, key, val)
                             local clubId = Addon.db.char.masterloot.council.clubId
                             Util.TblSet(Addon.db.profile.masterloot.council.clubs, clubId, "ranks", key, val)
+                            Session.RefreshRules()
                         end,
                         get = function (_, key)
                             local clubId = Addon.db.char.masterloot.council.clubId
@@ -802,6 +820,7 @@ function Self.RegisterMasterloot()
                             local r, w, t = GetRealmName(), Addon.db.profile.masterloot.council.whitelists
                             if w[r] then t = wipe(w[r]) else t = Util.Tbl() w[r] = t end
                             for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do t[v] = true end
+                            Session.RefreshRules()
                         end,
                         get = function ()
                             return Util(Addon.db.profile.masterloot.council.whitelists[GetRealmName()] or Util.TBL_EMPTY).Keys().Sort().Concat(", ")()

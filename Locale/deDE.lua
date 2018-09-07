@@ -147,7 +147,7 @@ L["TIP_MASTERLOOT_INFO"] = [=[|cffffff78Plündermeister:|r %s
 |cffffff78Stimmen:|r %s]=]
 L["TIP_MASTERLOOT_START"] = "Werde oder suche einen Plündermeister"
 L["TIP_MASTERLOOT_STOP"] = "Plündermeister entfernen"
-L["TIP_MASTERLOOTING"] = "Plündermeister Gruppe:"
+L["TIP_MASTERLOOTING"] = "Plündermeister Gruppe (%d):"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff78Links-Klick:|r Verlosung-Übersicht umschalten
 |cffffff78Rechts-Klick:|r Optionen öffnen]=]
 L["TIP_PLH_USERS"] = "PLH Nutzer:"
@@ -170,7 +170,9 @@ L["OPT_ENABLE_DESC"] = "Aktiviere oder deaktiviere das Addon"
 L["OPT_ILVL_THRESHOLD"] = "Item-Level Schwelle"
 L["OPT_ILVL_THRESHOLD_DESC"] = "Items deren Item-Level mehr als diesen Wert unter deinen Items liegen werden ignoriert."
 L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Doppelte Schwelle für Trinkets"
-L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Trinkets sollten eine doppelt so hohe Schwelle haben, da ihr Wert durch Proc-Effekte start schwanken kann."
+L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Trinkets sollten eine doppelt so hohe Schwelle haben, da ihr Wert durch Proc-Effekte stark schwanken kann."
+L["OPT_ILVL_THRESHOLD_RINGS"] = "Doppelte Schwelle für Ringe"
+L["OPT_ILVL_THRESHOLD_RINGS_DESC"] = "Ringe sollten eine doppelt so hohe Schwelle haben, da ihr Wert durch fehlende Primär-Attribute stark schwanken kann."
 L["OPT_INFO"] = "Informationen"
 L["OPT_INFO_DESC"] = "Ein paar Informationen über das Addon."
 L["OPT_ITEM_FILTER"] = "Item Filter"

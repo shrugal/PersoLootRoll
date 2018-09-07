@@ -147,7 +147,7 @@ L["TIP_MASTERLOOT_INFO"] = [=[|cffffff78Masterlooter:|r %s
 |cffffff78Votes:|r %s]=]
 L["TIP_MASTERLOOT_START"] = "Become or search for a masterlooter"
 L["TIP_MASTERLOOT_STOP"] = "Remove masterlooter"
-L["TIP_MASTERLOOTING"] = "Masterlooting group:"
+L["TIP_MASTERLOOTING"] = "Masterlooting group (%d):"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff78Left-Click:|r Toggle rolls window
 |cffffff78Right-Click:|r Show Options]=]
 L["TIP_PLH_USERS"] = "PLH users:"
@@ -171,6 +171,8 @@ L["OPT_ILVL_THRESHOLD"] = "Item-level threshold"
 L["OPT_ILVL_THRESHOLD_DESC"] = "Items that are more than this many item levels below yours are ignored."
 L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Double threshold for trinkets"
 L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Trinkets should have double the normal threshold because proc effects can make their value vary by a large amount."
+L["OPT_ILVL_THRESHOLD_RINGS"] = "Double threshold for rings"
+L["OPT_ILVL_THRESHOLD_RINGS_DESC"] = "Rings should have double the normal threshold because their value may vary by a large amount due to missing primary stats."
 L["OPT_INFO"] = "Information"
 L["OPT_INFO_DESC"] = "Some information about this addon."
 L["OPT_ITEM_FILTER"] = "Item Filter"

@@ -57,7 +57,7 @@ function Self.IsCommunityGroup(commId)
 
     local n, comms = GetNumGroupMembers(), Self.Tbl()
     for i=1,n do
-        local c = Unit.CommonCommunities(GetRaidRosterInfo(i))
+        local c = Unit.CommonClubs(GetRaidRosterInfo(i))
         for _,clubId in pairs(c) do
             comms[clubId] = (comms[clubId] or 0) + 1
             if (not commId or commId == clubId) and comms[clubId] / n >= Self.GROUP_THRESHOLD then
@@ -214,36 +214,28 @@ end
 
 -- Iterate tables or parameter lists
 local Fn = function (t, i)
-    local i, v = next(t, i)
-    if not i and Self.TblIsTmp(t) then
-        Self.TblRelease(t)
+    i = (i or 0) + 1
+    if i > #t then
+        Self.TblReleaseTmp(t)
+    else
+        local v = t[i]
+        return i, Self.Check(v == Self.TBL_EMPTY, nil, v)
     end
-    return i, v
 end
 function Self.Each(...)
     if ... and type(...) == "table" then
-        return Fn, ...
+        return next, ...
     elseif select("#", ...) == 0 then
         return Self.FnNoop
     else
         return Fn, Self.TblTmp(...)
     end
 end
-
--- Iterate table, matching entries against a set of key/value pairs
-local Fn = function (u, i)
-    local i, v = next(u[1], i)
-    while i do
-        if Self.TblContains(v, u[2], u[3]) then return i, v end
-        i, v = next(u[1], i)
-    end
-    Self.TblReleaseTmp(u[1], u[2], u)
- end
-function Self.EachWhere(t, ...)
-    if type(...) == "table" then
-        return Fn, Self.TblTmp(t, (...), (select(2, ...)))
+function Self.IEach(...)
+    if ... and type(...) == "table" then
+        return Fn, ...
     else
-        return Fn, Self.TblTmp(t, Self.TblTmpHash(...))
+        return Self.Each(...)
     end
 end
 
@@ -273,11 +265,35 @@ end
 --                       Table                       --
 -------------------------------------------------------
 
+-- Create a table that tracks the highest numerical index and offers count+newIndex fields and Add function
+function Self.TblCounter(t)
+    t = t or {}
+    local count = 0
+    
+    setmetatable(t, {
+        __index = function (t, k)
+            return k == "count" and count
+                or k == "nextIndex" and count+1
+                or k == "Add" and function (v) t[count+1] = v return count end
+                or rawget(t, k)
+        end,
+        __newindex = function (t, k, v)
+            if v ~= nil and type(k) == "number" and k > count then
+                count = k
+            end
+            rawset(t, k, v)
+        end
+    })
+    return t
+end
+
+-- REUSABLE TABLES: Store unused tables in a cache to reuse them later
+
 -- A cache for temp tables
 Self.tblPool = {}
 Self.tblPoolSize = 10
 
--- For when we need an empty table as noop
+-- For when we need an empty table as noop or special marking
 Self.TBL_EMPTY = {}
 
 -- Get a table (newly created or from the cache), and fill it with values
@@ -304,7 +320,7 @@ function Self.TblRelease(...)
 
     for i=1, select("#", ...) do
         local t = select(i, ...)
-        if type(t) == "table" then
+        if type(t) == "table" and t ~= Self.TBL_EMPTY then
             if #Self.tblPool < Self.tblPoolSize then
                 tinsert(Self.tblPool, t)
 
@@ -323,17 +339,28 @@ function Self.TblRelease(...)
     end
 end
 
--- Temporary tables: Same as above, but tables are marked as temporary and only those are released
+-- TEMPORARY TABLES: Tables that are automatically released after certain operations (such as loops)
 
-function Self.TblTmp(...) return setmetatable(Self.Tbl(...), Self.TBL_EMPTY) end
-function Self.TblTmpHash(...) return setmetatable(Self.TblHash(...), Self.TBL_EMPTY) end
+function Self.TblTmp(...)
+    local t = tremove(Self.tblPool) or {}
+    for i=1, select("#", ...) do
+        local v = select(i, ...)
+        t[i] = v == nil and Self.TBL_EMPTY or v
+    end
+    return setmetatable(t, Self.TBL_EMPTY)
+end
+
+function Self.TblHashTmp(...) return setmetatable(Self.TblHash(...), Self.TBL_EMPTY) end
 function Self.TblIsTmp(t) return getmetatable(t) == Self.TBL_EMPTY end
+
 function Self.TblReleaseTmp(...)
     for i=1, select("#", ...) do
         local t = select(i, ...)
         if type(t) == "table" and Self.TblIsTmp(t) then Self.TblRelease(t) end
     end
 end
+
+-- GET/SET
 
 -- Get a value from a table
 function Self.TblGet(t, ...)
@@ -391,28 +418,6 @@ end
 function Self.TblRandom(t)
     local key = Self.TblRandomKey(t)
     return key and t[key]
-end
-
--- Create a table that tracks the highest numerical index and offers count+newIndex fields and Add function
-function Self.TblCounter(t)
-    t = t or {}
-    local count = 0
-    
-    setmetatable(t, {
-        __index = function (t, k)
-            return k == "count" and count
-                or k == "nextIndex" and count+1
-                or k == "Add" and function (v) t[count+1] = v return count end
-                or rawget(t, k)
-        end,
-        __newindex = function (t, k, v)
-            if v ~= nil and type(k) == "number" and k > count then
-                count = k
-            end
-            rawset(t, k, v)
-        end
-    })
-    return t
 end
 
 -- Get table keys
@@ -652,7 +657,7 @@ function Self.TblFilter(t, fn, index, k, ...)
     else
         for i,v in pairs(t) do
             if index and not fn(v, i, ...) or not index and not fn(v, ...) then
-                if k then t[i] = nil else tremove(t, i) end
+                Self.TblRemove(t, i, k)
             end
         end
     end
@@ -717,7 +722,7 @@ function Self.TblCopyFilter(t, fn, k, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if fn(v, i, ...) then
-            if k then u[i] = v else tinsert(u, v) end
+            Self.TblInsert(u, i, v, k)
         end
     end
     return u
@@ -746,7 +751,7 @@ function Self.TblCopyOnly(t, val, k)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if v == val then
-            if k then u[i] = v else tinsert(u, v) end
+            Self.TblInsert(u, i, v, k)
         end
     end
     return u
@@ -757,7 +762,7 @@ function Self.TblCopyExcept(t, val, k)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if v ~= val then
-            if k then u[i] = v else tinsert(u, v) end
+            Self.TblInsert(u, i, v, k)
         end
     end
     return u
@@ -768,7 +773,7 @@ function Self.TblCopyWhere(t, k, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if Self.TblFindWhere(u, ...) then
-            if k then u[i] = v else tinsert(u, v) end
+            Self.TblInsert(u, i, v, k)
         end
     end
     return u
@@ -779,7 +784,7 @@ function Self.TblCopyExceptWhere(t, k, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if not Self.TblFindWhere(u, ...) then
-            if k then u[i] = v else tinsert(u, v) end
+            Self.TblInsert(u, i, v, k)
         end
     end
     return u
@@ -880,7 +885,7 @@ function Self.TblUnique(t, k)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if u[v] ~= nil then
-            if k then t[i] = nil else tremove(t, i) end
+            Self.TblRemove(t, i, k)
         else
             u[v] = true
         end
@@ -896,7 +901,7 @@ function Self.TblDiff(t, ...)
     for i,v in pairs(t) do
         for i=1, select("#", ...) - (k and 1 or 0) do
             if Self.In(v, (select(i, ...))) then
-                if k then t[i] = nil else tremove(t, i) end
+                Self.TblRemove(t, i, k)
                 break
             end
         end
@@ -911,7 +916,7 @@ function Self.TblIntersect(t, ...)
     for i,v in pairs(t) do
         for i=1, select("#", ...) - (k and 1 or 0) do
             if not Self.In(v, (select(i, ...))) then
-                if k then t[i] = nil else tremove(t, i) end
+                Self.TblRemove(t, i, k)
                 break
             end
         end
@@ -939,6 +944,8 @@ end
 
 -- CHANGE
 
+function Self.TblInsert(t, i, v, k) if k or type(i) ~= "number" then t[i] = v else tinsert(t, v) end end
+function Self.TblRemove(t, i, k) if k or type(i) ~= "number" then t[i] = nil else tremove(t, i) end end
 function Self.TblPush(t, v) tinsert(t, v) return t end
 function Self.TblPop(t) return tremove(t) end
 function Self.TblDrop(t) tremove(t) return t end
@@ -1146,12 +1153,15 @@ end
 --                      Boolean                      --
 -------------------------------------------------------
 
-function Self.BoolXor(...)
-    local u = false
-    for i,v in Self.Each(...) do
-        if u and v then return false else u = u or v end
-    end
-    return u
+function Self.Bool(v)
+    return not not v
+end
+
+-- True if an uneven # of inputs are true
+function Self.BoolXOR(...)
+    local n = 0
+    for _,v in Self.Each(...) do if v then n = n + 1 end end
+    return n % 2 == 1
 end
 
 -------------------------------------------------------
@@ -1175,26 +1185,43 @@ function Self.FnDiv(a, b) return a/b end
 
 -- MODIFY
 
--- Throttle a function, so it is called at most every n seconds
-function Self.FnThrottle(fn, n)
-    local timer
-    return function (...)
+-- Throttle a function, so it is executed at most every n seconds
+function Self.FnThrottle(fn, n, leading)
+    local Fn, timer, called
+    Fn = function (...)
         if not timer then
+            if leading then fn(...) end
             timer = Addon:ScheduleTimer(function (...)
                 timer = nil
-                fn(...)
+                if not leading then fn(...) end
+                if called then
+                    called = nil
+                    Fn(...)
+                end
             end, n, ...)
+        else
+            called = true
         end
     end
+    return Fn
 end
 
--- Debounce a function, so it doesn't get called again for n seconds after it has been called
-function Self.FnDebounce(fn, n)
-    local called
+-- Debounce a function, so it is executed only n seconds after the last call
+function Self.FnDebounce(fn, n, leading)
+    local timer, called
     return function (...)
-        if not called or called + n < GetTime() then
-            called = GetTime()
-            fn(...)
+        if not timer then
+            if leading then fn(...) end
+            timer = Addon:ScheduleTimer(function (...)
+                timer = nil
+                if not leading or called then
+                    called = nil
+                    fn(...)
+                end
+            end, n, ...)
+        else
+            called = true
+            Addon:ExtendTimerTo(timer, n)
         end
     end
 end

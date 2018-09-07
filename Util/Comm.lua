@@ -113,7 +113,7 @@ function Self.ShouldInitChat(target)
         -- Check target
         local target = c.whisper.target
         local guild = Unit.GuildName(unit)
-        local isGuild, isCommunity, isFriend = Unit.IsGuildMember(unit), Unit.IsCommunityMember(unit), Unit.IsFriend(unit)
+        local isGuild, isCommunity, isFriend = Unit.IsGuildMember(unit), Unit.IsClubMember(unit), Unit.IsFriend(unit)
 
         if isGuild or isCommunity or isFriend then
             if isGuild and not target.guild or isCommunity and not target.community or isFriend and not target.friend then
@@ -227,7 +227,7 @@ end
 -- BID
 
 -- Messages when bidding on a roll
-function Self.RollBid(roll, bid, fromUnit, isImport)
+function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport)
     local fromSelf = Unit.IsSelf(fromUnit)
     
     -- Show a confirmation message
@@ -242,7 +242,7 @@ function Self.RollBid(roll, bid, fromUnit, isImport)
     if not isImport then
         -- Inform others
         if roll.isOwner then
-            local data = Util.TblHash("ownerId", roll.ownerId, "bid", bid, "fromUnit", Unit.FullName(fromUnit))
+            local data = Util.TblHash("ownerId", roll.ownerId, "bid", bid, "roll", randomRoll, "fromUnit", Unit.FullName(fromUnit))
 
             -- Send to all or the council
             if Util.Check(Session.GetMasterlooter(), Session.rules.bidPublic, Addon.db.profile.bidPublic) then
@@ -253,6 +253,8 @@ function Self.RollBid(roll, bid, fromUnit, isImport)
                 end
             end
 
+            Util.TblRelease(data)
+
             -- Send message to PLH users
             if fromSelf and bid == Roll.BID_NEED and not Session.GetMasterlooter() then
                 Self.SendPlh(Self.PLH_ACTION_KEEP, roll)
@@ -260,7 +262,7 @@ function Self.RollBid(roll, bid, fromUnit, isImport)
         -- Send bid to owner
         elseif fromSelf then
             if roll.ownerId then
-                Self.SendData(Self.EVENT_BID, {ownerId = roll.ownerId, bid = bid}, roll.owner)
+                Self.SendData(Self.EVENT_BID, Util.TblHash("ownerId", roll.ownerId, "bid", bid), roll.owner)
             elseif bid ~= Roll.BID_PASS then
                 local owner, link = roll.item.owner, roll.item.link
 
@@ -311,9 +313,11 @@ function Self.RollVote(roll, vote, fromUnit, isImport)
                     Self.SendData(Self.EVENT_VOTE, data, target)
                 end
             end
+
+            Util.TblRelease(data)
         elseif fromSelf then
             -- Send to owner
-            Self.SendData(Self.EVENT_VOTE, {ownerId = roll.ownerId, vote = Unit.FullName(vote)}, Session.GetMasterlooter())
+            Self.SendData(Self.EVENT_VOTE, Util.TblHash("ownerId", roll.ownerId, "vote", Unit.FullName(vote)), Session.GetMasterlooter())
         end
     end
 end

@@ -194,7 +194,7 @@ function Self.Show()
                         GameTooltip:AddLine(L["TIP_MASTERLOOT_INFO"]:format(Unit.ColoredName(ml), timeoutBase, timeoutPerItem, council, bids, votes), 1, 1, 1)
 
                         -- Players
-                        GameTooltip:AddLine("\n" .. L["TIP_MASTERLOOTING"])
+                        GameTooltip:AddLine("\n" .. L["TIP_MASTERLOOTING"]:format(1 + Util.TblCountOnly(Session.masterlooting, ml)))
                         local units = Unit.ColoredName(UnitName("player"))
                         for unit,unitMl in pairs(Session.masterlooting) do
                             if ml == unitMl then
@@ -311,7 +311,7 @@ function Self.Update()
     GUI(Self.frames.empty).Toggle(Util.TblCount(rolls) == 0)
 
     local it = Util.Iter(#header + 1)
-    for _,roll in pairs(rolls) do
+    for _,roll in ipairs(rolls) do
         -- Create the row
         if not children[it(0) + 1] then
             -- ID
@@ -531,18 +531,16 @@ function Self.Update()
             local children = actions.children
             local it = Util.Iter()
 
-            local canBid = not roll.bid and roll:UnitCanBid()
-            local canPass = roll:UnitCanPass()
             local canBeAwarded = roll:CanBeAwarded(true)
             local canTrade = Trade.ShouldInitTrade(roll)
             local actionTarget = roll:GetActionTarget()
 
             -- Need
-            GUI(children[it()]).SetUserData("roll", roll).Toggle(canBid)
+            GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_NEED))
             -- Greed
-            GUI(children[it()]).SetUserData("roll", roll).Toggle(canBid and (roll.ownerId or roll.itemOwnerId))
+            GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_GREED))
             -- Pass
-            GUI(children[it()]).SetUserData("roll", roll).Toggle(canBid or canPass)
+            GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_PASS))
             -- Advertise
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:ShouldAdvertise(true))
             -- Award randomly
@@ -683,14 +681,14 @@ function Self.UpdateDetails(details, roll)
             GUI("Label").SetFontObject(GameFontNormal).AddTo(details)
         
             -- Votes
-            GUI("Label")
+            GUI("InteractiveLabel")
                 .SetFontObject(GameFontNormal)
                 .SetCallback("OnEnter", function (self)
                     local roll, unit = self:GetUserData("roll"), self:GetUserData("unit")
                     if Util.TblCountOnly(roll.votes, unit) > 0 then
                         GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOM")
                         GameTooltip:SetText(L["TIP_VOTES"])
-                        for toUnit,fromUnit in pairs(roll.votes) do
+                        for fromUnit,toUnit in pairs(roll.votes) do
                             if unit == toUnit then
                                 local c = Unit.Color(fromUnit)
                                 GameTooltip:AddLine(Unit.ShortenedName(fromUnit), c.r, c.g, c.b, false)

@@ -147,7 +147,7 @@ cffffff00競標:|r %s
 |cffffff00表決:|r %s]=]
 L["TIP_MASTERLOOT_START"] = "成為或搜尋負責分裝者"
 L["TIP_MASTERLOOT_STOP"] = "移除負責分裝者"
-L["TIP_MASTERLOOTING"] = "有分裝者的隊伍:"
+L["TIP_MASTERLOOTING"] = "有分裝者的隊伍 (%d):"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff00左鍵:|r 開關骰裝視窗 
 |cffffff00右鍵:|r 設定選項]=]
 L["TIP_PLH_USERS"] = "PLH使用者："
@@ -171,6 +171,8 @@ L["OPT_ILVL_THRESHOLD"] = "物品等級門檻"
 L["OPT_ILVL_THRESHOLD_DESC"] = "物品等級低於你以下多少的物品將被忽略。"
 L["OPT_ILVL_THRESHOLD_TRINKETS"] = "飾品門檻為雙倍"
 L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "飾品的門檻應該是正常值的兩倍，因為觸發特效會讓收益變化很大。"
+L["OPT_ILVL_THRESHOLD_RINGS"] = "Double threshold for rings" -- Translation missing
+L["OPT_ILVL_THRESHOLD_RINGS_DESC"] = "Rings should have double the normal threshold because their value may vary by a large amount due to missing primary stats." -- Translation missing
 L["OPT_INFO"] = "資訊"
 L["OPT_INFO_DESC"] = "關於此插件的一些資訊。"
 L["OPT_ITEM_FILTER"] = "物品過濾"

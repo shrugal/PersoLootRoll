@@ -154,5 +154,5 @@ end
 -- Check if the user should be allowed to initiate trade with a roll owner or winner
 function Self.ShouldInitTrade(roll)
     local target = roll:GetActionTarget()
-    return target and (roll.ownerId or roll.chat or IsGuildMember(target) or Unit.IsFriend(target) or Unit.IsCommunityMember(target))
+    return target and (roll.ownerId or roll.chat or IsGuildMember(target) or Unit.IsFriend(target) or Unit.IsClubMember(target))
 end
