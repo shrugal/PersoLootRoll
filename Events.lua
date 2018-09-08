@@ -69,10 +69,11 @@ function Self.GROUP_LEFT()
 end
 
 function Self.PARTY_MEMBER_ENABLE(event, unit)
-    if not Addon:IsTracking() then return end
+    if Addon:IsTracking() then Inspect.Queue(unit) end
+end
 
-    Inspect.Queue(unit)
-    Inspect.Start()
+function Self.RAID_ROSTER_UPDATE()
+    Addon:OnTrackingChanged()
 end
 
 -------------------------------------------------------
@@ -234,7 +235,7 @@ end
 
 function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
     local unit = Unit(sender)
-    if not Unit.InGroup(unit) or Util.BoolXOR(Unit.IsSelf(unit), Addon:IsTracking(unit, true)) then return end
+    if not Unit.InGroup(unit) or Util.BoolXOR(Unit.IsSelf(unit), Addon:UnitIsTracking(unit, true)) then return end
 
     local item = Item.GetLink(msg)
 
@@ -434,6 +435,7 @@ function Self.RegisterEvents()
     Addon:RegisterEvent("GROUP_JOINED", Self.GROUP_JOINED)
     Addon:RegisterEvent("GROUP_LEFT", Self.GROUP_LEFT)
     Addon:RegisterEvent("PARTY_MEMBER_ENABLE", Self.PARTY_MEMBER_ENABLE)
+    Addon:RegisterEvent("RAID_ROSTER_UPDATE", Self.RAID_ROSTER_UPDATE)
     -- Combat
     Addon:RegisterEvent("ENCOUNTER_START", Inspect.Stop)
     Addon:RegisterEvent("ENCOUNTER_END", Inspect.Start)
@@ -469,6 +471,7 @@ function Self.UnregisterEvents()
     Addon:UnregisterEvent("GROUP_JOINED")
     Addon:UnregisterEvent("GROUP_LEFT")
     Addon:UnregisterEvent("PARTY_MEMBER_ENABLE")
+    Addon:UnregisterEvent("RAID_ROSTER_UPDATE")
     -- Combat
     Addon:UnregisterEvent("ENCOUNTER_START")
     Addon:UnregisterEvent("ENCOUNTER_END")

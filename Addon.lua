@@ -29,6 +29,7 @@ Addon.plhUsers = {}
 -- Other
 Addon.rolls = Util.TblCounter()
 Addon.timers = {}
+Addon.tracking = nil
 
 -------------------------------------------------------
 --                    Addon stuff                    --
@@ -43,6 +44,7 @@ function Addon:OnInitialize()
         profile = {
             -- General
             enabled = true,
+            activeGroups = {lfd = true, party = true, lfr = true, raid = true, guild = true, community = true},
             onlyMasterloot = false,
             dontShare = false,
             awardSelf = false,
@@ -314,12 +316,32 @@ end
 -------------------------------------------------------
 
 -- Check if we should currently track loot etc.
-function Addon:IsTracking(unit, inclCompAddons)
+function Addon:IsTracking(refresh)
+    if self.tracking == nil or refresh then
+        local group, p = self.db.profile.activeGroups, Util.Push
+
+        self.tracking = self.db.profile.enabled
+            and (not self.db.profile.onlyMasterloot or Session.GetMasterlooter())
+            and IsInGroup()
+            and Util.In(GetLootMethod(), "freeforall", "roundrobin", "personalloot", "group")
+            and (
+                IsInRaid(LE_PARTY_CATEGORY_INSTANCE)                 and p(group.lfr)
+                or IsInGroup(LE_PARTY_CATEGORY_INSTANCE)             and p(group.lfd)
+                or Util.IsGuildGroup(Unit.GuildName("player") or "") and p(group.guild)
+                or Util.IsCommunityGroup()                           and p(group.community)
+                or IsInRaid()                                        and p(group.raid)
+                or p(group.party)
+            ).Pop()
+            or false
+    end
+
+    return self.tracking
+end
+
+-- Check if the given unit is tracking
+function Addon:UnitIsTracking(unit, inclCompAddons)
     if not unit or Unit.IsSelf(unit) then
-        return self.db.profile.enabled
-           and (not self.db.profile.onlyMasterloot or Session.GetMasterlooter())
-           and IsInGroup()
-           and Util.In(GetLootMethod(), "freeforall", "roundrobin", "personalloot", "group")
+        return self:IsTracking()
     else
         unit = Unit.Name(unit)
         return self.versions[unit] and not self.disabled[unit] or inclCompAddons and self.plhUsers[unit]
@@ -327,26 +349,23 @@ function Addon:IsTracking(unit, inclCompAddons)
 end
 
 -- Tracking state potentially changed
-function Addon:OnTrackingChanged(sync)
-    local isTracking = self:IsTracking()
-
-    -- Let others know
-    if not Util.BoolXOR(isTracking, self.disabled[UnitName("player")]) then
-        Comm.Send(Comm["EVENT_" .. (isTracking and "ENABLE" or "DISABLE")])
-    end
+function Addon:OnTrackingChanged(clear)
+    local wasTracking, isTracking = self.tracking, self:IsTracking(true)
 
     -- Start/Stop tracking process
-    if sync then
+    if wasTracking ~= isTracking then
+        Comm.Send(Comm["EVENT_" .. (isTracking and "ENABLE" or "DISABLE")])
+
         if isTracking then
             Comm.Send(Comm.EVENT_SYNC)
             Inspect.Queue()
-        else
+        elseif not isTracking and clear then
             Util.TblIter(self.rolls, Roll.Clear)
             Inspect.Clear()
         end
-    end
 
-    Inspect[isTracking and "Start" or "Stop"]()
+        Inspect[isTracking and "Start" or "Stop"]()
+    end
 end
 
 -- Set a unit's version string

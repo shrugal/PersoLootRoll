@@ -262,7 +262,7 @@ function Self.Update(data, unit)
             end
         end) end
     -- The winner can inform us that it has been traded, or the item owner if the winner doesn't have the addon or he traded it to someone else
-    elseif roll.winner and (unit == roll.winner or unit == roll.item.owner and not Addon:IsTracking(roll.winner) or data.traded ~= roll.winner) then
+    elseif roll.winner and (unit == roll.winner or unit == roll.item.owner and not Addon:UnitIsTracking(roll.winner) or data.traded ~= roll.winner) then
         roll.item:OnLoaded(function()
             -- Register when the roll has been traded
             if data.traded ~= roll.traded then

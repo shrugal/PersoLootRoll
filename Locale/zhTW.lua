@@ -167,6 +167,11 @@ L["OPT_DONT_SHARE"] = "不分享戰利品"
 L["OPT_DONT_SHARE_DESC"] = "不去骰別人的戰利品但也不分享自己的。此插件將會阻擋對你戰利品的請求(如果啟用的話)，但你仍可以成為分裝者以及戰利品議會成員。"
 L["OPT_ENABLE"] = "啟用"
 L["OPT_ENABLE_DESC"] = "啟用或停用此插件"
+L["OPT_ACTIVE_GROUPS"] = "Activate by group type" -- Translation missing
+L["OPT_ACTIVE_GROUPS_DESC"] = [=[Activate only when you are in one of these group types.
+
+|cffffff78公會團隊：|r團隊的%d%%或更多的成員是來自一個公會。
+|cffffff78社群團隊：|r團隊的%d%%或更多的成員是來自一個魔獸社群。]=]-- Translation missing
 L["OPT_ILVL_THRESHOLD"] = "物品等級門檻"
 L["OPT_ILVL_THRESHOLD_DESC"] = "物品等級低於你以下多少的物品將被忽略。"
 L["OPT_ILVL_THRESHOLD_TRINKETS"] = "飾品門檻為雙倍"

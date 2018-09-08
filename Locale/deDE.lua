@@ -167,6 +167,11 @@ L["OPT_DONT_SHARE"] = "Keine Beute teilen"
 L["OPT_DONT_SHARE_DESC"] = "Rolle nicht auf die Beute anderer, und teile deine eigene Beute nicht. Das Addon wird Anfragen zu deiner eigenen Beute verneinen (wenn aktiviert), und du kannst weiterhin Plündermeister und Ratsmitglied sein."
 L["OPT_ENABLE"] = "Aktiviert"
 L["OPT_ENABLE_DESC"] = "Aktiviere oder deaktiviere das Addon"
+L["OPT_ACTIVE_GROUPS"] = "Aktiviere nach Gruppentyp"
+L["OPT_ACTIVE_GROUPS_DESC"] = [=[Aktiviere das Addon nur, wenn du in einer dieser Gruppentypen bist.
+
+|cffffff78Gildengruppe:|r Die Mitglieder einer Gilde stellen %d%% oder mehr der Gruppe.
+|cffffff78Community Gruppe:|r Die Mitglieder einer deiner WoW-Communities stellen %d%% oder mehr der Gruppe.]=]
 L["OPT_ILVL_THRESHOLD"] = "Item-Level Schwelle"
 L["OPT_ILVL_THRESHOLD_DESC"] = "Items deren Item-Level mehr als diesen Wert unter deinen Items liegen werden ignoriert."
 L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Doppelte Schwelle für Trinkets"
