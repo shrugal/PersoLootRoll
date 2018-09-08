@@ -167,10 +167,17 @@ L["OPT_DONT_SHARE"] = "Не делиться добычей"
 L["OPT_DONT_SHARE_DESC"] = "Не участвовать в розыгрышах добычи от других и не делиться своей добычей. Аддон будет отклонять входящие запросы на вашу добычу (если включено), и вы все еще можете быть ответственным за добычу и членом совета."
 L["OPT_ENABLE"] = "Включить"
 L["OPT_ENABLE_DESC"] = "Включить или отключить аддон"
+L["OPT_ACTIVE_GROUPS"] = "Activate by group type" -- Translation missing
+L["OPT_ACTIVE_GROUPS_DESC"] = [=[Activate only when you are in one of these group types.
+
+|cffffff78Гильдейская группа:|r Кто-то из гильдии, члены которой составляют %d%% или более группы.
+|cffffff78Community Group:|r The members of one of your WoW-Communities make up %d%% or more of the group.]=] -- Translation missing
 L["OPT_ILVL_THRESHOLD"] = "Диапазон уровней предметов"
 L["OPT_ILVL_THRESHOLD_DESC"] = "Предметы, уровень которых ниже ваших, игнорируются."
 L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Удвоить диапазон для аксессуаров"
 L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Аксессуары должны иметь двойной диапазон, потому что эффекты на них могут сделать их ценность больше."
+L["OPT_ILVL_THRESHOLD_RINGS"] = "Double threshold for rings" -- Translation missing
+L["OPT_ILVL_THRESHOLD_RINGS_DESC"] = "Rings should have double the normal threshold because their value may vary by a large amount due to missing primary stats." -- Translation missing
 L["OPT_INFO"] = "Информация"
 L["OPT_INFO_DESC"] = "Немного информации об этом аддоне."
 L["OPT_ITEM_FILTER"] = "Фильтр предметов"
@@ -282,7 +289,7 @@ L["OPT_GROUPCHAT_GROUP_TYPE"] = "Объявлять по типу группы"
 L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[Отправлять сообщения в чат группы, только если вы находитесь в группе одного из этих типов.
 
 |cffffff78Гильдейская группа:|r Кто-то из гильдии, члены которой составляют %d%% или более группы.
-|cffffff78Community Group:|r The members of one of your WoW-Communities make up %d%% or more of the group.]=] -- Translation outdated
+|cffffff78Community Group:|r The members of one of your WoW-Communities make up %d%% or more of the group.]=] -- Translation missing
 L["OPT_GROUPCHAT_ROLL"] = "Roll on loot in chat" -- Translation missing
 L["OPT_GROUPCHAT_ROLL_DESC"] = "Roll on loot you want (/roll) if others post links in group chat." -- Translation missing
 L["OPT_MESSAGES"] = "Сообщения"

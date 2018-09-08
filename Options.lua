@@ -22,6 +22,9 @@ Self.frames = {}
 Self.groupKeys = {"party", "lfd", "guild", "raid", "lfr", "community"}
 Self.groupValues = {PARTY, LOOKING_FOR_DUNGEON_PVEFRAME, GUILD_GROUP, RAID, RAID_FINDER_PVEFRAME, L["COMMUNITY_GROUP"]}
 
+Self.groupKeysList = {"party", "raid", "lfd", "lfr", "guild", "community"}
+Self.groupValuesList = {PARTY, RAID, LOOKING_FOR_DUNGEON_PVEFRAME, RAID_FINDER_PVEFRAME, GUILD_GROUP, L["COMMUNITY_GROUP"]}
+
 Self.allowKeys = {"friend", "community", "guild", "raidleader", "raidassistant", "guildgroup"}
 Self.allowValues = {FRIEND, L["COMMUNITY_MEMBER"], LFG_LIST_GUILD_MEMBER, L["RAID_LEADER"], L["RAID_ASSISTANT"], GUILD_GROUP}
 
@@ -49,7 +52,7 @@ function Self.Register()
 
     -- Profiles
     C:RegisterOptionsTable(Name .. " Profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(Addon.db))
-    Self.frames["Profiles"] = CD:AddToBlizOptions(Name .. " Profiles", "Profiles", Name)
+    Self.frames.Profiles = CD:AddToBlizOptions(Name .. " Profiles", "Profiles", Name)
 end
 
 -- Show the options panel
@@ -90,14 +93,18 @@ function Self.RegisterGeneral()
                 get = function (_) return Addon.db.profile.enabled end,
                 width = Self.WIDTH_HALF
             },
-            awardSelf = {
-                name = L["OPT_AWARD_SELF"],
-                desc = L["OPT_AWARD_SELF_DESC"],
-                type = "toggle",
+            activeGroups = {
+                name = L["OPT_ACTIVE_GROUPS"],
+                desc = L["OPT_ACTIVE_GROUPS_DESC"]:format(Util.GROUP_THRESHOLD*100, Util.GROUP_THRESHOLD*100),
+                type = "multiselect",
+                control = "Dropdown",
                 order = it(),
-                set = function (_, val) Addon.db.profile.awardSelf = val end,
-                get = function () return Addon.db.profile.awardSelf end,
-                width = Self.WIDTH_HALF
+                values = Self.groupValuesList,
+                set = function (_, key, val)
+                    Addon.db.profile.activeGroups[Self.groupKeysList[key]] = val
+                    Addon:OnTrackingChanged()
+                end,
+                get = function (_, key) return Addon.db.profile.activeGroups[Self.groupKeysList[key]] end
             },
             onlyMasterloot = {
                 name = L["OPT_ONLY_MASTERLOOT"],
@@ -106,18 +113,9 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val)
                     Addon.db.profile.onlyMasterloot = val
-                    Addon:OnTrackingChanged(not val)
+                    Addon:OnTrackingChanged()
                 end,
                 get = function () return Addon.db.profile.onlyMasterloot end,
-                width = Self.WIDTH_HALF
-            },
-            bidPublic = {
-                name = L["OPT_BID_PUBLIC"],
-                desc = L["OPT_BID_PUBLIC_DESC"],
-                type = "toggle",
-                order = it(),
-                set = function (_, val) Addon.db.profile.bidPublic = val end,
-                get = function () return Addon.db.profile.bidPublic end,
                 width = Self.WIDTH_HALF
             },
             dontShare = {
@@ -127,6 +125,24 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.dontShare = val end,
                 get = function () return Addon.db.profile.dontShare end,
+                width = Self.WIDTH_HALF
+            },
+            awardSelf = {
+                name = L["OPT_AWARD_SELF"],
+                desc = L["OPT_AWARD_SELF_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.awardSelf = val end,
+                get = function () return Addon.db.profile.awardSelf end,
+                width = Self.WIDTH_HALF
+            },
+            bidPublic = {
+                name = L["OPT_BID_PUBLIC"],
+                desc = L["OPT_BID_PUBLIC_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.bidPublic = val end,
+                get = function () return Addon.db.profile.bidPublic end,
                 width = Self.WIDTH_HALF
             },
             ui = {type = "header", order = it(), name = L["OPT_UI"]},
@@ -1068,6 +1084,7 @@ function Self.Migrate()
             Self.MigrateOption("target", p.whisper, p.messages.whisper, true)
             p.whisper = nil
             Self.MigrateOption("messages", p, p.messages, true, "lines", "^%l%l%u%u$", true)
+            p.version = 5
         end
         if p.version < 6 then
             p.messages.group.groupType.community = p.messages.group.groupType.guild

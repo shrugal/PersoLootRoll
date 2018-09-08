@@ -167,6 +167,11 @@ L["OPT_DONT_SHARE"] = "Don't share loot"
 L["OPT_DONT_SHARE_DESC"] = "Don't roll on loot from others and don't share your own loot. The addon will deny incoming requests for your loot (if enabled), and you can still be masterlooter and loot council member."
 L["OPT_ENABLE"] = "Enable"
 L["OPT_ENABLE_DESC"] = "Enable or disable the addon"
+L["OPT_ACTIVE_GROUPS"] = "Activate by group type"
+L["OPT_ACTIVE_GROUPS_DESC"] = [=[Activate only when you are in one of these group types.
+
+|cffffff78Guild Group:|r The members of one guild make up %d%% or more of the group.
+|cffffff78Community Group:|r The members of one of your WoW-Communities make up %d%% or more of the group.]=]
 L["OPT_ILVL_THRESHOLD"] = "Item-level threshold"
 L["OPT_ILVL_THRESHOLD_DESC"] = "Items that are more than this many item levels below yours are ignored."
 L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Double threshold for trinkets"

@@ -219,7 +219,7 @@ local Fn = function (t, i)
         Self.TblReleaseTmp(t)
     else
         local v = t[i]
-        return i, Self.Check(v == Self.TBL_EMPTY, nil, v)
+        return i, Self.Check(v == Self.TBL_NIL, nil, v)
     end
 end
 function Self.Each(...)
@@ -261,6 +261,20 @@ function Self.Select(val, ...)
     end
 end
 
+-- STACK: Useful for ternary conditionals, e.g. val = (cond1 and Push(false) or cond2 and Push(true) or Push(nil)).Pop()
+
+Self.stack = {}
+
+function Self.Push(val)
+    tinsert(Self.stack, val == nil and Self.TBL_NIL or val)
+    return Self
+end
+
+function Self.Pop()
+    local val = tremove(Self.stack)
+    return Self.Check(val == Self.TBL_NIL, nil, val)
+end
+
 -------------------------------------------------------
 --                       Table                       --
 -------------------------------------------------------
@@ -296,6 +310,9 @@ Self.tblPoolSize = 10
 -- For when we need an empty table as noop or special marking
 Self.TBL_EMPTY = {}
 
+-- For when we need to store nil values in a table
+Self.TBL_NIL = {}
+
 -- Get a table (newly created or from the cache), and fill it with values
 function Self.Tbl(...)
     local t = tremove(Self.tblPool) or {}
@@ -320,7 +337,7 @@ function Self.TblRelease(...)
 
     for i=1, select("#", ...) do
         local t = select(i, ...)
-        if type(t) == "table" and t ~= Self.TBL_EMPTY then
+        if type(t) == "table" and t ~= Self.TBL_EMPTY and t ~= Self.TBL_NIL then
             if #Self.tblPool < Self.tblPoolSize then
                 tinsert(Self.tblPool, t)
 
@@ -345,7 +362,7 @@ function Self.TblTmp(...)
     local t = tremove(Self.tblPool) or {}
     for i=1, select("#", ...) do
         local v = select(i, ...)
-        t[i] = v == nil and Self.TBL_EMPTY or v
+        t[i] = v == nil and Self.TBL_NIL or v
     end
     return setmetatable(t, Self.TBL_EMPTY)
 end

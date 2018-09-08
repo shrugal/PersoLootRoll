@@ -106,7 +106,7 @@ function Self.ShouldInitChat(target)
     if channel == Self.TYPE_WHISPER then
         if not c.whisper.ask then
             return false
-        elseif UnitIsDND(unit) or Addon:IsTracking(unit) or Unit.IsSelf(unit) then
+        elseif UnitIsDND(unit) or Addon:UnitIsTracking(unit) or Unit.IsSelf(unit) then
             return false
         end
 
@@ -359,7 +359,7 @@ function Self.RollEnd(roll)
             -- Announce to target
             if Addon.plhUsers[roll.winner] then
                 Self.SendPlh(Self.PLH_ACTION_OFFER, roll, Unit.FullName(roll.winner))
-            elseif Addon.db.profile.messages.whisper.answer and not Addon:IsTracking(roll.winner) then
+            elseif Addon.db.profile.messages.whisper.answer and not Addon:UnitIsTracking(roll.winner) then
                 if roll.item:GetNumEligible(true) == 1 then
                     if roll.item.isOwner then
                         Self.ChatLine("MSG_ROLL_ANSWER_YES", roll.winner)
