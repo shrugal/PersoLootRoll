@@ -198,7 +198,7 @@ function Addon:ToggleDebug(debug)
 
     PersoLootRollDebug = self.DEBUG
 
-    if self.db then
+    if self.DEBUG or self.db then
         self:Info("Debugging " .. (self.DEBUG and "en" or "dis") .. "abled")
     end
 end
@@ -414,7 +414,7 @@ end
 
 function Addon:Echo(lvl, line, ...)
     if lvl == self.ECHO_DEBUG then
-        local args = Util().Tbl(line, ...).Map(Util.toString)()
+        local args = Util().Tbl(line, ...).Map(Util.ToString)()
         line = strjoin(", ", unpack(args))
         Util.TblRelease(args)
     else
@@ -423,7 +423,7 @@ function Addon:Echo(lvl, line, ...)
 
     self:Log(lvl, line)
 
-    if self.db.profile.messages.echo >= lvl then
+    if not self.db or self.db.profile.messages.echo >= lvl then
         self:Print(line)
     end
 end

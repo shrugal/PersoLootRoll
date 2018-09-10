@@ -1280,8 +1280,11 @@ function Self.ToString(val, depth)
     if t == "nil" then
         return "nil"
     elseif t == "table" then
+        local fn = val.ToString or val.toString or val.tostring
         if depth == 0 then
             return "{...}"
+        elseif type(fn) == "function" and fn ~= Self.ToString then
+            return fn(val, depth)
         else
             local j = 1
             return Self.TblFoldL(val, function (s, v, i)

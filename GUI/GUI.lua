@@ -482,8 +482,8 @@ function Self.ResetLabel(self)
 end
 
 function Self.ShowExportWindow(title, text)
-    local f = GUI("Frame").SetLayout("Fill").SetTitle(Name .. " - " .. title).Show()()
-    GUI("MultiLineEditBox").DisableButton(true).SetLabel().SetText(text).AddTo(f)
+    local f = Self("Frame").SetLayout("Fill").SetTitle(Name .. " - " .. title).Show()()
+    Self("MultiLineEditBox").DisableButton(true).SetLabel().SetText(text).AddTo(f)
     return f
 end
 
