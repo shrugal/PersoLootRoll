@@ -106,7 +106,7 @@ end
 
 -- Get the unit's guild name, incl. realm if from another realm
 function Self.GuildName(unit)
-    local guild, _, _, realm = GetGuildInfo(unit)
+    local guild, _, _, realm = GetGuildInfo(unit or "")
     return guild and guild .. (realm and "-" .. realm or "") or nil
 end
 

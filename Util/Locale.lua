@@ -1,23 +1,23 @@
 local Name, Addon = ...
-local RealmInfo = LibStub("LibRealmInfo")
+local RI = LibStub("LibRealmInfo")
 local Unit, Util = Addon.Unit, Addon.Util
 local Self = Addon.Locale
 
 -- The region's default language
-Self.DEFAULT = Util.Select(RealmInfo:GetCurrentRegion(), "KR", "koKR", "TW", "zhTW", "CN", "zhCN", "enUS")
+Self.DEFAULT = Util.Select(RI:GetCurrentRegion(), "KR", "koKR", "TW", "zhTW", "CN", "zhCN", "enUS")
 
 -- Fallback language for missing lines
 Self.FALLBACK = "enUS"
 
 -- Get language for the given realm
 function Self.GetRealmLanguage(realm)
-    local lang = select(5, RealmInfo:GetRealmInfo(realm or GetRealmName())) or Self.DEFAULT
+    local lang = select(5, RI:GetRealmInfo(realm or GetRealmName())) or Self.DEFAULT
     return lang == "enGB" and "enUS" or lang
 end
 
 -- Get language for the given unit
 function Self.GetUnitLanguage(unit)
-    local lang = select(5, RealmInfo:GetRealmInfoByUnit(unit or "player")) or Self.DEFAULT
+    local lang = select(5, RI:GetRealmInfoByUnit(unit or "player")) or Self.DEFAULT
     return lang == "enGB" and "enUS" or lang
 end
 
