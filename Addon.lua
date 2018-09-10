@@ -1,5 +1,6 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
+local RI = LibStub("LibRealmInfo")
 local Comm, GUI, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 
 -- Logging
@@ -413,10 +414,7 @@ end
 
 function Addon:Echo(lvl, line, ...)
     if lvl == self.ECHO_DEBUG then
-        local args = Util.Tbl(line, ...)
-        for i,v in pairs(args) do
-            if type(v) ~= "string" then args[i] = Util.ToString(v) end
-        end
+        local args = Util().Tbl(line, ...).Map(Util.toString)()
         line = strjoin(", ", unpack(args))
         Util.TblRelease(args)
     else
@@ -458,7 +456,7 @@ end
 
 -- Add an entry to the debug log
 function Addon:Log(lvl, line)
-    tinsert(self.log, ("[%f] %s: %s"):format(GetTime(), self.ECHO_LEVELS[lvl or self.ECHO_INFO], line or "-"))
+    tinsert(self.log, ("[%.1f] %s: %s"):format(GetTime(), self.ECHO_LEVELS[lvl or self.ECHO_INFO], line or "-"))
     while #self.log > self.LOG_MAX_ENTRIES do
         Util.TblShift(self.log)
     end
@@ -466,8 +464,11 @@ end
 
 -- Export the debug log
 function Addon:LogExport()
-    local f = GUI("Frame").SetLayout("Fill").SetTitle(Name .. " - Export log").Show()()
-    GUI("MultiLineEditBox").DisableButton(true).SetLabel().SetText(Util.TblConcat(self.log, "\n")).AddTo(f)
+    local _, name, _, _, lang, _, region = RI:GetRealmInfo(realm or GetRealmName())    
+    local txt = ("~ PersoLootRoll ~ Version: %s ~ Date: %s ~ Locale: %s ~ Realm: %s-%s (%s) ~"):format(self.VERSION, date(), GetLocale(), region, name, lang)
+    txt = txt .. "\n" .. Util.TblConcat(self.log, "\n")
+
+    GUI.ShowExportWindow("Export log", txt)
 end
 
 -------------------------------------------------------

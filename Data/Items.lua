@@ -467,10 +467,8 @@ if Addon.DEBUG then
                 local space2 = (" "):rep(3 - strlen(cat))
                 txt = txt .. ("\n    [%d] = %s%d, %s-- %s"):format(id, space1, cat, space2, GetItemInfo(id) or "?")
             end
-            txt = txt .. "\n}"
 
-            local f = GUI("Frame").SetLayout("Fill").SetTitle(Name .. " - Export trinkets").Show()()
-            GUI("MultiLineEditBox").DisableButton(true).SetLabel().SetText(txt).AddTo(f)
+            GUI.ShowExportWindow("Export trinkets", txt .. "\n}")
         end
     end
 end

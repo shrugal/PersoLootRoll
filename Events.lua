@@ -700,32 +700,33 @@ Comm.Listen(Comm.PLH_EVENT, function (event, msg, channel, _, unit)
         owner = Unit(owner)
         local fromOwner = owner == unit
 
-        -- Check: Version check
-        if action == Comm.PLH_ACTION_CHECK then
-            Comm.SendPlh(Comm.PLH_ACTION_VERSION, Unit.FullName("player"), Comm.PLH_VERSION)
-        -- Version: Answer to version check
-        elseif action == Comm.PLH_ACTION_VERSION then
-            if not Addon.versions[unit] then
+        if not Addon.versions[unit] then
+            -- Check: Version check
+            if action == Comm.PLH_ACTION_CHECK then
+                Comm.SendPlh(Comm.PLH_ACTION_VERSION, Unit.FullName("player"), Comm.PLH_VERSION)
+            -- Version: Answer to version check
+            elseif action == Comm.PLH_ACTION_VERSION then
                 Addon.plhUsers[unit] = param
-            end
-        else
-            local roll = Roll.Find(nil, nil, itemId, nil, owner, Roll.STATUS_RUNNING) or Roll.Find(nil, nil, itemId, nil, owner)
-            
-            -- Trade: The owner offers the item up for requests
-            if action == Comm.PLH_ACTION_TRADE and not roll and fromOwner and Item.IsLink(param) then
-                Addon:Debug("Events.PLH.Trade", msg, itemId, owner, param)
-                Roll.Add(param, owner):Start()
-            elseif roll and (roll.isOwner or not roll.ownerId) then
-                -- Keep: The owner wants to keep the item
-                if action == Comm.PLH_ACTION_KEEP and fromOwner then
-                    roll:End(owner)
-                -- Request: The sender bids on an item
-                elseif action == Comm.PLH_ACTION_REQUEST then
-                    local bid = Util.Select(param, Comm.PLH_BID_NEED, Roll.BID_NEED, Comm.PLH_BID_DISENCHANT, Roll.BID_DISENCHANT, Roll.BID_GREED)
-                    roll:Bid(bid, unit)
-                -- Offer: The owner has picked a winner
-                elseif action == Comm.PLH_ACTION_OFFER and fromOwner then
-                    roll:End(param)
+            else
+                local item = Item.IsLink(param) and param or itemId
+                local roll = Roll.Find(nil, nil, item, nil, owner, Roll.STATUS_RUNNING) or Roll.Find(nil, nil, item, nil, owner)
+                
+                -- Trade: The owner offers the item up for requests
+                if action == Comm.PLH_ACTION_TRADE and not roll and fromOwner and Item.IsLink(param) then
+                    Addon:Debug("Events.PLH.Trade", msg, itemId, owner, param)
+                    Roll.Add(param, owner):Start()
+                elseif roll and (roll.isOwner or not roll.ownerId) then
+                    -- Keep: The owner wants to keep the item
+                    if action == Comm.PLH_ACTION_KEEP and fromOwner then
+                        roll:End(owner)
+                    -- Request: The sender bids on an item
+                    elseif action == Comm.PLH_ACTION_REQUEST then
+                        local bid = Util.Select(param, Comm.PLH_BID_NEED, Roll.BID_NEED, Comm.PLH_BID_DISENCHANT, Roll.BID_DISENCHANT, Roll.BID_GREED)
+                        roll:Bid(bid, unit)
+                    -- Offer: The owner has picked a winner
+                    elseif action == Comm.PLH_ACTION_OFFER and fromOwner then
+                        roll:End(param)
+                    end
                 end
             end
         end

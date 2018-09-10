@@ -73,7 +73,7 @@ function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner, status)
     local id
     
     -- It's our own item
-    if UnitIsUnit(owner, "player") then
+    if Unit.IsSelf(owner) then
         id = ownerId
     end
     

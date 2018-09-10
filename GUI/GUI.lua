@@ -481,6 +481,12 @@ function Self.ResetLabel(self)
     self.OnRelease = nil
 end
 
+function Self.ShowExportWindow(title, text)
+    local f = GUI("Frame").SetLayout("Fill").SetTitle(Name .. " - " .. title).Show()()
+    GUI("MultiLineEditBox").DisableButton(true).SetLabel().SetText(text).AddTo(f)
+    return f
+end
+
 -- Add row-highlighting to a table
 function Self.TableRowHighlight(parent, skip)
     skip = skip or 0
