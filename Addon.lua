@@ -431,13 +431,15 @@ end
 --                      Logging                      --
 -------------------------------------------------------
 
-function Addon:Echo(lvl, line, ...)
+-- Write to log and print if lvl is high enough
+function Addon:Echo(lvl, ...)
+    local line = ""
     if lvl == self.ECHO_DEBUG then
-        local args = Util().Tbl(line, ...).Map(Util.ToString)()
-        line = strjoin(", ", unpack(args))
-        Util.TblRelease(args)
+        for i=1, select("#", ...) do
+            line = line .. (line == "" and "" or ", ") .. Util.ToString((select(i, ...)))
+        end
     else
-        line = line:format(...)
+        line = select(1, ...):format(select(2, ...))
     end
 
     self:Log(lvl, line)
@@ -447,31 +449,11 @@ function Addon:Echo(lvl, line, ...)
     end
 end
 
-function Addon:Err(...)
-    self:Echo(self.ECHO_ERROR, ...)
-end
-
-function Addon:Info(...)
-    self:Echo(self.ECHO_INFO, ...)
-end
-
-function Addon:Verbose(...)
-    self:Echo(self.ECHO_VERBOSE, ...)
-end
-
-function Addon:Debug(...)
-    self:Echo(self.ECHO_DEBUG, ...)
-end
-
-function Addon:Assert(cond, ...)
-    if not cond and self.db.profile.messages.echo >= self.ECHO_DEBUG then
-        if type(...) == "function" then
-            self:Echo(self.ECHO_DEBUG, (...)(select(2, ...)))
-        else
-            self:Echo(self.ECHO_DEBUG, ...)
-        end
-    end
-end
+-- Shortcuts for different log levels
+function Addon:Err(...) self:Echo(self.ECHO_ERROR, ...) end
+function Addon:Info(...) self:Echo(self.ECHO_INFO, ...) end
+function Addon:Verbose(...) self:Echo(self.ECHO_VERBOSE, ...) end
+function Addon:Debug(...) self:Echo(self.ECHO_DEBUG, ...) end
 
 -- Add an entry to the debug log
 function Addon:Log(lvl, line)
