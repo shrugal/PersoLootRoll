@@ -810,9 +810,10 @@ end
 function Self.OnStatusUpdate(frame)
     local roll, txt = frame.obj:GetUserData("roll")
     if roll.status == Roll.STATUS_RUNNING then
+        local timeLeft = roll:GetTimeLeft(true)
         GUI(frame.obj)
             .SetColor(1, 1, 0)
-            .SetText(L["ROLL_STATUS_" .. Roll.STATUS_RUNNING] .. " (" .. L["SECONDS"]:format(roll:GetTimeLeft()) .. ")")
+            .SetText(L["ROLL_STATUS_" .. Roll.STATUS_RUNNING] .. (timeLeft > 0 and " (" .. L["SECONDS"]:format(timeLeft) .. ")" or ""))
     elseif not roll.winner and roll.timers.award then
         GUI(frame.obj)
             .SetColor(0, 1, 0)

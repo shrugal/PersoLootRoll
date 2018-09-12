@@ -394,7 +394,7 @@ function Self:GetFullInfo()
             end
 
             -- Transmog appearance
-            if not self.isRelic and Addon.db.profile.transmog and self.isTransmogKnown == nil then
+            if not self.isRelic and Addon.db.profile.filter.transmog and self.isTransmogKnown == nil then
                 if line:match(Self.PATTERN_APPEARANCE_KNOWN) or line:match(Self.PATTERN_APPEARANCE_UNKNOWN_ITEM) then
                     self.isTransmogKnown = true
                 elseif line:match(Self.PATTERN_APPEARANCE_UNKNOWN) then
@@ -553,7 +553,7 @@ end
 -- Get the threshold for the item's slot
 function Self:GetThresholdForLocation(unit, upper)
     local unit = Unit(unit or "player")
-    local p = Addon.db.profile
+    local f = Addon.db.profile.filter
 
     -- Relics have a lower threshold of -1, meaning they have to be higher in ilvl to be worth considering
     if not upper and self:GetBasicInfo().isRelic then
@@ -562,14 +562,14 @@ function Self:GetThresholdForLocation(unit, upper)
 
     -- Use DB option only for the player and only for the lower threshold
     local custom = not upper and Unit.IsSelf(unit)
-    local threshold = custom and p.ilvlThreshold or Self.ILVL_THRESHOLD
+    local threshold = custom and f.ilvlThreshold or Self.ILVL_THRESHOLD
 
     -- Scale threshold for lower level chars
     local level = UnitLevel(unit)
     threshold = ceil(threshold * (level and level > 0 and level / MAX_PLAYER_LEVEL or 1))
 
     -- Trinkets and rings might have double the normal threshold
-    if Util.Select(self:GetBasicInfo().equipLoc, Self.TYPE_TRINKET, p.ilvlThresholdTrinkets or not custom, Self.TYPE_FINGER, p.ilvlThresholdRings and custom) then
+    if Util.Select(self:GetBasicInfo().equipLoc, Self.TYPE_TRINKET, f.ilvlThresholdTrinkets or not custom, Self.TYPE_FINGER, f.ilvlThresholdRings and custom) then
         threshold = threshold * 2
     end
 
@@ -854,20 +854,20 @@ end
 function Self:GetEligible(unit)
     if not self.eligible then
         if unit then
-            if not self.isSoulbound and Addon.db.profile.transmog and self:IsTransmogMissing(unit) then
+            if not self.isSoulbound and Addon.db.profile.filter.transmog and self:IsTransmogMissing(unit) then
                 return true
             elseif not self:CanBeEquipped(unit) then
                 return nil
             elseif not self:HasSufficientLevel(unit) then
                 return false
-            elseif Addon.db.profile.transmog and self:IsTransmogMissing(unit) then
+            elseif Addon.db.profile.filter.transmog and self:IsTransmogMissing(unit) then
                 return true
             else
                 local isSelf = Unit.IsSelf(unit)
                 local specs = isSelf and Util(Addon.db.char.specs).CopyOnly(true, true).Keys()() or nil
                 local isUseful = self:IsUseful(unit, specs)
 
-                if isUseful and isSelf and Addon.db.profile.pawn and IsAddOnLoaded("Pawn") then
+                if isUseful and isSelf and Addon.db.profile.filter.pawn and IsAddOnLoaded("Pawn") then
                     isUseful = self:IsPawnUpgrade(unit, specs)
                 end
 
