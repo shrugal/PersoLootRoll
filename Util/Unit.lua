@@ -91,13 +91,12 @@ end
 
 -- Get a unit's name in class color
 function Self.ColoredName(name, unit)
-    local color = Self.Color(unit or name)
-    return ("|c%s%s|r"):format(color.colorStr, name)
+    return ("|c%s%s|r"):format(Self.Color(unit or name).colorStr, name)
 end
 
 -- It's just such a common usecase
 function Self.ColoredShortenedName(unit)
-    return Self.ColoredName(Self.ShortenedName(unit), unit)
+    return unit and Self.ColoredName(Self.ShortenedName(unit), unit)
 end
 
 -------------------------------------------------------
@@ -106,24 +105,32 @@ end
 
 -- Get the unit's guild name, incl. realm if from another realm
 function Self.GuildName(unit)
+    if not unit then return end
+
     local guild, _, _, realm = GetGuildInfo(unit or "")
     return guild and guild .. (realm and "-" .. realm or "") or nil
 end
 
 -- The the unit's rank in our guild
 function Self.GuildRank(unit)
+    if not unit then return end
+
     local guild, _, rank, realm = GetGuildInfo(unit)
     return guild and guild .. (realm and "-" .. realm or "") == Self.GuildName("player") and rank or nil
 end
 
 -- Check if the given unit is in our guild
 function Self.IsGuildMember(unit)
+    if not unit then return false end
+
     local guild = Self.GuildName("player")
     return guild ~= nil and Self.GuildName(unit) == guild
 end
 
 -- Check if the given unit is on our friend list
 function Self.IsFriend(unit)
+    if not unit then return false end
+
     local unit = Self.Name(unit)
     for i=1, GetNumFriends() do
         if GetFriendInfo(i) == unit then
@@ -134,6 +141,8 @@ end
 
 -- Check if the given unit is part of one of our character coummunities
 function Self.IsClubMember(unit)
+    if not unit then return false end
+
     local guid = UnitGUID(unit)
     for _,info in pairs(C_Club.GetSubscribedClubs()) do
         if info.clubType == Enum.ClubType.Character then
@@ -148,6 +157,8 @@ end
 
 -- Get common community ids
 function Self.CommonClubs(unit)
+    if not unit then return end
+
     local t, guid = Util.Tbl(), UnitGUID(unit)
     for _,info in pairs(C_Club.GetSubscribedClubs()) do
         if info.clubType == Enum.ClubType.Character then
@@ -162,8 +173,9 @@ function Self.CommonClubs(unit)
 end
 
 function Self.ClubMemberInfo(unit, clubId)
-    unit = Self.Name(unit)
+    if not unit then return end
 
+    unit = Self.Name(unit)
     for _,memberId in pairs(C_Club.GetClubMembers(clubId)) do
         local info = C_Club.GetMemberInfo(clubId, memberId)
         if info.name == unit then
@@ -183,7 +195,7 @@ end
 
 -- Get the unit's class id
 function Self.ClassId(unit)
-    return select(3, UnitClass(unit))
+    return unit and select(3, UnitClass(unit))
 end
 
 -- Get a list of all specs
