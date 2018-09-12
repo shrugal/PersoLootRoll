@@ -127,6 +127,15 @@ function Self.RegisterGeneral()
                 get = function () return Addon.db.profile.dontShare end,
                 width = Self.WIDTH_HALF
             },
+            chillMode = {
+                name = L["OPT_CHILL_MODE"],
+                desc = L["OPT_CHILL_MODE_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.chillMode = val end,
+                get = function (_) return Addon.db.profile.chillMode end,
+                width = Self.WIDTH_HALF
+            },
             awardSelf = {
                 name = L["OPT_AWARD_SELF"],
                 desc = L["OPT_AWARD_SELF_DESC"],
@@ -170,7 +179,16 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.ui.showRollFrames = val end,
                 get = function (_) return Addon.db.profile.ui.showRollFrames end,
-                width = Self.WIDTH_FULL
+                width = Self.WIDTH_HALF
+            },
+            showRollsWindow = {
+                name = L["OPT_ROLLS_WINDOW"],
+                desc = L["OPT_ROLLS_WINDOW_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.ui.showRollsWindow = val end,
+                get = function (_) return Addon.db.profile.ui.showRollsWindow end,
+                width = Self.WIDTH_HALF
             },
             showActionsWindow = {
                 name = L["OPT_ACTIONS_WINDOW"],
@@ -178,7 +196,8 @@ function Self.RegisterGeneral()
                 type = "toggle",
                 order = it(),
                 set = function (_, val) Addon.db.profile.ui.showActionsWindow = val end,
-                get = function (_) return Addon.db.profile.ui.showActionsWindow end
+                get = function (_) return Addon.db.profile.ui.showActionsWindow end,
+                width = Self.WIDTH_HALF
             },
             moveActionsWindow = {
                 name = L["OPT_ACTIONS_WINDOW_MOVE"],
@@ -191,15 +210,6 @@ function Self.RegisterGeneral()
                     GUI.Actions.Show(true)
                 end
             },
-            showRollsWindow = {
-                name = L["OPT_ROLLS_WINDOW"],
-                desc = L["OPT_ROLLS_WINDOW_DESC"],
-                type = "toggle",
-                order = it(),
-                set = function (_, val) Addon.db.profile.ui.showRollsWindow = val end,
-                get = function (_) return Addon.db.profile.ui.showRollsWindow end,
-                width = Self.WIDTH_FULL
-            },
             itemFilter = {type = "header", order = it(), name = L["OPT_ITEM_FILTER"]},
             itemFilterDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_ITEM_FILTER_DESC"] .. "\n"},
             ilvlThreshold = {
@@ -210,8 +220,8 @@ function Self.RegisterGeneral()
                 min = -4 * Item.ILVL_THRESHOLD,
                 max = 4 * Item.ILVL_THRESHOLD,
                 step = 5,
-                set = function (_, val) Addon.db.profile.ilvlThreshold = val end,
-                get = function () return Addon.db.profile.ilvlThreshold end,
+                set = function (_, val) Addon.db.profile.filter.ilvlThreshold = val end,
+                get = function () return Addon.db.profile.filter.ilvlThreshold end,
                 width = Self.WIDTH_THIRD
             },
             ilvlThresholdTrinkets = {
@@ -219,8 +229,8 @@ function Self.RegisterGeneral()
                 desc = L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"],
                 type = "toggle",
                 order = it(),
-                set = function (_, val) Addon.db.profile.ilvlThresholdTrinkets = val end,
-                get = function () return Addon.db.profile.ilvlThresholdTrinkets end,
+                set = function (_, val) Addon.db.profile.filter.ilvlThresholdTrinkets = val end,
+                get = function () return Addon.db.profile.filter.ilvlThresholdTrinkets end,
                 width = Self.WIDTH_THIRD
             },
             ilvlThresholdRings = {
@@ -228,8 +238,8 @@ function Self.RegisterGeneral()
                 desc = L["OPT_ILVL_THRESHOLD_RINGS_DESC"],
                 type = "toggle",
                 order = it(),
-                set = function (_, val) Addon.db.profile.ilvlThresholdRings = val end,
-                get = function () return Addon.db.profile.ilvlThresholdRings end,
+                set = function (_, val) Addon.db.profile.filter.ilvlThresholdRings = val end,
+                get = function () return Addon.db.profile.filter.ilvlThresholdRings end,
                 width = Self.WIDTH_THIRD
             },
             ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
@@ -256,8 +266,8 @@ function Self.RegisterGeneral()
                 desc = L["OPT_PAWN_DESC"],
                 type = "toggle",
                 order = it(),
-                set = function (_, val) Addon.db.profile.pawn = val end,
-                get = function () return Addon.db.profile.pawn end,
+                set = function (_, val) Addon.db.profile.filter.pawn = val end,
+                get = function () return Addon.db.profile.filter.pawn end,
                 width = Self.WIDTH_HALF,
                 hidden = function () return not IsAddOnLoaded("Pawn") end
             },
@@ -266,8 +276,8 @@ function Self.RegisterGeneral()
                 desc = L["OPT_TRANSMOG_DESC"],
                 type = "toggle",
                 order = it(),
-                set = function (_, val) Addon.db.profile.transmog = val end,
-                get = function () return Addon.db.profile.transmog end,
+                set = function (_, val) Addon.db.profile.filter.transmog = val end,
+                get = function () return Addon.db.profile.filter.transmog end,
                 width = IsAddOnLoaded("Pawn") and Self.WIDTH_HALF or Self.WIDTH_FULL
             }
         }
@@ -1126,9 +1136,17 @@ function Self.Migrate()
 
                 p.masterlooter = nil
             end
+            p.version = 6
+        end
+        if p.version < 7 then
+            Self.MigrateOption("ilvlThreshold", p, p.filter)
+            Self.MigrateOption("ilvlThresholdTrinkets", p, p.filter)
+            Self.MigrateOption("ilvlThresholdRings", p, p.filter)
+            Self.MigrateOption("pawn", p, p.filter)
+            Self.MigrateOption("transmog", p, p.filter)
         end
     end
-    p.version = 6
+    p.version = 7
 
     -- Factionrealm
     if f.version then

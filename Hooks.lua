@@ -66,8 +66,10 @@ function Self.EnableGroupLootRoll()
             if Roll.IsPlrId(id) then
                 local roll = Roll.Get(id)
                 if roll then
-                    if roll.status == Roll.STATUS_RUNNING then
-                        roll:Bid(bid == 0 and Roll.BID_PASS or bid)
+                    bid = bid == 0 and Roll.BID_PASS or bid
+
+                    if roll:UnitCanBid("player", bid) then
+                        roll:Bid(bid)
                     else
                         roll:HideRollFrame()
                     end
