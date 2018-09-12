@@ -349,6 +349,8 @@ L["OPT_WHISPER_SUPPRESS"] = "Suppress requests"
 L["OPT_WHISPER_SUPPRESS_DESC"] = "Suppress incoming whisper messages from eligible players when giving away your loot."
 L["OPT_WHISPER_TARGET"] = "Ask by target"
 L["OPT_WHISPER_TARGET_DESC"] = "Ask for loot depending on whether the target is in your guild, in one of your WoW-Communities or on your friend list."
+L["OPT_WHISPER_ASK_VARIANTS"] = "Enable ask variants"
+L["OPT_WHISPER_ASK_VARIANTS_DESC"] = "Use different lines (see below) when asking for loot, to make it less repetitive."
 
 -- Roll
 L["BID_CHAT"] = "Asking %s for %s -> %s."

@@ -349,6 +349,8 @@ L["OPT_WHISPER_SUPPRESS"] = "阻擋詢問"
 L["OPT_WHISPER_SUPPRESS_DESC"] = "當你放棄戰利品時，阻擋來自符合條件玩家的密語訊息。"
 L["OPT_WHISPER_TARGET"] = "詢問目標"
 L["OPT_WHISPER_TARGET_DESC"] = "是否詢問戰利品取決於目標是否在你的公會或是魔獸社群或是好友名單上。"
+L["OPT_WHISPER_ASK_VARIANTS"] = "Enable ask variants" -- Translation missing
+L["OPT_WHISPER_ASK_VARIANTS_DESC"] = "Use different lines (see below) when asking for loot, to make it less repetitive." -- Translation missing
 
 -- Roll
 L["BID_CHAT"] = "正在詢問 %s 為了 %s -> %s。"

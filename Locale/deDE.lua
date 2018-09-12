@@ -349,6 +349,8 @@ L["OPT_WHISPER_SUPPRESS"] = "Anfragen unterdrücken"
 L["OPT_WHISPER_SUPPRESS_DESC"] = "Unterdrücke Anfragen von Gruppenmitgliedern während du deine Beute vergibst."
 L["OPT_WHISPER_TARGET"] = "Frage nach Ziel"
 L["OPT_WHISPER_TARGET_DESC"] = "Frage nach Beute, abhängig davon ob das Ziel in deiner Gilde, einer deiner WoW-Communities oder auf deiner Freundesliste ist."
+L["OPT_WHISPER_ASK_VARIANTS"] = "Aktiviere Frage-Varianten"
+L["OPT_WHISPER_ASK_VARIANTS_DESC"] = "Verwende unterschiedliche Sätze (s.u.) um nach Beute zu fragen, um es weniger repetitiv zu machen."
 
 -- Roll
 L["BID_CHAT"] = "Frage %s nach %s -> %s."

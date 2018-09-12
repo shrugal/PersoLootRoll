@@ -349,6 +349,8 @@ L["OPT_WHISPER_SUPPRESS"] = "Подавлять запросы"
 L["OPT_WHISPER_SUPPRESS_DESC"] = "Подавлять входящие личные сообщения от подходящих игроков при розыгрыше добычи."
 L["OPT_WHISPER_TARGET"] = "Спросить у цели"
 L["OPT_WHISPER_TARGET_DESC"] = "Спросить про добычу в зависимости от того, находится ли цель в вашей гильдии или в списке друзей."
+L["OPT_WHISPER_ASK_VARIANTS"] = "Enable ask variants" -- Translation missing
+L["OPT_WHISPER_ASK_VARIANTS_DESC"] = "Use different lines (see below) when asking for loot, to make it less repetitive." -- Translation missing
 
 -- Roll
 L["BID_CHAT"] = "Спросить %s про %s -> %s."
