@@ -72,6 +72,7 @@ function Addon:OnInitialize()
                     target = {friend = false, guild = false, community = false, other = true},
                     answer = true,
                     suppress = false,
+                    variants = true
                 },
                 lines = {}
             },

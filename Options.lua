@@ -506,7 +506,21 @@ function Self.GetCustomMessageOptions(isDefault)
         if line:sub(1, 3) == "OPT" then
             t[line] = {type = "header", order = it(), name = L[line]}
         elseif line == "MSG_BID" then
-            for i=1,5 do add(line, i) end
+            add(line, 1)
+
+            t["OPT_WHISPER_ASK_VARIANTS"] = {
+                name = L["OPT_WHISPER_ASK_VARIANTS"],
+                desc = L["OPT_WHISPER_ASK_VARIANTS_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.messages.whisper.variants = val end,
+                get = function () return Addon.db.profile.messages.whisper.variants end
+            }
+
+            for i=2,5 do
+                add(line, i)
+                t[line .. "_" .. i].disabled = function () return not Addon.db.profile.messages.whisper.variants end
+            end
         else
             add(line)
         end

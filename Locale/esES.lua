@@ -349,6 +349,8 @@ L["OPT_WHISPER_SUPPRESS"] = "Suprimir peticiones"
 L["OPT_WHISPER_SUPPRESS_DESC"] = "Eliminar susurros entrantes de jugadores elegibles cuando repartas tu loot."
 L["OPT_WHISPER_TARGET"] = "Pedir según objetivo"
 L["OPT_WHISPER_TARGET_DESC"] = "Pedir loot dependiendo de si el objetivo está en tu hermandad, en una de tus comunidades de WoW o en tu lista de amigos."
+L["OPT_WHISPER_ASK_VARIANTS"] = "Enable ask variants" -- Translation missing
+L["OPT_WHISPER_ASK_VARIANTS_DESC"] = "Use different lines (see below) when asking for loot, to make it less repetitive." -- Translation missing
 
 -- Roll
 L["BID_CHAT"] = "Solicitando a %s el objeto %s -> %s."
