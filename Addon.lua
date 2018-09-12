@@ -40,7 +40,7 @@ function Addon:OnInitialize()
     self:ToggleDebug(PersoLootRollDebug or self.DEBUG)
     
     self.db = LibStub("AceDB-3.0"):New(Name .. "DB", {
-        -- VERSION 6
+        -- VERSION 7
         profile = {
             -- General
             enabled = true,
@@ -49,14 +49,23 @@ function Addon:OnInitialize()
             dontShare = false,
             awardSelf = false,
             bidPublic = false,
-            ui = {showRollFrames = true, showActionsWindow = true, showRollsWindow = false},
+            chillMode = false,
+
+            -- UI
+            ui = {
+                showRollFrames = true,
+                showActionsWindow = true,
+                showRollsWindow = false
+            },
             
             -- Item filter
-            ilvlThreshold = 30,
-            ilvlThresholdTrinkets = true,
-            ilvlThresholdRings = false,
-            pawn = false,
-            transmog = false,
+            filter = {
+                ilvlThreshold = 30,
+                ilvlThresholdTrinkets = true,
+                ilvlThresholdRings = false,
+                pawn = false,
+                transmog = false
+            },
 
             -- Messages
             messages = {
