@@ -208,11 +208,11 @@ function Self.Update(data, unit)
         end
         
         -- Cancel the roll if the owner has canceled it
-        if data.status == Self.STATUS_CANCELED and roll.status ~= Self.STATUS_CANCELED then
+        if data.status == Self.STATUS_CANCELED then
             roll:Cancel()
         else roll.item:OnLoaded(function ()
-            -- Declare our interest if the roll is pending TODO: Only if it's because of transmog
-            if data.status == Self.STATUS_PENDING and roll.item:ShouldBeBidOn() then
+            -- Declare our interest if the roll is pending without any eligible players
+            if data.status == Self.STATUS_PENDING and (data.item.eligible or 0) == 0 and roll.item:ShouldBeBidOn() then
                 roll.item:SetEligible("player")
                 Comm.SendData(Comm.EVENT_INTEREST, {ownerId = roll.ownerId}, roll.owner)
             end
@@ -788,7 +788,12 @@ function Self:SendStatus(noCheck, target, full)
         data.posted = self.posted
         data.winner = self.winner and Unit.FullName(self.winner)
         data.traded = self.traded and Unit.FullName(self.traded)
-        data.item = Util.TblHash("link", self.item.link, "owner", Unit.FullName(self.item.owner), "isTradable", Util.Check(self.item.isTradable == false and not Addon.DEBUG, false, nil))
+        data.item = Util.TblHash(
+            "link", self.item.link,
+            "owner", Unit.FullName(self.item.owner),
+            "isTradable", Util.Check(self.item.isTradable == false and not Addon.DEBUG, false, nil)
+            "eligible", self.item:GetNumEligible(true, true)
+        )
 
         if full then
             if Addon.db.profile.bidPublic or Session.rules.bidPublic or Session.IsOnCouncil(target) then

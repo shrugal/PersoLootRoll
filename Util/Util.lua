@@ -58,14 +58,16 @@ function Self.IsCommunityGroup(commId)
     local n, comms = GetNumGroupMembers(), Self.Tbl()
     for i=1,n do
         local c = Unit.CommonClubs(GetRaidRosterInfo(i))
-        for _,clubId in pairs(c) do
-            comms[clubId] = (comms[clubId] or 0) + 1
-            if (not commId or commId == clubId) and comms[clubId] / n >= Self.GROUP_THRESHOLD then
-                Self.TblRelease(comms, c)
-                return clubId
+        if c then
+            for _,clubId in pairs(c) do
+                comms[clubId] = (comms[clubId] or 0) + 1
+                if (not commId or commId == clubId) and comms[clubId] / n >= Self.GROUP_THRESHOLD then
+                    Self.TblRelease(comms, c)
+                    return clubId
+                end
             end
+            Self.TblRelease(c)
         end
-        Self.TblRelease(c)
     end
     Self.TblRelease(comms)
 end
@@ -555,10 +557,10 @@ function Self.TblCountWhere(t, ...)
 end
 
 -- Count using a function
-function Self.TblCountFn(t, fn, ...)
+function Self.TblCountFn(t, fn, index, ...)
     local n, fn = 0, Self.Fn(fn)
     for i,v in pairs(t) do
-        n = n + fn(v, ...)
+        n = n + index and fn(v, i, ...) or fn(v, ...)
     end
     return n
 end
