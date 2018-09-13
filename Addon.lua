@@ -380,6 +380,8 @@ end
 
 -- Set a unit's version string
 function Addon:SetVersion(unit, version)
+    version = tonumber(version) or version
+
     self.versions[unit] = version
     self.plhUsers[unit] = nil
 
