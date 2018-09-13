@@ -34,7 +34,7 @@ Self.lastSuppressed = nil
 function Self.GROUP_JOINED()
     -- Schedule version check
     Addon.timers.versionCheck = Addon:ScheduleTimer(function ()
-        Comm.SendData(Comm.EVENT_VERSION_ASK)
+        Comm.SendData(Comm.EVENT_CHECK)
     end, Self.VERSION_CHECK_DELAY)
 
     -- Discover PLH users
@@ -507,7 +507,7 @@ end
 -------------------------------------------------------
 
 -- Check
-local checkFn = function (event, data, channel, sender, unit)
+Comm.ListenData(Comm.EVENT_CHECK, function (event, data, channel, sender, unit)
     if not Self.lastVersionCheck or Self.lastVersionCheck + Self.VERSION_CHECK_DELAY < GetTime() then
         Self.lastVersionCheck = GetTime()
 
@@ -526,8 +526,7 @@ local checkFn = function (event, data, channel, sender, unit)
             Comm.Send(Comm.EVENT_DISABLE, target)
         end
     end
-end
-Comm.ListenData(Comm.EVENT_CHECK, checkFn, true)
+end, true)
 
 -- Version
 Comm.ListenData(Comm.EVENT_VERSION, function (event, version, channel, sender, unit)
