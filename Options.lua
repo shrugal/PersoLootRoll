@@ -69,6 +69,7 @@ function Self.RegisterGeneral()
     local it = Self.it
 
     return {
+        name = Name,
         type = "group",
         args = {
             info = {

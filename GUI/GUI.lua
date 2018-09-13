@@ -373,7 +373,7 @@ end
 -- Display a tooltip showing only the full name of an x-realm player
 function Self.TooltipUnitFullName(self)
     local unit = self:GetUserData("unit")
-    if unit and Unit.Realm(unit) ~= GetRealmName() then
+    if unit and Unit.Realm(unit) ~= Unit.RealmName() then
         local c = Unit.Color(unit)
         GameTooltip:SetOwner(self.frame, "ANCHOR_TOP")
         GameTooltip:SetText(Unit.FullName(unit), c.r, c.g, c.b, false)
