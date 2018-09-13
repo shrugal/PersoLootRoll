@@ -825,7 +825,7 @@ end
 
 -- Check if the item is an upgrade according to Pawn
 function Self:IsPawnUpgrade(unit, ...)
-    if unit and not Util.IsSelf(unit) or not (IsAddOnLoaded("Pawn") and PawnGetItemData and PawnIsItemAnUpgrade and PawnCommon and PawnCommon.Scales) then
+    if unit and not Unit.IsSelf(unit) or not (IsAddOnLoaded("Pawn") and PawnGetItemData and PawnIsItemAnUpgrade and PawnCommon and PawnCommon.Scales) then
         return false
     else
         local data = PawnGetItemData(self.link)
