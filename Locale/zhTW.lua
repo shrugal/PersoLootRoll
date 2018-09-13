@@ -163,6 +163,14 @@ L["OPT_AWARD_SELF"] = "自行選擇你的物品的獲勝者"
 L["OPT_AWARD_SELF_DESC"] = "自行選擇誰該得到你的戰利品，而非讓插件隨機選擇，當你是拾取分配者時，始終啟用此功能。"
 L["OPT_BID_PUBLIC"] = "公開競標"
 L["OPT_BID_PUBLIC_DESC"] = "你擲骰的競標是公開的，所有使用此插件的人都可以看見。"
+L["OPT_CHILL_MODE"] = "Chill mode" -- Translation missing
+L["OPT_CHILL_MODE_DESC"] = [=[The intent of chill mode is to take the pressure out of sharing the loot, even if that means that things will take a bit longer. If you enable it the following things will change:
+
+|cffffff781.|r Rolls from you won't start until you actually decided to share them, so you have as much time as you want to choose, and other addon users won't see your items util you did.
+|cffffff782.|r Rolls from you have double the normal run-time, or no run-time at all if you enabled to choose winners of your own items yourself (see next option).
+|cffffff783.|r Rolls from non-addon users in your group also stay open until you decided if you want them or not.
+
+|cffff0000IMPORTANT:|r Rolls from other addon users without chill mode active will still have a normal timeout. Make sure that everyone in your group enables this option if you want a chill run.]=] -- Translation missing
 L["OPT_DONT_SHARE"] = "不分享戰利品"
 L["OPT_DONT_SHARE_DESC"] = "不去骰別人的戰利品但也不分享自己的。此插件將會阻擋對你戰利品的請求(如果啟用的話)，但你仍可以成為分裝者以及戰利品議會成員。"
 L["OPT_ENABLE"] = "啟用"
@@ -190,8 +198,6 @@ L["OPT_PAWN"] = "檢查 \"Pawn\" 提供的數值"
 L["OPT_PAWN_DESC"] = "只骰裝備屬性比較插件 \"Pawn\" 標示為提升的物品。"
 L["OPT_ROLL_FRAMES"] = "顯示擲骰框架"
 L["OPT_ROLL_FRAMES_DESC"] = "當某人拾取你感興趣的戰利品時顯示擲骰框架，這樣你就可以骰它。"
-L["OPT_CHILL_MODE"] = "Chill mode"
-L["OPT_CHILL_MODE_DESC"] = "In chill mode rolls from you and non-addon users in your group have no timeout and stay until you made your decision, so you aren't rushed to make a choice. Other addon users will also only be asked to bid on your items after you decided to share them."
 L["OPT_ROLLS_WINDOW"] = "顯示擲骰視窗"
 L["OPT_ROLLS_WINDOW_DESC"] = "當某人拾取你感興趣的戰利品時總是顯示擲骰視窗(所有的擲骰都在上面)。當你是分裝者時，始終啟用此功能。"
 L["OPT_SPECS"] = "專精"
