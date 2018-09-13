@@ -39,13 +39,17 @@ Self.SPECS = {
 --                       Names                       --
 -------------------------------------------------------
 
+-- Get the player's realm name for use in unit strings
+function Self.RealmName()
+    return (GetRealmName():gsub("%s", ""))
+end
+
 -- Get a unit's realm name
-function Self.RealmName(unit)
-    local name, realm = UnitName(Self(unit))
-    return realm ~= "" and realm
-        or name and GetRealmName()
-        or unit and unit:match("^.+-(.+)$")
-        or nil
+function Self.Realm(unit)
+    local name, realm = UnitFullName(Self(unit))
+    realm = realm ~= "" and realm or Self.RealmName()
+
+    return name and realm or unit and unit:match("^.*-(.*)$") or nil
 end
 
 -- Get a unit's name (incl. realm name if from another realm)
@@ -71,7 +75,7 @@ end
 -- Get a unit's full name (always incl. realm name)
 function Self.FullName(unit)
     local name, realm = UnitFullName(Self(unit))
-    realm = realm ~= "" and realm or GetRealmName()
+    realm = realm ~= "" and realm or Self.RealmName()
 
     return name and name .. "-" .. realm
         or unit and unit:match("^(.*-.*)$")
@@ -84,7 +88,7 @@ function Self.ShortenedName(unit)
     unit = Self(unit)
     local name, realm = UnitFullName(unit)
 
-    return name and name ~= "" and name .. (realm and not Util.In(realm, "", GetRealmName()) and " (*)" or "")
+    return name and name ~= "" and name .. (realm and not Util.In(realm, "", Self.RealmName()) and " (*)" or "")
         or unit and unit ~= "" and not unit:find("^[a-z]") and unit:gsub("-.+", " (*)")
         or nil
 end
@@ -212,14 +216,6 @@ function Self.Specs(unit)
     end
 end
 
--- Get a unit's realm name
-function Self.Realm(unit)
-    local name, realm = UnitFullName(Self(unit))
-    realm = realm ~= "" and realm or GetRealmName()
-
-    return name and realm or unit and unit:match("^.*-(.*)$") or nil
-end
-
 -- Get a unit's class color
 function Self.Color(unit)
     return RAID_CLASS_COLORS[select(2, UnitClass(Self(unit))) or "PRIEST"]
@@ -245,6 +241,6 @@ end
 
 setmetatable(Self, {
     __call = function (_, unit)
-        return unit and unit:gsub("-" .. GetRealmName(), "") or ""
+        return unit and unit:gsub("-" .. Self.RealmName(), "") or ""
     end
 })

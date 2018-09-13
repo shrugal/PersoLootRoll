@@ -166,17 +166,17 @@ function Self.Update(data, unit)
     if not roll then
         local ml = Session.GetMasterlooter()
 
-        -- Only the item owner can create rolls
-        if unit ~= data.item.owner then
-            Addon:Debug("Roll.Update.Reject.SenderNotItemOwner")
+        -- Only the item owner and our ml can create rolls
+        if not (unit == data.item.owner or ml and unit == ml) then
+            Addon:Debug("Roll.Update.Reject.SenderNotAllowed")
             return
-        -- Only accept items owned by our masterlooter if enabled
-        elseif Addon.db.profile.onlyMasterloot and not (ml and ml == data.owner) then
-            Addon:Debug("Roll.Update.Reject.OwnerNotML")
+        -- Only accept items while having a masterlooter if enabled
+        elseif Addon.db.profile.onlyMasterloot and not ml then
+            Addon:Debug("Roll.Update.Reject.NoMasterlooter")
             return
         end
 
-        roll = Self.Add(Item.FromLink(data.item.link, data.item.owner), data.owner, data.timeout, data.ownerId, data.itemOwnerId)
+        roll = Self.Add(Item.FromLink(data.item.link, data.item.owner, nil, nil, Util.Default(data.item.isTradable, true)), data.owner, data.timeout, data.ownerId, data.itemOwnerId)
 
         if roll.isOwner then roll.item:OnLoaded(function ()
             if roll.item:ShouldBeRolledFor() or roll.item:ShouldBeBidOn() then
@@ -196,9 +196,11 @@ function Self.Update(data, unit)
 
     -- Only the roll owner can send updates
     if unit == roll.owner then
+        -- Update basic
         roll.owner = data.owner or roll.owner
         roll.ownerId = data.ownerId or roll.ownerId
         roll.posted = data.posted
+        roll.item.isTradable = Util.Default(data.item.isTradable, true)
 
         -- Update the timeout
         if data.timeout > roll.timeout then
@@ -786,7 +788,7 @@ function Self:SendStatus(noCheck, target, full)
         data.posted = self.posted
         data.winner = self.winner and Unit.FullName(self.winner)
         data.traded = self.traded and Unit.FullName(self.traded)
-        data.item = Util.TblHash("link", self.item.link, "owner", Unit.FullName(self.item.owner))
+        data.item = Util.TblHash("link", self.item.link, "owner", Unit.FullName(self.item.owner), "isTradable", Util.Check(self.item.isTradable == false and not Addon.DEBUG, false, nil))
 
         if full then
             if Addon.db.profile.bidPublic or Session.rules.bidPublic or Session.IsOnCouncil(target) then

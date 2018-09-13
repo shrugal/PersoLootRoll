@@ -215,7 +215,7 @@ end
 -------------------------------------------------------
 
 -- Create an item instance from a link
-function Self.FromLink(item, owner, bagOrEquip, slot)
+function Self.FromLink(item, owner, bagOrEquip, slot, isTradable)
     if type(item) == "string" then
         owner = owner and Unit.Name(owner) or nil
         item = {
@@ -223,7 +223,7 @@ function Self.FromLink(item, owner, bagOrEquip, slot)
             owner = owner,
             isOwner = owner and UnitIsUnit(owner, "player"),
             infoLevel = Self.INFO_NONE,
-            isTradable = not owner or nil
+            isTradable = Util.Default(isTradable, not owner or nil)
         }
         setmetatable(item, {__index = Self})
         item:SetPosition(bagOrEquip, slot)
@@ -233,19 +233,19 @@ function Self.FromLink(item, owner, bagOrEquip, slot)
 end
 
 -- Create an item instance for the given equipment slot
-function Self.FromSlot(slot, unit)
+function Self.FromSlot(slot, unit, isTradable)
     unit = unit or "player"
     local link = GetInventoryItemLink(unit, slot)
     if link then
-        return Self.FromLink(link, unit, slot)
+        return Self.FromLink(link, unit, slot, nil, isTradable)
     end
 end
 
 -- Create an item instance from the given bag position
-function Self.FromBagSlot(bag, slot)
+function Self.FromBagSlot(bag, slot, isTradable)
     local link = GetContainerItemLink(bag, slot)
     if link then
-        return Self.FromLink(link, "player", bag, slot)
+        return Self.FromLink(link, "player", bag, slot, isTradable)
     end
 end
 
@@ -259,7 +259,7 @@ function Self.GetEquippedArtifact(unit)
         if id then
             for i,spec in pairs(Self.CLASSES[classId].specs) do
                 if id == spec.artifact.id then
-                    return Self.FromSlot(slot, unit)
+                    return Self.FromSlot(slot, unit, false)
                 end
             end
         end
