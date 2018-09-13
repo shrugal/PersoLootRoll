@@ -898,8 +898,12 @@ function Self:GetEligible(unit)
 end
 
 -- Get the # of eligible players
-function Self:GetNumEligible(checkIlvl)
-    return checkIlvl and Util.TblCountOnly(self:GetEligible(), true) or Util.TblCount(self:GetEligible())
+function Self:GetNumEligible(checkIlvl, othersOnly)
+    local n = 0
+    for unit,v in pairs(self:GetEligible()) do
+        n = n + ((not checkIlvl or v) and not (othersOnly and Unit.IsSelf(unit)) and 1 or 0)
+    end
+    return n
 end
 
 -------------------------------------------------------
@@ -925,7 +929,7 @@ end
 
 -- Check if the addon should start a roll for an item
 function Self:ShouldBeRolledFor()
-    return not (self.isOwner and Addon.db.profile.dontShare) and self:ShouldBeConsidered() and self:GetNumEligible(true) > (self:GetEligible(self.owner) and 1 or 0)
+    return not (self.isOwner and Addon.db.profile.dontShare) and self:ShouldBeConsidered() and self:GetNumEligible(true, true) > 0
 end
 
 -------------------------------------------------------
