@@ -168,6 +168,14 @@ L["OPT_AWARD_SELF"] = "Elegir manualmente el ganador de tus objetos"
 L["OPT_AWARD_SELF_DESC"] = "Escoger manualmente quién debe recibir tus objetos, en lugar de dejar que el addon elija a alguien al azar. Esto está siempre activado cuando eres el maestro despojador."
 L["OPT_BID_PUBLIC"] = "Publicar las pujas"
 L["OPT_BID_PUBLIC_DESC"] = "Las pujas de tus tiradas son públicas, por lo que todo el que tenga el addon puede verlas."
+L["OPT_CHILL_MODE"] = "Chill mode" -- Translation missing
+L["OPT_CHILL_MODE_DESC"] = [=[The intent of chill mode is to take the pressure out of sharing the loot, even if that means that things will take a bit longer. If you enable it the following things will change:
+
+|cffffff781.|r Rolls from you won't start until you actually decided to share them, so you have as much time as you want to choose, and other addon users won't see your items until you did.
+|cffffff782.|r Rolls from you have double the normal run-time, or no run-time at all if you enabled to choose winners of your own items yourself (see next option).
+|cffffff783.|r Rolls from non-addon users in your group also stay open until you decided if you want them or not.
+
+|cffff0000IMPORTANT:|r Rolls from other addon users without chill mode active will still have a normal timeout. Make sure that everyone in your group enables this option if you want a chill run.]=] -- Translation missing
 L["OPT_DONT_SHARE"] = "No compartir objetos"
 L["OPT_DONT_SHARE_DESC"] = "No tirar por objetos de otros jugadores y no compartir mis objetos. El addon rechazará las peticiones de mis objetos (si está activado), y podrás seguir  siendo maestro despojador y miembro del 'loot council'."
 L["OPT_ENABLE"] = "Activar"
@@ -190,8 +198,6 @@ L["OPT_PAWN"] = "Comprobar el \"Pawn\""
 L["OPT_PAWN_DESC"] = "Optar solamente por objetos que sean una mejora según el addon \"Pawn\"."
 L["OPT_ROLL_FRAMES"] = "Mostrar cuadros de loot"
 L["OPT_ROLL_FRAMES_DESC"] = "Muestra cuadros de loot cuando alguien recibe algo en lo que tú puedas estar interesado, de manera que puedas optar a ello."
-L["OPT_CHILL_MODE"] = "Chill mode"
-L["OPT_CHILL_MODE_DESC"] = "In chill mode rolls from you and non-addon users in your group have no timeout and stay until you made your decision, so you aren't rushed to make a choice. Other addon users will also only be asked to bid on your items after you decided to share them."
 L["OPT_ROLLS_WINDOW"] = "Mostrar ventana de repartos"
 L["OPT_ROLLS_WINDOW_DESC"] = "Siempre muestra la ventana de repartos (con todas las tiradas de dados en ella) cuando alguien recibe algo en lo que tú puedas estar interesado. Esta opción siempre está activa si eres maestro despojador."
 L["OPT_SPECS"] = "Especializaciones"

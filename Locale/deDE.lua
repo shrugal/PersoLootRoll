@@ -163,6 +163,14 @@ L["OPT_AWARD_SELF"] = "Eigene Beute selbst verteilen"
 L["OPT_AWARD_SELF_DESC"] = "Wähle selbst wer deinen Loot bekommen soll, anstatt das Addon entscheiden zu lassen. Wenn du Plündermeister bist ist dies immer aktiv"
 L["OPT_BID_PUBLIC"] = "Gebote öffentlich"
 L["OPT_BID_PUBLIC_DESC"] = "Gebote deiner Verlosungen sind öffentlich, sodass jeder mit dem Addon sie sehen kann."
+L["OPT_CHILL_MODE"] = "Chill-Modus"
+L["OPT_CHILL_MODE_DESC"] = [=[Die Idee vom "Chill-Modus" ist keinen Zeitdruck mehr bei der Vergabe von Beute zu haben, selbst wenn es dadurch etwas länger dauert. Wenn du ihn aktivierst ändert sich folgendes:
+
+|cffffff781.|r Verlosungen von dir starten erst nachdem du sie geteilt hast, sodass do soviel Zeit zum Enscheiden hast wie du möchtest. Außerdem sehen andere Addon-Nutzer deine Items nicht mehr schon vorher.
+|cffffff782.|r Verlosungen von dir haben doppelte Laufzeit, oder überhaupt keine wenn du dich entschieden hast Gewinner deiner Items selbst auszuwählen (siehe nächste Option).
+|cffffff783.|r Verlosungen von Gruppenmitgliedern ohne Addon bleiben auch solange bestehen bis du dich entschieden hast.
+
+|cffff0000WICHTIG:|r Verlosungen von anderen Addon-Nutzern ohne aktivem "Chill-Mode" haben weiterhin die normale Laufzeit. Für einen entspannten Run solltest du sicherstellen, dass alle in deiner Gruppe "Chill-Mode" aktiviert haben.]=]
 L["OPT_DONT_SHARE"] = "Keine Beute teilen"
 L["OPT_DONT_SHARE_DESC"] = "Rolle nicht auf die Beute anderer, und teile deine eigene Beute nicht. Das Addon wird Anfragen zu deiner eigenen Beute verneinen (wenn aktiviert), und du kannst weiterhin Plündermeister und Ratsmitglied sein."
 L["OPT_ENABLE"] = "Aktiviert"
@@ -188,8 +196,6 @@ L["OPT_ONLY_MASTERLOOT"] = "Nur Plündermeister"
 L["OPT_ONLY_MASTERLOOT_DESC"] = "Aktiviere das Addon nur, wenn der Plündermeister-Modus aktiv ist (z.B. mit deiner Gilde)"
 L["OPT_ROLL_FRAMES"] = "Zeige Roll-Fenster"
 L["OPT_ROLL_FRAMES_DESC"] = "Zeige Roll-Fenster wenn jemand etwas plündert dass dich interessieren könnten, sodass du darauf rollen kannst."
-L["OPT_CHILL_MODE"] = "Chill-Modus"
-L["OPT_CHILL_MODE_DESC"] = "Im Chill-Modus haben Verlosungen von dir und Spielern ohne Addon keinen Timeout, d.h. sie bleiben so lange offen bis du deine Entscheidung getroffen hast. Außerdem werden andere Addon-Nutzer erst zum Bieten aufgefordert, nachdem du dich dazu entschieden hast dein Item zu teilen."
 L["OPT_ROLLS_WINDOW"] = "Zeige Verlosungs-Übersicht"
 L["OPT_ROLLS_WINDOW_DESC"] = "Zeige die Verlosungs-Übersicht jedes Mal wenn jemand etwas plündert dass dich interessieren könnten. Wenn du Plündermeister bist ist dies immer aktiv."
 L["OPT_SPECS"] = "Spezialisierungen"

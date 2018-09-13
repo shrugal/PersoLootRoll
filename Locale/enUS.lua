@@ -163,6 +163,14 @@ L["OPT_AWARD_SELF"] = "Choose winner of your items yourself"
 L["OPT_AWARD_SELF_DESC"] = "Choose for yourself who should get your loot, instead of letting the addon randomly pick someone. This is always enabled when you are a masterlooter."
 L["OPT_BID_PUBLIC"] = "Bids public"
 L["OPT_BID_PUBLIC_DESC"] = "Bids on your rolls are public, so everyone with the addon can see them."
+L["OPT_CHILL_MODE"] = "Chill mode"
+L["OPT_CHILL_MODE_DESC"] = [=[The intent of chill mode is to take the pressure out of sharing the loot, even if that means that things will take a bit longer. If you enable it the following things will change:
+
+|cffffff781.|r Rolls from you won't start until you actually decided to share them, so you have as much time as you want to choose, and other addon users won't see your items until you did.
+|cffffff782.|r Rolls from you have double the normal run-time, or no run-time at all if you enabled to choose winners of your own items yourself (see next option).
+|cffffff783.|r Rolls from non-addon users in your group also stay open until you decided if you want them or not.
+
+|cffff0000IMPORTANT:|r Rolls from other addon users without chill mode active will still have a normal timeout. Make sure that everyone in your group enables this option if you want a chill run.]=]
 L["OPT_DONT_SHARE"] = "Don't share loot"
 L["OPT_DONT_SHARE_DESC"] = "Don't roll on loot from others and don't share your own loot. The addon will deny incoming requests for your loot (if enabled), and you can still be masterlooter and loot council member."
 L["OPT_ENABLE"] = "Enable"
@@ -188,14 +196,6 @@ L["OPT_ONLY_MASTERLOOT"] = "Only masterloot"
 L["OPT_ONLY_MASTERLOOT_DESC"] = "Only activate the addon when using masterloot (e.g. with your guild)"
 L["OPT_ROLL_FRAMES"] = "Show roll frames"
 L["OPT_ROLL_FRAMES_DESC"] = "Show the roll frames when someone loots something you might be interested in, so you can roll for it."
-L["OPT_CHILL_MODE"] = "Chill mode"
-L["OPT_CHILL_MODE_DESC"] = [=[The intent of chill mode is to take the pressure out of sharing the loot, even if that means that things will take a bit longer. If you enable it the following things will change:
-
-|cffffff781.|r Rolls from you won't start until you actually decided to share them, so you have as much time as you want to choose, and other addon users with chill mode active won't see your items util you did.
-|cffffff782.|r Rolls from you have double the normal run-time, or no run-time at all if you enabled to choose winners of your own items yourself (see next option).
-|cffffff783.|r Rolls from non-addon users in your group also stay open until you decided if you want them or not.
-
-|cffff0000IMPORTANT:|r Rolls from other addon users without chill mode active will still have a normal timeout. Make sure that everyone in your group enables this option if you want a chill run.]=]
 L["OPT_ROLLS_WINDOW"] = "Show rolls window"
 L["OPT_ROLLS_WINDOW_DESC"] = "Always show the rolls window (with all rolls on it) when someone loots something you might be interested in. This is always enabled when you are a masterlooter."
 L["OPT_SPECS"] = "Specializations"

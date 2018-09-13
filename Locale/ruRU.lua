@@ -163,6 +163,14 @@ L["OPT_AWARD_SELF"] = "Выберите победителя ваших пред
 L["OPT_AWARD_SELF_DESC"] = "Выбирать самому кто получит вашу добычу, вместо того чтобы аддон случайно выбирал. Эта опция всегда включена, когда вы ответственный за добычу."
 L["OPT_BID_PUBLIC"] = "Публичные заявки"
 L["OPT_BID_PUBLIC_DESC"] = "Заявки в ваших розыгрышах являются публичными, поэтому все с аддоном могут их видеть."
+L["OPT_CHILL_MODE"] = "Chill mode" -- Translation missing
+L["OPT_CHILL_MODE_DESC"] = [=[The intent of chill mode is to take the pressure out of sharing the loot, even if that means that things will take a bit longer. If you enable it the following things will change:
+
+|cffffff781.|r Rolls from you won't start until you actually decided to share them, so you have as much time as you want to choose, and other addon users won't see your items until you did.
+|cffffff782.|r Rolls from you have double the normal run-time, or no run-time at all if you enabled to choose winners of your own items yourself (see next option).
+|cffffff783.|r Rolls from non-addon users in your group also stay open until you decided if you want them or not.
+
+|cffff0000IMPORTANT:|r Rolls from other addon users without chill mode active will still have a normal timeout. Make sure that everyone in your group enables this option if you want a chill run.]=] -- Translation missing
 L["OPT_DONT_SHARE"] = "Не делиться добычей"
 L["OPT_DONT_SHARE_DESC"] = "Не участвовать в розыгрышах добычи от других и не делиться своей добычей. Аддон будет отклонять входящие запросы на вашу добычу (если включено), и вы все еще можете быть ответственным за добычу и членом совета."
 L["OPT_ENABLE"] = "Включить"
@@ -190,8 +198,6 @@ L["OPT_PAWN"] = "Check \"Pawn\"" -- Translation missing
 L["OPT_PAWN_DESC"] = "Only roll on items that are an upgrade according to the \"Pawn\" addon." -- Translation missing
 L["OPT_ROLL_FRAMES"] = "Показать панели розыгрышей"
 L["OPT_ROLL_FRAMES_DESC"] = "Показать панели розыгрышей, когда кто-либо получает добычу, в которой вы можете быть заинтересованы."
-L["OPT_CHILL_MODE"] = "Chill mode"
-L["OPT_CHILL_MODE_DESC"] = "In chill mode rolls from you and non-addon users in your group have no timeout and stay until you made your decision, so you aren't rushed to make a choice. Other addon users will also only be asked to bid on your items after you decided to share them."
 L["OPT_ROLLS_WINDOW"] = "Показать окно розыгрышей"
 L["OPT_ROLLS_WINDOW_DESC"] = "Always show the rolls window (with all rolls on it) when someone loots something you might be interested in. This is always enabled when you are a masterlooter." -- Translation missing
 L["OPT_SPECS"] = "Специализации"
