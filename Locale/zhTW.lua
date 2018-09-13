@@ -166,7 +166,7 @@ L["OPT_BID_PUBLIC_DESC"] = "你擲骰的競標是公開的，所有使用此插�
 L["OPT_CHILL_MODE"] = "Chill mode" -- Translation missing
 L["OPT_CHILL_MODE_DESC"] = [=[The intent of chill mode is to take the pressure out of sharing the loot, even if that means that things will take a bit longer. If you enable it the following things will change:
 
-|cffffff781.|r Rolls from you won't start until you actually decided to share them, so you have as much time as you want to choose, and other addon users won't see your items util you did.
+|cffffff781.|r Rolls from you won't start until you actually decided to share them, so you have as much time as you want to choose, and other addon users won't see your items until you did.
 |cffffff782.|r Rolls from you have double the normal run-time, or no run-time at all if you enabled to choose winners of your own items yourself (see next option).
 |cffffff783.|r Rolls from non-addon users in your group also stay open until you decided if you want them or not.
 
