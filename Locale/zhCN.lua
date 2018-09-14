@@ -28,6 +28,10 @@ L["MSG_ROLL_WINNER"] = "<%s> 已贏得 %s -> 请跟我交易！"
 L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%1$s> 已贏得由<%3$s>提供的 %2$s -> 请交易 %4$s！"
 L["MSG_ROLL_WINNER_WHISPER"] = "你已经贏得 %s！请跟我交易。"
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "你已贏得由<%2$s>提供的 %1$s！请交易 %3$s。"
+L["MSG_ROLL_DISENCHANT"] = "<%s> will disenchant %s -> Trade me!" -- Translation missing
+L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> will disenchant %s from <%s> -> Trade %s!" -- Translation missing
+L["MSG_ROLL_DISENCHANT_WHISPER"] = "You were picked to disenchant %s, please trade me." -- Translation missing
+L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "You were picked to disenchant %s from <%s>, please trade %s." -- Translation missing
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
@@ -160,6 +164,8 @@ L["OPT_ACTIONS_WINDOW"] = "显示动作视窗"
 L["OPT_ACTIONS_WINDOW_DESC"] = "当有处理中的动作时显示动作窗口，例如，当你赢得一件物品但还需要交易某人才能得到它。"
 L["OPT_ACTIONS_WINDOW_MOVE"] = "移动"
 L["OPT_ACTIONS_WINDOW_MOVE_DESC"] = "移动动作窗口到一旁。"
+L["OPT_ALLOW_DISENCHANT"] = "Allow \"Disenchant\" bids" -- Translation missing
+L["OPT_ALLOW_DISENCHANT_DESC"] = "Allow others to bid \"Disenchant\" on your own items." -- Translation missing
 L["OPT_AUTHOR"] = "|cffffff00作者:|r Shrugal (EU-Mal'Ganis)"
 L["OPT_AWARD_SELF"] = "自行选择你的物品的获胜者"
 L["OPT_AWARD_SELF_DESC"] = "自行选择谁该得到你的战利品，而非让插件随机选择，当你是拾取分配者时，始终启用此功能。"
@@ -207,6 +213,8 @@ L["OPT_SPECS_DESC"] = "只建议这些职业专精的战利品。"
 L["OPT_TRANSLATION"] = "|cffffff00翻译:|r 不懂英文 (CN-新手学习)"
 L["OPT_TRANSMOG"] = "检查幻化外观"
 L["OPT_TRANSMOG_DESC"] = "ROLL那些你还未拥有外观的物品。"
+L["OPT_DISENCHANT"] = "Disenchant" -- Translation missing
+L["OPT_DISENCHANT_DESC"] = "Bid \"Disenchant\" on items you can't use if you have the profession and the item owner has allowed it." -- Translation missing
 L["OPT_UI"] = "使用者界面"
 L["OPT_UI_DESC"] = "根据自己的喜好自订persolootroll的外观。"
 L["OPT_VERSION"] = "|cffffff00版本:|r "
@@ -252,8 +260,9 @@ L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM_DESC"] = "将每个掉落的
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC"] = "公开竞标"
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC_DESC"] = "你可以公开竞标，这样每个人都可以看到谁出价。"
 L["OPT_MASTERLOOT_RULES_DESC"] = "当你是分装者时，这些选项适用于每个人。"
+L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"] = "Allow group members to roll \"Disenchant\" on items." -- Translation missing
 L["OPT_MASTERLOOT_RULES_DISENCHANTER"] = "分解者"
-L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "将没人要的战利品给这些玩家分解。"
+L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "将没人要的战利品给这些玩家分解。 Separate multiple names with spaces or commas." -- Translation outdated
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS"] = "自订 '贪婪' 的应答"
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS_DESC"] = [=[当掷骰'贪婪'时最多可依据优先等级指定9个自订回答。你还可以插入'%s'本身让优先级降低到先前回答之下。使用逗号分隔多个条目。
 
@@ -340,6 +349,20 @@ L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "密语ROLL装获胜者 (如同队
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1：物品连接
 2：物品提供者
 3：他/她]=]
+L["OPT_MSG_ROLL_DISENCHANT"] = "Announcing a disenchanter" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_DESC"] = [=[1: Disenchanter
+2: Item link]=] -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT"] = "Announcing a disenchanter (as masterlooter)" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT_DESC"] = [=[1: Disenchanter
+2: Item link
+3: Item owner
+4: him/her]=] -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER"] = "Whispering the disenchanter" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_DESC"] = "1: Item link" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Whispering the disenchanter (as masterlooter)" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1: Item link
+2: Item owner
+3: him/her]=] -- Translation missing
 L["OPT_SHOULD_CHAT"] = "启用/停用"
 L["OPT_SHOULD_CHAT_DESC"] = "决定插件何时发布到队伍/团队聊天并密语其他玩家。"
 L["OPT_WHISPER"] = "聊天密语"

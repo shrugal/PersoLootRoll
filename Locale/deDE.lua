@@ -28,6 +28,10 @@ L["MSG_ROLL_WINNER"] = "<%s> hat %s gewonnen -> Mich anhandeln!"
 L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%s> hat %s von <%s> gewonnen -> %s anhandeln!"
 L["MSG_ROLL_WINNER_WHISPER"] = "Du hast %s gewonnen! Bitte handel mich an."
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Du hast %s von <%s> gewonnen! Bitte handel %s an."
+L["MSG_ROLL_DISENCHANT"] = "<%s> wird %s entzaubern -> Mich anhandeln!"
+L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> wird %s von <%s> entzaubern -> %s anhandeln!"
+L["MSG_ROLL_DISENCHANT_WHISPER"] = "Du wurdest ausgewählt %s zu entzaubern, bitte handel mich an."
+L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Du wurdest ausgewählt %s von <%s> zu entzaubern, Bitte handel %s an."
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
@@ -160,6 +164,8 @@ L["OPT_ACTIONS_WINDOW"] = "Zeige Aktions-Übersicht"
 L["OPT_ACTIONS_WINDOW_DESC"] = "Zeige die Aktions-Übersicht wenn eine Aktion ansteht, z.B. wenn du ein Item gewonnen hast und den Eigner anhandeln musst um es zu bekommen."
 L["OPT_ACTIONS_WINDOW_MOVE"] = "Verschieben"
 L["OPT_ACTIONS_WINDOW_MOVE_DESC"] = "Verschiebe die Aktions-Übersicht."
+L["OPT_ALLOW_DISENCHANT"] = "Erlaube \"Entzaubern\" Gebote"
+L["OPT_ALLOW_DISENCHANT_DESC"] = "Erlaube anderen \"Entzaubern\" auf deine Items zu bieten."
 L["OPT_AUTHOR"] = "|cffffd100Author:|r Shrugal (EU-Mal'Ganis)"
 L["OPT_AWARD_SELF"] = "Eigene Beute selbst verteilen"
 L["OPT_AWARD_SELF_DESC"] = "Wähle selbst wer deinen Loot bekommen soll, anstatt das Addon entscheiden zu lassen. Wenn du Plündermeister bist ist dies immer aktiv"
@@ -205,6 +211,8 @@ L["OPT_SPECS_DESC"] = "Schlage nur Beute für diese Klassen-Spezialisierungen vo
 L["OPT_TRANSLATION"] = "|cffffd100Übersetzung:|r Shrugal (EU-Mal'Ganis)"
 L["OPT_TRANSMOG"] = "Prüfe Transmog-Aussehen"
 L["OPT_TRANSMOG_DESC"] = "Rolle auf Items deren Aussehen du noch nicht hast."
+L["OPT_DISENCHANT"] = "Entzaubern"
+L["OPT_DISENCHANT_DESC"] = "Biete \"Entzaubern\" auf Items die du nicht nutzen kannst, wenn du den Beruf hast und der Item-Besitzer es erlaubt hat."
 L["OPT_PAWN"] = "Überprüfe \"Pawn\""
 L["OPT_PAWN_DESC"] = "Rolle nur auf Items, die laut dem \"Pawn\" Addon ein Upgrade für dich sind."
 L["OPT_UI"] = "Benutzerinterface"
@@ -252,8 +260,9 @@ L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM_DESC"] = "Für jedes gedropp
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC"] = "Gebote öffentlich"
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC_DESC"] = "Du kannst Gebote öffentlich machen, sodass jeder sehen kann wer für was gestimmt hat."
 L["OPT_MASTERLOOT_RULES_DESC"] = "Diese Optionen betreffen jeden der dich als Plündermeister akzeptiert."
+L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"] = "Erlaube Gruppenmitgliedern \"Entzaubern\" auf Items zu bieten."
 L["OPT_MASTERLOOT_RULES_DISENCHANTER"] = "Entzauberer"
-L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "Gib Beute die niemand haben möchte an Spieler zum Entzaubern."
+L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "Gib Beute die niemand haben möchte an Spieler zum Entzaubern. Trenne mehrere Namen mit Leerzeichen oder Kommas."
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS"] = "Eigene 'Gier' Antworten"
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS_DESC"] = [=[Lege bis zu 9 eigene Antworten für das 'Gier' Gebot fest, in absteigender Priorität. Du kannst auch '%s' selbst hinzufügen, um dessen Priorität unter die der vorherigen Antworten zu senken Trenne mehrer Einträge mit Kommas.
 
@@ -333,13 +342,27 @@ L["OPT_MSG_ROLL_WINNER_MASTERLOOT"] = "Den Gewinner einer Verlosung verkünden (
 L["OPT_MSG_ROLL_WINNER_MASTERLOOT_DESC"] = [=[1: Gewinner
 2: Item Link
 3: Item Besitzer
-4: ihm/ihr]=]
+4: ihn/sie]=]
 L["OPT_MSG_ROLL_WINNER_WHISPER"] = "Den Gewinner einer Verlosung anflüstern"
 L["OPT_MSG_ROLL_WINNER_WHISPER_DESC"] = "1: Item Link"
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Den Gewinner einer Verlosung anflüstern (als Plündermeister)"
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1: Item Link
 2: Item Besitzer
-3: ihm/ihr]=]
+3: ihn/sie]=]
+L["OPT_MSG_ROLL_DISENCHANT"] = "Den Entzauberer einer Verlosung verkünden"
+L["OPT_MSG_ROLL_DISENCHANT_DESC"] = [=[1: Entzauberer
+2: Item Link]=]
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT"] = "Den Entzauberer einer Verlosung verkünden (als Plündermeister)"
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT_DESC"] = [=[1: Entzauberer
+2: Item Link
+3: Item Besitzer
+4: ihn/sie]=]
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER"] = "Den Entzauberer einer Verlosung anflüstern"
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_DESC"] = "1: Item Link"
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Den Entzauberer einer Verlosung anflüstern (als Plündermeister)"
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1: Item Link
+2: Item Besitzer
+3: ihn/sie]=]
 L["OPT_SHOULD_CHAT"] = "An/abschalten"
 L["OPT_SHOULD_CHAT_DESC"] = "Ändere wann da Addon in den Gruppen/Raid-Chat postet und andere Spieler anschreibt."
 L["OPT_WHISPER"] = "Flüsternachrichten"

@@ -11,7 +11,7 @@ Self.open = {}
 
 -- Register for roll changes
 Roll.On(Self, Roll.EVENT_START, function (_, roll)
-    if roll.isOwner and Session.IsMasterlooter() or Addon.db.profile.ui.showRollsWindow and (roll.item.isOwner or roll.item:ShouldBeBidOn()) then
+    if roll.isOwner and Session.IsMasterlooter() or Addon.db.profile.ui.showRollsWindow and (roll.item.isOwner or roll:ShouldBeBidOn()) then
         Self.Show()
     end
 end)

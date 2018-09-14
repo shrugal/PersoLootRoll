@@ -736,11 +736,11 @@ function Self.TblCopy(t, fn, index, ...)
 end
 
 -- Filter by a function
-function Self.TblCopyFilter(t, fn, k, ...)
+function Self.TblCopyFilter(t, fn, index, k, ...)
     fn = Self.Fn(fn) or Self.FnId
     local u = Self.Tbl()
     for i,v in pairs(t) do
-        if fn(v, i, ...) then
+        if index and fn(v, i, ...) or not index and fn (v, ...) then
             Self.TblInsert(u, i, v, k)
         end
     end

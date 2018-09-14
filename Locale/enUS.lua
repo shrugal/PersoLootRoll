@@ -28,6 +28,10 @@ L["MSG_ROLL_WINNER"] = "<%s> has won %s -> Trade me!"
 L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%s> has won %s from <%s> -> Trade %s!"
 L["MSG_ROLL_WINNER_WHISPER"] = "You have won %s! Please trade me."
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "You have won %s from <%s>! Please trade %s."
+L["MSG_ROLL_DISENCHANT"] = "<%s> will disenchant %s -> Trade me!"
+L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> will disenchant %s from <%s> -> Trade %s!"
+L["MSG_ROLL_DISENCHANT_WHISPER"] = "You were picked to disenchant %s, please trade me."
+L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "You were picked to disenchant %s from <%s>, please trade %s."
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
@@ -160,6 +164,8 @@ L["OPT_ACTIONS_WINDOW"] = "Show actions window"
 L["OPT_ACTIONS_WINDOW_DESC"] = "Show the actions window when there are pending actions, e.g. when you won an item and need to trade someone to get it."
 L["OPT_ACTIONS_WINDOW_MOVE"] = "Move"
 L["OPT_ACTIONS_WINDOW_MOVE_DESC"] = "Move the actions window around."
+L["OPT_ALLOW_DISENCHANT"] = "Allow \"Disenchant\" bids"
+L["OPT_ALLOW_DISENCHANT_DESC"] = "Allow others to bid \"Disenchant\" on your own items."
 L["OPT_AUTHOR"] = "|cffffd100Author:|r Shrugal (EU-Mal'Ganis)"
 L["OPT_AWARD_SELF"] = "Choose winner of your items yourself"
 L["OPT_AWARD_SELF_DESC"] = "Choose for yourself who should get your loot, instead of letting the addon randomly pick someone. This is always enabled when you are a masterlooter."
@@ -205,6 +211,8 @@ L["OPT_SPECS_DESC"] = "Only suggest loot for these class specializations."
 L["OPT_TRANSLATION"] = "|cffffd100Translation:|r Shrugal (EU-Mal'Ganis)"
 L["OPT_TRANSMOG"] = "Check transmog appearance"
 L["OPT_TRANSMOG_DESC"] = "Roll on items that you don't have the appearance of yet."
+L["OPT_DISENCHANT"] = "Disenchant"
+L["OPT_DISENCHANT_DESC"] = "Bid \"Disenchant\" on items you can't use if you have the profession and the item owner has allowed it."
 L["OPT_PAWN"] = "Check \"Pawn\""
 L["OPT_PAWN_DESC"] = "Only roll on items that are an upgrade according to the \"Pawn\" addon."
 L["OPT_UI"] = "User interface"
@@ -252,8 +260,9 @@ L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM_DESC"] = "Will be added to t
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC"] = "Bids public"
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC_DESC"] = "You can make bids public, so everybody can see who bid on what."
 L["OPT_MASTERLOOT_RULES_DESC"] = "These rules apply to everybody when you are the masterlooter"
+L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"] = "Allow group members to roll \"Disenchant\" on items."
 L["OPT_MASTERLOOT_RULES_DISENCHANTER"] = "Disenchanter"
-L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "Give loot nobody wants to these players for disenchanting."
+L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "Give loot nobody wants to these players for disenchanting. Separate multiple names with spaces or commas."
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS"] = "Custom 'Greed' answers"
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS_DESC"] = [=[Specify up to 9 custom answers when rolling 'Greed', with decreasing priority. You can also insert '%s' itself to lower its priority below the prior answers. Separate multiple entries with Commas.
 
@@ -338,6 +347,20 @@ L["OPT_MSG_ROLL_WINNER_WHISPER"] = "Whispering the roll winner"
 L["OPT_MSG_ROLL_WINNER_WHISPER_DESC"] = "1: Item link"
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Whispering the roll winner (as masterlooter)"
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1: Item link
+2: Item owner
+3: him/her]=]
+L["OPT_MSG_ROLL_DISENCHANT"] = "Announcing a disenchanter"
+L["OPT_MSG_ROLL_DISENCHANT_DESC"] = [=[1: Disenchanter
+2: Item link]=]
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT"] = "Announcing a disenchanter (as masterlooter)"
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT_DESC"] = [=[1: Disenchanter
+2: Item link
+3: Item owner
+4: him/her]=]
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER"] = "Whispering the disenchanter"
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_DESC"] = "1: Item link"
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Whispering the disenchanter (as masterlooter)"
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1: Item link
 2: Item owner
 3: him/her]=]
 L["OPT_SHOULD_CHAT"] = "Enable/Disable"

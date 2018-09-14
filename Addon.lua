@@ -50,6 +50,7 @@ function Addon:OnInitialize()
             awardSelf = false,
             bidPublic = false,
             chillMode = false,
+            allowDisenchant = false,
 
             -- UI
             ui = {
@@ -64,7 +65,8 @@ function Addon:OnInitialize()
                 ilvlThresholdTrinkets = true,
                 ilvlThresholdRings = false,
                 pawn = false,
-                transmog = false
+                transmog = false,
+                disenchant = false
             },
 
             -- Messages
@@ -280,7 +282,7 @@ function Addon:HandleChatCommand(msg)
 
             for i,item in pairs(items) do
                 item = Item.FromLink(item, itemOwner)
-                local roll = Roll.Add(item, ml or "player", timeout)
+                local roll = Roll.Add(item, ml or "player", nil, nil, timeout)
 
                 if roll.isOwner then
                     roll:Start()

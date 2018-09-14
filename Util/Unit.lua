@@ -1,4 +1,5 @@
 local Name, Addon = ...
+local RI = LibStub("LibRealmInfo")
 local Util = Addon.Util
 local Self = Addon.Unit
 
@@ -50,6 +51,22 @@ function Self.Realm(unit)
     realm = realm ~= "" and realm or Self.RealmName()
 
     return name and realm or unit and unit:match("^.*-(.*)$") or nil
+end
+
+-- Get a unique indentifier for the unit's realm connection
+function Self.ConnectedRealm(unit)
+    local realm = Self.Realm(unit)
+    local info = realm and RI:GetRealmInfo(realm)
+
+    if info and info.connections then
+        local s = ""
+        for _,id in ipairs(info.connections) do
+            s = s .. (s == "" and "" or "-") .. RI:GetRealmInfoByID(id)
+        end
+        return s
+    else
+        return realm
+    end
 end
 
 -- Get a unit's name (incl. realm name if from another realm)

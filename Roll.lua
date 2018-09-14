@@ -115,18 +115,20 @@ function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner, status)
 end
 
 -- Add a roll to the list
-function Self.Add(item, owner, timeout, ownerId, itemOwnerId)
+function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
     owner = Unit.Name(owner or "player")
+    local isOwner = Unit.IsSelf(owner)
 
     -- Create the roll entry
     local roll = {
         created = time(),
-        isOwner = Unit.IsSelf(owner),
+        isOwner = isOwner,
         item = Item.FromLink(item, owner),
         owner = owner,
         ownerId = ownerId,
         itemOwnerId = itemOwnerId,
         timeout = timeout or Self.CalculateTimeout(),
+        disenchant = Util.Default(disenchant, isOwner and Addon.db.profile.allowDisenchant),
         status = Self.STATUS_PENDING,
         bids = {},
         rolls = {},
@@ -176,10 +178,10 @@ function Self.Update(data, unit)
             return
         end
 
-        roll = Self.Add(Item.FromLink(data.item.link, data.item.owner, nil, nil, Util.Default(data.item.isTradable, true)), data.owner, data.timeout, data.ownerId, data.itemOwnerId)
+        roll = Self.Add(Item.FromLink(data.item.link, data.item.owner, nil, nil, Util.Default(data.item.isTradable, true)), data.owner, data.ownerId, data.itemOwnerId, data.timeout, data.disenchant)
 
         if roll.isOwner then roll.item:OnLoaded(function ()
-            if roll.item:ShouldBeRolledFor() or roll.item:ShouldBeBidOn() then
+            if roll.item:ShouldBeRolledFor() or roll:ShouldBeBidOn() then
                 Addon:Debug("Roll.Update.Start")
                 roll:Start()
             else
@@ -212,7 +214,7 @@ function Self.Update(data, unit)
             roll:Cancel()
         else roll.item:OnLoaded(function ()
             -- Declare our interest if the roll is pending without any eligible players
-            if data.status == Self.STATUS_PENDING and (data.item.eligible or 0) == 0 and roll.item:ShouldBeBidOn() then
+            if data.status == Self.STATUS_PENDING and (data.item.eligible or 0) == 0 and roll:ShouldBeBidOn() then
                 roll.item:SetEligible("player")
                 Comm.SendData(Comm.EVENT_INTEREST, {ownerId = roll.ownerId}, roll.owner)
             end
@@ -338,12 +340,19 @@ function Self:Start(started)
                 Self.events:Fire(Self.EVENT_START, self)
             end
 
-            -- Show some UI
-            if not self.bid and (self.item.isOwner or self.item:ShouldBeBidOn()) then
-                self:ShowRollFrame()
-            end
-            
+            -- Let others know
             self:SendStatus()
+
+            -- Offer to bid or bid disenchant directly
+            if not self.bid and (self.item.isOwner or self:ShouldBeBidOn()) then
+                -- Show some UI
+                if self.item.isOwner or self.item:ShouldBeBidOn() then
+                    self:ShowRollFrame()
+                -- Bid disenchant
+                elseif self.disenchant and Addon.db.profile.filter.disenchant and Unit.IsEnchanter() then
+                    self:Bid(Self.BID_DISENCHANT)
+                end
+            end
         end
     end)
 
@@ -363,7 +372,7 @@ function Self:Schedule()
         if self.status == Self.STATUS_PENDING then
             self.timers.bid = nil
 
-            if self.isOwner and self.item:ShouldBeRolledFor() or not self.isOwner and self.item:ShouldBeBidOn() then
+            if self.isOwner and self.item:ShouldBeRolledFor() or not self.isOwner and self:ShouldBeBidOn() then
                 Addon:Debug("Roll.Schedule.Start")
                 self:Start()
             else
@@ -785,6 +794,7 @@ function Self:SendStatus(noCheck, target, full)
         data.status = self.status
         data.started = self.started
         data.timeout = self.timeout
+        data.disenchant = self.disenchant
         data.posted = self.posted
         data.winner = self.winner and Unit.FullName(self.winner)
         data.traded = self.traded and Unit.FullName(self.traded)
@@ -953,6 +963,15 @@ function Self:ValidateVote(vote, fromUnit, isImport)
 end
 
 -------------------------------------------------------
+--                     Decisions                     --
+-------------------------------------------------------
+
+-- Check if we should bid on the roll
+function Self:ShouldBeBidOn()
+    return self.item:ShouldBeBidOn() or self.disenchant and Addon.db.profile.filter.disenchant and Unit.IsEnchanter()
+end
+
+-------------------------------------------------------
 --                      Helper                       --
 -------------------------------------------------------
 
@@ -972,7 +991,7 @@ function Self:DetermineWinner()
 
     -- Narrow down by bids
     if next(self.bids) then
-        Util.TblMap(candidates, function (_, i) return self.bids[i] or Self.BID_PASS end, true)
+        Util.TblMap(candidates, function (_, i) return self.bids[i] end, true)
         Util.TblOnly(candidates, Util.TblMin(candidates))
         if Util.TblCount(candidates) == 1 then
             return next(candidates), Util.TblRelease(candidates)
@@ -989,7 +1008,20 @@ function Self:DetermineWinner()
     end
 
     -- Pick one at random
-    return Util.TblRandomKey(candidates), Util.TblRelease(candidates)
+    if next(candidates) then
+        return Util.TblRandomKey(candidates), Util.TblRelease(candidates)
+    end
+
+    Util.TblRelease(candidates)
+
+    -- Check for disenchanter
+    if Session.GetMasterlooter() then
+        local dis = Util.TblCopyFilter(Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()] or Util.TBL_EMPTY, Unit.InGroup)
+        if next(dis) then
+            for _,unit in pairs(dis) do self:Bid(Self.BID_DISENCHANT, unit, nil, true) end
+            return self:DetermineWinner()
+        end
+    end
 end
 
 -- Check if the given unit is eligible
@@ -1026,7 +1058,7 @@ function Self:UnitCanBid(unit, bid, checkIlvl)
     if self.traded or not Unit.InGroup(unit) then
         return false
     -- Only need+pass for rolls from non-users
-    elseif not (self.ownerId or self.itemOwnerId or Util.In(bid, nil, Self.BID_NEED, Self.BID_PASS)) then
+    elseif not (self:OwnerUsesAddon() or Util.In(bid, nil, Self.BID_NEED, Self.BID_PASS)) then
         return false
     -- Can't bid if "Don't share" is enabled
     elseif Addon.db.profile.dontShare and Unit.IsSelf(unit) then
@@ -1066,6 +1098,11 @@ end
 -- Check if the roll is handled by a masterlooter
 function Self:HasMasterlooter()
     return self.owner ~= self.item.owner or self.owner == Session.GetMasterlooter(self.item.owner)
+end
+
+-- Check if the roll is from an addon user
+function Self:OwnerUsesAddon()
+    return Util.Bool(self.ownerId or self.itemOwnerId or Addon.plhUsers[self.owner])
 end
 
 -- Check if the player has to take an action to complete the roll (e.g. trade)
