@@ -67,7 +67,7 @@ Use /plr or /PersoLootRoll to open the rolls overview window, manually start rol
 
 - `/plr`: Open rolls window
 - `/plr roll [item]* (<timeout> <owner>)`: Start a roll for one or more item(s)
-- `/plr bid <owner> ([item])`: Bid for an item from another player
+- `/plr bid [item] (<owner> <bid>)`: Bid for an item from another player
 - `/plr options`: Open options window
 - `/plr config`: Change settings through the command line
 - `/plr help`: Print this help message

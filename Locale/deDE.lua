@@ -93,11 +93,11 @@ L["HELP"] = [=[]Verrolle und biete auf items (/PersoLootRoll oder /plr).
  /plr: Optionen öffnen
  /plr rolls: Verlosung-Übersicht öffnen
  /plr roll [Item]* (<Zeit> <Spieler>): Verrolle ein item
- /plr bid <Spieler> ([Item]): Biete auf ein Item eines anderen Spielers
+ /plr bid [Item] (<Spieler> <Gebot>): Biete auf ein Item eines anderen Spielers
  /plr config: Einstellungen über die Commando-Zeile ändern
  /plr help: Gib diese Hilfsmeldung aus
  Legende: (..) = optional, [..] = Item-Link, * = Ein- oder Mehrmals]=]
-L["USAGE_BID"] = "Benutzung: /plr bid <Spieler> ([Item])"
+L["USAGE_BID"] = "Benutzung: /plr bid [Item] (<Spieler> <Gebot>)"
 L["USAGE_ROLL"] = "Benutzung: /plr roll [Item]* (<Zeit> <Spieler>)"
 
 -- Errors
@@ -105,7 +105,7 @@ L["ERROR_CMD_UNKNOWN"] = "Unbekannter Befehl '%s'"
 L["ERROR_ITEM_NOT_TRADABLE"] = "Du kannst dieses Item nicht handeln."
 L["ERROR_NOT_IN_GROUP"] = "Du bist nicht in einer Gruppe/Raid."
 L["ERROR_OPT_MASTERLOOT_EXPORT_FAILED"] = "Export der Plündermeister-Einstellungen zu <%s> ist fehlgeschlagen!"
-L["ERROR_PLAYER_NOT_FOUND"] = "Kann Spieler %s nicht finden."
+L["ERROR_PLAYER_NOT_FOUND"] = "Kann Spieler %q nicht finden."
 L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"] = "%s hat ein Gebot für %s gesendet, aber hat dazu gerade keine Berechtigung."
 L["ERROR_ROLL_BID_IMPOSSIBLE_SELF"] = "Du kannst für dieses Item gerade nicht bieten."
 L["ERROR_ROLL_BID_UNKNOWN_OTHER"] = "%s hat ein ungültiges Gebot für %s gesendet."

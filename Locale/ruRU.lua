@@ -92,12 +92,12 @@ L["HELP"] = [=[Начать розыгрыши предметов (/PersoLootRol
 Использование:
 /plr: Открыть настройки
 /plr roll [предмет]* (<таймаут> <владелец>): Начать розыгрыш одного и более предметов
-/plr bid <владелец> ([предмет]): Ставка на предмет от другого игрока
+/plr bid [предмет] (<владелец> <bid>): Ставка на предмет от другого игрока
 /plr options: Открыть настройки
 /plr config: Изменить настройки через команды чата
 /plr help: Показать это сообщение
 Легенда: [..] = ссылка на предмет, * = один и более раз, (..) = опционально]=]
-L["USAGE_BID"] = "Использование: /plr bid <владелец> ([предмет])"
+L["USAGE_BID"] = "Использование: /plr bid [предмет] (<владелец> <bid>)"
 L["USAGE_ROLL"] = "Использование: /plr roll [предмет]* (<таймаут> <владелец>)"
 
 -- Errors
@@ -105,7 +105,7 @@ L["ERROR_CMD_UNKNOWN"] = "Неизвестная команда '%s' "
 L["ERROR_ITEM_NOT_TRADABLE"] = "Вы не можете передать этот предмет."
 L["ERROR_NOT_IN_GROUP"] = "Вы не в группе или рейде."
 L["ERROR_OPT_MASTERLOOT_EXPORT_FAILED"] = "Exporting masterloot settings to <%s> failed!" -- Translation missing
-L["ERROR_PLAYER_NOT_FOUND"] = "Игрок %s не найден."
+L["ERROR_PLAYER_NOT_FOUND"] = "Игрок %q не найден."
 L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"] = "%s отправил заявку на %s, но сейчас это не разрешено."
 L["ERROR_ROLL_BID_IMPOSSIBLE_SELF"] = "Вы не можете делать заявки на этот предмет прямо сейчас."
 L["ERROR_ROLL_BID_UNKNOWN_OTHER"] = "%s отправил недопустимую заявку для %s."

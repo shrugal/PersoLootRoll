@@ -222,6 +222,7 @@ end
 -- Chat command handling
 function Addon:HandleChatCommand(msg)
     local args = Util.Tbl(Addon:GetArgs(msg, 10))
+    args[11] = nil
     local cmd = tremove(args, 1)
 
     -- Help
@@ -266,7 +267,9 @@ function Addon:HandleChatCommand(msg)
             end
         end
 
-        if not Unit.IsSelf(itemOwner) and not isML then
+        if not UnitExists(itemOwner) then
+            self:Error(L["ERROR_PLAYER_NOT_FOUND"], itemOwner)
+        elseif not Unit.IsSelf(itemOwner) and not isML then
             self:Error(L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"])
         elseif timeout and ml and not isML then
             self:Error(L["ERROR_NOT_MASTERLOOTER_TIMEOUT"])
@@ -288,14 +291,36 @@ function Addon:HandleChatCommand(msg)
         end
     -- Bid
     elseif cmd == "bid" then
-        local owner, item, bid = unpack(args)
+        local item, owner, bid = unpack(args)
+
+        -- Determine bid
+        if Util.In(bid, NEED, "Need", "need", "100") then
+            bid = Roll.BID_NEED
+        elseif Util.In(bid, GREED, "Greed", "greed", "50") then
+            bid = Roll.BID_GREED
+        elseif Session.GetMasterlooter() then
+            for i=1,2 do
+                if Util.In(bid, Session.rules["answers" .. i]) then
+                    bid = i + Util.TblFind(Session.rules["answers" .. i], bid) / 10
+                end
+            end
+        end
+
+        bid = bid or Roll.BID_NEED
+        owner = Unit.Name(owner or "player")
         
-        if Util.StrIsEmpty(owner) or Item.IsLink(owner)            -- owner
-        or item and not Item.IsLink(item)                          -- item
-        or bid and not Util.TblFind(Roll.BIDS, tonumber(bid)) then -- answer
+        if not Item.IsLink(item) or Item.IsLink(owner) or not tonumber(bid) then
             self:Print(L["USAGE_BID"])
+        elseif not UnitExists(owner) then
+            self:Error(L["ERROR_PLAYER_NOT_FOUND"], args[2])
         else
-            (Roll.Find(nil, owner, item) or Roll.Add(item, owner)):Bid(bid or Roll.BID_NEED)
+            local roll = (Roll.Find(nil, owner, item) or Roll.Add(item, owner))
+    
+            if self.db.profile.messages.echo < Addon.ECHO_VERBOSE then
+                self:Info(L["BID_START"], roll:GetBidName(bid), item, Comm.GetPlayerLink(owner))
+            end
+            
+            roll:Bid(bid or Roll.BID_NEED)
         end
     -- Trade
     elseif cmd == "trade" then
@@ -317,7 +342,7 @@ function Addon:HandleChatCommand(msg)
         Util.ExportInstances()
     -- Unknown
     else
-        self:Err(L["ERROR_CMD_UNKNOWN"], cmd)
+        self:Error(L["ERROR_CMD_UNKNOWN"], cmd)
     end
 end
 
@@ -466,7 +491,7 @@ function Addon:Echo(lvl, ...)
 end
 
 -- Shortcuts for different log levels
-function Addon:Err(...) self:Echo(self.ECHO_ERROR, ...) end
+function Addon:Error(...) self:Echo(self.ECHO_ERROR, ...) end
 function Addon:Info(...) self:Echo(self.ECHO_INFO, ...) end
 function Addon:Verbose(...) self:Echo(self.ECHO_VERBOSE, ...) end
 function Addon:Debug(...) self:Echo(self.ECHO_DEBUG, ...) end

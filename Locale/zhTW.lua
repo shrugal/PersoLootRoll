@@ -92,12 +92,12 @@ L["HELP"] = [=[開始物品的擲骰或競標（/PersoLootRoll or /plr）。
 使用方法：
 /plr: 開啟選項視窗
 /plr roll [物品]* (<持續時間> <擁有者>): 開始一個或多個物品的擲骰
-/plr bid <擁有者> ([物品]): 競標來自其他玩家的物品
+/plr bid [物品] (<擁有者> <bid>): 競標來自其他玩家的物品
 /plr options: 開啟選項視窗
 /plr config: 透過指令更改設置
 /plr help: 發送此幫助訊息
 解釋: [..] = 物品連結, * = 一個或多個物品， (..) = 備選的]=]
-L["USAGE_BID"] = "使用：/plr bid <提供者> ([物品])"
+L["USAGE_BID"] = "使用：/plr bid [物品] (<提供者> <bid>)"
 L["USAGE_ROLL"] = "使用：/plr roll [item]* (<持續時間> <提供者>)"
 
 -- Errors
@@ -105,7 +105,7 @@ L["ERROR_CMD_UNKNOWN"] = "未知指令'%s'"
 L["ERROR_ITEM_NOT_TRADABLE"] = "你無法交易這項物品。"
 L["ERROR_NOT_IN_GROUP"] = "你不在隊伍或團隊中。"
 L["ERROR_OPT_MASTERLOOT_EXPORT_FAILED"] = "匯出分裝設置到<%s>失敗了！"
-L["ERROR_PLAYER_NOT_FOUND"] = "找不到玩家 %s。"
+L["ERROR_PLAYER_NOT_FOUND"] = "找不到玩家 %q。"
 L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"] = "%s已發送了%s的競標，但現在不允許這樣做。"
 L["ERROR_ROLL_BID_IMPOSSIBLE_SELF"] = "你現在無法競標該物品。"
 L["ERROR_ROLL_BID_UNKNOWN_OTHER"] = "%s已發送了%s的競標邀請。"
