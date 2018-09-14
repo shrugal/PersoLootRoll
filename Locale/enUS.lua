@@ -92,12 +92,12 @@ L["HELP"] = [=[Start rolls and bid for items (/PersoLootRoll or /plr).
 Usage:
 /plr: Open options window
 /plr roll [item]* (<timeout> <owner>): Start a roll for one or more item(s)
-/plr bid <owner> ([item]): Bid for an item from another player
+/plr bid [item] (<owner> <bid>): Bid for an item from another player
 /plr options: Open options window
 /plr config: Change settings through the command line
 /plr help: Print this help message
 Legend: [..] = item link, * = one or more times, (..) = optional]=]
-L["USAGE_BID"] = "Usage: /plr bid <owner> ([item])"
+L["USAGE_BID"] = "Usage: /plr bid [item] (<owner> <bid>)"
 L["USAGE_ROLL"] = "Usage: /plr roll [item]* (<timeout> <owner>)"
 
 -- Errors
@@ -105,7 +105,7 @@ L["ERROR_CMD_UNKNOWN"] = "Unknown command '%s'"
 L["ERROR_ITEM_NOT_TRADABLE"] = "You cannot trade that item."
 L["ERROR_NOT_IN_GROUP"] = "You are not in a group or raid."
 L["ERROR_OPT_MASTERLOOT_EXPORT_FAILED"] = "Exporting masterloot settings to <%s> failed!"
-L["ERROR_PLAYER_NOT_FOUND"] = "Cannot find player %s."
+L["ERROR_PLAYER_NOT_FOUND"] = "Cannot find player %q."
 L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"] = "%s has send a bid for %s but is not allowed to do so right now."
 L["ERROR_ROLL_BID_IMPOSSIBLE_SELF"] = "You cannot bid on that item right now."
 L["ERROR_ROLL_BID_UNKNOWN_OTHER"] = "%s has send an invalid bid for %s."

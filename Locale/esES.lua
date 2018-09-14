@@ -92,12 +92,12 @@ L["HELP"] = [=[Realiza tiradas y pujas por objetos (/PersoLootRoll o /plr).
 Uso:
 /plr: Abre la ventana de opciones
 /plr roll [item]* (<timeout> <owner>): Empezar una tirada por uno o más objeto(s)
-/plr bid <owner> ([item]): Pujar por un objeto de otro jugador
+/plr bid [item] (<owner> <bid>): Pujar por un objeto de otro jugador
 /plr options: Abrir la ventana de opciones
 /plr config: Cambiar la configuración a través de la línea de comandos
 /plr help: Mostrar este mensaje de ayuda
 Leyenda: [..] = enlace del objeto, * = una o más veces, (..) = opcional]=]
-L["USAGE_BID"] = "Uso: /plr bid <dueño> ([ítem])"
+L["USAGE_BID"] = "Uso: /plr bid [ítem] (<dueño> <bid>)"
 L["USAGE_ROLL"] = "Uso: /plr roll [ítem]* (<plazo> <dueño>)"
 
 -- Errors
@@ -105,7 +105,7 @@ L["ERROR_CMD_UNKNOWN"] = "Comando '%s' desconocido "
 L["ERROR_ITEM_NOT_TRADABLE"] = "No puedes comerciar con ese objeto."
 L["ERROR_NOT_IN_GROUP"] = "No estás en un grupo o banda."
 L["ERROR_OPT_MASTERLOOT_EXPORT_FAILED"] = "¡La exportación de la configuración de maestro despojador a <%s> falló!"
-L["ERROR_PLAYER_NOT_FOUND"] = "No se encuentra al jugador %s."
+L["ERROR_PLAYER_NOT_FOUND"] = "No se encuentra al jugador %q."
 L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"] = "%s ha enviado una puja por %s pero no tiene permiso para hacerlo ahora."
 L["ERROR_ROLL_BID_IMPOSSIBLE_SELF"] = "No puedes solicitar ese objeto ahora."
 L["ERROR_ROLL_BID_UNKNOWN_OTHER"] = "%s ha enviado una puja incorrecta por %s."

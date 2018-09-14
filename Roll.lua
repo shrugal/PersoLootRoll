@@ -308,7 +308,7 @@ function Self:Start(started)
         -- Check if we can start he roll
         local valid, msg = self:Validate(Self.STATUS_PENDING)
         if not valid then
-            Addon:Err(msg)
+            Addon:Error(msg)
         else
             -- Update eligible players if not already done so
             if self.isOwner or self.item.isOwner then
@@ -523,7 +523,7 @@ function Self:End(winner, cleanup, force)
         -- Check if we can end the roll
         local valid, msg = self:Validate(Self.STATUS_RUNNING, winner)
         if not valid then
-            Addon:Err(msg)
+            Addon:Error(msg)
             return self
         end
 
@@ -791,7 +791,7 @@ function Self:SendStatus(noCheck, target, full)
         data.item = Util.TblHash(
             "link", self.item.link,
             "owner", Unit.FullName(self.item.owner),
-            "isTradable", Util.Check(self.item.isTradable == false and not Addon.DEBUG, false, nil)
+            "isTradable", Util.Check(self.item.isTradable == false and not Addon.DEBUG, false, nil),
             "eligible", self.item:GetNumEligible(true, true)
         )
 
@@ -909,21 +909,21 @@ end
 function Self:ValidateBid(bid, fromUnit, roll, isImport, answer, answers)
     local valid, msg = self:Validate(nil, fromUnit)
     if not valid then
-        Addon:Err(msg)
+        Addon:Error(msg)
     -- Don't validate imports any further
     elseif isImport then
         return true
     -- Check if it's a valid bid
     elseif not Util.TblFind(Self.BIDS, floor(bid)) or Session.GetMasterlooter(self.owner) and answer > 0 and not (answers and answers[answer]) then
         if Unit.IsSelf(fromUnit) then
-            Addon:Err(L["ERROR_ROLL_BID_UNKNOWN_SELF"])
+            Addon:Error(L["ERROR_ROLL_BID_UNKNOWN_SELF"])
         else
             Addon:Verbose(L["ERROR_ROLL_BID_UNKNOWN_OTHER"], fromUnit, self.item.link)
         end
     -- Check if the unit can bid
     elseif not self:UnitCanBid(fromUnit, bid) then
         if Unit.IsSelf(fromUnit) then
-            Addon:Err(L["ERROR_ROLL_BID_IMPOSSIBLE_SELF"])
+            Addon:Error(L["ERROR_ROLL_BID_IMPOSSIBLE_SELF"])
         else
             Addon:Verbose(L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"], fromUnit, self.item.link)
         end
@@ -936,14 +936,14 @@ end
 function Self:ValidateVote(vote, fromUnit, isImport)
     local valid, msg = self:Validate(nil, vote, fromUnit)
     if not valid then
-        Addon:Err(msg)
+        Addon:Error(msg)
     -- Don't validate imports any further
     elseif isImport then
         return true
     -- Check if the unit can bid
     elseif not self:UnitCanVote(fromUnit) then
         if fromSelf then
-            Addon:Err(L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"])
+            Addon:Error(L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"])
         else
             Addon:Verbose(L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"], fromUnit, self.item.link)
         end
