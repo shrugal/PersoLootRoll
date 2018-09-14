@@ -115,6 +115,8 @@ L["ERROR_ROLL_STATUS_NOT_1"] = "Розыгрыш не запущен."
 L["ERROR_ROLL_UNKNOWN"] = "Этот бросок не существует."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"] = "%s проголосовал за %s, но сейчас это не разрешено."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"] = "Вы не можете проголосовать прямо сейчас."
+L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"] = "You need to become masterlooter to create rolls for other player's items." -- Translation missing
+L["ERROR_NOT_MASTERLOOTER_TIMEOUT"] = "You cannot change the timeout while having a masterlooter other than yourself." -- Translation missing
 
 -- GUI
 L["DIALOG_MASTERLOOT_ASK"] = "<%s> хочет стать вашим ответственным за добычу."

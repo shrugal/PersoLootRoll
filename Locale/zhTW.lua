@@ -115,6 +115,8 @@ L["ERROR_ROLL_STATUS_NOT_1"] = "此擲骰沒有運行。"
 L["ERROR_ROLL_UNKNOWN"] = "此擲骰不存在。"
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"] = "%s已經發送了%s的投票表決，但現在不允許這樣做。"
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"] = "你現在無法對該物品進行投票。"
+L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"] = "You need to become masterlooter to create rolls for other player's items." -- Translation missing
+L["ERROR_NOT_MASTERLOOTER_TIMEOUT"] = "You cannot change the timeout while having a masterlooter other than yourself." -- Translation missing
 
 -- GUI
 L["DIALOG_MASTERLOOT_ASK"] = "<%s>想成為你的分裝者。"
