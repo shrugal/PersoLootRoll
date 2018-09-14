@@ -115,6 +115,8 @@ L["ERROR_ROLL_STATUS_NOT_1"] = "Diese Verlosung läuft noch nicht."
 L["ERROR_ROLL_UNKNOWN"] = "Diese Verlosung existiert nicht."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"] = "%s hat eine Stimme für %s gesendet, aber hat dazu gerate keine Berechtigung."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"] = "Du kannst für dieses Item gerade nicht abstimmen."
+L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"] = "Du musst Plündermeister werden, um Verlosungen für andere Spieler zu starten."
+L["ERROR_NOT_MASTERLOOTER_TIMEOUT"] = "Du kannst die Laufzeit nicht ändern während jemand anders dein Plündermeister ist."
 
 -- GUI
 L["DIALOG_MASTERLOOT_ASK"] = "<%s> möchte dein Plündermeister werden."

@@ -115,6 +115,8 @@ L["ERROR_ROLL_STATUS_NOT_1"] = "La tirada no está en marcha."
 L["ERROR_ROLL_UNKNOWN"] = "Esa tirada no existe."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"] = "%s ha enviado un voto por %s pero no puede hacerlo ahora mismo."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"] = "No puedes votar por ese objeto ahora mismo."
+L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"] = "You need to become masterlooter to create rolls for other player's items." -- Translation missing
+L["ERROR_NOT_MASTERLOOTER_TIMEOUT"] = "You cannot change the timeout while having a masterlooter other than yourself." -- Translation missing
 
 -- GUI
 L["DIALOG_MASTERLOOT_ASK"] = "<%s> quiere convertirse en tu maestro despojador."

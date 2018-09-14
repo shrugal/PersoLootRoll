@@ -221,8 +221,8 @@ end
 
 -- Chat command handling
 function Addon:HandleChatCommand(msg)
-    local args = {Addon:GetArgs(msg, 10)}
-    local cmd = args[1]
+    local args = Util.Tbl(Addon:GetArgs(msg, 10))
+    local cmd = tremove(args, 1)
 
     -- Help
     if cmd == "help" then
@@ -236,14 +236,14 @@ function Addon:HandleChatCommand(msg)
 
         -- Handle submenus
         local subs = Util.Tbl("messages", "masterloot", "profiles")
-        if Util.In(args[2], subs) then
-            name, pre, line = name .. " " .. Util.StrUcFirst(args[2]), pre .. " " .. args[2], line:sub(args[2]:len() + 2)
+        if Util.In(args[1], subs) then
+            name, pre, line = name .. " " .. Util.StrUcFirst(args[1]), pre .. " " .. args[1], line:sub(args[1]:len() + 2)
         end
 
         LibStub("AceConfigCmd-3.0").HandleCommand(Addon, pre, name, line)
 
         -- Add submenus as additional options
-        if Util.StrIsEmpty(args[2]) then
+        if Util.StrIsEmpty(args[1]) then
             for i,v in pairs(subs) do
                 local name = Util.StrUcFirst(v)
                 local getter = LibStub("AceConfigRegistry-3.0"):GetOptionsTable(Name .. " " .. name)
@@ -254,24 +254,31 @@ function Addon:HandleChatCommand(msg)
         Util.TblRelease(subs)
     -- Roll
     elseif cmd == "roll" then
-        local items, i, item = {}, 1
+        local ml, isML, items, itemOwner, timeout = Session.GetMasterlooter(), Session.IsMasterlooter(), Util.Tbl(), "player"
 
-        while i do
-            i, item = next(args, i)
-            if i and Item.IsLink(item) then
-                tinsert(items, item)
+        for i,v in pairs(args) do
+            if tonumber(v) then
+                timeout = tonumber(v)
+            elseif Item.IsLink(v) then
+                tinsert(items, v)
+            else
+                itemOwner = v
             end
         end
 
+        if not Unit.IsSelf(itemOwner) and not isML then
+            self:Error(L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"])
+        elseif timeout and ml and not isML then
+            self:Error(L["ERROR_NOT_MASTERLOOTER_TIMEOUT"])
         if not next(items) then
-            self:Print(L["USAGE_ROLL"])
+            self:Error(L["USAGE_ROLL"])
         else
-            i = table.getn(items) + 2
-            local timeout, owner = tonumber(args[i]), args[i+1]
-            
+            local ml = Session.GetMasterlooter()
+
             for i,item in pairs(items) do
-                item = Item.FromLink(item, owner or "player")
-                local roll = Roll.Add(item, owner or Session.GetMasterlooter() or "player", timeout)
+                item = Item.FromLink(item, itemOwner)
+                local roll = Roll.Add(item, ml or "player", timeout)
+
                 if roll.isOwner then
                     roll:Start()
                 else
@@ -281,21 +288,18 @@ function Addon:HandleChatCommand(msg)
         end
     -- Bid
     elseif cmd == "bid" then
-        local owner, item, bid = select(2, unpack(args))
+        local owner, item, bid = unpack(args)
         
         if Util.StrIsEmpty(owner) or Item.IsLink(owner)            -- owner
         or item and not Item.IsLink(item)                          -- item
         or bid and not Util.TblFind(Roll.BIDS, tonumber(bid)) then -- answer
             self:Print(L["USAGE_BID"])
         else
-            local roll = Roll.Find(nil, owner, item)
-            if roll then
-                roll:Bid(bid)
-            end
+            (Roll.Find(nil, owner, item) or Roll.Add(item, owner)):Bid(bid or Roll.BID_NEED)
         end
     -- Trade
     elseif cmd == "trade" then
-        Trade.Initiate(args[2] or "target")
+        Trade.Initiate(args[1] or "target")
     -- Rolls/None
     elseif cmd == "rolls" or not cmd then
         GUI.Rolls.Show()
