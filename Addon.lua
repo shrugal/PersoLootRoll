@@ -270,7 +270,7 @@ function Addon:HandleChatCommand(msg)
             self:Error(L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"])
         elseif timeout and ml and not isML then
             self:Error(L["ERROR_NOT_MASTERLOOTER_TIMEOUT"])
-        if not next(items) then
+        elseif not next(items) then
             self:Error(L["USAGE_ROLL"])
         else
             local ml = Session.GetMasterlooter()
