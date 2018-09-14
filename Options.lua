@@ -155,6 +155,15 @@ function Self.RegisterGeneral()
                 get = function () return Addon.db.profile.bidPublic end,
                 width = Self.WIDTH_HALF
             },
+            allowDisenchant = {
+                name = L["OPT_ALLOW_DISENCHANT"],
+                desc = L["OPT_ALLOW_DISENCHANT_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.allowDisenchant = val end,
+                get = function () return Addon.db.profile.allowDisenchant end,
+                width = Self.WIDTH_HALF
+            },
             ui = {type = "header", order = it(), name = L["OPT_UI"]},
             uiDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_UI_DESC"]:format(Name) .. "\n"},
             minimapIcon = {
@@ -269,8 +278,8 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.filter.pawn = val end,
                 get = function () return Addon.db.profile.filter.pawn end,
-                width = Self.WIDTH_HALF,
-                hidden = function () return not IsAddOnLoaded("Pawn") end
+                width = Self.WIDTH_THIRD,
+                disabled = function () return not IsAddOnLoaded("Pawn") end
             },
             transmog = {
                 name = L["OPT_TRANSMOG"],
@@ -279,7 +288,16 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.filter.transmog = val end,
                 get = function () return Addon.db.profile.filter.transmog end,
-                width = IsAddOnLoaded("Pawn") and Self.WIDTH_HALF or Self.WIDTH_FULL
+                width = Self.WIDTH_THIRD
+            },
+            disenchant = {
+                name = L["OPT_DISENCHANT"],
+                desc = L["OPT_DISENCHANT_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.filter.disenchant = val end,
+                get = function () return Addon.db.profile.filter.disenchant end,
+                width = Self.WIDTH_THIRD
             }
         }
     }
@@ -499,9 +517,13 @@ function Self.GetCustomMessageOptions(isDefault)
         "MSG_ROLL_START_MASTERLOOT",
         "MSG_ROLL_WINNER",
         "MSG_ROLL_WINNER_MASTERLOOT",
+        "MSG_ROLL_DISENCHANT",
+        "MSG_ROLL_DISENCHANT_MASTERLOOT",
         "OPT_WHISPER",
         "MSG_ROLL_WINNER_WHISPER",
         "MSG_ROLL_WINNER_WHISPER_MASTERLOOT",
+        "MSG_ROLL_DISENCHANT_WHISPER",
+        "MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT",
         "OPT_WHISPER_ASK",
         "MSG_BID",
         "OPT_WHISPER_ANSWER",
@@ -763,7 +785,14 @@ function Self.RegisterMasterloot()
                         end,
                         width = Self.WIDTH_FULL
                     },
-                    --[[
+                    allowDisenchant = {
+                        name = L["OPT_ALLOW_DISENCHANT"],
+                        desc = L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"],
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) Addon.db.profile.masterloot.rules.allowDisenchant = val end,
+                        get = function () return Addon.db.profile.masterloot.rules.allowDisenchant end
+                    },
                     disenchanter = {
                         name = L["OPT_MASTERLOOT_RULES_DISENCHANTER"],
                         desc = L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"],
@@ -779,7 +808,6 @@ function Self.RegisterMasterloot()
                         end,
                         width = Self.WIDTH_FULL
                     },
-                    --]]
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
                     autoAward = {
                         name = L["OPT_MASTERLOOT_RULES_AUTO_AWARD"],

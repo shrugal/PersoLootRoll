@@ -31,14 +31,13 @@ function Self.EnableGroupLootRoll()
                     local item = roll.item
 
                     return item.texture, item.name, 1, item.quality, item.bindType == LE_ITEM_BIND_ON_ACQUIRE,
-                        true, -- Can need
-                        roll.ownerId or roll.itemOwnerId or Addon.plhUsers[roll.owner], -- Can greed
-                        false, -- Can disenchant
-                        5, -- Reason need
-                        "PLR_NO_ADDON", -- Reason greed
-                        "PLR_NO_DISENCHANT", -- Reason disenchant
-                        nil -- Disenchant skill required
-                        -- TODO
+                        true,                                                             -- Can need
+                        roll:OwnerUsesAddon(),                                            -- Can greed
+                        roll:OwnerUsesAddon() and roll.disenchant and Unit.IsEnchanter(), -- Can disenchant
+                        5,                                                                -- Reason need
+                        "PLR_NO_ADDON",                                                   -- Reason greed
+                        "PLR_NO_DISENCHANT",                                              -- Reason disenchant
+                        1                                                                 -- Disenchant skill required
                 end
             else
                 return Addon.hooks.GetLootRollItemInfo(id)

@@ -28,6 +28,10 @@ L["MSG_ROLL_WINNER"] = "<%s> ha ganado %s -> ¡Comercia conmigo!"
 L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%s> ha ganado %s de <%s> -> ¡Comercia con %s!"
 L["MSG_ROLL_WINNER_WHISPER"] = "¡Has ganado %s! Por favor comercia conmigo."
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "¡Has ganado %s de %s! Por favor comercia con %s."
+L["MSG_ROLL_DISENCHANT"] = "<%s> will disenchant %s -> Trade me!" -- Translation missing
+L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> will disenchant %s from <%s> -> Trade %s!" -- Translation missing
+L["MSG_ROLL_DISENCHANT_WHISPER"] = "You were picked to disenchant %s, please trade me." -- Translation missing
+L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "You were picked to disenchant %s from <%s>, please trade %s." -- Translation missing
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
@@ -165,6 +169,8 @@ L["OPT_ACTIVE_GROUPS_DESC"] = [=[Activar sólo cuando estás en uno de estos tip
 
 |cffffff78Grupo de heramandad:|r Los miembros de una hermandad son el %d%% o más del grupo.
 |cffffff78Grupo de comunidad:|r Los miembros de una de tus comunidades de WoW son el %d%% o más del grupo]=]
+L["OPT_ALLOW_DISENCHANT"] = "Allow \"Disenchant\" bids" -- Translation missing
+L["OPT_ALLOW_DISENCHANT_DESC"] = "Allow others to bid \"Disenchant\" on your own items." -- Translation missing
 L["OPT_AUTHOR"] = "|cffffd100Autor:|r Shrugal (EU-Mal'Ganis)"
 L["OPT_AWARD_SELF"] = "Elegir manualmente el ganador de tus objetos"
 L["OPT_AWARD_SELF_DESC"] = "Escoger manualmente quién debe recibir tus objetos, en lugar de dejar que el addon elija a alguien al azar. Esto está siempre activado cuando eres el maestro despojador."
@@ -207,6 +213,8 @@ L["OPT_SPECS_DESC"] = "Sólo sugiere loot a estas especializaciones de clase."
 L["OPT_TRANSLATION"] = "|cffffd100Traducción:|r Jolugon (EU-Minahonda)"
 L["OPT_TRANSMOG"] = "Comprobar apariencias para transfiguración"
 L["OPT_TRANSMOG_DESC"] = "Optar a los ítems para los que aún no tienes la apariencia correspondiente."
+L["OPT_DISENCHANT"] = "Disenchant" -- Translation missing
+L["OPT_DISENCHANT_DESC"] = "Bid \"Disenchant\" on items you can't use if you have the profession and the item owner has allowed it." -- Translation missing
 L["OPT_UI"] = "Interfaz de usuario"
 L["OPT_UI_DESC"] = "Personaliza la apariencia y comportamiento de %s a tu gusto."
 L["OPT_VERSION"] = "|cffffd100Versión:|r %s"
@@ -252,8 +260,9 @@ L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM_DESC"] = "Será añadido al 
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC"] = "Pujas públicas"
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC_DESC"] = "Puedes hacer pujas públicas, de manera que todo el mundo pueda ver quién puja por qué."
 L["OPT_MASTERLOOT_RULES_DESC"] = "Estas reglas aplican a todo el mundo cuando tú eres maestro despojador"
+L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"] = "Allow group members to roll \"Disenchant\" on items." -- Translation missing
 L["OPT_MASTERLOOT_RULES_DISENCHANTER"] = "Desencantador"
-L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "Dar el loot que nadie quiera a estos jugadores para desencantar."
+L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "Dar el loot que nadie quiera a estos jugadores para desencantar. Separate multiple names with spaces or commas." -- Translation outdated
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS"] = "Respuestas tipo 'Codicia' personalizadas"
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS_DESC"] = [=[Especifica un máximo de 9 respuestas personalizadas cuando se opte por 'Codicia', con prioridad decreciente. También puedes insertar '%s' a la misma para bajar su prioridad por debajo de las respuestas previas. Para introducir entradas múltiples, sepáralas por comas.
 
@@ -340,6 +349,20 @@ L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Susurrando el ganador del reparto
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1: Enlace del objeto
 2: Dueño del objeto
 3: Él/ella]=]
+L["OPT_MSG_ROLL_DISENCHANT"] = "Announcing a disenchanter" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_DESC"] = [=[1: Disenchanter
+2: Item link]=] -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT"] = "Announcing a disenchanter (as masterlooter)" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT_DESC"] = [=[1: Disenchanter
+2: Item link
+3: Item owner
+4: him/her]=] -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER"] = "Whispering the disenchanter" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_DESC"] = "1: Item link" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Whispering the disenchanter (as masterlooter)" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1: Item link
+2: Item owner
+3: him/her]=] -- Translation missing
 L["OPT_SHOULD_CHAT"] = "Habilitar/Deshabilitar"
 L["OPT_SHOULD_CHAT_DESC"] = "Define cuándo el addon escribirá en el chat de grupo/raid y susurrará a otros jugadores."
 L["OPT_WHISPER"] = "Chat de susurros"
