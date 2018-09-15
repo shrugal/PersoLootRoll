@@ -257,7 +257,7 @@ L["OPT_MASTERLOOT_SAVE"] = "Save"
 L["OPT_MASTERLOOT_SAVE_DESC"] = "Save your current masterloot settings to your guild/community's description."
 
 L["OPT_MASTERLOOT_EPGP"] = "EPGP"
-L["OPT_MASTERLOOT_EPGP_DESC"] = "Use the EPGP loot system to award items. When enabled, EPGP priority values will replace bids."
+L["OPT_MASTERLOOT_EPGP_DESC"] = "Use the EPGP loot system to award items. When enabled and Masterlooter, awarding loot to a Need roll will award GP."
 L["OPT_MASTERLOOT_EPGP_ENABLE"] = "Enable EPGP"
 L["OPT_MASTERLOOT_EPGP_ENABLE_DESC"] = "Enable EPGP support"
 

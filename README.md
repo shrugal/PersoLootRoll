@@ -62,6 +62,9 @@ If they accept, then all loot they get will be distributed by you, so other play
 
 ![Masterloot](https://imgur.com/njPScmx.jpg)
 
+### EPGP Support
+EPGP is now supported for auto-assignment and GP tracking. When an item is assigned by a masterlooter with EPGP enabled from a need roll, GP will automatically be credited to the winner. This will also work for custom named need rolls.
+
 ## Commands
 Use /plr or /PersoLootRoll to open the rolls overview window, manually start rolling for items in your bag etc.
 
@@ -94,7 +97,7 @@ These are the things I have planed currently:
 - Import settings from guild info
 - Better trade tracking.
 - Disenchant support
-- Integrations with Pawn and DKP systems like EQDKP and EPGP.
+- Integrations with Pawn and DKP systems like EQDKP.
 - Integration with RCLootCouncil
 - Test mode with dummy-data for the GUI
 - Maybe profile presets (e.g. Never send messages, never advertise, guild masterloot only, ...)
