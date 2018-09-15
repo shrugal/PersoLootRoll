@@ -31,7 +31,7 @@ L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Du hast %s von <%s> gewonnen! Bitte h
 L["MSG_ROLL_DISENCHANT"] = "<%s> wird %s entzaubern -> Mich anhandeln!"
 L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> wird %s von <%s> entzaubern -> %s anhandeln!"
 L["MSG_ROLL_DISENCHANT_WHISPER"] = "Du wurdest ausgewählt %s zu entzaubern, bitte handel mich an."
-L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Du wurdest ausgewählt %s von <%s> zu entzaubern, Bitte handel %s an."
+L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Du wurdest ausgewählt %s von <%s> zu entzaubern, bitte handel %s an."
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
@@ -415,7 +415,8 @@ L["TRADE_START"] = "Starte Handel mit %s."
 
 -- Globals
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "Der Besitzer dieses Items benutzt nicht das PersoLootRoll Addon."
-LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "Das PersoLootRoll Addon unterstützt kein Entzaubern."
+LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "Der Besitzer des Items hat \"Entzaubern\" Gebote nicht erlaubt."
+LOOT_ROLL_INELIGIBLE_REASONPLR_NOT_ENCHANTER = "Dein Charakter hat den \"Verzauberungskunst\" Beruf nicht."
 
 -- Other
 L["ID"] = ID

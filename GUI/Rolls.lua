@@ -376,6 +376,8 @@ function Self.Update()
                 f = GUI.CreateIconButton("UI-GroupLoot-Coin", actions, needGreedClick, GREED)
                 f:SetUserData("bid", Roll.BID_GREED)
                 f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+
+                -- TODO: Disenchant
         
                 -- Pass
                 GUI.CreateIconButton("UI-GroupLoot-Pass", actions, function (self)

@@ -415,7 +415,8 @@ L["TRADE_START"] = "与 %s 开始交易。"
 
 -- Globals
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "物品的提供者并没有使用persolootroll插件。"
-LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "persolootroll插件不支持附魔分解。"
+LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "The owner of this item has not allowed \"Disenchant\" bids." -- Translation missing
+LOOT_ROLL_INELIGIBLE_REASONPLR_NOT_ENCHANTER = "Your character doesn't have the \"Enchanting\" profession." -- Translation missing
 
 -- Other
 L["ID"] = ID
