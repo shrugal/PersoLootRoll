@@ -1,7 +1,7 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local CB = LibStub("CallbackHandler-1.0")
-local Comm, Events, GUI, Item, Locale, Session, Trade, Unit, Util = Addon.Comm, Addon.Events, Addon.GUI, Addon.Item, Addon.Locale, Addon.Session, Addon.Trade, Addon.Unit, Addon.Util
+local Comm, Events, GUI, Item, Locale, Session, Trade, Unit, Util, Epgp = Addon.Comm, Addon.Events, Addon.GUI, Addon.Item, Addon.Locale, Addon.Session, Addon.Trade, Addon.Unit, Addon.Util, Addon.Epgp
 local Self = Addon.Roll
 
 -- Default schedule delay
@@ -136,6 +136,8 @@ function Self.Add(item, owner, timeout, ownerId, itemOwnerId)
         bids = {},
         rolls = {},
         votes = {},
+        eps = {},
+        prs = {},
         timers = {},
         whispers = 0,
         shown = nil,
@@ -319,6 +321,10 @@ function Self.GetBidName(roll, bid)
     end
 end
 
+function Self.BidIsNeed(bid)
+    return type(bid) ~= "string" and floor(bid) == 1
+end
+
 -------------------------------------------------------
 --                     Rolling                       --
 -------------------------------------------------------
@@ -417,6 +423,8 @@ function Self:Restart(started)
     wipe(self.bids)
     wipe(self.rolls)
     wipe(self.votes)
+    wipe(self.eps)
+    wipe(self.prs)
 
     self:HideRollFrame()
 
@@ -433,6 +441,8 @@ function Self:Bid(bid, fromUnit, roll, isImport)
     bid = bid or Self.BID_NEED
     fromUnit = Unit.Name(fromUnit or "player")
     roll = roll or self.isOwner and bid ~= Self.BID_PASS and random(100) or nil
+    local ep,gp
+    if Epgp.IsEpgpEnabled() then ep,gp = Epgp.GetEpgp(fromUnit) end
     local fromSelf = Unit.IsSelf(fromUnit)
 
     -- Handle custom answers
@@ -450,6 +460,8 @@ function Self:Bid(bid, fromUnit, roll, isImport)
     if self:ValidateBid(bid, fromUnit, roll, isImport, answer, answers) then
         self.bids[fromUnit] = bid
         self.rolls[fromUnit] = roll
+        self.eps[fromUnit] = ep
+        self.prs[fromUnit] = ep and gp and ep/gp
 
         if fromSelf then
             self.bid = bid
@@ -529,7 +541,7 @@ function Self:End(winner, cleanup, force)
     end
 
     winner = winner and winner ~= true and Unit.Name(winner) or winner
-    
+
     -- End it if it is running
     if self.status < Self.STATUS_DONE then
         Addon:Verbose(L["ROLL_END"], self.item.link, Comm.GetPlayerLink(self.item.owner))
@@ -602,6 +614,12 @@ function Self:End(winner, cleanup, force)
             -- Let everyone know
             Comm.RollEnd(self)
         end
+    end
+
+    -- Award gp if epgp enabled and roll type is need
+    if Session.IsMasterlooter() and Epgp.IsEpgpEnabled() and self.bids[winner] and floor(self.bids[winner]) == Self.BID_NEED then
+        local value = Epgp.GetValue(self.item.link)
+        Epgp.IncGPSecure(winner, self.item.link, value or 0)
     end
 
     Self.events:Fire(Self.EVENT_AWARD, self)
@@ -946,6 +964,27 @@ end
 -- Figure out a winner
 function Self:DetermineWinner()
     local candidates = Util.TblCopyExcept(self.bids, Self.BID_PASS, true)
+
+    -- Narrow down by epgp if enabled
+    if Epgp.IsEpgpEnabled() then
+        --narrow down by eligible
+        if next(self.eps) then
+            Util.TblMap(candidates, function (_, i) return (self.eps[i] or 0 > Epgp.GetMinEp() and 1) or 0 end, true)
+            Util.TblOnly(candidates, Util.TblMax(candidates))
+            if Util.TblCount(candidates) == 1 then
+                return next(candidates), Util.TblRelease(candidates)
+            end
+        end
+
+        --narrow down by pr
+        if next(self.prs) then
+            Util.TblMap(candidates, function (_, i) return self.prs[i] or 0 end, true)
+            Util.TblOnly(candidates, Util.TblMax(candidates))
+            if Util.TblCount(candidates) == 1 then
+                return next(candidates), Util.TblRelease(candidates)
+            end
+        end
+    end
 
     -- Narrow down by votes
     if next(self.votes) then

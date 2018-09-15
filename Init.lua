@@ -21,6 +21,7 @@ Addon.Roll = {}
 Addon.Trade = {}
 Addon.Unit = {}
 Addon.Util = {}
+Addon.Epgp = {}
 
 -- TODO: DEBUG
 if true or Addon.DEBUG then

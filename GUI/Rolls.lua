@@ -1,7 +1,7 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local AceGUI = LibStub("AceGUI-3.0")
-local GUI, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.GUI, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+local GUI, Inspect, Item, Options, Session, Roll, Trade, Unit, Util, Epgp = Addon.GUI, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util, Addon.Epgp
 local Self = GUI.Rolls
 
 Self.frames = {}
@@ -631,8 +631,13 @@ function Self.UpdateDetails(details, roll)
     -- Header
 
     local header = {"PLAYER", "ITEM_LEVEL", "EQUIPPED", "BID", "ROLL", "VOTES"}
+    if Epgp.IsEpgpEnabled() then table.insert(header, "EPGP_PR") end
     if #children == 0 then
-        details.userdata.table.columns = {1, {25, 100}, {34, 100}, {25, 100}, {25, 100}, {25, 100}, 100}
+        if not Epgp.IsEpgpEnabled() then
+            details.userdata.table.columns = {1, {25, 100}, {34, 100}, {25, 100}, {25, 100}, {25, 100}, 100}
+        else
+            details.userdata.table.columns = {1, {25, 100}, {34, 100}, {25, 100}, {25, 100}, {25, 100}, {25,100}, 100}
+        end
         
         for i,v in pairs(header) do
             local f = GUI("Label").SetFontObject(GameFontNormal).SetText(L[v]).SetColor(1, 0.82, 0)()
@@ -651,6 +656,7 @@ function Self.UpdateDetails(details, roll)
 
     local players = GUI.GetRollEligibleList(roll)
 
+    TempDump = {}
     local it = Util.Iter(#header)
     for _,player in ipairs(players) do
         -- Create the row
@@ -699,6 +705,14 @@ function Self.UpdateDetails(details, roll)
                 end)
                 .SetCallback("OnLeave", GUI.TooltipHide)
                 .AddTo(details)
+
+            -- Epgp
+            if Epgp.IsEpgpEnabled() then
+                GUI("Label")
+                    .SetFontObject(((player.epMin or 0) > 0 and GameFontNormal) or GameFontNormal)
+                    --.SetFontObject(GameFontNormal)
+                    .AddTo(details)
+            end
         
             -- Action
             local f = GUI("Button")
@@ -754,6 +768,13 @@ function Self.UpdateDetails(details, roll)
             .SetUserData("unit", player.unit)
             .Show()
 
+        -- Epgp
+        if Epgp.IsEpgpEnabled() then
+            GUI(children[it()])
+                    .SetText(player.pr and string.format("%.4g",player.pr) or "-")
+                    .Show()
+        end
+
         -- Action
         local txt = canBeAwarded and L["AWARD"]
             or canVote and (roll.vote == player.unit and L["VOTE_WITHDRAW"] or L["VOTE"])
@@ -772,7 +793,7 @@ function Self.UpdateDetails(details, roll)
         children[it(0)] = nil
     end
 
-    Util.TblRelease(1, players)
+    --Util.TblRelease(1, players)
     details:ResumeLayout()
 end
 

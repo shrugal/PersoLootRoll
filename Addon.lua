@@ -96,6 +96,9 @@ function Addon:OnInitialize()
                     roles = {raidleader = false, raidassistant = false},
                     clubs = {},
                     whitelists = {}
+                },
+                epgp = {
+                    enabled = false
                 }
             },
 

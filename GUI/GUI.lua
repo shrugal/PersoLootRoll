@@ -1,7 +1,7 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local AceGUI = LibStub("AceGUI-3.0")
-local Comm, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+local Comm, Inspect, Item, Options, Session, Roll, Trade, Unit, Util, Epgp = Addon.Comm, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util, Addon.Epgp
 local Self = Addon.GUI
 
 Self.Rolls = {}
@@ -238,21 +238,27 @@ end
 -------------------------------------------------------
 
 function Self.GetRollEligibleList(roll)
-    return Util(roll.item:GetEligible()).Copy().Merge(roll.bids).Map(function (val, unit)
+     TempGlobalDump = Util(roll.item:GetEligible()).Copy().Merge(roll.bids).Map(function (val, unit)
         local t = Util.Tbl()
         t.unit = unit
         t.ilvl = roll.item:GetLevelForLocation(unit)
         t.bid = type(val) == "number" and val or nil
         t.votes = Util.TblCountOnly(roll.votes, unit)
         t.roll = roll.rolls[unit]
+        t.epMin = (roll.eps[unit] or 0 > Epgp.GetMinEp() and 1) or 0
+        t.pr = roll.prs[unit]
         return t
     end, true).List().SortBy(
+        "epMin", 0,   true,
+        "pr",    0,   true,
         "bid",   99,  false,
         "votes", 0,   true,
         "roll",  100, true,
         "ilvl",  0,   false,
         "unit"
     )()
+
+    return TempGlobalDump
 end
 
 function Self.ReverseAnchor(anchor)
