@@ -178,7 +178,7 @@ function Self.Update(data, unit)
             return
         end
 
-        roll = Self.Add(Item.FromLink(data.item.link, data.item.owner, nil, nil, Util.Default(data.item.isTradable, true)), data.owner, data.ownerId, data.itemOwnerId, data.timeout, data.disenchant)
+        roll = Self.Add(Item.FromLink(data.item.link, data.item.owner, nil, nil, Util.Default(data.item.isTradable, true)), data.owner, data.ownerId, data.itemOwnerId, data.timeout, data.disenchant or nil)
 
         if roll.isOwner then roll.item:OnLoaded(function ()
             if roll.item:ShouldBeRolledFor() or roll:ShouldBeBidOn() then
@@ -202,6 +202,7 @@ function Self.Update(data, unit)
         roll.owner = data.owner or roll.owner
         roll.ownerId = data.ownerId or roll.ownerId
         roll.posted = data.posted
+        roll.disenchant = data.disenchant
         roll.item.isTradable = Util.Default(data.item.isTradable, true)
 
         -- Update the timeout
@@ -794,7 +795,7 @@ function Self:SendStatus(noCheck, target, full)
         data.status = self.status
         data.started = self.started
         data.timeout = self.timeout
-        data.disenchant = self.disenchant
+        data.disenchant = self.disenchant or nil
         data.posted = self.posted
         data.winner = self.winner and Unit.FullName(self.winner)
         data.traded = self.traded and Unit.FullName(self.traded)
@@ -1059,6 +1060,9 @@ function Self:UnitCanBid(unit, bid, checkIlvl)
         return false
     -- Only need+pass for rolls from non-users
     elseif not (self:OwnerUsesAddon() or Util.In(bid, nil, Self.BID_NEED, Self.BID_PASS)) then
+        return false
+    -- Can't bid disenchant if it's not allowed
+    elseif bid == Self.BID_DISENCHANT and not roll.disenchant then
         return false
     -- Can't bid if "Don't share" is enabled
     elseif Addon.db.profile.dontShare and Unit.IsSelf(unit) then

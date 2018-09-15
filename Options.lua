@@ -12,6 +12,9 @@ Self.WIDTH_FULL = "full"
 Self.WIDTH_HALF = 1.7
 Self.WIDTH_THIRD = 1.1
 Self.WIDTH_QUARTER = 0.85
+Self.WIDTH_HALF_SCROLL = Self.WIDTH_HALF - .1
+Self.WIDTH_THIRD_SCROLL = Self.WIDTH_THIRD - .05
+Self.WIDTH_QUARTER_SCROLL = Self.WIDTH_QUARTER - .05
 
 Self.DIVIDER = "------ PersoLootRoll ------"
 
@@ -694,7 +697,7 @@ function Self.RegisterMasterloot()
                             Session.RefreshRules()
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.timeoutBase end,
-                        width = Self.WIDTH_HALF
+                        width = Self.WIDTH_HALF_SCROLL
                     },
                     timeoutPerItem = {
                         name = L["OPT_MASTERLOOT_RULES_TIMEOUT_PER_ITEM"],
@@ -709,7 +712,7 @@ function Self.RegisterMasterloot()
                             Session.RefreshRules()
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.timeoutPerItem end,
-                        width = Self.WIDTH_HALF
+                        width = Self.WIDTH_HALF_SCROLL
                     },
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
                     bidPublic = {
@@ -722,7 +725,7 @@ function Self.RegisterMasterloot()
                             Session.RefreshRules()
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.bidPublic end,
-                        width = Self.WIDTH_HALF
+                        width = Self.WIDTH_HALF_SCROLL
                     },
                     votePublic = {
                         name = L["OPT_MASTERLOOT_RULES_VOTE_PUBLIC"],
@@ -734,7 +737,7 @@ function Self.RegisterMasterloot()
                             Session.RefreshRules()
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.votePublic end,
-                        width = Self.WIDTH_HALF
+                        width = Self.WIDTH_HALF_SCROLL
                     },
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
                     needAnswers = {
@@ -785,6 +788,7 @@ function Self.RegisterMasterloot()
                         end,
                         width = Self.WIDTH_FULL
                     },
+                    ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
                     allowDisenchant = {
                         name = L["OPT_ALLOW_DISENCHANT"],
                         desc = L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"],
@@ -828,7 +832,7 @@ function Self.RegisterMasterloot()
                         step = 5,
                         set = function (_, val) Addon.db.profile.masterloot.rules.autoAwardTimeout = val end,
                         get = function () return Addon.db.profile.masterloot.rules.autoAwardTimeout end,
-                        width = Self.WIDTH_HALF
+                        width = Self.WIDTH_HALF_SCROLL
                     },
                     autoAwardTimeoutPerItem = {
                         name = L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM"],
@@ -840,7 +844,7 @@ function Self.RegisterMasterloot()
                         step = 1,
                         set = function (_, val) Addon.db.profile.masterloot.rules.autoAwardTimeoutPerItem = val end,
                         get = function () return Addon.db.profile.masterloot.rules.autoAwardTimeoutPerItem end,
-                        width = Self.WIDTH_HALF
+                        width = Self.WIDTH_HALF_SCROLL
                     },
                 }
             },

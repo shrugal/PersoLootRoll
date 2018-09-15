@@ -415,7 +415,8 @@ L["TRADE_START"] = "Начало обмена с %s."
 
 -- Globals
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "Владелец этого предмета не использует PersoLootRoll."
-LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "Аддон PersoLootRoll не поддерживает распыление."
+LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "The owner of this item has not allowed \"Disenchant\" bids." -- Translation missing
+LOOT_ROLL_INELIGIBLE_REASONPLR_NOT_ENCHANTER = "Your character doesn't have the \"Enchanting\" profession." -- Translation missing
 
 -- Other
 L["ID"] = ID

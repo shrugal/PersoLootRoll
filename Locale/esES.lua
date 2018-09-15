@@ -415,7 +415,8 @@ L["TRADE_START"] = "Empezando comercio con %s."
 
 -- Globals
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "El dueño de este objeto no usa el addon PersoLootRoll."
-LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "El addon PersoLootRoll no incluye opción de desencantar."
+LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "The owner of this item has not allowed \"Disenchant\" bids." -- Translation missing
+LOOT_ROLL_INELIGIBLE_REASONPLR_NOT_ENCHANTER = "Your character doesn't have the \"Enchanting\" profession." -- Translation missing
 
 -- Other
 L["ID"] = ID
