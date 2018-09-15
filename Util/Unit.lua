@@ -37,7 +37,7 @@ Self.SPECS = {
 }
 
 -------------------------------------------------------
---                       Names                       --
+--                       Realm                       --
 -------------------------------------------------------
 
 -- Get the player's realm name for use in unit strings
@@ -56,18 +56,22 @@ end
 -- Get a unique indentifier for the unit's realm connection
 function Self.ConnectedRealm(unit)
     local realm = Self.Realm(unit)
-    local info = realm and RI:GetRealmInfo(realm)
+    local connections = realm and select(9, RI:GetRealmInfo(realm))
 
-    if info and info.connections then
+    if connections  then
         local s = ""
-        for _,id in ipairs(info.connections) do
-            s = s .. (s == "" and "" or "-") .. RI:GetRealmInfoByID(id)
+        for _,id in ipairs(connections) do
+            s = s .. (s == "" and "" or "-") .. select(3, RI:GetRealmInfoByID(id))
         end
         return s
     else
         return realm
     end
 end
+
+-------------------------------------------------------
+--                        Name                       --
+-------------------------------------------------------
 
 -- Get a unit's name (incl. realm name if from another realm)
 function Self.Name(unit)
