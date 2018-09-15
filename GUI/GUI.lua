@@ -455,6 +455,8 @@ end
 function Self.GetBidColor(bid, hex)
     if not bid then
         return 1, 1, 1
+    elseif bid == Roll.BID_DISENCHANT then
+        return .7, .26, .95
     elseif bid == Roll.BID_PASS then
         return .5, .5, .5
     else

@@ -29,16 +29,19 @@ function Self.EnableGroupLootRoll()
                 local roll = Roll.Get(id)
                 if roll then
                     local item = roll.item
+                    local disReason = not roll:OwnerUsesAddon() and "PLR_NO_ADDON"
+                        or not roll.disenchant and "PLR_NO_DISENCHANT"
+                        or not Unit.IsEnchanter() and "PLR_NOT_ENCHANTER"
+                        or nil
 
                     return item.texture, item.name, 1, item.quality, item.bindType == LE_ITEM_BIND_ON_ACQUIRE,
-                        true, -- Can need
-                        roll.ownerId or roll.itemOwnerId or Addon.plhUsers[roll.owner], -- Can greed
-                        false, -- Can disenchant
-                        5, -- Reason need
-                        "PLR_NO_ADDON", -- Reason greed
-                        "PLR_NO_DISENCHANT", -- Reason disenchant
-                        nil -- Disenchant skill required
-                        -- TODO
+                        true,                   -- Can need
+                        roll:OwnerUsesAddon(),  -- Can greed
+                        not disReason,          -- Can disenchant
+                        5,                      -- Reason need
+                        "PLR_NO_ADDON",         -- Reason greed
+                        disReason,              -- Reason disenchant
+                        1                       -- Disenchant skill required
                 end
             else
                 return Addon.hooks.GetLootRollItemInfo(id)
@@ -66,8 +69,10 @@ function Self.EnableGroupLootRoll()
             if Roll.IsPlrId(id) then
                 local roll = Roll.Get(id)
                 if roll then
-                    if roll.status == Roll.STATUS_RUNNING then
-                        roll:Bid(bid == 0 and Roll.BID_PASS or bid)
+                    bid = bid == 0 and Roll.BID_PASS or bid
+
+                    if roll:UnitCanBid("player", bid) then
+                        roll:Bid(bid)
                     else
                         roll:HideRollFrame()
                     end

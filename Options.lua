@@ -12,6 +12,9 @@ Self.WIDTH_FULL = "full"
 Self.WIDTH_HALF = 1.7
 Self.WIDTH_THIRD = 1.1
 Self.WIDTH_QUARTER = 0.85
+Self.WIDTH_HALF_SCROLL = Self.WIDTH_HALF - .1
+Self.WIDTH_THIRD_SCROLL = Self.WIDTH_THIRD - .05
+Self.WIDTH_QUARTER_SCROLL = Self.WIDTH_QUARTER - .05
 
 Self.DIVIDER = "------ PersoLootRoll ------"
 
@@ -21,6 +24,9 @@ Self.frames = {}
 
 Self.groupKeys = {"party", "lfd", "guild", "raid", "lfr", "community"}
 Self.groupValues = {PARTY, LOOKING_FOR_DUNGEON_PVEFRAME, GUILD_GROUP, RAID, RAID_FINDER_PVEFRAME, L["COMMUNITY_GROUP"]}
+
+Self.groupKeysList = {"party", "raid", "lfd", "lfr", "guild", "community"}
+Self.groupValuesList = {PARTY, RAID, LOOKING_FOR_DUNGEON_PVEFRAME, RAID_FINDER_PVEFRAME, GUILD_GROUP, L["COMMUNITY_GROUP"]}
 
 Self.allowKeys = {"friend", "community", "guild", "raidleader", "raidassistant", "guildgroup"}
 Self.allowValues = {FRIEND, L["COMMUNITY_MEMBER"], LFG_LIST_GUILD_MEMBER, L["RAID_LEADER"], L["RAID_ASSISTANT"], GUILD_GROUP}
@@ -49,7 +55,7 @@ function Self.Register()
 
     -- Profiles
     C:RegisterOptionsTable(Name .. " Profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(Addon.db))
-    Self.frames["Profiles"] = CD:AddToBlizOptions(Name .. " Profiles", "Profiles", Name)
+    Self.frames.Profiles = CD:AddToBlizOptions(Name .. " Profiles", "Profiles", Name)
 end
 
 -- Show the options panel
@@ -91,14 +97,18 @@ function Self.RegisterGeneral()
                 get = function (_) return Addon.db.profile.enabled end,
                 width = Self.WIDTH_HALF
             },
-            awardSelf = {
-                name = L["OPT_AWARD_SELF"],
-                desc = L["OPT_AWARD_SELF_DESC"],
-                type = "toggle",
+            activeGroups = {
+                name = L["OPT_ACTIVE_GROUPS"],
+                desc = L["OPT_ACTIVE_GROUPS_DESC"]:format(Util.GROUP_THRESHOLD*100, Util.GROUP_THRESHOLD*100),
+                type = "multiselect",
+                control = "Dropdown",
                 order = it(),
-                set = function (_, val) Addon.db.profile.awardSelf = val end,
-                get = function () return Addon.db.profile.awardSelf end,
-                width = Self.WIDTH_HALF
+                values = Self.groupValuesList,
+                set = function (_, key, val)
+                    Addon.db.profile.activeGroups[Self.groupKeysList[key]] = val
+                    Addon:OnTrackingChanged()
+                end,
+                get = function (_, key) return Addon.db.profile.activeGroups[Self.groupKeysList[key]] end
             },
             onlyMasterloot = {
                 name = L["OPT_ONLY_MASTERLOOT"],
@@ -107,9 +117,36 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val)
                     Addon.db.profile.onlyMasterloot = val
-                    Addon:OnTrackingChanged(not val)
+                    Addon:OnTrackingChanged()
                 end,
                 get = function () return Addon.db.profile.onlyMasterloot end,
+                width = Self.WIDTH_HALF
+            },
+            dontShare = {
+                name = L["OPT_DONT_SHARE"],
+                desc = L["OPT_DONT_SHARE_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.dontShare = val end,
+                get = function () return Addon.db.profile.dontShare end,
+                width = Self.WIDTH_HALF
+            },
+            chillMode = {
+                name = L["OPT_CHILL_MODE"],
+                desc = L["OPT_CHILL_MODE_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.chillMode = val end,
+                get = function (_) return Addon.db.profile.chillMode end,
+                width = Self.WIDTH_HALF
+            },
+            awardSelf = {
+                name = L["OPT_AWARD_SELF"],
+                desc = L["OPT_AWARD_SELF_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.awardSelf = val end,
+                get = function () return Addon.db.profile.awardSelf end,
                 width = Self.WIDTH_HALF
             },
             bidPublic = {
@@ -121,13 +158,13 @@ function Self.RegisterGeneral()
                 get = function () return Addon.db.profile.bidPublic end,
                 width = Self.WIDTH_HALF
             },
-            dontShare = {
-                name = L["OPT_DONT_SHARE"],
-                desc = L["OPT_DONT_SHARE_DESC"],
+            allowDisenchant = {
+                name = L["OPT_ALLOW_DISENCHANT"],
+                desc = L["OPT_ALLOW_DISENCHANT_DESC"],
                 type = "toggle",
                 order = it(),
-                set = function (_, val) Addon.db.profile.dontShare = val end,
-                get = function () return Addon.db.profile.dontShare end,
+                set = function (_, val) Addon.db.profile.allowDisenchant = val end,
+                get = function () return Addon.db.profile.allowDisenchant end,
                 width = Self.WIDTH_HALF
             },
             ui = {type = "header", order = it(), name = L["OPT_UI"]},
@@ -155,7 +192,16 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.ui.showRollFrames = val end,
                 get = function (_) return Addon.db.profile.ui.showRollFrames end,
-                width = Self.WIDTH_FULL
+                width = Self.WIDTH_HALF
+            },
+            showRollsWindow = {
+                name = L["OPT_ROLLS_WINDOW"],
+                desc = L["OPT_ROLLS_WINDOW_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.ui.showRollsWindow = val end,
+                get = function (_) return Addon.db.profile.ui.showRollsWindow end,
+                width = Self.WIDTH_HALF
             },
             showActionsWindow = {
                 name = L["OPT_ACTIONS_WINDOW"],
@@ -163,7 +209,8 @@ function Self.RegisterGeneral()
                 type = "toggle",
                 order = it(),
                 set = function (_, val) Addon.db.profile.ui.showActionsWindow = val end,
-                get = function (_) return Addon.db.profile.ui.showActionsWindow end
+                get = function (_) return Addon.db.profile.ui.showActionsWindow end,
+                width = Self.WIDTH_HALF
             },
             moveActionsWindow = {
                 name = L["OPT_ACTIONS_WINDOW_MOVE"],
@@ -176,15 +223,6 @@ function Self.RegisterGeneral()
                     GUI.Actions.Show(true)
                 end
             },
-            showRollsWindow = {
-                name = L["OPT_ROLLS_WINDOW"],
-                desc = L["OPT_ROLLS_WINDOW_DESC"],
-                type = "toggle",
-                order = it(),
-                set = function (_, val) Addon.db.profile.ui.showRollsWindow = val end,
-                get = function (_) return Addon.db.profile.ui.showRollsWindow end,
-                width = Self.WIDTH_FULL
-            },
             itemFilter = {type = "header", order = it(), name = L["OPT_ITEM_FILTER"]},
             itemFilterDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_ITEM_FILTER_DESC"] .. "\n"},
             ilvlThreshold = {
@@ -195,8 +233,8 @@ function Self.RegisterGeneral()
                 min = -4 * Item.ILVL_THRESHOLD,
                 max = 4 * Item.ILVL_THRESHOLD,
                 step = 5,
-                set = function (_, val) Addon.db.profile.ilvlThreshold = val end,
-                get = function () return Addon.db.profile.ilvlThreshold end,
+                set = function (_, val) Addon.db.profile.filter.ilvlThreshold = val end,
+                get = function () return Addon.db.profile.filter.ilvlThreshold end,
                 width = Self.WIDTH_THIRD
             },
             ilvlThresholdTrinkets = {
@@ -204,8 +242,8 @@ function Self.RegisterGeneral()
                 desc = L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"],
                 type = "toggle",
                 order = it(),
-                set = function (_, val) Addon.db.profile.ilvlThresholdTrinkets = val end,
-                get = function () return Addon.db.profile.ilvlThresholdTrinkets end,
+                set = function (_, val) Addon.db.profile.filter.ilvlThresholdTrinkets = val end,
+                get = function () return Addon.db.profile.filter.ilvlThresholdTrinkets end,
                 width = Self.WIDTH_THIRD
             },
             ilvlThresholdRings = {
@@ -213,8 +251,8 @@ function Self.RegisterGeneral()
                 desc = L["OPT_ILVL_THRESHOLD_RINGS_DESC"],
                 type = "toggle",
                 order = it(),
-                set = function (_, val) Addon.db.profile.ilvlThresholdRings = val end,
-                get = function () return Addon.db.profile.ilvlThresholdRings end,
+                set = function (_, val) Addon.db.profile.filter.ilvlThresholdRings = val end,
+                get = function () return Addon.db.profile.filter.ilvlThresholdRings end,
                 width = Self.WIDTH_THIRD
             },
             ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
@@ -241,19 +279,28 @@ function Self.RegisterGeneral()
                 desc = L["OPT_PAWN_DESC"],
                 type = "toggle",
                 order = it(),
-                set = function (_, val) Addon.db.profile.pawn = val end,
-                get = function () return Addon.db.profile.pawn end,
-                width = Self.WIDTH_HALF,
-                hidden = function () return not IsAddOnLoaded("Pawn") end
+                set = function (_, val) Addon.db.profile.filter.pawn = val end,
+                get = function () return Addon.db.profile.filter.pawn end,
+                width = Self.WIDTH_THIRD,
+                disabled = function () return not IsAddOnLoaded("Pawn") end
             },
             transmog = {
                 name = L["OPT_TRANSMOG"],
                 desc = L["OPT_TRANSMOG_DESC"],
                 type = "toggle",
                 order = it(),
-                set = function (_, val) Addon.db.profile.transmog = val end,
-                get = function () return Addon.db.profile.transmog end,
-                width = IsAddOnLoaded("Pawn") and Self.WIDTH_HALF or Self.WIDTH_FULL
+                set = function (_, val) Addon.db.profile.filter.transmog = val end,
+                get = function () return Addon.db.profile.filter.transmog end,
+                width = Self.WIDTH_THIRD
+            },
+            disenchant = {
+                name = L["OPT_DISENCHANT"],
+                desc = L["OPT_DISENCHANT_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.filter.disenchant = val end,
+                get = function () return Addon.db.profile.filter.disenchant end,
+                width = Self.WIDTH_THIRD
             }
         }
     }
@@ -473,9 +520,13 @@ function Self.GetCustomMessageOptions(isDefault)
         "MSG_ROLL_START_MASTERLOOT",
         "MSG_ROLL_WINNER",
         "MSG_ROLL_WINNER_MASTERLOOT",
+        "MSG_ROLL_DISENCHANT",
+        "MSG_ROLL_DISENCHANT_MASTERLOOT",
         "OPT_WHISPER",
         "MSG_ROLL_WINNER_WHISPER",
         "MSG_ROLL_WINNER_WHISPER_MASTERLOOT",
+        "MSG_ROLL_DISENCHANT_WHISPER",
+        "MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT",
         "OPT_WHISPER_ASK",
         "MSG_BID",
         "OPT_WHISPER_ANSWER",
@@ -490,7 +541,21 @@ function Self.GetCustomMessageOptions(isDefault)
         if line:sub(1, 3) == "OPT" then
             t[line] = {type = "header", order = it(), name = L[line]}
         elseif line == "MSG_BID" then
-            for i=1,5 do add(line, i) end
+            add(line, 1)
+
+            t["OPT_WHISPER_ASK_VARIANTS"] = {
+                name = L["OPT_WHISPER_ASK_VARIANTS"],
+                desc = L["OPT_WHISPER_ASK_VARIANTS_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.messages.whisper.variants = val end,
+                get = function () return Addon.db.profile.messages.whisper.variants end
+            }
+
+            for i=2,5 do
+                add(line, i)
+                t[line .. "_" .. i].disabled = function () return not Addon.db.profile.messages.whisper.variants end
+            end
         else
             add(line)
         end
@@ -632,7 +697,7 @@ function Self.RegisterMasterloot()
                             Session.RefreshRules()
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.timeoutBase end,
-                        width = Self.WIDTH_HALF
+                        width = Self.WIDTH_HALF_SCROLL
                     },
                     timeoutPerItem = {
                         name = L["OPT_MASTERLOOT_RULES_TIMEOUT_PER_ITEM"],
@@ -647,7 +712,7 @@ function Self.RegisterMasterloot()
                             Session.RefreshRules()
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.timeoutPerItem end,
-                        width = Self.WIDTH_HALF
+                        width = Self.WIDTH_HALF_SCROLL
                     },
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
                     bidPublic = {
@@ -660,7 +725,7 @@ function Self.RegisterMasterloot()
                             Session.RefreshRules()
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.bidPublic end,
-                        width = Self.WIDTH_HALF
+                        width = Self.WIDTH_HALF_SCROLL
                     },
                     votePublic = {
                         name = L["OPT_MASTERLOOT_RULES_VOTE_PUBLIC"],
@@ -672,7 +737,7 @@ function Self.RegisterMasterloot()
                             Session.RefreshRules()
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.votePublic end,
-                        width = Self.WIDTH_HALF
+                        width = Self.WIDTH_HALF_SCROLL
                     },
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
                     needAnswers = {
@@ -723,7 +788,15 @@ function Self.RegisterMasterloot()
                         end,
                         width = Self.WIDTH_FULL
                     },
-                    --[[
+                    ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+                    allowDisenchant = {
+                        name = L["OPT_ALLOW_DISENCHANT"],
+                        desc = L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"],
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) Addon.db.profile.masterloot.rules.allowDisenchant = val end,
+                        get = function () return Addon.db.profile.masterloot.rules.allowDisenchant end
+                    },
                     disenchanter = {
                         name = L["OPT_MASTERLOOT_RULES_DISENCHANTER"],
                         desc = L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"],
@@ -739,7 +812,6 @@ function Self.RegisterMasterloot()
                         end,
                         width = Self.WIDTH_FULL
                     },
-                    --]]
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
                     autoAward = {
                         name = L["OPT_MASTERLOOT_RULES_AUTO_AWARD"],
@@ -760,7 +832,7 @@ function Self.RegisterMasterloot()
                         step = 5,
                         set = function (_, val) Addon.db.profile.masterloot.rules.autoAwardTimeout = val end,
                         get = function () return Addon.db.profile.masterloot.rules.autoAwardTimeout end,
-                        width = Self.WIDTH_HALF
+                        width = Self.WIDTH_HALF_SCROLL
                     },
                     autoAwardTimeoutPerItem = {
                         name = L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM"],
@@ -772,7 +844,7 @@ function Self.RegisterMasterloot()
                         step = 1,
                         set = function (_, val) Addon.db.profile.masterloot.rules.autoAwardTimeoutPerItem = val end,
                         get = function () return Addon.db.profile.masterloot.rules.autoAwardTimeoutPerItem end,
-                        width = Self.WIDTH_HALF
+                        width = Self.WIDTH_HALF_SCROLL
                     },
                 }
             },
@@ -1069,6 +1141,7 @@ function Self.Migrate()
             Self.MigrateOption("target", p.whisper, p.messages.whisper, true)
             p.whisper = nil
             Self.MigrateOption("messages", p, p.messages, true, "lines", "^%l%l%u%u$", true)
+            p.version = 5
         end
         if p.version < 6 then
             p.messages.group.groupType.community = p.messages.group.groupType.guild
@@ -1096,9 +1169,17 @@ function Self.Migrate()
 
                 p.masterlooter = nil
             end
+            p.version = 6
+        end
+        if p.version < 7 then
+            Self.MigrateOption("ilvlThreshold", p, p.filter)
+            Self.MigrateOption("ilvlThresholdTrinkets", p, p.filter)
+            Self.MigrateOption("ilvlThresholdRings", p, p.filter)
+            Self.MigrateOption("pawn", p, p.filter)
+            Self.MigrateOption("transmog", p, p.filter)
         end
     end
-    p.version = 6
+    p.version = 7
 
     -- Factionrealm
     if f.version then

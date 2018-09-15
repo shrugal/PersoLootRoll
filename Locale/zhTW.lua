@@ -28,6 +28,10 @@ L["MSG_ROLL_WINNER"] = "<%s> 已贏得 %s -> 請跟我交易！"
 L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%1$s> 已贏得由<%3$s>提供的 %2$s -> 請交易 %4$s！"
 L["MSG_ROLL_WINNER_WHISPER"] = "你已經贏得 %s！請跟我交易。"
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "你已贏得由<%2$s>提供的 %1$s！請交易 %3$s。"
+L["MSG_ROLL_DISENCHANT"] = "<%s> will disenchant %s -> Trade me!" -- Translation missing
+L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> will disenchant %s from <%s> -> Trade %s!" -- Translation missing
+L["MSG_ROLL_DISENCHANT_WHISPER"] = "You were picked to disenchant %s, please trade me." -- Translation missing
+L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "You were picked to disenchant %s from <%s>, please trade %s." -- Translation missing
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
@@ -92,12 +96,12 @@ L["HELP"] = [=[開始物品的擲骰或競標（/PersoLootRoll or /plr）。
 使用方法：
 /plr: 開啟選項視窗
 /plr roll [物品]* (<持續時間> <擁有者>): 開始一個或多個物品的擲骰
-/plr bid <擁有者> ([物品]): 競標來自其他玩家的物品
+/plr bid [物品] (<擁有者> <bid>): 競標來自其他玩家的物品
 /plr options: 開啟選項視窗
 /plr config: 透過指令更改設置
 /plr help: 發送此幫助訊息
 解釋: [..] = 物品連結, * = 一個或多個物品， (..) = 備選的]=]
-L["USAGE_BID"] = "使用：/plr bid <提供者> ([物品])"
+L["USAGE_BID"] = "使用：/plr bid [物品] (<提供者> <bid>)"
 L["USAGE_ROLL"] = "使用：/plr roll [item]* (<持續時間> <提供者>)"
 
 -- Errors
@@ -105,7 +109,7 @@ L["ERROR_CMD_UNKNOWN"] = "未知指令'%s'"
 L["ERROR_ITEM_NOT_TRADABLE"] = "你無法交易這項物品。"
 L["ERROR_NOT_IN_GROUP"] = "你不在隊伍或團隊中。"
 L["ERROR_OPT_MASTERLOOT_EXPORT_FAILED"] = "匯出分裝設置到<%s>失敗了！"
-L["ERROR_PLAYER_NOT_FOUND"] = "找不到玩家 %s。"
+L["ERROR_PLAYER_NOT_FOUND"] = "找不到玩家 %q。"
 L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"] = "%s已發送了%s的競標，但現在不允許這樣做。"
 L["ERROR_ROLL_BID_IMPOSSIBLE_SELF"] = "你現在無法競標該物品。"
 L["ERROR_ROLL_BID_UNKNOWN_OTHER"] = "%s已發送了%s的競標邀請。"
@@ -115,6 +119,8 @@ L["ERROR_ROLL_STATUS_NOT_1"] = "此擲骰沒有運行。"
 L["ERROR_ROLL_UNKNOWN"] = "此擲骰不存在。"
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"] = "%s已經發送了%s的投票表決，但現在不允許這樣做。"
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"] = "你現在無法對該物品進行投票。"
+L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"] = "You need to become masterlooter to create rolls for other player's items." -- Translation missing
+L["ERROR_NOT_MASTERLOOTER_TIMEOUT"] = "You cannot change the timeout while having a masterlooter other than yourself." -- Translation missing
 
 -- GUI
 L["DIALOG_MASTERLOOT_ASK"] = "<%s>想成為你的分裝者。"
@@ -138,7 +144,7 @@ L["MENU_MASTERLOOT_START"] = "成為分裝者"
 L["TIP_ADDON_MISSING"] = "插件缺少："
 L["TIP_ADDON_VERSIONS"] = "插件版本："
 L["TIP_ENABLE_WHISPER_ASK"] = "提示：右鍵點擊啟用戰利品自動詢問"
-L["TIP_CHAT_TO_TRADE"] = "Please ask the owner first before trading" -- Translation missing
+L["TIP_CHAT_TO_TRADE"] = "交易前請先詢問提供者"
 L["TIP_MASTERLOOT"] = "隊長分配是啟用的"
 L["TIP_MASTERLOOT_INFO"] = [=[|cffffff00分裝者:|r %s 
 |cffffff00擲骰時間:|r %ds (+ %ds 每項物品) 
@@ -158,21 +164,36 @@ L["OPT_ACTIONS_WINDOW"] = "顯示動作視窗"
 L["OPT_ACTIONS_WINDOW_DESC"] = "當有處理中的動作時顯示動作視窗，例如，當你贏得一件物品但還需要交易某人才能得到它。"
 L["OPT_ACTIONS_WINDOW_MOVE"] = "移動"
 L["OPT_ACTIONS_WINDOW_MOVE_DESC"] = "移動動作視窗到一旁。"
+L["OPT_ALLOW_DISENCHANT"] = "Allow \"Disenchant\" bids" -- Translation missing
+L["OPT_ALLOW_DISENCHANT_DESC"] = "Allow others to bid \"Disenchant\" on your own items." -- Translation missing
 L["OPT_AUTHOR"] = "|cffffff00作者:|r Shrugal (EU-Mal'Ganis)"
 L["OPT_AWARD_SELF"] = "自行選擇你的物品的獲勝者"
 L["OPT_AWARD_SELF_DESC"] = "自行選擇誰該得到你的戰利品，而非讓插件隨機選擇，當你是拾取分配者時，始終啟用此功能。"
 L["OPT_BID_PUBLIC"] = "公開競標"
 L["OPT_BID_PUBLIC_DESC"] = "你擲骰的競標是公開的，所有使用此插件的人都可以看見。"
+L["OPT_CHILL_MODE"] = "Chill mode" -- Translation missing
+L["OPT_CHILL_MODE_DESC"] = [=[The intent of chill mode is to take the pressure out of sharing the loot, even if that means that things will take a bit longer. If you enable it the following things will change:
+
+|cffffff781.|r Rolls from you won't start until you actually decided to share them, so you have as much time as you want to choose, and other addon users won't see your items until you did.
+|cffffff782.|r Rolls from you have double the normal run-time, or no run-time at all if you enabled to choose winners of your own items yourself (see next option).
+|cffffff783.|r Rolls from non-addon users in your group also stay open until you decided if you want them or not.
+
+|cffff0000IMPORTANT:|r Rolls from other addon users without chill mode active will still have a normal timeout. Make sure that everyone in your group enables this option if you want a chill run.]=] -- Translation missing
 L["OPT_DONT_SHARE"] = "不分享戰利品"
 L["OPT_DONT_SHARE_DESC"] = "不去骰別人的戰利品但也不分享自己的。此插件將會阻擋對你戰利品的請求(如果啟用的話)，但你仍可以成為分裝者以及戰利品議會成員。"
 L["OPT_ENABLE"] = "啟用"
 L["OPT_ENABLE_DESC"] = "啟用或停用此插件"
+L["OPT_ACTIVE_GROUPS"] = "Activate by group type" -- Translation missing
+L["OPT_ACTIVE_GROUPS_DESC"] = [=[Activate only when you are in one of these group types.
+
+|cffffff78公會團隊：|r團隊的%d%%或更多的成員是來自一個公會。
+|cffffff78社群團隊：|r團隊的%d%%或更多的成員是來自一個魔獸社群。]=]-- Translation missing
 L["OPT_ILVL_THRESHOLD"] = "物品等級門檻"
 L["OPT_ILVL_THRESHOLD_DESC"] = "物品等級低於你以下多少的物品將被忽略。"
 L["OPT_ILVL_THRESHOLD_TRINKETS"] = "飾品門檻為雙倍"
 L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "飾品的門檻應該是正常值的兩倍，因為觸發特效會讓收益變化很大。"
-L["OPT_ILVL_THRESHOLD_RINGS"] = "Double threshold for rings" -- Translation missing
-L["OPT_ILVL_THRESHOLD_RINGS_DESC"] = "Rings should have double the normal threshold because their value may vary by a large amount due to missing primary stats." -- Translation missing
+L["OPT_ILVL_THRESHOLD_RINGS"] = "戒指門檻為雙倍"
+L["OPT_ILVL_THRESHOLD_RINGS_DESC"] = "戒指的門檻應該是正常值的兩倍，因為缺乏主屬性它們的價值可能會有很大差異。"
 L["OPT_INFO"] = "資訊"
 L["OPT_INFO_DESC"] = "關於此插件的一些資訊。"
 L["OPT_ITEM_FILTER"] = "物品過濾"
@@ -181,8 +202,8 @@ L["OPT_MINIMAP_ICON"] = "顯示小地圖圖示"
 L["OPT_MINIMAP_ICON_DESC"] = "顯示或隱藏小地圖圖示"
 L["OPT_ONLY_MASTERLOOT"] = "只有拾取分配"
 L["OPT_ONLY_MASTERLOOT_DESC"] = "只有使用拾取分配時才啟用此插件(例如跟你的公會一起)"
-L["OPT_PAWN"] = "Check \"Pawn\"" -- Translation missing
-L["OPT_PAWN_DESC"] = "Only roll on items that are an upgrade according to the \"Pawn\" addon." -- Translation missing
+L["OPT_PAWN"] = "檢查 \"Pawn\" 提供的數值"
+L["OPT_PAWN_DESC"] = "只骰裝備屬性比較插件 \"Pawn\" 標示為提升的物品。"
 L["OPT_ROLL_FRAMES"] = "顯示擲骰框架"
 L["OPT_ROLL_FRAMES_DESC"] = "當某人拾取你感興趣的戰利品時顯示擲骰框架，這樣你就可以骰它。"
 L["OPT_ROLLS_WINDOW"] = "顯示擲骰視窗"
@@ -192,6 +213,8 @@ L["OPT_SPECS_DESC"] = "只建議這些職業專精的戰利品。"
 L["OPT_TRANSLATION"] = "|cffffff00翻譯:|r 三皈依 (TW-暗影之月)"
 L["OPT_TRANSMOG"] = "檢查塑形外觀"
 L["OPT_TRANSMOG_DESC"] = "擲骰那些你還未擁有外觀的物品。"
+L["OPT_DISENCHANT"] = "Disenchant" -- Translation missing
+L["OPT_DISENCHANT_DESC"] = "Bid \"Disenchant\" on items you can't use if you have the profession and the item owner has allowed it." -- Translation missing
 L["OPT_UI"] = "使用者介面"
 L["OPT_UI_DESC"] = "根據自己的喜好自訂PersoLootRoll的外觀。"
 L["OPT_VERSION"] = "|cffffff00版本:|r "
@@ -237,8 +260,9 @@ L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM_DESC"] = "將每個掉落的
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC"] = "公開競標"
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC_DESC"] = "你可以公開競標，這樣每個人都可以看到誰出價。"
 L["OPT_MASTERLOOT_RULES_DESC"] = "當你是分裝者時，這些選項適用於每個人。"
+L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"] = "Allow group members to roll \"Disenchant\" on items." -- Translation missing
 L["OPT_MASTERLOOT_RULES_DISENCHANTER"] = "分解者"
-L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "將沒人要的戰利品給這些玩家分解。"
+L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "將沒人要的戰利品給這些玩家分解。 Separate multiple names with spaces or commas." -- Translation outdated
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS"] = "自訂 '貪婪' 的應答"
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS_DESC"] = [=[當擲骰'貪婪'時最多可依據優先等級指定9個自訂回答。你還可以插入'%s'本身讓優先級降低到先前回答之下。使用逗號分隔多個條目。
 
@@ -325,6 +349,20 @@ L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "密語骰裝獲勝者 (如同隊�
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1：物品連結
 2：物品提供者
 3：他/她]=]
+L["OPT_MSG_ROLL_DISENCHANT"] = "Announcing a disenchanter" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_DESC"] = [=[1: Disenchanter
+2: Item link]=] -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT"] = "Announcing a disenchanter (as masterlooter)" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT_DESC"] = [=[1: Disenchanter
+2: Item link
+3: Item owner
+4: him/her]=] -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER"] = "Whispering the disenchanter" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_DESC"] = "1: Item link" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Whispering the disenchanter (as masterlooter)" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1: Item link
+2: Item owner
+3: him/her]=] -- Translation missing
 L["OPT_SHOULD_CHAT"] = "啟用/停用"
 L["OPT_SHOULD_CHAT_DESC"] = "決定插件何時發佈到隊伍/團隊聊天並密語其他玩家。"
 L["OPT_WHISPER"] = "聊天密語"
@@ -344,6 +382,8 @@ L["OPT_WHISPER_SUPPRESS"] = "阻擋詢問"
 L["OPT_WHISPER_SUPPRESS_DESC"] = "當你放棄戰利品時，阻擋來自符合條件玩家的密語訊息。"
 L["OPT_WHISPER_TARGET"] = "詢問目標"
 L["OPT_WHISPER_TARGET_DESC"] = "是否詢問戰利品取決於目標是否在你的公會或是魔獸社群或是好友名單上。"
+L["OPT_WHISPER_ASK_VARIANTS"] = "Enable ask variants" -- Translation missing
+L["OPT_WHISPER_ASK_VARIANTS_DESC"] = "Use different lines (see below) when asking for loot, to make it less repetitive." -- Translation missing
 
 -- Roll
 L["BID_CHAT"] = "正在詢問 %s 為了 %s -> %s。"
@@ -375,7 +415,8 @@ L["TRADE_START"] = "與 %s 開始交易。"
 
 -- Globals
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "物品的提供者並沒有使用PersoLootRoll插件。"
-LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "PersoLootRoll插件不支援附魔分解。"
+LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "The owner of this item has not allowed \"Disenchant\" bids." -- Translation missing
+LOOT_ROLL_INELIGIBLE_REASONPLR_NOT_ENCHANTER = "Your character doesn't have the \"Enchanting\" profession." -- Translation missing
 
 -- Other
 L["ID"] = ID

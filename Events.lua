@@ -34,7 +34,7 @@ Self.lastSuppressed = nil
 function Self.GROUP_JOINED()
     -- Schedule version check
     Addon.timers.versionCheck = Addon:ScheduleTimer(function ()
-        Comm.SendData(Comm.EVENT_VERSION_ASK)
+        Comm.SendData(Comm.EVENT_CHECK)
     end, Self.VERSION_CHECK_DELAY)
 
     -- Discover PLH users
@@ -69,10 +69,11 @@ function Self.GROUP_LEFT()
 end
 
 function Self.PARTY_MEMBER_ENABLE(event, unit)
-    if not Addon:IsTracking() then return end
+    if Addon:IsTracking() then Inspect.Queue(unit) end
+end
 
-    Inspect.Queue(unit)
-    Inspect.Start()
+function Self.RAID_ROSTER_UPDATE()
+    Addon:OnTrackingChanged()
 end
 
 -------------------------------------------------------
@@ -234,7 +235,7 @@ end
 
 function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
     local unit = Unit(sender)
-    if not Unit.InGroup(unit) or Util.BoolXOR(Unit.IsSelf(unit), Addon:IsTracking(unit, true)) then return end
+    if not Unit.InGroup(unit) or Util.BoolXOR(Unit.IsSelf(unit), Addon:UnitIsTracking(unit, true)) then return end
 
     local item = Item.GetLink(msg)
 
@@ -434,6 +435,7 @@ function Self.RegisterEvents()
     Addon:RegisterEvent("GROUP_JOINED", Self.GROUP_JOINED)
     Addon:RegisterEvent("GROUP_LEFT", Self.GROUP_LEFT)
     Addon:RegisterEvent("PARTY_MEMBER_ENABLE", Self.PARTY_MEMBER_ENABLE)
+    Addon:RegisterEvent("RAID_ROSTER_UPDATE", Self.RAID_ROSTER_UPDATE)
     -- Combat
     Addon:RegisterEvent("ENCOUNTER_START", Inspect.Stop)
     Addon:RegisterEvent("ENCOUNTER_END", Inspect.Start)
@@ -469,6 +471,7 @@ function Self.UnregisterEvents()
     Addon:UnregisterEvent("GROUP_JOINED")
     Addon:UnregisterEvent("GROUP_LEFT")
     Addon:UnregisterEvent("PARTY_MEMBER_ENABLE")
+    Addon:UnregisterEvent("RAID_ROSTER_UPDATE")
     -- Combat
     Addon:UnregisterEvent("ENCOUNTER_START")
     Addon:UnregisterEvent("ENCOUNTER_END")
@@ -504,7 +507,7 @@ end
 -------------------------------------------------------
 
 -- Check
-local checkFn = function (event, data, channel, sender, unit)
+Comm.ListenData(Comm.EVENT_CHECK, function (event, data, channel, sender, unit)
     if not Self.lastVersionCheck or Self.lastVersionCheck + Self.VERSION_CHECK_DELAY < GetTime() then
         Self.lastVersionCheck = GetTime()
 
@@ -515,22 +518,19 @@ local checkFn = function (event, data, channel, sender, unit)
 
         local target = channel == Comm.TYPE_WHISPER and sender or channel
 
-        -- Send version TODO: Send full version string at some point
-        local version, channel = Addon:GetVersion()
-        Comm.SendData(Comm.EVENT_VERSION, channel == Addon.CHANNEL_STABLE and version or version-1, target)
+        -- Send version
+        Comm.SendData(Comm.EVENT_VERSION, Addon.VERSION, target)
         
         -- Send disabled state
         if Addon.disabled[UnitName("player")] then
             Comm.Send(Comm.EVENT_DISABLE, target)
         end
     end
-end
-Comm.ListenData(Comm.EVENT_CHECK, checkFn, true)
-Comm.ListenData(Comm.EVENT_VERSION_ASK, checkFn, true) -- TODO: DEPRECATED
+end, true)
 
 -- Version
 Comm.ListenData(Comm.EVENT_VERSION, function (event, version, channel, sender, unit)
-    Addon:SetVersion(unit, tonumber(version) or version)
+    Addon:SetVersion(unit, version)
 end)
 
 -- Enable/Disable

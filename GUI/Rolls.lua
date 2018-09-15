@@ -11,7 +11,7 @@ Self.open = {}
 
 -- Register for roll changes
 Roll.On(Self, Roll.EVENT_START, function (_, roll)
-    if roll.isOwner and Session.IsMasterlooter() or Addon.db.profile.ui.showRollsWindow and (roll.item.isOwner or roll.item:ShouldBeBidOn()) then
+    if roll.isOwner and Session.IsMasterlooter() or Addon.db.profile.ui.showRollsWindow and (roll.item.isOwner or roll:ShouldBeBidOn()) then
         Self.Show()
     end
 end)
@@ -376,6 +376,8 @@ function Self.Update()
                 f = GUI.CreateIconButton("UI-GroupLoot-Coin", actions, needGreedClick, GREED)
                 f:SetUserData("bid", Roll.BID_GREED)
                 f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+
+                -- TODO: Disenchant
         
                 -- Pass
                 GUI.CreateIconButton("UI-GroupLoot-Pass", actions, function (self)
@@ -810,9 +812,10 @@ end
 function Self.OnStatusUpdate(frame)
     local roll, txt = frame.obj:GetUserData("roll")
     if roll.status == Roll.STATUS_RUNNING then
+        local timeLeft = roll:GetTimeLeft(true)
         GUI(frame.obj)
             .SetColor(1, 1, 0)
-            .SetText(L["ROLL_STATUS_" .. Roll.STATUS_RUNNING] .. " (" .. L["SECONDS"]:format(roll:GetTimeLeft()) .. ")")
+            .SetText(L["ROLL_STATUS_" .. Roll.STATUS_RUNNING] .. (timeLeft > 0 and " (" .. L["SECONDS"]:format(timeLeft) .. ")" or ""))
     elseif not roll.winner and roll.timers.award then
         GUI(frame.obj)
             .SetColor(0, 1, 0)
