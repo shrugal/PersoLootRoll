@@ -793,7 +793,7 @@ function Self.UpdateDetails(details, roll)
         children[it(0)] = nil
     end
 
-    --Util.TblRelease(1, players)
+    Util.TblRelease(1, players)
     details:ResumeLayout()
 end
 

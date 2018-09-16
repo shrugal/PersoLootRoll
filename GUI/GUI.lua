@@ -238,7 +238,7 @@ end
 -------------------------------------------------------
 
 function Self.GetRollEligibleList(roll)
-     TempGlobalDump = Util(roll.item:GetEligible()).Copy().Merge(roll.bids).Map(function (val, unit)
+     return Util(roll.item:GetEligible()).Copy().Merge(roll.bids).Map(function (val, unit)
         local t = Util.Tbl()
         t.unit = unit
         t.ilvl = roll.item:GetLevelForLocation(unit)
@@ -257,8 +257,6 @@ function Self.GetRollEligibleList(roll)
         "ilvl",  0,   false,
         "unit"
     )()
-
-    return TempGlobalDump
 end
 
 function Self.ReverseAnchor(anchor)
