@@ -202,7 +202,7 @@ function Self.EnableGroupLootRoll()
         Addon:SecureHook("GroupLootContainer_RemoveFrame", function (self, frame)
             -- Find a running roll that hasn't been shown yet
             for i,roll in pairs(Addon.rolls) do
-                if not roll.shown and roll:UnitCanBid() then
+                if roll.shown == false and not roll.bid and roll:UnitCanBid() then
                     roll:ShowRollFrame() break
                 end
             end
