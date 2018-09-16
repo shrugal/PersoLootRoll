@@ -656,7 +656,6 @@ function Self.UpdateDetails(details, roll)
 
     local players = GUI.GetRollEligibleList(roll)
 
-    TempDump = {}
     local it = Util.Iter(#header)
     for _,player in ipairs(players) do
         -- Create the row
