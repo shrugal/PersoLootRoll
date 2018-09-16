@@ -128,7 +128,7 @@ function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
         ownerId = ownerId,
         itemOwnerId = itemOwnerId,
         timeout = timeout or Self.CalculateTimeout(),
-        disenchant = Util.Default(disenchant, isOwner and Addon.db.profile.allowDisenchant),
+        disenchant = Util.Default(disenchant, isOwner and Util.Check(Session.GetMasterlooter(), Addon.db.profile.masterloot.rules.allowDisenchant, Addon.db.profile.allowDisenchant)),
         status = Self.STATUS_PENDING,
         bids = {},
         rolls = {},
@@ -1017,9 +1017,9 @@ function Self:DetermineWinner()
 
     -- Check for disenchanter
     if Session.GetMasterlooter() then
-        local dis = Util.TblCopyFilter(Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()] or Util.TBL_EMPTY, Unit.InGroup)
+        local dis = Util.TblCopyFilter(Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()] or Util.TBL_EMPTY, Unit.InGroup, false, true, true)
         if next(dis) then
-            for _,unit in pairs(dis) do self:Bid(Self.BID_DISENCHANT, unit, nil, true) end
+            for unit in pairs(dis) do self:Bid(Self.BID_DISENCHANT, unit, nil, true) end
             return self:DetermineWinner()
         end
     end
@@ -1062,7 +1062,7 @@ function Self:UnitCanBid(unit, bid, checkIlvl)
     elseif not (self:OwnerUsesAddon() or Util.In(bid, nil, Self.BID_NEED, Self.BID_PASS)) then
         return false
     -- Can't bid disenchant if it's not allowed
-    elseif bid == Self.BID_DISENCHANT and not roll.disenchant then
+    elseif bid == Self.BID_DISENCHANT and not self.disenchant then
         return false
     -- Can't bid if "Don't share" is enabled
     elseif Addon.db.profile.dontShare and Unit.IsSelf(unit) then

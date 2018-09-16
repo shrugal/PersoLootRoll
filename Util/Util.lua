@@ -637,13 +637,9 @@ end
 -- Find the first element matching a fn
 function Self.TblFindFn(t, fn, val, index, ...)
     for i,v in pairs(t) do
-        local f, r = Self.Fn(fn, v)
-        if val then
-            if index then r = f(v, i, ...) else r = f(v, ...) end
-        else
-            if index then r = f(i, ...) else r = f(...) end
+        if Self.FnCall(Self.Fn(fn, v), v, i, val, index, ...) then
+            return i, v
         end
-        if r then return i, v end
     end
 end
 
@@ -736,11 +732,11 @@ function Self.TblCopy(t, fn, index, ...)
 end
 
 -- Filter by a function
-function Self.TblCopyFilter(t, fn, index, k, ...)
+function Self.TblCopyFilter(t, fn, val, index, k, ...)
     fn = Self.Fn(fn) or Self.FnId
     local u = Self.Tbl()
     for i,v in pairs(t) do
-        if index and fn(v, i, ...) or not index and fn (v, ...) then
+        if Self.FnCall(fn, v, i, val, index, ...) then
             Self.TblInsert(u, i, v, k)
         end
     end
@@ -1193,6 +1189,14 @@ function Self.FnTrue() return true end
 function Self.FnFalse() return false end
 function Self.FnZero() return 0 end
 function Self.FnNoop() end
+
+function Self.FnCall(fn, v, i, val, index, ...)
+    if val and index then return fn(v, i, ...)
+    elseif val then       return fn(v, ...)
+    elseif index then     return fn(i, ...)
+    else                  return fn(...)
+    end
+end
 
 -- Some math
 function Self.FnInc(i) return i+1 end
