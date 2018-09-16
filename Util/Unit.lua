@@ -256,7 +256,7 @@ end
 -- Check if the player is an enchanter
 function Self.IsEnchanter()
     for _,i in Util.Each(GetProfessions()) do
-        if select(7, GetProfessionInfo(i)) == 333 then return true end
+        if i and select(7, GetProfessionInfo(i)) == 333 then return true end
     end
 end
 

@@ -269,7 +269,7 @@ function Self.Update()
 
     local header = {"ID", "ITEM", "LEVEL", "OWNER", "ML", "STATUS", "YOUR_BID", "WINNER"}
     if #children == 0 then
-        scroll.userdata.table.columns = {20, 1, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, 6 * 20 - 4}
+        scroll.userdata.table.columns = {20, 1, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, 7 * 20 - 4}
 
         for i,v in pairs(header) do
             GUI("Label").SetFontObject(GameFontNormal).SetText(L[v]).SetColor(1, 0.82, 0).AddTo(scroll)
@@ -306,7 +306,7 @@ function Self.Update()
            and (Self.filter.awarded or not roll.winner)
            and (Self.filter.traded or not roll.traded)
            and (Self.filter.hidden or roll.status >= Roll.STATUS_RUNNING and (roll.isWinner or roll.isOwner or roll.item.isOwner or roll.bid ~= Roll.BID_PASS) and not roll.hidden)
-    end).SortBy("id")()
+    end, true).SortBy("id")()
 
     GUI(Self.frames.empty).Toggle(Util.TblCount(rolls) == 0)
 
@@ -376,8 +376,11 @@ function Self.Update()
                 f = GUI.CreateIconButton("UI-GroupLoot-Coin", actions, needGreedClick, GREED)
                 f:SetUserData("bid", Roll.BID_GREED)
                 f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-
-                -- TODO: Disenchant
+        
+                -- Disenchant
+                f = GUI.CreateIconButton("UI-GroupLoot-DE", actions, function (self)
+                    self:GetUserData("roll"):Bid(Roll.BID_DISENCHANT)
+                end, ROLL_DISENCHANT, 14, 14)
         
                 -- Pass
                 GUI.CreateIconButton("UI-GroupLoot-Pass", actions, function (self)
@@ -536,17 +539,23 @@ function Self.Update()
             local canBeAwarded = roll:CanBeAwarded(true)
             local canTrade = Trade.ShouldInitTrade(roll)
             local actionTarget = roll:GetActionTarget()
+            local awardRandomly = roll.status == Roll.STATUS_DONE and canBeAwarded and (
+                Util.TblCountExcept(roll.bids, Roll.BID_PASS) > 0
+                or Session.GetMasterlooter() and Util.TblFindFn(Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()] or Util.TBL_EMPTY, Unit.InGroup, false, true)
+            )
 
             -- Need
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_NEED))
             -- Greed
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_GREED))
+            -- Disenchant
+            GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_DISENCHANT))
             -- Pass
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_PASS))
             -- Advertise
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:ShouldAdvertise(true))
             -- Award randomly
-            GUI(children[it()]).SetUserData("roll", roll).Toggle(roll.status == Roll.STATUS_DONE and canBeAwarded and Util.TblCountExcept(roll.bids, Roll.BID_PASS) > 0)
+            GUI(children[it()]).SetUserData("roll", roll).Toggle(awardRandomly)
             -- Chat
             GUI(children[it()])
                 .SetImage("Interface\\GossipFrame\\" .. (roll.chat and "Petition" or "Gossip") .. "GossipIcon")

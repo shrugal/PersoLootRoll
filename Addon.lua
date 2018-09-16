@@ -101,6 +101,7 @@ function Addon:OnInitialize()
                     votePublic = false,
                     needAnswers = {},
                     greedAnswers = {},
+                    allowDisenchant = false,
                     disenchanter = {},
                     autoAward = false,
                     autoAwardTimeout = Roll.TIMEOUT,
