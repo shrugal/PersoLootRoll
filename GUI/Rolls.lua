@@ -292,6 +292,7 @@ function Self.Update()
             for i,child in pairs(scroll.children) do
                 if child:GetUserData("isDetails") then child.frame:Hide() end
             end
+            wipe(Self.open)
             Self.Update()
         end)
         f.image:SetPoint("TOP", 0, 2)
@@ -400,6 +401,7 @@ function Self.Update()
                 -- Chat
                 f = GUI.CreateIconButton("Interface\\GossipFrame\\GossipGossipIcon", actions, GUI.ChatClick, nil, 13, 13)
                 f:SetCallback("OnEnter", GUI.TooltipChat)
+                f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
         
                 -- Trade
                 GUI.CreateIconButton("Interface\\GossipFrame\\VendorGossipIcon", actions, function (self)
@@ -549,7 +551,7 @@ function Self.Update()
             -- Greed
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_GREED))
             -- Disenchant
-            GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_DISENCHANT))
+            GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_DISENCHANT) and Unit.IsEnchanter())
             -- Pass
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_PASS))
             -- Advertise

@@ -127,7 +127,7 @@ function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
         owner = owner,
         ownerId = ownerId,
         itemOwnerId = itemOwnerId,
-        timeout = timeout or Self.CalculateTimeout(),
+        timeout = timeout or Self.CalculateTimeout(owner),
         disenchant = Util.Default(disenchant, isOwner and Util.Check(Session.GetMasterlooter(), Addon.db.profile.masterloot.rules.allowDisenchant, Addon.db.profile.allowDisenchant)),
         status = Self.STATUS_PENDING,
         bids = {},
@@ -223,7 +223,7 @@ function Self.Update(data, unit)
             -- Start (or restart) the roll if the owner has started it
             if data.status < roll.status or roll.started and data.started ~= roll.started then
                 roll:Restart(data.started, data.status == Self.STATUS_PENDING)
-            elseif data.status >= Self.STATUS_RUNNING and roll.status < Self.STATUS_RUNNING then
+            elseif data.status == Self.STATUS_RUNNING and roll.status < Self.STATUS_RUNNING then
                 roll:Start(data.started)
             end
 
@@ -494,8 +494,11 @@ end
 
 -- Check if we should end the roll prematurely
 function Self:ShouldEnd()
+    -- We voted need on our own item
+    if Util.In(self.status, Self.STATUS_PENDING, Self.STATUS_RUNNING) and not Session.GetMasterlooter() and self.item.isOwner and self.bid and floor(self.bid) == Self.BID_NEED then
+        return true
     -- Not running or we haven't bid yet
-    if self.status ~= Self.STATUS_RUNNING or not self.bid then
+    elseif self.status ~= Self.STATUS_RUNNING or not self.bid then
         return false
     -- The owner doesn't have the addon
     elseif not self.ownerId then
@@ -503,9 +506,6 @@ function Self:ShouldEnd()
     -- Not the owner
     elseif not self.isOwner then
         return false
-    -- We voted need on our own item
-    elseif not Session.GetMasterlooter() and self.item.isOwner and floor(self.bid) == Self.BID_NEED then
-        return true
     end
 
     -- Check if all eligible players have bid
@@ -520,9 +520,18 @@ end
 
 -- End a roll
 function Self:End(winner, cleanup, force)
-    if self.winner and not force then
-        return self
+    -- Hide UI elements etc.
+    if cleanup then
+        if self.timers.bid then
+            Addon:CancelTimer(self.timers.bid)
+            self.timers.bid = nil
+        end
+
+        self:HideRollFrame()
     end
+
+    -- Don't overwrite an existing winner
+    if self.winner and not force then return self end
 
     winner = winner and winner ~= true and Unit.Name(winner) or winner
     
@@ -545,18 +554,9 @@ function Self:End(winner, cleanup, force)
         -- Update status
         self.status = Self.STATUS_DONE
         self.ended = time()
+        self.started = self.started or time()
 
         Self.events:Fire(Self.EVENT_END, self)
-    end
-
-    -- Hide UI elements etc.
-    if cleanup then
-        if self.timers.bid then
-            Addon:CancelTimer(self.timers.bid)
-            self.timers.bid = nil
-        end
-
-        self:HideRollFrame()
     end
 
     -- Determine a winner
@@ -832,16 +832,16 @@ function Self:GetRunTime(real)
     if self.timeout == 0 and (Addon.db.profile.chillMode or real) then
         return 0
     else
-        return self.timeout == 0 and self:CalculateTimeout() or self.timeout + (real and 0 or Self.DELAY)
+        return max(0, self.timeout == 0 and self:CalculateTimeout() or self.timeout + (real and 0 or Self.DELAY))
     end
 end
 
 -- Get the time that is left on a roll
 function Self:GetTimeLeft(real)
-    if self.status ~= Self.STATUS_RUNNING or self.timeout == 0 and (Addon.db.profile.chillMode or real) then
+    if self.status ~= Self.STATUS_RUNNING and real or self.timeout == 0 and (Addon.db.profile.chillMode or real) then
         return 0
     else
-        return (self.started and self.started - time() or 0) + self:GetRunTime(real)
+        return max(0, (self.started and self.started - time() or 0) + self:GetRunTime(real))
     end
 end
 
