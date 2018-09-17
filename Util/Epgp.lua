@@ -52,7 +52,7 @@ function Self.GetEpgpName(inputName)
 end
 
 function Self.IncGPSecure(name, reason, amount)
-    name = Self.GetEPGPName(name)
+    name = Self.GetEpgpName(name)
     if not GS:IsCurrentState() then
         return Addon:ScheduleTimer("Epgp:IncGPSecure", 0.5, name, reason, amount)
     end
