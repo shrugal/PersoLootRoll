@@ -690,7 +690,7 @@ function Self.RegisterMasterloot()
                         type = "range",
                         order = it(),
                         min = 5,
-                        max = 120,
+                        max = 300,
                         step = 5,
                         set = function (_, val)
                             Addon.db.profile.masterloot.rules.timeoutBase = val
@@ -705,7 +705,7 @@ function Self.RegisterMasterloot()
                         type = "range",
                         order = it(),
                         min = 0,
-                        max = 30,
+                        max = 60,
                         step = 1,
                         set = function (_, val)
                             Addon.db.profile.masterloot.rules.timeoutPerItem = val
