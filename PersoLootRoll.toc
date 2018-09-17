@@ -1,7 +1,7 @@
 ## Interface: 80000
 ## Title: PersoLootRoll
 ## Notes: A loot roll addon for personal loot.
-## Notes-deDE: Ein Beute Vergabe Addon für Perönlichen Loot.
+## Notes-deDE: Ein Beute Vergabe Addon für Persönlichen Loot.
 ## Version: 15
 ## SavedVariables: PersoLootRollDB, PersoLootRollIconDB, PersoLootRollML, PersoLootRollDebug
 
