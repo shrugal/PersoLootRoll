@@ -22,16 +22,16 @@ L["MSG_ROLL_ANSWER_NO_SELF"] = "Извини, я оставлю себе."
 L["MSG_ROLL_ANSWER_NOT_TRADABLE"] = "Извини, я не могу передать этот предмет."
 L["MSG_ROLL_ANSWER_YES"] = "Ты можешь забрать этот предмет, предложи мне обмен."
 L["MSG_ROLL_ANSWER_YES_MASTERLOOT"] = "Ты можешь забрать этот предмет, предложи <%s> обмен."
+L["MSG_ROLL_DISENCHANT"] = "<%s> will disenchant %s -> Trade me!" -- Translation missing
+L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> will disenchant %s from <%s> -> Trade %s!" -- Translation missing
+L["MSG_ROLL_DISENCHANT_WHISPER"] = "You were picked to disenchant %s, please trade me." -- Translation missing
+L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "You were picked to disenchant %s from <%s>, please trade %s." -- Translation missing
 L["MSG_ROLL_START"] = "Отдаю %s -> /w мне или /roll %d!"
 L["MSG_ROLL_START_MASTERLOOT"] = "Отдаю %s от <%s> -> /w мне или /roll %d!"
 L["MSG_ROLL_WINNER"] = "<%s> выиграл %s -> Предложи мне обмен!"
 L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%s> выиграл %s от <%s> -> Предложи %s обмен!"
 L["MSG_ROLL_WINNER_WHISPER"] = "Ты выиграл %s! Предложи мне обмен."
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Ты выиграл %s от <%s>! Предложи %s обмен."
-L["MSG_ROLL_DISENCHANT"] = "<%s> will disenchant %s -> Trade me!" -- Translation missing
-L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> will disenchant %s from <%s> -> Trade %s!" -- Translation missing
-L["MSG_ROLL_DISENCHANT_WHISPER"] = "You were picked to disenchant %s, please trade me." -- Translation missing
-L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "You were picked to disenchant %s from <%s>, please trade %s." -- Translation missing
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
@@ -96,18 +96,20 @@ L["HELP"] = [=[Начать розыгрыши предметов (/PersoLootRol
 Использование:
 /plr: Открыть настройки
 /plr roll [предмет]* (<таймаут> <владелец>): Начать розыгрыш одного и более предметов
-/plr bid [предмет] (<владелец> <bid>): Ставка на предмет от другого игрока
+/plr bid <владелец> ([предмет]): Ставка на предмет от другого игрока
 /plr options: Открыть настройки
 /plr config: Изменить настройки через команды чата
 /plr help: Показать это сообщение
 Легенда: [..] = ссылка на предмет, * = один и более раз, (..) = опционально]=]
-L["USAGE_BID"] = "Использование: /plr bid [предмет] (<владелец> <bid>)"
+L["USAGE_BID"] = "Использование: /plr bid <владелец> ([предмет])"
 L["USAGE_ROLL"] = "Использование: /plr roll [предмет]* (<таймаут> <владелец>)"
 
 -- Errors
 L["ERROR_CMD_UNKNOWN"] = "Неизвестная команда '%s' "
 L["ERROR_ITEM_NOT_TRADABLE"] = "Вы не можете передать этот предмет."
 L["ERROR_NOT_IN_GROUP"] = "Вы не в группе или рейде."
+L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"] = "\"You need to become masterlooter to create rolls for other player's items." -- Translation missing
+L["ERROR_NOT_MASTERLOOTER_TIMEOUT"] = "You cannot change the timeout while having a masterlooter other than yourself." -- Translation missing
 L["ERROR_OPT_MASTERLOOT_EXPORT_FAILED"] = "Exporting masterloot settings to <%s> failed!" -- Translation missing
 L["ERROR_PLAYER_NOT_FOUND"] = "Игрок %q не найден."
 L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"] = "%s отправил заявку на %s, но сейчас это не разрешено."
@@ -119,8 +121,6 @@ L["ERROR_ROLL_STATUS_NOT_1"] = "Розыгрыш не запущен."
 L["ERROR_ROLL_UNKNOWN"] = "Этот бросок не существует."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"] = "%s проголосовал за %s, но сейчас это не разрешено."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"] = "Вы не можете проголосовать прямо сейчас."
-L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"] = "You need to become masterlooter to create rolls for other player's items." -- Translation missing
-L["ERROR_NOT_MASTERLOOTER_TIMEOUT"] = "You cannot change the timeout while having a masterlooter other than yourself." -- Translation missing
 
 -- GUI
 L["DIALOG_MASTERLOOT_ASK"] = "<%s> хочет стать вашим ответственным за добычу."
@@ -164,6 +164,11 @@ L["OPT_ACTIONS_WINDOW"] = "Показать окно действий"
 L["OPT_ACTIONS_WINDOW_DESC"] = "Показать окно действий, когда есть ожидающие действия, например, когда выиграли предмет и нужно предложить обмен, чтобы получить его."
 L["OPT_ACTIONS_WINDOW_MOVE"] = "Переместить"
 L["OPT_ACTIONS_WINDOW_MOVE_DESC"] = "Переместить окно действий."
+L["OPT_ACTIVE_GROUPS"] = "Activate by group type" -- Translation missing
+L["OPT_ACTIVE_GROUPS_DESC"] = [=[Activate only when you are in one of these group types.
+
+|cffffff78Гильдейская группа:|r Кто-то из гильдии, члены которой составляют %d%% или более группы.
+|cffffff78Community Group:|r The members of one of your WoW-Communities make up %d%% or more of the group.]=]
 L["OPT_ALLOW_DISENCHANT"] = "Allow \"Disenchant\" bids" -- Translation missing
 L["OPT_ALLOW_DISENCHANT_DESC"] = "Allow others to bid \"Disenchant\" on your own items." -- Translation missing
 L["OPT_AUTHOR"] = "|cffffd100Автор:|r Shrugal (EU-Mal'Ganis)"
@@ -179,21 +184,18 @@ L["OPT_CHILL_MODE_DESC"] = [=[The intent of chill mode is to take the pressure o
 |cffffff783.|r Rolls from non-addon users in your group also stay open until you decided if you want them or not.
 
 |cffff0000IMPORTANT:|r Rolls from other addon users without chill mode active will still have a normal timeout. Make sure that everyone in your group enables this option if you want a chill run.]=] -- Translation missing
+L["OPT_DISENCHANT"] = "Disenchant" -- Translation missing
+L["OPT_DISENCHANT_DESC"] = "Bid \"Disenchant\" on items you can't use if you have the profession and the item owner has allowed it." -- Translation missing
 L["OPT_DONT_SHARE"] = "Не делиться добычей"
 L["OPT_DONT_SHARE_DESC"] = "Не участвовать в розыгрышах добычи от других и не делиться своей добычей. Аддон будет отклонять входящие запросы на вашу добычу (если включено), и вы все еще можете быть ответственным за добычу и членом совета."
 L["OPT_ENABLE"] = "Включить"
 L["OPT_ENABLE_DESC"] = "Включить или отключить аддон"
-L["OPT_ACTIVE_GROUPS"] = "Activate by group type" -- Translation missing
-L["OPT_ACTIVE_GROUPS_DESC"] = [=[Activate only when you are in one of these group types.
-
-|cffffff78Гильдейская группа:|r Кто-то из гильдии, члены которой составляют %d%% или более группы.
-|cffffff78Community Group:|r The members of one of your WoW-Communities make up %d%% or more of the group.]=] -- Translation missing
 L["OPT_ILVL_THRESHOLD"] = "Диапазон уровней предметов"
 L["OPT_ILVL_THRESHOLD_DESC"] = "Предметы, уровень которых ниже ваших, игнорируются."
-L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Удвоить диапазон для аксессуаров"
-L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Аксессуары должны иметь двойной диапазон, потому что эффекты на них могут сделать их ценность больше."
 L["OPT_ILVL_THRESHOLD_RINGS"] = "Double threshold for rings" -- Translation missing
 L["OPT_ILVL_THRESHOLD_RINGS_DESC"] = "Rings should have double the normal threshold because their value may vary by a large amount due to missing primary stats." -- Translation missing
+L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Удвоить диапазон для аксессуаров"
+L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Аксессуары должны иметь двойной диапазон, потому что эффекты на них могут сделать их ценность больше."
 L["OPT_INFO"] = "Информация"
 L["OPT_INFO_DESC"] = "Немного информации об этом аддоне."
 L["OPT_ITEM_FILTER"] = "Фильтр предметов"
@@ -213,8 +215,6 @@ L["OPT_SPECS_DESC"] = "Предлагать добычу только для э�
 L["OPT_TRANSLATION"] = "|cffffd100Перевод:|r Боонер (EU-Галакронд)"
 L["OPT_TRANSMOG"] = "Проверять на трансмогрификацию."
 L["OPT_TRANSMOG_DESC"] = "Участвовать в розыгрышах предметов, которых нет в коллекции моделей."
-L["OPT_DISENCHANT"] = "Disenchant" -- Translation missing
-L["OPT_DISENCHANT_DESC"] = "Bid \"Disenchant\" on items you can't use if you have the profession and the item owner has allowed it." -- Translation missing
 L["OPT_UI"] = "Пользовательский интерфейс"
 L["OPT_UI_DESC"] = "Настройте внешний вид %s по своему вкусу."
 L["OPT_VERSION"] = "|cffffd100Версия:|r %s"
@@ -251,6 +251,7 @@ L["OPT_MASTERLOOT_EXPORT_WINDOW"] = "Export masterloot settings" -- Translation 
 L["OPT_MASTERLOOT_LOAD"] = "Load" -- Translation missing
 L["OPT_MASTERLOOT_LOAD_DESC"] = "Load masterloot settings from your guild/community's description." -- Translation missing
 L["OPT_MASTERLOOT_RULES"] = "Правила"
+L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"] = "Allow group members to roll \"Disenchant\" on items." -- Translation missing
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD"] = "Award loot automatically" -- Translation missing
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_DESC"] = "Let the addon decide who should get the loot, based on factors like council votes, bids and equipped ilvl." -- Translation missing
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT"] = "Auto award time (base)" -- Translation missing
@@ -260,7 +261,6 @@ L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM_DESC"] = "Will be added to t
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC"] = "Публичные заявки"
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC_DESC"] = "Вы можете сделать заявки публичными, чтобы все могли видеть, кто на что делает заявки."
 L["OPT_MASTERLOOT_RULES_DESC"] = "Эти настройки применяются ко всем, когда вы ответственный за добычу."
-L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"] = "Allow group members to roll \"Disenchant\" on items." -- Translation missing
 L["OPT_MASTERLOOT_RULES_DISENCHANTER"] = "Disenchanter" -- Translation missing
 L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "Give loot nobody wants to these players for disenchanting. Separate multiple names with spaces or commas." -- Translation missing
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS"] = "Custom 'Greed' answers" -- Translation missing
@@ -308,7 +308,7 @@ L["OPT_GROUPCHAT_GROUP_TYPE"] = "Объявлять по типу группы"
 L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[Отправлять сообщения в чат группы, только если вы находитесь в группе одного из этих типов.
 
 |cffffff78Гильдейская группа:|r Кто-то из гильдии, члены которой составляют %d%% или более группы.
-|cffffff78Community Group:|r The members of one of your WoW-Communities make up %d%% or more of the group.]=] -- Translation missing
+|cffffff78Community Group:|r The members of one of your WoW-Communities make up %d%% or more of the group.]=]
 L["OPT_GROUPCHAT_ROLL"] = "Roll on loot in chat" -- Translation missing
 L["OPT_GROUPCHAT_ROLL_DESC"] = "Roll on loot you want (/roll) if others post links in group chat." -- Translation missing
 L["OPT_MESSAGES"] = "Сообщения"
@@ -328,6 +328,20 @@ L["OPT_MSG_ROLL_ANSWER_YES"] = "Ответ: Ты можешь получить"
 L["OPT_MSG_ROLL_ANSWER_YES_DESC"] = "" -- Translation missing
 L["OPT_MSG_ROLL_ANSWER_YES_MASTERLOOT"] = "Answer: You can have it (as masterlooter)" -- Translation missing
 L["OPT_MSG_ROLL_ANSWER_YES_MASTERLOOT_DESC"] = "1: Владелец предмета"
+L["OPT_MSG_ROLL_DISENCHANT"] = "Announcing a disenchanter" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_DESC"] = [=[1: Disenchanter
+2: Item link]=] -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT"] = "Announcing a disenchanter (as masterlooter)" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT_DESC"] = [=[1: Disenchanter -- Translation missing
+2: Item link
+3: Item owner
+4: him/her]=]
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER"] = "Whispering the disenchanter" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_DESC"] = "1: Item link" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Whispering the disenchanter (as masterlooter)" -- Translation missing
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1: Item link -- Translation missing
+2: Item owner
+3: him/her]=]
 L["OPT_MSG_ROLL_START"] = "Объявление нового розыгрыша"
 L["OPT_MSG_ROLL_START_DESC"] = [=[1: Ссылка на предмет
 2: Номер розыгрыша]=]
@@ -349,20 +363,6 @@ L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Whispering the roll winner (as ma
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1: Ссылка на предмет
 2: Владелец предмета
 3: его/её]=]
-L["OPT_MSG_ROLL_DISENCHANT"] = "Announcing a disenchanter" -- Translation missing
-L["OPT_MSG_ROLL_DISENCHANT_DESC"] = [=[1: Disenchanter
-2: Item link]=] -- Translation missing
-L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT"] = "Announcing a disenchanter (as masterlooter)" -- Translation missing
-L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT_DESC"] = [=[1: Disenchanter
-2: Item link
-3: Item owner
-4: him/her]=] -- Translation missing
-L["OPT_MSG_ROLL_DISENCHANT_WHISPER"] = "Whispering the disenchanter" -- Translation missing
-L["OPT_MSG_ROLL_DISENCHANT_WHISPER_DESC"] = "1: Item link" -- Translation missing
-L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Whispering the disenchanter (as masterlooter)" -- Translation missing
-L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1: Item link
-2: Item owner
-3: him/her]=] -- Translation missing
 L["OPT_SHOULD_CHAT"] = "Включить/Отключить"
 L["OPT_SHOULD_CHAT_DESC"] = "Задайте когда аддон будет отправлять сообщения в чат группы/рейда и шептать другим игрокам."
 L["OPT_WHISPER"] = "Шёпот"
@@ -370,6 +370,8 @@ L["OPT_WHISPER_ANSWER"] = "Ответить на запросы"
 L["OPT_WHISPER_ANSWER_DESC"] = "Позволить аддону отвечать на личные сообщения от членов группы по поводу вещей, которые вы получили."
 L["OPT_WHISPER_ASK"] = "Спросить про добычу"
 L["OPT_WHISPER_ASK_DESC"] = "Шептать другим, если они получили добычу, которую вы хотите."
+L["OPT_WHISPER_ASK_VARIANTS"] = "Enable ask variants" -- Translation missing
+L["OPT_WHISPER_ASK_VARIANTS_DESC"] = "Use different lines (see below) when asking for loot, to make it less repetitive." -- Translation missing
 L["OPT_WHISPER_DESC"] = "Change whether or not the addon will whisper other players and/or answer incoming messages." -- Translation missing
 L["OPT_WHISPER_GROUP"] = "Шептать по типу группы"
 L["OPT_WHISPER_GROUP_DESC"] = "Whisper others if they got loot you want, depending on the type of group you are currently in." -- Translation missing
@@ -377,13 +379,11 @@ L["OPT_WHISPER_GROUP_TYPE"] = "Спрашивать по типу группы"
 L["OPT_WHISPER_GROUP_TYPE_DESC"] = [=[Спрашивать про добычу, если вы в одной из этих типов групп.
 
 |cffffff78Гильдейская группа:|r Кто-то из гильдии, члены которой составляют %d%% или более группы.
-|cffffff78Community Group:|r The members of one of your WoW-Communities make up %d%% or more of the group.]=] -- Translation outdated
+|cffffff78Community Group:|r The members of one of your WoW-Communities make up %d%% or more of the group.]=]
 L["OPT_WHISPER_SUPPRESS"] = "Подавлять запросы"
 L["OPT_WHISPER_SUPPRESS_DESC"] = "Подавлять входящие личные сообщения от подходящих игроков при розыгрыше добычи."
 L["OPT_WHISPER_TARGET"] = "Спросить у цели"
 L["OPT_WHISPER_TARGET_DESC"] = "Спросить про добычу в зависимости от того, находится ли цель в вашей гильдии или в списке друзей."
-L["OPT_WHISPER_ASK_VARIANTS"] = "Enable ask variants" -- Translation missing
-L["OPT_WHISPER_ASK_VARIANTS_DESC"] = "Use different lines (see below) when asking for loot, to make it less repetitive." -- Translation missing
 
 -- Roll
 L["BID_CHAT"] = "Спросить %s про %s -> %s."

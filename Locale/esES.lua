@@ -22,16 +22,16 @@ L["MSG_ROLL_ANSWER_NO_SELF"] = "Lo siento, necesito ese objeto."
 L["MSG_ROLL_ANSWER_NOT_TRADABLE"] = "Lo siento, no puedo comerciar ese objeto."
 L["MSG_ROLL_ANSWER_YES"] = "Para ti, comercia conmigo."
 L["MSG_ROLL_ANSWER_YES_MASTERLOOT"] = "Puedes quedártelo, comercia a <%s>."
+L["MSG_ROLL_DISENCHANT"] = "<%s> va a desencantar %s -> Comercia conmigo!"
+L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> va a desencantar %s de <%s> -> Comercia con %s!"
+L["MSG_ROLL_DISENCHANT_WHISPER"] = "Has sido elegido para desencantar %s, por favor, comercia conmigo."
+L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Has sido escogido para desencantar %s de <%s>, por favor comercia %s."
 L["MSG_ROLL_START"] = "Ofrezco %s -> susúrrame o haz /roll %d!"
 L["MSG_ROLL_START_MASTERLOOT"] = "Ofrezco %s de <%s> -> susúrrame o haz /roll %d!"
 L["MSG_ROLL_WINNER"] = "<%s> ha ganado %s -> ¡Comercia conmigo!"
 L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%s> ha ganado %s de <%s> -> ¡Comercia con %s!"
 L["MSG_ROLL_WINNER_WHISPER"] = "¡Has ganado %s! Por favor comercia conmigo."
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "¡Has ganado %s de %s! Por favor comercia con %s."
-L["MSG_ROLL_DISENCHANT"] = "<%s> will disenchant %s -> Trade me!" -- Translation missing
-L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> will disenchant %s from <%s> -> Trade %s!" -- Translation missing
-L["MSG_ROLL_DISENCHANT_WHISPER"] = "You were picked to disenchant %s, please trade me." -- Translation missing
-L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "You were picked to disenchant %s from <%s>, please trade %s." -- Translation missing
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
@@ -108,6 +108,8 @@ L["USAGE_ROLL"] = "Uso: /plr roll [ítem]* (<plazo> <dueño>)"
 L["ERROR_CMD_UNKNOWN"] = "Comando '%s' desconocido "
 L["ERROR_ITEM_NOT_TRADABLE"] = "No puedes comerciar con ese objeto."
 L["ERROR_NOT_IN_GROUP"] = "No estás en un grupo o banda."
+L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"] = "Tienes que ser maestro despojador para poder crear pujas para objetos de otros jugadores."
+L["ERROR_NOT_MASTERLOOTER_TIMEOUT"] = "No puedes cambiar el tiempo de espera mientras haya un maestro despojador que no seas tú."
 L["ERROR_OPT_MASTERLOOT_EXPORT_FAILED"] = "¡La exportación de la configuración de maestro despojador a <%s> falló!"
 L["ERROR_PLAYER_NOT_FOUND"] = "No se encuentra al jugador %q."
 L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"] = "%s ha enviado una puja por %s pero no tiene permiso para hacerlo ahora."
@@ -119,8 +121,6 @@ L["ERROR_ROLL_STATUS_NOT_1"] = "La tirada no está en marcha."
 L["ERROR_ROLL_UNKNOWN"] = "Esa tirada no existe."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"] = "%s ha enviado un voto por %s pero no puede hacerlo ahora mismo."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"] = "No puedes votar por ese objeto ahora mismo."
-L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"] = "You need to become masterlooter to create rolls for other player's items." -- Translation missing
-L["ERROR_NOT_MASTERLOOTER_TIMEOUT"] = "You cannot change the timeout while having a masterlooter other than yourself." -- Translation missing
 
 -- GUI
 L["DIALOG_MASTERLOOT_ASK"] = "<%s> quiere convertirse en tu maestro despojador."
@@ -169,21 +169,23 @@ L["OPT_ACTIVE_GROUPS_DESC"] = [=[Activar sólo cuando estás en uno de estos tip
 
 |cffffff78Grupo de heramandad:|r Los miembros de una hermandad son el %d%% o más del grupo.
 |cffffff78Grupo de comunidad:|r Los miembros de una de tus comunidades de WoW son el %d%% o más del grupo]=]
-L["OPT_ALLOW_DISENCHANT"] = "Allow \"Disenchant\" bids" -- Translation missing
-L["OPT_ALLOW_DISENCHANT_DESC"] = "Allow others to bid \"Disenchant\" on your own items." -- Translation missing
+L["OPT_ALLOW_DISENCHANT"] = "Permitir pujas para \"Desencantar\""
+L["OPT_ALLOW_DISENCHANT_DESC"] = "Permite que otros pujen por objetos tuyos para la opción \"Desencantar\"."
 L["OPT_AUTHOR"] = "|cffffd100Autor:|r Shrugal (EU-Mal'Ganis)"
 L["OPT_AWARD_SELF"] = "Elegir manualmente el ganador de tus objetos"
 L["OPT_AWARD_SELF_DESC"] = "Escoger manualmente quién debe recibir tus objetos, en lugar de dejar que el addon elija a alguien al azar. Esto está siempre activado cuando eres el maestro despojador."
 L["OPT_BID_PUBLIC"] = "Publicar las pujas"
 L["OPT_BID_PUBLIC_DESC"] = "Las pujas de tus tiradas son públicas, por lo que todo el que tenga el addon puede verlas."
-L["OPT_CHILL_MODE"] = "Chill mode" -- Translation missing
-L["OPT_CHILL_MODE_DESC"] = [=[The intent of chill mode is to take the pressure out of sharing the loot, even if that means that things will take a bit longer. If you enable it the following things will change:
+L["OPT_CHILL_MODE"] = "Modo relajado"
+L["OPT_CHILL_MODE_DESC"] = [=[El objetivo del modo relajado es reducir la presión para compartir el loot, incluso si eso significa que las cosas llevarán algo más de tiempo. Si lo habilitas, cambiará lo siguiente:
 
-|cffffff781.|r Rolls from you won't start until you actually decided to share them, so you have as much time as you want to choose, and other addon users won't see your items until you did.
-|cffffff782.|r Rolls from you have double the normal run-time, or no run-time at all if you enabled to choose winners of your own items yourself (see next option).
-|cffffff783.|r Rolls from non-addon users in your group also stay open until you decided if you want them or not.
+|cffffff781.|r Las pujas por objetos tuyos no comenzarán hasta que tú no decidas compartirlos, de modo que tienes todo el tiempo que quieras para decidir si los compartes, y otros usuarios del addon no verán el ítem hasta que tú lo hagas.
+|cffffff782.|r Las pujas por tus objetos tienen el doble del tiempo de decisión, o no tienen limitación de tiempo si habilitas la opción de elegir por ti mismo los ganadores de tus objetos (ver la siguiente opción).
+|cffffff783.|r Las pujas por objetos de usuarios sin el addon permanecen abiertas hasta que decidas si los quieres o no.
 
-|cffff0000IMPORTANT:|r Rolls from other addon users without chill mode active will still have a normal timeout. Make sure that everyone in your group enables this option if you want a chill run.]=] -- Translation missing
+|cffff0000IMPORTANTE:|r Las pujas por otros usuarios del addon que no tengan el modo relajado activado seguirán teniendo el tiempo de ejecución normal. Asegúrate de que todo el mundo en tu grupo tiene el modo relajado activado si quieres una sesión relajada.]=]
+L["OPT_DISENCHANT"] = "Desencantar"
+L["OPT_DISENCHANT_DESC"] = "Pujar por \"Desencatar\" para objetos que no puedes usar, si tienes la profesión y el dueño del ítem lo permite."
 L["OPT_DONT_SHARE"] = "No compartir objetos"
 L["OPT_DONT_SHARE_DESC"] = "No tirar por objetos de otros jugadores y no compartir mis objetos. El addon rechazará las peticiones de mis objetos (si está activado), y podrás seguir  siendo maestro despojador y miembro del 'loot council'."
 L["OPT_ENABLE"] = "Activar"
@@ -213,8 +215,6 @@ L["OPT_SPECS_DESC"] = "Sólo sugiere loot a estas especializaciones de clase."
 L["OPT_TRANSLATION"] = "|cffffd100Traducción:|r Jolugon (EU-Minahonda)"
 L["OPT_TRANSMOG"] = "Comprobar apariencias para transfiguración"
 L["OPT_TRANSMOG_DESC"] = "Optar a los ítems para los que aún no tienes la apariencia correspondiente."
-L["OPT_DISENCHANT"] = "Disenchant" -- Translation missing
-L["OPT_DISENCHANT_DESC"] = "Bid \"Disenchant\" on items you can't use if you have the profession and the item owner has allowed it." -- Translation missing
 L["OPT_UI"] = "Interfaz de usuario"
 L["OPT_UI_DESC"] = "Personaliza la apariencia y comportamiento de %s a tu gusto."
 L["OPT_VERSION"] = "|cffffd100Versión:|r %s"
@@ -251,6 +251,7 @@ L["OPT_MASTERLOOT_EXPORT_WINDOW"] = "Exportar la configuración de maestro despo
 L["OPT_MASTERLOOT_LOAD"] = "Cargar"
 L["OPT_MASTERLOOT_LOAD_DESC"] = "Cargar la configuración de maestro despojador desde la descripción de tu hermandad/comunidad."
 L["OPT_MASTERLOOT_RULES"] = "Reglas"
+L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"] = "Permitir que los miembros del grupo pujen por \"Desencantar\" sobre objetos."
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD"] = "Dar loot automáticamente"
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_DESC"] = "Dejar que el addon decida quién tiene que recibir el loot, basándose en factores como los votos del consejo de loot, pujas e ilvl equipado."
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT"] = "Tiempo de espera (base) para el reparto automático del loot"
@@ -260,9 +261,8 @@ L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM_DESC"] = "Será añadido al 
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC"] = "Pujas públicas"
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC_DESC"] = "Puedes hacer pujas públicas, de manera que todo el mundo pueda ver quién puja por qué."
 L["OPT_MASTERLOOT_RULES_DESC"] = "Estas reglas aplican a todo el mundo cuando tú eres maestro despojador"
-L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"] = "Allow group members to roll \"Disenchant\" on items." -- Translation missing
 L["OPT_MASTERLOOT_RULES_DISENCHANTER"] = "Desencantador"
-L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "Dar el loot que nadie quiera a estos jugadores para desencantar. Separate multiple names with spaces or commas." -- Translation outdated
+L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "Dar el loot que nadie quiera a estos jugadores para desencantar."
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS"] = "Respuestas tipo 'Codicia' personalizadas"
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS_DESC"] = [=[Especifica un máximo de 9 respuestas personalizadas cuando se opte por 'Codicia', con prioridad decreciente. También puedes insertar '%s' a la misma para bajar su prioridad por debajo de las respuestas previas. Para introducir entradas múltiples, sepáralas por comas.
 
@@ -328,6 +328,20 @@ L["OPT_MSG_ROLL_ANSWER_YES"] = "Respuesta: Para ti"
 L["OPT_MSG_ROLL_ANSWER_YES_DESC"] = "-"
 L["OPT_MSG_ROLL_ANSWER_YES_MASTERLOOT"] = "Respuesta: Para ti (como maestro despojador)"
 L["OPT_MSG_ROLL_ANSWER_YES_MASTERLOOT_DESC"] = "1: El dueño del objeto"
+L["OPT_MSG_ROLL_DISENCHANT"] = "Anunciando un desencatador"
+L["OPT_MSG_ROLL_DISENCHANT_DESC"] = [=[1: Desencantador
+2: Enlace del objeto]=]
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT"] = "Anunciando un desencantador (como maestro despojador)"
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT_DESC"] = [=[1: Desencantador
+2: Enlace del objeto
+3: Dueño del objeto
+4: Él/ella]=]
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER"] = "Susurrando el desencantador"
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_DESC"] = "1: Enlace del objeto"
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Susurrando el desencantador (como maestro despojador)"
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1: Enlace del objeto
+2: Dueño del objeto
+3: Él/ellla]=]
 L["OPT_MSG_ROLL_START"] = "Anunciando un nuevo reparto"
 L["OPT_MSG_ROLL_START_DESC"] = [=[1: Enlace del ítem
 2: Número de la tirada de dados]=]
@@ -349,20 +363,6 @@ L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Susurrando el ganador del reparto
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1: Enlace del objeto
 2: Dueño del objeto
 3: Él/ella]=]
-L["OPT_MSG_ROLL_DISENCHANT"] = "Announcing a disenchanter" -- Translation missing
-L["OPT_MSG_ROLL_DISENCHANT_DESC"] = [=[1: Disenchanter
-2: Item link]=] -- Translation missing
-L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT"] = "Announcing a disenchanter (as masterlooter)" -- Translation missing
-L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT_DESC"] = [=[1: Disenchanter
-2: Item link
-3: Item owner
-4: him/her]=] -- Translation missing
-L["OPT_MSG_ROLL_DISENCHANT_WHISPER"] = "Whispering the disenchanter" -- Translation missing
-L["OPT_MSG_ROLL_DISENCHANT_WHISPER_DESC"] = "1: Item link" -- Translation missing
-L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Whispering the disenchanter (as masterlooter)" -- Translation missing
-L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1: Item link
-2: Item owner
-3: him/her]=] -- Translation missing
 L["OPT_SHOULD_CHAT"] = "Habilitar/Deshabilitar"
 L["OPT_SHOULD_CHAT_DESC"] = "Define cuándo el addon escribirá en el chat de grupo/raid y susurrará a otros jugadores."
 L["OPT_WHISPER"] = "Chat de susurros"
@@ -370,6 +370,8 @@ L["OPT_WHISPER_ANSWER"] = "Peticiones de respuesta"
 L["OPT_WHISPER_ANSWER_DESC"] = "Dejar que el addon conteste a susurros provenientes de miembros del grupo acerca de objetos que has looteado."
 L["OPT_WHISPER_ASK"] = "Preguntar por loot"
 L["OPT_WHISPER_ASK_DESC"] = "Susurrar a otros si tienen loot que tú quieres."
+L["OPT_WHISPER_ASK_VARIANTS"] = "Habilitar pedir con diferentes frases"
+L["OPT_WHISPER_ASK_VARIANTS_DESC"] = "Utilizar diferentes frases (ver más abajo) cuando preguntes por loot, para hacerlo menos repetitivo."
 L["OPT_WHISPER_DESC"] = "Selecciona si el addon va a susurrar a otros jugadores y/o responder mensajes entrantes."
 L["OPT_WHISPER_GROUP"] = "Susurrar por tipo de grupo"
 L["OPT_WHISPER_GROUP_DESC"] = "Susurra a otros si tienen loot que tú quieres, dependiendo del tipo de grupo en el que te encuentres."
@@ -382,8 +384,6 @@ L["OPT_WHISPER_SUPPRESS"] = "Suprimir peticiones"
 L["OPT_WHISPER_SUPPRESS_DESC"] = "Eliminar susurros entrantes de jugadores elegibles cuando repartas tu loot."
 L["OPT_WHISPER_TARGET"] = "Pedir según objetivo"
 L["OPT_WHISPER_TARGET_DESC"] = "Pedir loot dependiendo de si el objetivo está en tu hermandad, en una de tus comunidades de WoW o en tu lista de amigos."
-L["OPT_WHISPER_ASK_VARIANTS"] = "Enable ask variants" -- Translation missing
-L["OPT_WHISPER_ASK_VARIANTS_DESC"] = "Use different lines (see below) when asking for loot, to make it less repetitive." -- Translation missing
 
 -- Roll
 L["BID_CHAT"] = "Solicitando a %s el objeto %s -> %s."
@@ -416,7 +416,7 @@ L["TRADE_START"] = "Empezando comercio con %s."
 -- Globals
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "El dueño de este objeto no usa el addon PersoLootRoll."
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "The owner of this item has not allowed \"Disenchant\" bids." -- Translation missing
-LOOT_ROLL_INELIGIBLE_REASONPLR_NOT_ENCHANTER = "Your character doesn't have the \"Enchanting\" profession." -- Translation missing
+LOOT_ROLL_INELIGIBLE_REASONPLR_NOT_ENCHANTER = "Tu personaje no tiene la profesión \"Encantamiento\"."
 
 -- Other
 L["ID"] = ID
