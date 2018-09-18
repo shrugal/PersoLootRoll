@@ -29,6 +29,7 @@ Addon.plhUsers = {}
 -- Other
 Addon.rolls = Util.TblCounter()
 Addon.timers = {}
+Addon.tracking = nil
 
 -------------------------------------------------------
 --                    Addon stuff                    --
@@ -39,22 +40,34 @@ function Addon:OnInitialize()
     self:ToggleDebug(PersoLootRollDebug or self.DEBUG)
     
     self.db = LibStub("AceDB-3.0"):New(Name .. "DB", {
-        -- VERSION 6
+        -- VERSION 7
         profile = {
             -- General
             enabled = true,
+            activeGroups = {lfd = true, party = true, lfr = true, raid = true, guild = true, community = true},
             onlyMasterloot = false,
             dontShare = false,
             awardSelf = false,
             bidPublic = false,
-            ui = {showRollFrames = true, showActionsWindow = true, showRollsWindow = false},
+            chillMode = false,
+            allowDisenchant = false,
+
+            -- UI
+            ui = {
+                showRollFrames = true,
+                showActionsWindow = true,
+                showRollsWindow = false
+            },
             
             -- Item filter
-            ilvlThreshold = 30,
-            ilvlThresholdTrinkets = true,
-            ilvlThresholdRings = false,
-            pawn = false,
-            transmog = false,
+            filter = {
+                ilvlThreshold = 30,
+                ilvlThresholdTrinkets = true,
+                ilvlThresholdRings = false,
+                pawn = false,
+                transmog = false,
+                disenchant = false
+            },
 
             -- Messages
             messages = {
@@ -70,6 +83,7 @@ function Addon:OnInitialize()
                     target = {friend = false, guild = false, community = false, other = true},
                     answer = true,
                     suppress = false,
+                    variants = true
                 },
                 lines = {}
             },
@@ -87,6 +101,7 @@ function Addon:OnInitialize()
                     votePublic = false,
                     needAnswers = {},
                     greedAnswers = {},
+                    allowDisenchant = false,
                     disenchanter = {},
                     autoAward = false,
                     autoAwardTimeout = Roll.TIMEOUT,
@@ -212,8 +227,9 @@ end
 
 -- Chat command handling
 function Addon:HandleChatCommand(msg)
-    local args = {Addon:GetArgs(msg, 10)}
-    local cmd = args[1]
+    local args = Util.Tbl(Addon:GetArgs(msg, 10))
+    args[11] = nil
+    local cmd = tremove(args, 1)
 
     -- Help
     if cmd == "help" then
@@ -227,14 +243,14 @@ function Addon:HandleChatCommand(msg)
 
         -- Handle submenus
         local subs = Util.Tbl("messages", "masterloot", "profiles")
-        if Util.In(args[2], subs) then
-            name, pre, line = name .. " " .. Util.StrUcFirst(args[2]), pre .. " " .. args[2], line:sub(args[2]:len() + 2)
+        if Util.In(args[1], subs) then
+            name, pre, line = name .. " " .. Util.StrUcFirst(args[1]), pre .. " " .. args[1], line:sub(args[1]:len() + 2)
         end
 
         LibStub("AceConfigCmd-3.0").HandleCommand(Addon, pre, name, line)
 
         -- Add submenus as additional options
-        if Util.StrIsEmpty(args[2]) then
+        if Util.StrIsEmpty(args[1]) then
             for i,v in pairs(subs) do
                 local name = Util.StrUcFirst(v)
                 local getter = LibStub("AceConfigRegistry-3.0"):GetOptionsTable(Name .. " " .. name)
@@ -245,24 +261,33 @@ function Addon:HandleChatCommand(msg)
         Util.TblRelease(subs)
     -- Roll
     elseif cmd == "roll" then
-        local items, i, item = {}, 1
+        local ml, isML, items, itemOwner, timeout = Session.GetMasterlooter(), Session.IsMasterlooter(), Util.Tbl(), "player"
 
-        while i do
-            i, item = next(args, i)
-            if i and Item.IsLink(item) then
-                tinsert(items, item)
+        for i,v in pairs(args) do
+            if tonumber(v) then
+                timeout = tonumber(v)
+            elseif Item.IsLink(v) then
+                tinsert(items, v)
+            else
+                itemOwner = v
             end
         end
 
-        if not next(items) then
-            self:Print(L["USAGE_ROLL"])
+        if not UnitExists(itemOwner) then
+            self:Error(L["ERROR_PLAYER_NOT_FOUND"], itemOwner)
+        elseif not Unit.IsSelf(itemOwner) and not isML then
+            self:Error(L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"])
+        elseif timeout and ml and not isML then
+            self:Error(L["ERROR_NOT_MASTERLOOTER_TIMEOUT"])
+        elseif not next(items) then
+            self:Error(L["USAGE_ROLL"])
         else
-            i = table.getn(items) + 2
-            local timeout, owner = tonumber(args[i]), args[i+1]
-            
+            local ml = Session.GetMasterlooter()
+
             for i,item in pairs(items) do
-                item = Item.FromLink(item, owner or "player")
-                local roll = Roll.Add(item, owner or Session.GetMasterlooter() or "player", timeout)
+                item = Item.FromLink(item, itemOwner)
+                local roll = Roll.Add(item, ml or "player", nil, nil, timeout)
+
                 if roll.isOwner then
                     roll:Start()
                 else
@@ -272,21 +297,40 @@ function Addon:HandleChatCommand(msg)
         end
     -- Bid
     elseif cmd == "bid" then
-        local owner, item, bid = select(2, unpack(args))
-        
-        if Util.StrIsEmpty(owner) or Item.IsLink(owner)            -- owner
-        or item and not Item.IsLink(item)                          -- item
-        or bid and not Util.TblFind(Roll.BIDS, tonumber(bid)) then -- answer
-            self:Print(L["USAGE_BID"])
-        else
-            local roll = Roll.Find(nil, owner, item)
-            if roll then
-                roll:Bid(bid)
+        local item, owner, bid = unpack(args)
+
+        -- Determine bid
+        if Util.In(bid, NEED, "Need", "need", "100") then
+            bid = Roll.BID_NEED
+        elseif Util.In(bid, GREED, "Greed", "greed", "50") then
+            bid = Roll.BID_GREED
+        elseif Session.GetMasterlooter() then
+            for i=1,2 do
+                if Util.In(bid, Session.rules["answers" .. i]) then
+                    bid = i + Util.TblFind(Session.rules["answers" .. i], bid) / 10
+                end
             end
+        end
+
+        bid = bid or Roll.BID_NEED
+        owner = Unit.Name(owner or "player")
+        
+        if not Item.IsLink(item) or Item.IsLink(owner) or not tonumber(bid) then
+            self:Print(L["USAGE_BID"])
+        elseif not UnitExists(owner) then
+            self:Error(L["ERROR_PLAYER_NOT_FOUND"], args[2])
+        else
+            local roll = (Roll.Find(nil, owner, item) or Roll.Add(item, owner))
+    
+            if self.db.profile.messages.echo < Addon.ECHO_VERBOSE then
+                self:Info(L["BID_START"], roll:GetBidName(bid), item, Comm.GetPlayerLink(owner))
+            end
+            
+            roll:Bid(bid or Roll.BID_NEED)
         end
     -- Trade
     elseif cmd == "trade" then
-        Trade.Initiate(args[2] or "target")
+        Trade.Initiate(args[1] or "target")
     -- Rolls/None
     elseif cmd == "rolls" or not cmd then
         GUI.Rolls.Show()
@@ -304,7 +348,7 @@ function Addon:HandleChatCommand(msg)
         Util.ExportInstances()
     -- Unknown
     else
-        self:Err(L["ERROR_CMD_UNKNOWN"], cmd)
+        self:Error(L["ERROR_CMD_UNKNOWN"], cmd)
     end
 end
 
@@ -317,12 +361,32 @@ end
 -------------------------------------------------------
 
 -- Check if we should currently track loot etc.
-function Addon:IsTracking(unit, inclCompAddons)
+function Addon:IsTracking(refresh)
+    if self.tracking == nil or refresh then
+        local group, p = self.db.profile.activeGroups, Util.Push
+
+        self.tracking = self.db.profile.enabled
+            and (not self.db.profile.onlyMasterloot or Session.GetMasterlooter())
+            and IsInGroup()
+            and Util.In(GetLootMethod(), "freeforall", "roundrobin", "personalloot", "group")
+            and (
+                IsInRaid(LE_PARTY_CATEGORY_INSTANCE)                 and p(group.lfr)
+                or IsInGroup(LE_PARTY_CATEGORY_INSTANCE)             and p(group.lfd)
+                or Util.IsGuildGroup(Unit.GuildName("player") or "") and p(group.guild)
+                or Util.IsCommunityGroup()                           and p(group.community)
+                or IsInRaid()                                        and p(group.raid)
+                or p(group.party)
+            ).Pop()
+            or false
+    end
+
+    return self.tracking
+end
+
+-- Check if the given unit is tracking
+function Addon:UnitIsTracking(unit, inclCompAddons)
     if not unit or Unit.IsSelf(unit) then
-        return self.db.profile.enabled
-           and (not self.db.profile.onlyMasterloot or Session.GetMasterlooter())
-           and IsInGroup()
-           and Util.In(GetLootMethod(), "freeforall", "roundrobin", "personalloot", "group")
+        return self:IsTracking()
     else
         unit = Unit.Name(unit)
         return self.versions[unit] and not self.disabled[unit] or inclCompAddons and self.plhUsers[unit]
@@ -330,30 +394,29 @@ function Addon:IsTracking(unit, inclCompAddons)
 end
 
 -- Tracking state potentially changed
-function Addon:OnTrackingChanged(sync)
-    local isTracking = self:IsTracking()
-
-    -- Let others know
-    if not Util.BoolXOR(isTracking, self.disabled[UnitName("player")]) then
-        Comm.Send(Comm["EVENT_" .. (isTracking and "ENABLE" or "DISABLE")])
-    end
+function Addon:OnTrackingChanged(clear)
+    local wasTracking, isTracking = self.tracking, self:IsTracking(true)
 
     -- Start/Stop tracking process
-    if sync then
+    if wasTracking ~= isTracking then
+        Comm.Send(Comm["EVENT_" .. (isTracking and "ENABLE" or "DISABLE")])
+
         if isTracking then
             Comm.Send(Comm.EVENT_SYNC)
             Inspect.Queue()
-        else
+        elseif not isTracking and clear then
             Util.TblIter(self.rolls, Roll.Clear)
             Inspect.Clear()
         end
-    end
 
-    Inspect[isTracking and "Start" or "Stop"]()
+        Inspect[isTracking and "Start" or "Stop"]()
+    end
 end
 
 -- Set a unit's version string
 function Addon:SetVersion(unit, version)
+    version = tonumber(version) or version
+
     self.versions[unit] = version
     self.plhUsers[unit] = nil
 
@@ -434,7 +497,7 @@ function Addon:Echo(lvl, ...)
 end
 
 -- Shortcuts for different log levels
-function Addon:Err(...) self:Echo(self.ECHO_ERROR, ...) end
+function Addon:Error(...) self:Echo(self.ECHO_ERROR, ...) end
 function Addon:Info(...) self:Echo(self.ECHO_INFO, ...) end
 function Addon:Verbose(...) self:Echo(self.ECHO_VERBOSE, ...) end
 function Addon:Debug(...) self:Echo(self.ECHO_DEBUG, ...) end

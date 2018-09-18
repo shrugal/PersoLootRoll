@@ -21,7 +21,6 @@ Self.TYPES = {Self.TYPE_GROUP, Self.TYPE_PARTY, Self.TYPE_RAID, Self.TYPE_GUILD,
 
 -- Addon events
 Self.EVENT_CHECK = "CHECK"
-Self.EVENT_VERSION_ASK = "VERSION-ASK" -- TODO: DEPRECATED
 Self.EVENT_VERSION = "VERSION"
 Self.EVENT_ENABLE = "ENABLE"
 Self.EVENT_DISABLE = "DISABLE"
@@ -106,7 +105,7 @@ function Self.ShouldInitChat(target)
     if channel == Self.TYPE_WHISPER then
         if not c.whisper.ask then
             return false
-        elseif UnitIsDND(unit) or Addon:IsTracking(unit) or Unit.IsSelf(unit) then
+        elseif UnitIsDND(unit) or Addon:UnitIsTracking(unit) or Unit.IsSelf(unit) then
             return false
         end
 
@@ -282,7 +281,7 @@ function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport)
                     elseif not Self.ShouldInitChat(owner) then
                         Addon:Info(L["BID_NO_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
                     else
-                        Self.ChatLine("MSG_BID_" .. random(5), owner, link or Locale.GetChatLine('MSG_ITEM', owner))
+                        Self.ChatLine("MSG_BID_" .. random(Addon.db.profile.messages.whisper.variants and 5 or 1), owner, link or Locale.GetChatLine('MSG_ITEM', owner))
                         roll.whispers = roll.whispers + 1
 
                         Addon:Info(L["BID_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
@@ -347,19 +346,22 @@ function Self.RollEnd(roll)
         end
 
         if roll.isOwner then
+            local line = roll.bids[roll.winner] == Roll.BID_DISENCHANT and "DISENCHANT" or "WINNER"
+
             -- Announce to chat
             if roll.posted and Self.ShouldInitChat() then
+
                 if roll.item.isOwner then
-                    Self.ChatLine("MSG_ROLL_WINNER", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link)
+                    Self.ChatLine("MSG_ROLL_" .. line, Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link)
                 else
-                    Self.ChatLine("MSG_ROLL_WINNER_MASTERLOOT", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
+                    Self.ChatLine("MSG_ROLL_" .. line .. "_MASTERLOOT", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
                 end
             end
             
             -- Announce to target
             if Addon.plhUsers[roll.winner] then
                 Self.SendPlh(Self.PLH_ACTION_OFFER, roll, Unit.FullName(roll.winner))
-            elseif Addon.db.profile.messages.whisper.answer and not Addon:IsTracking(roll.winner) then
+            elseif Addon.db.profile.messages.whisper.answer and not Addon:UnitIsTracking(roll.winner) then
                 if roll.item:GetNumEligible(true) == 1 then
                     if roll.item.isOwner then
                         Self.ChatLine("MSG_ROLL_ANSWER_YES", roll.winner)
@@ -368,9 +370,9 @@ function Self.RollEnd(roll)
                     end
                 else
                     if roll.item.isOwner then
-                        Self.ChatLine("MSG_ROLL_WINNER_WHISPER", roll.winner, roll.item.link)
+                        Self.ChatLine("MSG_ROLL_" .. line .. "_WHISPER", roll.winner, roll.item.link)
                     else
-                        Self.ChatLine("MSG_ROLL_WINNER_WHISPER_MASTERLOOT", roll.winner, roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
+                        Self.ChatLine("MSG_ROLL_" .. line .. "_WHISPER_MASTERLOOT", roll.winner, roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
                     end
                 end
             end

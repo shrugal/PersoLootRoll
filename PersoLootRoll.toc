@@ -1,7 +1,8 @@
 ## Interface: 80000
 ## Title: PersoLootRoll
 ## Notes: A loot roll addon for personal loot.
-## Version: 14.07
+## Notes-deDE: Ein Beute Vergabe Addon für Persönlichen Loot.
+## Version: 15
 ## SavedVariables: PersoLootRollDB, PersoLootRollIconDB, PersoLootRollML, PersoLootRollDebug
 
 # Libs
@@ -9,7 +10,6 @@ Libs\libs.xml
 
 # Initialization
 Init.lua
-Util\Util.lua
 
 # Util, Locale
 Util\Util.lua
@@ -17,6 +17,9 @@ Util\Unit.lua
 Util\Locale.lua
 Locale\enUS.lua
 Locale\deDE.lua
+Locale\esES.lua
+Locale\ruRU.lua
+Locale\zhCN.lua
 Locale\zhTW.lua
 Util\Comm.lua
 Util\Item.lua

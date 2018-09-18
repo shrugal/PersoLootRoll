@@ -22,6 +22,10 @@ L["MSG_ROLL_ANSWER_NO_SELF"] = "抱歉，我自己也有需求。"
 L["MSG_ROLL_ANSWER_NOT_TRADABLE"] = "抱歉，這件無法交易。"
 L["MSG_ROLL_ANSWER_YES"] = "可以給你，請來跟我交易。"
 L["MSG_ROLL_ANSWER_YES_MASTERLOOT"] = "可以給你，請交易 <%s>。"
+L["MSG_ROLL_DISENCHANT"] = "<%s> 將分解 %s -> 交易我1"
+L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> 將分解%s 由<%s>提供 -> 交易%s！"
+L["MSG_ROLL_DISENCHANT_WHISPER"] = "您被選中來分解%s，請交易我。"
+L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "您被選中來分解%s 由<%s>提供，請交易%s。"
 L["MSG_ROLL_START"] = "送出裝備 %s -> 要的密我，或 /roll %d！"
 L["MSG_ROLL_START_MASTERLOOT"] = "送出由<%2$s>提供的 %1$s -> /w 我，或 /roll %3$s！"
 L["MSG_ROLL_WINNER"] = "<%s> 已贏得 %s -> 請跟我交易！"
@@ -38,9 +42,9 @@ L["ACTIONS"] = "動作"
 L["ADVERTISE"] = "在聊天頻道發佈訊息"
 L["ANSWER"] = "回答"
 L["ASK"] = "詢問"
-L["AWARD"] = "給予"
-L["AWARD_LOOT"] = "給予戰利品"
-L["AWARD_RANDOMLY"] = "隨機給予"
+L["AWARD"] = "分配"
+L["AWARD_LOOT"] = "分配戰利品"
+L["AWARD_RANDOMLY"] = "隨機分配"
 L["BID"] = "競標"
 L["COMMUNITY_GROUP"] = "社群隊伍"
 L["COMMUNITY_MEMBER"] = "社群成員"
@@ -88,22 +92,24 @@ L["WON"] = "獲勝"
 L["YOUR_BID"] = "你的競標"
 
 -- Commands
-L["HELP"] = [=[開始物品的擲骰或競標（/PersoLootRoll or /plr）。
+L["HELP"] = [=[開始物品的擲骰或競標（/PersoLootRoll 或 /plr）。
 使用方法：
 /plr: 開啟選項視窗
 /plr roll [物品]* (<持續時間> <擁有者>): 開始一個或多個物品的擲骰
-/plr bid <擁有者> ([物品]): 競標來自其他玩家的物品
+/plr bid [物品] (<擁有者> <bid>): 競標來自其他玩家的物品
 /plr options: 開啟選項視窗
 /plr config: 透過指令更改設置
 /plr help: 發送此幫助訊息
 解釋: [..] = 物品連結, * = 一個或多個物品， (..) = 備選的]=]
-L["USAGE_BID"] = "使用：/plr bid <提供者> ([物品])"
+L["USAGE_BID"] = "使用方法：/plr bid [物品] (<提供者> <bid>)"
 L["USAGE_ROLL"] = "使用：/plr roll [item]* (<持續時間> <提供者>)"
 
 -- Errors
 L["ERROR_CMD_UNKNOWN"] = "未知指令'%s'"
 L["ERROR_ITEM_NOT_TRADABLE"] = "你無法交易這項物品。"
 L["ERROR_NOT_IN_GROUP"] = "你不在隊伍或團隊中。"
+L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"] = "你需要成為拾取分配者來為其他玩家的物品創建擲骰。"
+L["ERROR_NOT_MASTERLOOTER_TIMEOUT"] = "當拾取分配者不是你自己時，你無法更改擲骰時間。"
 L["ERROR_OPT_MASTERLOOT_EXPORT_FAILED"] = "匯出分裝設置到<%s>失敗了！"
 L["ERROR_PLAYER_NOT_FOUND"] = "找不到玩家 %s。"
 L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"] = "%s已發送了%s的競標，但現在不允許這樣做。"
@@ -137,8 +143,8 @@ L["MENU_MASTERLOOT_SEARCH"] = "搜尋有人負責分裝的團體"
 L["MENU_MASTERLOOT_START"] = "成為分裝者"
 L["TIP_ADDON_MISSING"] = "插件缺少："
 L["TIP_ADDON_VERSIONS"] = "插件版本："
+L["TIP_CHAT_TO_TRADE"] = "交易前請先詢問提供者"
 L["TIP_ENABLE_WHISPER_ASK"] = "提示：右鍵點擊啟用戰利品自動詢問"
-L["TIP_CHAT_TO_TRADE"] = "Please ask the owner first before trading" -- Translation missing
 L["TIP_MASTERLOOT"] = "隊長分配是啟用的"
 L["TIP_MASTERLOOT_INFO"] = [=[|cffffff00分裝者:|r %s 
 |cffffff00擲骰時間:|r %ds (+ %ds 每項物品) 
@@ -158,21 +164,38 @@ L["OPT_ACTIONS_WINDOW"] = "顯示動作視窗"
 L["OPT_ACTIONS_WINDOW_DESC"] = "當有處理中的動作時顯示動作視窗，例如，當你贏得一件物品但還需要交易某人才能得到它。"
 L["OPT_ACTIONS_WINDOW_MOVE"] = "移動"
 L["OPT_ACTIONS_WINDOW_MOVE_DESC"] = "移動動作視窗到一旁。"
+L["OPT_ACTIVE_GROUPS"] = "根據團體類型啟用"
+L["OPT_ACTIVE_GROUPS_DESC"] = [=[只有當您處於以下團體類型時才啟用。
+
+|cffffff78公會團隊：|r團隊的%d%%或更多的成員是來自一個公會。
+|cffffff78社群團隊：|r團隊的%d%%或更多的成員是來自一個魔獸社群。]=]
+L["OPT_ALLOW_DISENCHANT"] = "允許 \"分解\" 的競標"
+L["OPT_ALLOW_DISENCHANT_DESC"] = "允許其他人對你自己的物品競標 \"分解\"。"
 L["OPT_AUTHOR"] = "|cffffff00作者:|r Shrugal (EU-Mal'Ganis)"
 L["OPT_AWARD_SELF"] = "自行選擇你的物品的獲勝者"
 L["OPT_AWARD_SELF_DESC"] = "自行選擇誰該得到你的戰利品，而非讓插件隨機選擇，當你是拾取分配者時，始終啟用此功能。"
 L["OPT_BID_PUBLIC"] = "公開競標"
 L["OPT_BID_PUBLIC_DESC"] = "你擲骰的競標是公開的，所有使用此插件的人都可以看見。"
+L["OPT_CHILL_MODE"] = "冷漠模式"
+L["OPT_CHILL_MODE_DESC"] = [=[冷漠模式的目的是消除分享戰利品的壓力，即使這意味著事情會花費更長的時間。 如果啟用它，以下內容將會更改：
+
+|cffffff781.|r 在你真正決定分享它們之前，你的擲骰不會開始，因此你有足夠的時間選擇，而其他插件用戶在你決定之前不會看到你的物品。
+|cffffff782.|r 如果您選擇了自己是自己物品的獲勝者，那麼您的運行時間是正常時間的兩倍，或者根本無時間限制(參見下個選項)。
+|cffffff783.|r 來自您團體中的非插件用戶的擲骰也將保持打開狀態，直到您決定是否需要它們為止。
+
+|cffff0000重要:|r 在沒有啟用模式的情況下，其他插件用戶的擲骰仍將具有正常運行時間。 如果您想要冷漠模式運行，請確保團體中的每個人都啟用此選項。]=]
+L["OPT_DISENCHANT"] = "分解"
+L["OPT_DISENCHANT_DESC"] = "如果您擁有附魔專業並且物品所有者允許，則對您無法使用的項目競標“分解”。"
 L["OPT_DONT_SHARE"] = "不分享戰利品"
 L["OPT_DONT_SHARE_DESC"] = "不去骰別人的戰利品但也不分享自己的。此插件將會阻擋對你戰利品的請求(如果啟用的話)，但你仍可以成為分裝者以及戰利品議會成員。"
 L["OPT_ENABLE"] = "啟用"
 L["OPT_ENABLE_DESC"] = "啟用或停用此插件"
 L["OPT_ILVL_THRESHOLD"] = "物品等級門檻"
 L["OPT_ILVL_THRESHOLD_DESC"] = "物品等級低於你以下多少的物品將被忽略。"
+L["OPT_ILVL_THRESHOLD_RINGS"] = "戒指門檻為雙倍"
+L["OPT_ILVL_THRESHOLD_RINGS_DESC"] = "戒指的門檻應該是正常值的兩倍，因為缺乏主屬性它們的價值可能會有很大差異。"
 L["OPT_ILVL_THRESHOLD_TRINKETS"] = "飾品門檻為雙倍"
 L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "飾品的門檻應該是正常值的兩倍，因為觸發特效會讓收益變化很大。"
-L["OPT_ILVL_THRESHOLD_RINGS"] = "Double threshold for rings" -- Translation missing
-L["OPT_ILVL_THRESHOLD_RINGS_DESC"] = "Rings should have double the normal threshold because their value may vary by a large amount due to missing primary stats." -- Translation missing
 L["OPT_INFO"] = "資訊"
 L["OPT_INFO_DESC"] = "關於此插件的一些資訊。"
 L["OPT_ITEM_FILTER"] = "物品過濾"
@@ -181,8 +204,8 @@ L["OPT_MINIMAP_ICON"] = "顯示小地圖圖示"
 L["OPT_MINIMAP_ICON_DESC"] = "顯示或隱藏小地圖圖示"
 L["OPT_ONLY_MASTERLOOT"] = "只有拾取分配"
 L["OPT_ONLY_MASTERLOOT_DESC"] = "只有使用拾取分配時才啟用此插件(例如跟你的公會一起)"
-L["OPT_PAWN"] = "Check \"Pawn\"" -- Translation missing
-L["OPT_PAWN_DESC"] = "Only roll on items that are an upgrade according to the \"Pawn\" addon." -- Translation missing
+L["OPT_PAWN"] = "檢查 \"Pawn\" 提供的數值"
+L["OPT_PAWN_DESC"] = "只骰裝備屬性比較插件 \"Pawn\" 標示為提升的物品。"
 L["OPT_ROLL_FRAMES"] = "顯示擲骰框架"
 L["OPT_ROLL_FRAMES_DESC"] = "當某人拾取你感興趣的戰利品時顯示擲骰框架，這樣你就可以骰它。"
 L["OPT_ROLLS_WINDOW"] = "顯示擲骰視窗"
@@ -228,6 +251,7 @@ L["OPT_MASTERLOOT_EXPORT_WINDOW"] = "匯出分裝設置"
 L["OPT_MASTERLOOT_LOAD"] = "載入"
 L["OPT_MASTERLOOT_LOAD_DESC"] = "從公會/社群的說明訊息中載入分裝設置。"
 L["OPT_MASTERLOOT_RULES"] = "規則"
+L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"] = "允許團體成員在物品上擲骰\"分解\"。"
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD"] = "自動給予戰利品"
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_DESC"] = "讓插件決定誰應該獲得戰利品，基於議會投票，競標和裝等等因素。"
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT"] = "自動給予時間(基本)"
@@ -238,7 +262,7 @@ L["OPT_MASTERLOOT_RULES_BID_PUBLIC"] = "公開競標"
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC_DESC"] = "你可以公開競標，這樣每個人都可以看到誰出價。"
 L["OPT_MASTERLOOT_RULES_DESC"] = "當你是分裝者時，這些選項適用於每個人。"
 L["OPT_MASTERLOOT_RULES_DISENCHANTER"] = "分解者"
-L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "將沒人要的戰利品給這些玩家分解。"
+L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "將沒人要的戰利品給這些玩家分解。用空格或逗號分隔多個名稱。"
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS"] = "自訂 '貪婪' 的應答"
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS_DESC"] = [=[當擲骰'貪婪'時最多可依據優先等級指定9個自訂回答。你還可以插入'%s'本身讓優先級降低到先前回答之下。使用逗號分隔多個條目。
 
@@ -304,6 +328,20 @@ L["OPT_MSG_ROLL_ANSWER_YES"] = "回答：你可以得到它"
 L["OPT_MSG_ROLL_ANSWER_YES_DESC"] = ""
 L["OPT_MSG_ROLL_ANSWER_YES_MASTERLOOT"] = "回答：你可以得到它(如同隊長分配)"
 L["OPT_MSG_ROLL_ANSWER_YES_MASTERLOOT_DESC"] = "1：物品提供者"
+L["OPT_MSG_ROLL_DISENCHANT"] = "通告分解者"
+L["OPT_MSG_ROLL_DISENCHANT_DESC"] = [=[1：分解者
+2：物品連結]=]
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT"] = "通告分解者(作為分裝者)"
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT_DESC"] = [=[1：分解者
+2：物品連結
+3：物品提供者
+4：他/她]=]
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER"] = "密語分解者"
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_DESC"] = "1：物品連結"
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "密語分解者(作為分裝者)"
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1：物品連結
+2：物品提供者
+3：他/她]=]
 L["OPT_MSG_ROLL_START"] = "通告新的骰裝"
 L["OPT_MSG_ROLL_START_DESC"] = [=[1：物品連結
 2：擲骰數字]=]
@@ -321,7 +359,7 @@ L["OPT_MSG_ROLL_WINNER_MASTERLOOT_DESC"] = [=[1：獲勝者
 4：他/她]=]
 L["OPT_MSG_ROLL_WINNER_WHISPER"] = "密語骰裝獲勝者"
 L["OPT_MSG_ROLL_WINNER_WHISPER_DESC"] = "1：物品連結"
-L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "密語骰裝獲勝者 (如同隊長分配)"
+L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "密語骰裝獲勝者 (作為分裝者)"
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1：物品連結
 2：物品提供者
 3：他/她]=]
@@ -332,6 +370,8 @@ L["OPT_WHISPER_ANSWER"] = "回答詢問"
 L["OPT_WHISPER_ANSWER_DESC"] = "讓插件自動回答來自隊伍/團隊成員的關於你拾取物品的密語。"
 L["OPT_WHISPER_ASK"] = "詢問戰利品"
 L["OPT_WHISPER_ASK_DESC"] = "當他人拾取你想要的戰利品時密語他們。"
+L["OPT_WHISPER_ASK_VARIANTS"] = "啟用不固定的詢問"
+L["OPT_WHISPER_ASK_VARIANTS_DESC"] = "當詢問戰利品時使用不同行(請看以下)，以降低重複性。"
 L["OPT_WHISPER_DESC"] = "更改插件是否會密語其他玩家並且/或回應其他人的訊息。"
 L["OPT_WHISPER_GROUP"] = "密語根據團體類型"
 L["OPT_WHISPER_GROUP_DESC"] = "如果其他人拾取你想要的物品則密語他們，這取決於你目前所處的團體類型。"
@@ -375,7 +415,8 @@ L["TRADE_START"] = "與 %s 開始交易。"
 
 -- Globals
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "物品的提供者並沒有使用PersoLootRoll插件。"
-LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "PersoLootRoll插件不支援附魔分解。"
+LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "The owner of this item has not allowed \"Disenchant\" bids." -- Translation missing
+LOOT_ROLL_INELIGIBLE_REASONPLR_NOT_ENCHANTER = "您的角色並未學習\"附魔\"專業技能。"
 
 -- Other
 L["ID"] = ID

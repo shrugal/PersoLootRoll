@@ -145,7 +145,7 @@ function Self.ToggleAnswersDropdown(roll, bid, answers, ...)
 
         for i,v in pairs(answers) do
             Self("Dropdown-Item-Execute")
-                .SetText(Util.In(v, Roll.ANSWER_NEED, Roll.ANSWER_GREED) and L["ROLL_BID_" .. self.bid] or v)
+                .SetText(Util.In(v, Roll.ANSWER_NEED, Roll.ANSWER_GREED) and L["ROLL_BID_" .. bid] or v)
                 .SetCallback("OnClick", function () roll:Bid(bid + i/10) end)
                 .AddTo(dropdown)
         end
@@ -459,6 +459,8 @@ end
 function Self.GetBidColor(bid, hex)
     if not bid then
         return 1, 1, 1
+    elseif bid == Roll.BID_DISENCHANT then
+        return .7, .26, .95
     elseif bid == Roll.BID_PASS then
         return .5, .5, .5
     else

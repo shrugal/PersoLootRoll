@@ -1,4 +1,5 @@
 local Name, Addon = ...
+local RI = LibStub("LibRealmInfo")
 local Util = Addon.Util
 local Self = Addon.Unit
 
@@ -36,7 +37,7 @@ Self.SPECS = {
 }
 
 -------------------------------------------------------
---                       Names                       --
+--                       Realm                       --
 -------------------------------------------------------
 
 -- Get the player's realm name for use in unit strings
@@ -51,6 +52,26 @@ function Self.Realm(unit)
 
     return name and realm or unit and unit:match("^.*-(.*)$") or nil
 end
+
+-- Get a unique indentifier for the unit's realm connection
+function Self.ConnectedRealm(unit)
+    local realm = Self.Realm(unit)
+    local connections = realm and select(9, RI:GetRealmInfo(realm))
+
+    if connections  then
+        local s = ""
+        for _,id in ipairs(connections) do
+            s = s .. (s == "" and "" or "-") .. select(3, RI:GetRealmInfoByID(id))
+        end
+        return s
+    else
+        return realm
+    end
+end
+
+-------------------------------------------------------
+--                        Name                       --
+-------------------------------------------------------
 
 -- Get a unit's name (incl. realm name if from another realm)
 function Self.Name(unit)
@@ -235,7 +256,7 @@ end
 -- Check if the player is an enchanter
 function Self.IsEnchanter()
     for _,i in Util.Each(GetProfessions()) do
-        if select(7, GetProfessionInfo(i)) == 333 then return true end
+        if i and select(7, GetProfessionInfo(i)) == 333 then return true end
     end
 end
 
