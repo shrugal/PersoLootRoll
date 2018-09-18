@@ -267,7 +267,7 @@ function Self.Update()
 
     -- Header
 
-    local header = {"ID", "ITEM", "LEVEL", "OWNER", "ML", "STATUS", "YOUR_BID", "WINNER"}
+    local header = Util.Tbl("ID", "ITEM", "LEVEL", "OWNER", "ML", "STATUS", "YOUR_BID", "WINNER")
     if #children == 0 then
         scroll.userdata.table.columns = {20, 1, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, 7 * 20 - 4}
 
@@ -605,7 +605,7 @@ function Self.Update()
         children[it(0)] = nil
     end
 
-    Util.TblRelease(rolls)
+    Util.TblRelease(rolls, header)
     scroll:ResumeLayout()
     scroll:DoLayout()
 
@@ -643,19 +643,25 @@ function Self.UpdateDetails(details, roll)
 
     -- Header
 
-    local header = {"PLAYER", "ITEM_LEVEL", "EQUIPPED", "BID", "ROLL", "VOTES"}
+    local header = Util.Tbl("PLAYER", "ITEM_LEVEL", "EQUIPPED", "CUSTOM", "BID", "ROLL", "VOTES", "")
+    local numCols = #header - 1 + #GUI.playerColumns
+
     if #children == 0 then
-        details.userdata.table.columns = {1, {25, 100}, {34, 100}, {25, 100}, {25, 100}, {25, 100}, 100}
+        local columns = {1, {25, 100}, {34, 100}, {25, 100}, {25, 100}, {25, 100}, 100}
         
         for i,v in pairs(header) do
-            local f = GUI("Label").SetFontObject(GameFontNormal).SetText(L[v]).SetColor(1, 0.82, 0)()
-            if i == #header then
-                f:SetUserData("cell", {colspan = 2})
+            if v == "CUSTOM" then
+                for j,col in ipairs(GUI.playerColumns) do
+                    details:AddChild(GUI("Label").SetFontObject(GameFontNormal).SetText(col.header).SetColor(1, 0.82, 0)())
+                    tinsert(columns, col.width or {25, 100})
+                end
+            else
+                details:AddChild(GUI("Label").SetFontObject(GameFontNormal).SetText(L[v]).SetColor(1, 0.82, 0)())
             end
-            details:AddChild(f)
         end
 
-        GUI.TableRowHighlight(details, #header)
+        details.userdata.table.columns = columns
+        GUI.TableRowHighlight(details, numCols)
     end
 
     -- Players
@@ -664,7 +670,7 @@ function Self.UpdateDetails(details, roll)
 
     local players = GUI.GetRollEligibleList(roll)
 
-    local it = Util.Iter(#header)
+    local it = Util.Iter(numCols)
     for _,player in ipairs(players) do
         -- Create the row
         if not children[it(0) + 1] then
@@ -687,6 +693,11 @@ function Self.UpdateDetails(details, roll)
                     .SetPoint(i == 1 and "LEFT" or "RIGHT")()
                 f.image:SetPoint("TOP")
                 f.OnRelease = GUI.ResetIcon
+            end
+
+            -- Custom columns
+            for i,col in ipairs(GUI.playerColumns) do
+                GUI("Label").SetFontObject(GameFontNormal).AddTo(details)
             end
         
             -- Bid, Roll
@@ -749,6 +760,13 @@ function Self.UpdateDetails(details, roll)
             Util.TblRelease(links)
         end
 
+        -- Custom columns
+        for i,col in ipairs(Self.playerColumns) do
+            GUI(children[it()])
+                .SetText(Util.FnVal(col.desc, roll, player.unit, player) or player[col.name] or "-")
+                .Show()
+        end
+
         -- Bid
         GUI(children[it()])
             .SetText(roll:GetBidName(player.bid))
@@ -785,7 +803,7 @@ function Self.UpdateDetails(details, roll)
         children[it(0)] = nil
     end
 
-    Util.TblRelease(1, players)
+    Util.TblRelease(1, players, header)
     details:ResumeLayout()
 end
 

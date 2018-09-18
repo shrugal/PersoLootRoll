@@ -4,6 +4,18 @@ local AceGUI = LibStub("AceGUI-3.0")
 local Comm, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.GUI
 
+-- Events
+Self.events = CB:New(Self, "On", "Off")
+
+--- Fires when custom player columns are added or removed
+-- @bool  added Whether the entry was added
+-- @table entry The entry that was added/removed
+Self.EVENT_PLAYER_COLUMNS = "PLAYER_COLUMNS"
+
+-- Custom player columns
+Self.playerColumns = {}
+
+-- Windows
 Self.Rolls = {}
 Self.Actions = {}
 
@@ -234,11 +246,39 @@ function Self.ToggleAwardUnitDropdown(unit, ...)
 end
 
 -------------------------------------------------------
---                      Helper                       --
+--                Roll Eligible list                 --
 -------------------------------------------------------
 
+--- Add a custom column to the list of eligible players for a roll
+-- @string name A unique identifier
+-- @string header      Localized title, e.g. for table headers
+-- @param  value       Value for sorting etc., either a primitive or callback with parameters: roll, unit, listEntry
+-- @param  desc        Localized value shown to the user, either a string/int or callback with parameters: roll, unit, listEntry
+-- @param  width       Column width, @see table layout for details (optional)
+-- @string sortBefore  Other column name with lower sorting priority, one of "bid", "votes", "roll", "ilvl" or "unit" (optional)
+-- @param  sortDefault Sorting default value (optional)
+-- @bool   sortDesc    Sort in descending order (optional)
+-- @return table       The column entry
+function Self.AddPlayerColumn(name, header, value, desc, width, sortBefore, sortDefault, sortDesc)
+    local entry = Util.TblHash("name", name, "header", header, "value", value, "desc", desc, "width", width, "sortBefore", sortBefore, "sortDefault", sortDefault "sortDesc", sortDesc)
+    tinsert(playerColumns, entry)
+    Self.events:Fire(Self.EVENT_PLAYER_COLUMNS, true, entry)
+    return entry
+end
+
+-- Remove a custom column from the list of eligible player for a roll
+function Self.RemovePlayerColumn(name)
+    local i = Util.TblFindWhere(Self.playerColumns, "name", name)
+    if i then
+        local entry = tremove(Self.playerColumns, i)
+        Self.events:Fire(Self.EVENT_PLAYER_COLUMNS_CHANGE, false, entry)
+        return entry
+    end
+end
+
+-- Get list of eligible players for a roll
 function Self.GetRollEligibleList(roll)
-    return Util(roll.item:GetEligible()).Copy().Merge(roll.bids).Map(function (val, unit)
+    local list = Util(roll.item:GetEligible()).Copy().Merge(roll.bids).Map(function (val, unit)
         local t = Util.Tbl()
         t.unit = unit
         t.ilvl = roll.item:GetLevelForLocation(unit)
@@ -246,14 +286,36 @@ function Self.GetRollEligibleList(roll)
         t.votes = Util.TblCountOnly(roll.votes, unit)
         t.roll = roll.rolls[unit]
         return t
-    end, true).List().SortBy(
+    end, true).List()()
+
+    local sortBy = Util.Tbl(
         "bid",   99,  false,
         "votes", 0,   true,
         "roll",  100, true,
         "ilvl",  0,   false,
-        "unit"
-    )()
+        "unit",  nil, false
+    )
+
+    -- Add custom columns
+    for i,col in ipairs(Self.playerColumns) do
+        for j,entry in pairs(list) do
+            t[col.name] = Util.FnVal(col.value, roll, entry.unit, entry)
+        end
+
+        local sortPos = col.sortBefore and Util.TblFind(sortBy, col.sortBefore)
+        if sortPos then 
+            tinsert(sortBy, sortPos, col.sortDesc or false)
+            tinsert(sortBy, sortPos, col.sortDefault)
+            tinsert(sortBy, sortPos, col.name)
+        end
+    end
+    
+    return Util.TblSortBy(list, sortBy), Util.TblRelease(sortBy)
 end
+
+-------------------------------------------------------
+--                      Helper                       --
+-------------------------------------------------------
 
 function Self.ReverseAnchor(anchor)
     return anchor:gsub("TOP", "B-OTTOM"):gsub("BOTTOM", "T-OP"):gsub("LEFT", "R-IGHT"):gsub("RIGHT", "L-EFT"):gsub("-", "")

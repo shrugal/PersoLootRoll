@@ -991,7 +991,7 @@ end
 -- Sort a table of tables by given table keys and default values
 local Fn = function (a, b) return Self.Compare(b, a) end
 function Self.TblSortBy(t, ...)
-    local args = type(...) == "table" and (...) or {...}
+    local args = type(...) == "table" and (...) or Self.TblTmp(...)
     return Self.TblSort(t, function (a, b)
         for i=1, #args, 3 do
             local key, default, fn = args[i], args[i+1], args[i+2]            
@@ -1000,7 +1000,7 @@ function Self.TblSortBy(t, ...)
             local cmp = fn(a and a[key] or default, b and b[key] or default)
             if cmp ~= 0 then return cmp == -1 end
         end
-    end)
+    end), Self.TblReleaseTmp(args)
 end
 
 -- Merge two or more tables
@@ -1198,6 +1198,11 @@ function Self.FnCall(fn, v, i, val, index, ...)
     end
 end
 
+-- Get a value directly or as return value of a function
+function Self.FnVal(fn, ...)
+    return (type(fn) == "function" and Self.Push(fn(...)) or Self.Push(fn)).Pop()
+end
+    
 -- Some math
 function Self.FnInc(i) return i+1 end
 function Self.FnDec(i) return i-1 end

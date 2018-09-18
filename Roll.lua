@@ -42,23 +42,83 @@ Self.ANSWER_NEED = "NEED"
 Self.ANSWER_GREED = "GREED"
 
 -- Events
+Self.events = CB:New(Self, "On", "Off")
+
+--- Fires when a new roll is added
+-- @table roll The roll
 Self.EVENT_ADD = "ADD"
+
+--- Fires when a roll is cleared
+-- @table roll The roll
 Self.EVENT_CLEAR = "CLEAR"
+
+--- Fires when a roll starts
+-- @table roll    The roll
+-- @int   started The time when it started
 Self.EVENT_START = "START"
+
+--- Fires when a roll is restared
+-- @table roll The roll
 Self.EVENT_RESTART = "RESTART"
+
+--- Fires when a roll is canceled
+-- @table roll The roll
 Self.EVENT_CANCEL = "CANCEL"
+
+--- Fires when the player advertises a roll in chat
+-- @table roll     The roll
+-- @bool  manually Whether it was triggered manually by the player (e.g. through the UI)
+-- @bool  silent   Whether a status update was send afterwards
 Self.EVENT_ADVERTISE = "ADVERTISE"
+
+--- Fires when someone bids on a roll
+-- @table     roll       The roll
+-- @int|float bid        The bid value
+-- @string    fromUnit   The unit the bid came from
+-- @int       rollResult The random roll result (1-100)
+-- @bool      isImport   Whether it was an import received from the roll owner
 Self.EVENT_BID = "BID"
+
+--- Fires when someone votes on a roll
+-- @table     roll       The roll
+-- @int|float bid        The unit being voted for
+-- @string    fromUnit   The unit the vote came from
+-- @bool      isImport   Whether it was an import received from the roll owner
 Self.EVENT_VOTE = "VOTE"
+
+--- Fires when a roll ends
+-- @table roll  The roll
+-- @int   ended The time when it ended
 Self.EVENT_END = "END"
+
+--- Fires when a roll winner (or no winner) is picked
+-- @table  roll   The roll
+-- @string winner The winner (optional)
 Self.EVENT_AWARD = "AWARD"
+
+--- Fires when the roll item is traded
+-- @table  roll   The roll
+-- @string target The unit being traded to
 Self.EVENT_TRADE = "TRADE"
+
+--- Fires when a roll's visiblity in GUIs is changed
+-- @table roll   The roll
+-- @bool  hidden Whether the roll is now hidden or not
 Self.EVENT_VISIBILITY = "VISIBILITY"
+
+--- Fires when a whisper message is received from the owner/winner
+-- @table  roll The roll
+-- @string msg  The message
+-- @string unit The sender
 Self.EVENT_CHAT = "CHAT"
+
+--- Catchall event that fires for all of the above
+-- @string event The original event
+-- @param  ...   The original event parameters
 Self.EVENT_CHANGE = "CHANGE"
+
 Self.EVENTS = {Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_RESTART, Self.EVENT_CANCEL, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_AWARD, Self.EVENT_TRADE, Self.EVENT_VISIBILITY, Self.EVENT_CHAT}
 
-Self.events = CB:New(Self, "On", "Off")
 
 local changeFn = function (...) Self.events:Fire(Self.EVENT_CHANGE, ...) end
 for _,ev in pairs(Self.EVENTS) do
@@ -338,7 +398,7 @@ function Self:Start(started)
                     Comm.SendPlh(Comm.PLH_ACTION_TRADE, self, self.item.link)
                 end
                 
-                Self.events:Fire(Self.EVENT_START, self)
+                Self.events:Fire(Self.EVENT_START, self, self.started)
             end
 
             -- Let others know
@@ -556,7 +616,7 @@ function Self:End(winner, cleanup, force)
         self.ended = time()
         self.started = self.started or time()
 
-        Self.events:Fire(Self.EVENT_END, self)
+        Self.events:Fire(Self.EVENT_END, self, self.ended)
     end
 
     -- Determine a winner
@@ -600,7 +660,7 @@ function Self:End(winner, cleanup, force)
         end
     end
 
-    Self.events:Fire(Self.EVENT_AWARD, self)
+    Self.events:Fire(Self.EVENT_AWARD, self, self.winner)
     if not statusSend then self:SendStatus() end
 
     return self
@@ -717,7 +777,7 @@ end
 -- Toggle the rolls visiblity in GUIs
 function Self:ToggleVisibility(show)
     if show == nil then self.hidden = not self.hidden else self.hidden = not show end
-    Self.events:Fire(Self.EVENT_VISIBILITY, self)
+    Self.events:Fire(Self.EVENT_VISIBILITY, self, self.hidden)
 end
 
 -- Log a chat message about the roll
@@ -730,7 +790,7 @@ function Self:AddChat(msg, unit)
     self.chat = self.chat or Util.Tbl()
     tinsert(self.chat, msg)
     
-    Self.events:Fire(Self.EVENT_CHAT, self)
+    Self.events:Fire(Self.EVENT_CHAT, self, msg, unit)
 end
 
 -------------------------------------------------------

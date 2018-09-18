@@ -4,13 +4,31 @@ local CB = LibStub("CallbackHandler-1.0")
 local Comm, GUI, Roll, Unit, Util = Addon.Comm, Addon.GUI, Addon.Roll, Addon.Unit, Addon.Util
 local Self = Addon.Session
 
-Self.EVENT_SET = "SET"
-Self.EVENT_CLEAR = "CLEAR"
-Self.EVENT_SESSION = "SESSION"
-Self.EVENT_CHANGE = "CHANGE"
-Self.EVENTS = {Self.EVENT_SET, Self.EVENT_CLEAR, Self.EVENT_SESSION}
-
+-- Events
 Self.events = CB:New(Self, "On", "Off")
+
+--- Fired when a session is started
+-- @string unit   The masterlooter
+-- @table  rules  The session rules
+-- @bool   silent Whether other players are informed about it
+Self.EVENT_START = "START"
+
+--- Fired when a session is stopped/cleared
+-- @bool silent Whether other players are informed about it
+Self.EVENT_CLEAR = "CLEAR"
+
+--- Fired when rules are set or changed
+-- @table  rules  The session rules
+-- @bool   silent Whether other players are informed about it
+Self.EVENT_RULES = "RULES"
+
+
+--- Catchall event that fires for all of the above
+-- @string event The original event
+-- @param  ...   The original event parameters
+Self.EVENT_CHANGE = "CHANGE"
+
+Self.EVENTS = {Self.EVENT_START, Self.EVENT_CLEAR, Self.EVENT_RULES}
 
 local changeFn = function (...) Self.events:Fire(Self.EVENT_CHANGE, ...) end
 for _,ev in pairs(Self.EVENTS) do
@@ -26,7 +44,7 @@ Self.masterlooting = {}
 -------------------------------------------------------
 
 -- Set (or reset) the masterlooter
-function Self.SetMasterlooter(unit, session, silent)
+function Self.SetMasterlooter(unit, rules, silent)
     unit = unit and Unit.Name(unit)
 
     -- Clear old masterlooter
@@ -48,7 +66,7 @@ function Self.SetMasterlooter(unit, session, silent)
 
     -- Let others know
     if unit then
-        Self.SetRules(session)
+        Self.SetRules(rules)
 
         local isSelf = UnitIsUnit(Self.masterlooter, "player")
         Addon:Info(isSelf and L["MASTERLOOTER_SELF"] or L["MASTERLOOTER_OTHER"], Comm.GetPlayerLink(unit))
@@ -60,7 +78,12 @@ function Self.SetMasterlooter(unit, session, silent)
         end
     end
 
-    Self.events:Fire(unit and Self.EVENT_SET or Self.EVENT_CLEAR, unit, session, silent)
+    -- Fire event
+    if unit then
+        Self.events:Fire(Self.EVENT_START, unit, rules, silent)
+    else
+        Self.events:Fire(Self.EVENT_CLEAR, silent)
+    end
 end
 
 -- Check if the unit (or the player) is our masterlooter
@@ -202,7 +225,7 @@ function Self.SetRules(rules, silent)
         wipe(Self.rules)
     end
 
-    Self.events:Fire(Self.EVENT_SESSION, Self.rules, silent)
+    Self.events:Fire(Self.EVENT_RULES, Self.rules, silent)
 
     return Self.rules
 end
