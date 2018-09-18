@@ -45,30 +45,6 @@ function Self.Initiate(target)
     return true
 end
 
--- Start a trade
-function Self.Start()
-    Self.Clear()
-    Self.target = Unit.Name("NPC")
-
-    if Self.target then
-        -- Find items the target has won and add them to the trade window
-        local i = 1
-        for _,roll in pairs(Addon.rolls) do
-            if i > MAX_TRADE_ITEMS then
-                break
-            elseif roll.item.isOwner and roll.winner == Self.target and not roll.traded then
-                local bag, slot, isTradable = roll.item:GetPosition()
-                if bag and slot and isTradable then
-                    ClearCursor()
-                    PickupContainerItem(bag, slot)
-                    ClickTradeButton(i)
-                    i = i + 1
-                end
-            end
-        end
-    end
-end
-
 -- Finalize a trade
 function Self.End()
     if Self.target then
@@ -122,19 +98,60 @@ function Self.Clear()
 end
 
 -------------------------------------------------------
---                       Events                      --
+--                       Helper                      --
 -------------------------------------------------------
 
--- Save (or clear) item links for later reference
-function Self.OnPlayerItem(_, slot)
+-- Check if the user should be allowed to initiate trade with a roll owner or winner
+function Self.ShouldInitTrade(roll)
+    local target = roll:GetActionTarget()
+    return target and (roll.ownerId or roll.chat or IsGuildMember(target) or Unit.IsFriend(target) or Unit.IsClubMember(target))
+end
+
+-------------------------------------------------------
+--                    Events/Hooks                   --
+-------------------------------------------------------
+
+function Self:OnEnable()
+    -- Register events
+    Self:RegisterEvent("TRADE_SHOW")
+    Self:RegisterEvent("TRADE_PLAYER_ITEM_CHANGED")
+    Self:RegisterEvent("TRADE_TARGET_ITEM_CHANGED")
+    Self:RegisterEvent("TRADE_CLOSED")
+    Self:RegisterEvent("TRADE_REQUEST_CANCEL", Self.Clear)
+end
+
+function Self.TRADE_SHOW()
+    Self.Clear()
+    Self.target = Unit.Name("NPC")
+
+    if Self.target then
+        -- Find items the target has won and add them to the trade window
+        local i = 1
+        for _,roll in pairs(Addon.rolls) do
+            if i > MAX_TRADE_ITEMS then
+                break
+            elseif roll.item.isOwner and roll.winner == Self.target and not roll.traded then
+                local bag, slot, isTradable = roll.item:GetPosition()
+                if bag and slot and isTradable then
+                    ClearCursor()
+                    PickupContainerItem(bag, slot)
+                    ClickTradeButton(i)
+                    i = i + 1
+                end
+            end
+        end
+    end
+end
+
+function Self.TRADE_PLAYER_ITEM_CHANGED(_, slot)
     Self.items.player[slot] = GetTradePlayerItemLink(slot)
 end
-function Self.OnTargetItem(_, slot)
+
+function Self.TRADE_TARGET_ITEM_CHANGED(_, slot)
     Self.items.target[slot] = GetTradeTargetItemLink(slot)
 end
 
--- Called when a trade is ended (successfully or not)
-function Self.OnClose()
+function Self.TRADE_CLOSED()
     -- This usually get's called twice in a row
     if Self.timers.onClose then
         Addon:CancelTimer(Self.timers.onClose)
@@ -145,14 +162,4 @@ function Self.OnClose()
     if Self.target then
         Self.timers.onClose = Addon:ScheduleTimer(Self.End, 1)
     end
-end
-
--------------------------------------------------------
---                       Helper                      --
--------------------------------------------------------
-
--- Check if the user should be allowed to initiate trade with a roll owner or winner
-function Self.ShouldInitTrade(roll)
-    local target = roll:GetActionTarget()
-    return target and (roll.ownerId or roll.chat or IsGuildMember(target) or Unit.IsFriend(target) or Unit.IsClubMember(target))
 end

@@ -392,11 +392,6 @@ function Self:Start(started)
 
                 -- Let everyone know
                 self:Advertise(false, true)
-
-                -- Send message to PLH users
-                if self.isOwner then
-                    Comm.SendPlh(Comm.PLH_ACTION_TRADE, self, self.item.link)
-                end
                 
                 Self.events:Fire(Self.EVENT_START, self, self.started)
             end
@@ -1166,7 +1161,7 @@ end
 
 -- Check if the roll is from an addon user
 function Self:OwnerUsesAddon()
-    return Util.Bool(self.ownerId or self.itemOwnerId or Addon.plhUsers[self.owner])
+    return Util.Bool(self.ownerId or self.itemOwnerId or Addon.compAddonUsers[self.owner])
 end
 
 -- Check if the player has to take an action to complete the roll (e.g. trade)

@@ -156,7 +156,7 @@ L["TIP_MASTERLOOT_STOP"] = "Quitar el maestro despojador"
 L["TIP_MASTERLOOTING"] = "Grupo con maestro despojador (%d): "
 L["TIP_MINIMAP_ICON"] = [=[|cffffff78Clic-izquierdo:|r Fija la ventana de repartos
 |cffffff78Clic-derecho:|r Muestra Opciones]=]
-L["TIP_PLH_USERS"] = "Usuarios de PLH:"
+L["TIP_COMP_ADDON_USERS"] = "Compatible addon users:" -- Translation missing
 L["TIP_VOTES"] = "Votos de:"
 
 -- Options - Home

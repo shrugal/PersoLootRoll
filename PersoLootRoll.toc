@@ -22,19 +22,24 @@ Locale\ruRU.lua
 Locale\zhCN.lua
 Locale\zhTW.lua
 Util\Comm.lua
-Util\Item.lua
 
 # Data
 Data\Items.lua
 Data\Instances.lua
 
-# Application logic
+# Application, GUI
 Addon.lua
-Session.lua
-Roll.lua
-Trade.lua
-Inspect.lua
-GUI\GUI.xml
 Events.lua
 Hooks.lua
-Options.lua
+GUI\GUI.xml
+
+# Modules
+Modules\Inspect.lua
+Modules\Item.lua
+Modules\Options.lua
+Modules\Roll.lua
+Modules\Session.lua
+Modules\Trade.lua
+
+# Plugins
+Plugins\PersonalLootHelper.lua

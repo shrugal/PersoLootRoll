@@ -311,3 +311,100 @@ end
 function Self.SendCancellation(unit, target)
     Comm.Send(Comm.EVENT_MASTERLOOT_DEC, unit and Unit.FullName(unit) or nil, target)
 end
+
+-- ASK
+Comm.Listen(Comm.EVENT_MASTERLOOT_ASK, function (event, msg, channel, sender, unit)
+    if Session.IsMasterlooter() then
+        Session.SetMasterlooting(unit, nil)
+        Session.SendOffer(unit)
+    elseif channel == Comm.TYPE_WHISPER then
+        Session.SendCancellation(nil, unit)
+    elseif Session.GetMasterlooter() then
+        Session.SendConfirmation(unit)
+    end
+end)
+
+-- OFFER
+Comm.ListenData(Comm.EVENT_MASTERLOOT_OFFER, function (event, data, channel, sender, unit)
+    Session.SetMasterlooting(unit, unit)
+
+    if Session.IsMasterlooter(unit) then
+        Session.SendConfirmation()
+        Session.SetRules(data.session)
+    elseif Session.UnitAllow(unit) then
+        if Session.UnitAccept(unit) then
+            Session.SetMasterlooter(unit, data.session)
+        elseif not data.silent then
+            local dialog = StaticPopupDialogs[GUI.DIALOG_MASTERLOOT_ASK]
+            dialog.text = L["DIALOG_MASTERLOOT_ASK"]:format(unit)
+            dialog.OnAccept = function ()
+                Session.SetMasterlooter(unit, data.session)
+            end
+            StaticPopup_Show(GUI.DIALOG_MASTERLOOT_ASK)
+        end
+    end
+end)
+
+-- ACK
+Comm.Listen(Comm.EVENT_MASTERLOOT_ACK, function (event, ml, channel, sender, unit)
+    ml = Unit(ml)
+    if ml then
+        if UnitIsUnit(ml, "player") and not Session.IsMasterlooter() then
+            Session.SendCancellation(nil, channel == Comm.TYPE_WHISPER and unit or nil)
+        else
+            Session.SetMasterlooting(unit, ml)
+        end
+    end
+end)
+
+-- DEC
+Comm.Listen(Comm.EVENT_MASTERLOOT_DEC, function (event, player, channel, sender, unit)
+    player = Unit(player)
+
+    -- Clear the player's masterlooter
+    if Session.IsMasterlooter(unit) and (Util.StrIsEmpty(player) or UnitIsUnit(player, "player")) then
+        Session.SetMasterlooter(nil, nil, true)
+    elseif player == unit or Session.masterlooting[player] == unit then
+        Session.SetMasterlooting(player, nil)
+    end
+
+    -- Clear everybody who has the sender as masterlooter
+    if Util.StrIsEmpty(player) then
+        Session.ClearMasterlooting(unit)
+    end
+end)
+
+-------------------------------------------------------
+--                    Events/Hooks                   --
+-------------------------------------------------------
+
+function Self:OnEnable()
+    -- Register events
+    Self:RegisterEvent("GROUP_JOINED")
+    Self:RegisterEvent("GROUP_LEFT")
+    Self:RegisterEvent("CHAT_MSG_SYSTEM")
+end
+
+function Self.GROUP_JOINED()
+    Self.Restore()
+end
+
+function Self.GROUP_LEFT()
+    Self.SetMasterlooter(nil)
+    wipe(Self.masterlooting)
+end
+
+function Self.CHAT_MSG_SYSTEM(_, msg)
+    -- Check if a player left the group/raid
+    for _,pattern in pairs(Comm.PATTERNS_LEFT) do
+        local unit = msg:match(pattern)
+        if unit then
+            -- Clear masterlooter
+            if unit == Session.GetMasterlooter() then
+                Session.SetMasterlooter(nil, nil, true)
+            end
+            Session.SetMasterlooting(unit, nil)
+            Session.ClearMasterlooting(unit)
+        end
+    end
+end

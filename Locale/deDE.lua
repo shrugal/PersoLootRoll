@@ -156,7 +156,7 @@ L["TIP_MASTERLOOT_STOP"] = "Plündermeister entfernen"
 L["TIP_MASTERLOOTING"] = "Plündermeister Gruppe (%d):"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff78Links-Klick:|r Verlosung-Übersicht umschalten
 |cffffff78Rechts-Klick:|r Optionen öffnen]=]
-L["TIP_PLH_USERS"] = "PLH Nutzer:"
+L["TIP_COMP_ADDON_USERS"] = "Nutzer kompatibler Addons:"
 L["TIP_VOTES"] = "Stimmen von:"
 
 -- Options - Home

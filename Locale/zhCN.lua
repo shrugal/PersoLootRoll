@@ -156,7 +156,7 @@ L["TIP_MASTERLOOT_STOP"] = "移除负责分装者"
 L["TIP_MASTERLOOTING"] = "有分装者的队伍:"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff00左鍵:|r 开关骰装视窗 
 |cffffff00右键:|r 设定选项]=]
-L["TIP_PLH_USERS"] = "PLH使用者："
+L["TIP_COMP_ADDON_USERS"] = "Compatible addon users:" -- Translation missing
 L["TIP_VOTES"] = "表決來自:"
 
 -- Options - Home

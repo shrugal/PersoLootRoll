@@ -156,7 +156,7 @@ L["TIP_MASTERLOOT_STOP"] = "Убрать ответственного за до�
 L["TIP_MASTERLOOTING"] = "Группа ответственного за добычу:"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff78Left-Click:|r Показать окно с бросками
 |cffffff78Right-Click:|r Открыть настройки]=]
-L["TIP_PLH_USERS"] = "PLH пользователи:"
+L["TIP_COMP_ADDON_USERS"] = "Compatible addon users:" -- Translation missing
 L["TIP_VOTES"] = "Голоса от:"
 
 -- Options - Home

@@ -94,17 +94,17 @@ function Self.Show()
                             end
                         end
 
-                        -- PLH users
-                        if next(Addon.plhUsers) then
-                            GameTooltip:AddLine((count > 0 and "\n" or "") .. L["TIP_PLH_USERS"])
-                            for unit,version in pairs(Addon.plhUsers) do
-                                GameTooltip:AddLine(Unit.ColoredShortenedName(unit) .. ": " .. version, 1, 1, 1, false)
+                        -- Users of compatible addons
+                        if next(Addon.compAddonUsers) then
+                            GameTooltip:AddLine((count > 0 and "\n" or "") .. L["TIP_COMP_ADDON_USERS"])
+                            for unit,addon in pairs(Addon.compAddonUsers) do
+                                GameTooltip:AddLine(Unit.ColoredShortenedName(unit) .. ": " .. addon, 1, 1, 1, false)
                             end
                         end
 
                         -- Addon missing
                         if count + 1 < GetNumGroupMembers() then
-                            GameTooltip:AddLine(((count > 0 or next(Addon.plhUsers)) and "\n" or "") .. L["TIP_ADDON_MISSING"])
+                            GameTooltip:AddLine(((count > 0 or next(Addon.compAddonUsers)) and "\n" or "") .. L["TIP_ADDON_MISSING"])
                             local s = ""
                             for i=1,GetNumGroupMembers() do
                                 local unit = GetRaidRosterInfo(i)

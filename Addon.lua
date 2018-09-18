@@ -24,7 +24,9 @@ Addon.CHANNELS = Util.TblFlip({Addon.CHANNEL_ALPHA, Addon.CHANNEL_BETA, Addon.CH
 Addon.versions = {}
 Addon.versionNoticeShown = false
 Addon.disabled = {}
-Addon.plhUsers = {}
+
+-- Users of compatible addons
+Addon.compAddonUsers = {}
 
 -- Other
 Addon.rolls = Util.TblCounter()
@@ -386,7 +388,7 @@ function Addon:UnitIsTracking(unit, inclCompAddons)
         return self:IsTracking()
     else
         unit = Unit.Name(unit)
-        return self.versions[unit] and not self.disabled[unit] or inclCompAddons and self.plhUsers[unit]
+        return self.versions[unit] and not self.disabled[unit] or inclCompAddons and self.compAddonUsers[unit]
     end
 end
 
@@ -415,7 +417,7 @@ function Addon:SetVersion(unit, version)
     version = tonumber(version) or version
 
     self.versions[unit] = version
-    self.plhUsers[unit] = nil
+    self.compAddonUsers[unit] = nil
 
     if not version then
         self.disabled[unit] = nil
@@ -466,7 +468,7 @@ end
 function Addon:GetNumAddonUsers(inclCompAddons)
     local n = Util.TblCount(self.versions) - Util.TblCount(self.disabled)
     if inclCompAddons then
-        n = n + Util.TblCount(Addon.plhUsers)
+        n = n + Util.TblCount(Addon.compAddonUsers)
     end
     return n
 end

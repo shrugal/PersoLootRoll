@@ -225,11 +225,26 @@ function Self.Stop()
 end
 
 -------------------------------------------------------
---                      Events                       --
+--                   Events/Hooks                    --
 -------------------------------------------------------
 
--- INSPECT_READY
-function Self.OnInspectReady(unit)
+function Self:OnEnable()
+    -- Register events
+    Self:RegisterEvent("ENCOUNTER_START", Self.Stop)
+    Self:RegisterEvent("ENCOUNTER_END", Self.Start)
+    Self:RegisterEvent("PARTY_MEMBER_ENABLE")
+    Self:RegisterEvent("INSPECT_READY")
+    Self:RegisterEvent("CHAT_MSG_SYSTEM")
+end
+
+function Self.PARTY_MEMBER_ENABLE(event, unit)
+    if Addon:IsTracking() then Self.Queue(unit) end
+end
+
+function Self.INSPECT_READY(_, guid)
+    local _, _, _, _, _, name, realm = GetPlayerInfoByGUID(guid)
+    local unit = realm and realm ~= "" and name .. "-" .. realm or name
+
     -- Inspect the unit
     if unit == Self.target then
         if Self.queue[unit] and Unit.InGroup(unit) then
@@ -243,5 +258,28 @@ function Self.OnInspectReady(unit)
     -- Extend a running loop timer
     if Addon:TimerIsRunning(Self.timer) then
         Self.timer = Addon:ExtendTimerTo(Self.timer, Self.INSPECT_DELAY)
+    end
+end
+
+function Self.CHAT_MSG_SYSTEM(_, msg)
+    if not Addon:IsTracking() then return end
+
+    -- Check if a player joined the group/raid
+    for _,pattern in pairs(Comm.PATTERNS_JOINED) do
+        local unit = msg:match(pattern)
+        if unit then
+            -- Queue inspection
+            Self.Queue(unit)
+            return
+        end
+    end
+    
+    -- Check if a player left the group/raid
+    for _,pattern in pairs(Comm.PATTERNS_LEFT) do
+        local unit = msg:match(pattern)
+        if unit then
+            -- Clear inspect cache
+            Self.Clear(unit)
+        end
     end
 end

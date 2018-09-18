@@ -45,31 +45,13 @@ Self.PATTERN_RAID_LEFT = ERR_RAID_MEMBER_REMOVED_S:gsub("%%s", "(.+)")
 Self.PATTERNS_JOINED = {Self.PATTERN_PARTY_JOINED, Self.PATTERN_INSTANCE_JOINED, Self.PATTERN_RAID_JOINED}
 Self.PATTERNS_LEFT = {Self.PATTERN_PARTY_LEFT, Self.PATTERN_INSTANCE_LEFT, Self.PATTERN_RAID_LEFT}
 
--- PLH integration
-Self.PLH_NAME = "Personal Loot Helper"
-Self.PLH_VERSION = "2.08"
-Self.PLH_EVENT = "PLH"
-Self.PLH_BID_NEED = "MAIN SPEC"
-Self.PLH_BID_GREED = "OFF SPEC"
-Self.PLH_BID_DISENCHANT = "SHARD"
-Self.PLH_ACTION_CHECK = "IDENTIFY_USERS"
-Self.PLH_ACTION_VERSION = "VERSION"
-Self.PLH_ACTION_KEEP = "KEEP"
-Self.PLH_ACTION_TRADE = "TRADE"
-Self.PLH_ACTION_REQUEST = "REQUEST"
-Self.PLH_ACTION_OFFER = "OFFER"
-
 -------------------------------------------------------
 --                      Chatting                     --
 -------------------------------------------------------
 
 -- Get the complete message prefix for an event
 function Self.GetPrefix(event)
-    if not Util.In(event:sub(1, 3), Self.PREFIX, Self.PLH_EVENT) then
-        event = Self.PREFIX .. event
-    end
-
-    return event
+    return event:sub(1, 3) == Self.PREFIX and event or Self.PREFIX .. event
 end
 
 -- Figure out the channel and target for a message
@@ -187,17 +169,6 @@ function Self.SendData(event, data, target, prio, callbackFn, callbackArg)
     Self.Send(event, Addon:Serialize(data), target, prio, callbackFn, callbackArg)
 end
 
--- Send a PLH message
-function Self.SendPlh(action, roll, param)
-    if not IsAddOnLoaded(Self.PLH_NAME) then
-        local msg = not roll and ("%s~ ~%s"):format(action, param)
-                or type(roll) == "string" and ("%s~ ~%s~%s"):format(action, roll, param)
-                or param and ("%s~%d~%s~%s"):format(action, roll.item.id, Unit.FullName(roll.item.owner), param)
-                or ("%s~%d~%s"):format(action, roll.item.id, Unit.FullName(roll.item.owner))
-        Self.Send(Self.PLH_EVENT, msg)
-    end
-end
-
 -- Listen for an addon message
 function Self.Listen(event, method, fromSelf, fromAll)
     Addon:RegisterComm(Self.GetPrefix(event), function (event, msg, channel, sender)
@@ -253,24 +224,15 @@ function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport)
             end
 
             Util.TblRelease(data)
-
-            -- Send message to PLH users
-            if fromSelf and bid == Roll.BID_NEED and not Session.GetMasterlooter() then
-                Self.SendPlh(Self.PLH_ACTION_KEEP, roll)
-            end
         -- Send bid to owner
         elseif fromSelf then
             if roll.ownerId then
                 Self.SendData(Self.EVENT_BID, Util.TblHash("ownerId", roll.ownerId, "bid", bid), roll.owner)
-            elseif bid ~= Roll.BID_PASS then
+            elseif bid ~= Roll.BID_PASS and not Addon.compAddonUsers then
                 local owner, link = roll.item.owner, roll.item.link
 
-                -- Send message to PLH users
-                if Addon.plhUsers[owner] then
-                    local request = Util.Select(bid, Roll.BID_NEED, Self.PLH_BID_NEED, Roll.BID_DISENCHANT, Self.PLH_BID_DISENCHANT, Self.PLH_BID_GREED)
-                    Self.SendPlh(Self.PLH_ACTION_REQUEST, roll, request)
                 -- Roll on it in chat
-                elseif roll.posted then
+                if roll.posted then
                     if Addon.db.profile.messages.group.roll and Events.lastPostedRoll == roll then
                         RandomRoll("1", floor(bid) == Roll.BID_GREED and "50" or "100")
                     end
@@ -359,9 +321,7 @@ function Self.RollEnd(roll)
             end
             
             -- Announce to target
-            if Addon.plhUsers[roll.winner] then
-                Self.SendPlh(Self.PLH_ACTION_OFFER, roll, Unit.FullName(roll.winner))
-            elseif Addon.db.profile.messages.whisper.answer and not Addon:UnitIsTracking(roll.winner) then
+            if Addon.db.profile.messages.whisper.answer and not Addon:UnitIsTracking(roll.winner, true) then
                 if roll.item:GetNumEligible(true) == 1 then
                     if roll.item.isOwner then
                         Self.ChatLine("MSG_ROLL_ANSWER_YES", roll.winner)

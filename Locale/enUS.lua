@@ -156,7 +156,7 @@ L["TIP_MASTERLOOT_STOP"] = "Remove masterlooter"
 L["TIP_MASTERLOOTING"] = "Masterlooting group (%d):"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff78Left-Click:|r Toggle rolls window
 |cffffff78Right-Click:|r Show Options]=]
-L["TIP_PLH_USERS"] = "PLH users:"
+L["TIP_COMP_ADDON_USERS"] = "Compatible addon users:"
 L["TIP_VOTES"] = "Votes from:"
 
 -- Options - Home

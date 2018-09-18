@@ -1,6 +1,6 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Comm, GUI, Inspect, Item, Locale, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Inspect, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+local Comm, GUI, Item, Locale, Session, Roll, Unit, Util = Addon.Comm, Addon.GUI, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
 local Self = Addon.Events
 
 -- Message patterns
@@ -13,10 +13,6 @@ Self.VERSION_CHECK_DELAY = 5
 Self.CHAT_MARGIN_BEFORE = 300
 Self.CHAT_MARGIN_AFTER = 30
 
--- Remember the last locked item slot
-Self.lastLocked = {}
--- Remember the bag of the last looted item
-Self.lastLootedBag = nil
 -- Remember the last item link posted in group chat so we can track random rolls
 Self.lastPostedRoll = nil
 -- Remember the last time a version check happened
@@ -37,12 +33,6 @@ function Self.GROUP_JOINED()
         Comm.SendData(Comm.EVENT_CHECK)
     end, Self.VERSION_CHECK_DELAY)
 
-    -- Discover PLH users
-    Comm.SendPlh(Comm.PLH_ACTION_CHECK, nil, Unit.FullName("player"))
-    
-    -- Restore or ask for masterlooter
-    Session.Restore()
-
     -- Start tracking process
     Addon:OnTrackingChanged(true)
 end
@@ -51,14 +41,10 @@ function Self.GROUP_LEFT()
     -- Stop tracking process
     Addon:OnTrackingChanged(true)
 
-    -- Clear masterlooter
-    Session.SetMasterlooter(nil)
-    wipe(Session.masterlooting)
-
     -- Clear versions and disabled
     wipe(Addon.versions)
     wipe(Addon.disabled)
-    wipe(Addon.plhUsers)
+    wipe(Addon.compAddonUsers)
 
     -- Clear lastXYZ stuff
     Self.lastPostedRoll = nil
@@ -68,56 +54,8 @@ function Self.GROUP_LEFT()
     wipe(Self.lastChattedRoll)
 end
 
-function Self.PARTY_MEMBER_ENABLE(event, unit)
-    if Addon:IsTracking() then Inspect.Queue(unit) end
-end
-
 function Self.RAID_ROSTER_UPDATE()
     Addon:OnTrackingChanged()
-end
-
--------------------------------------------------------
---                     Inspect                       --
--------------------------------------------------------
-
-function Self.INSPECT_READY(event, guid)
-    local _, _, _, _, _, name, realm = GetPlayerInfoByGUID(guid)
-    local unit = realm and realm ~= "" and name .. "-" .. realm or name
-    Inspect.OnInspectReady(unit)
-end
-
--------------------------------------------------------
---                      Items                        --
--------------------------------------------------------
-
-function Self.ITEM_PUSH(event, bagId)
-    Self.lastLootedBag = bagId == 0 and 0 or (bagId - CharacterBag0Slot:GetID() + 1)
-end
-
-function Self.ITEM_LOCKED(event, bagOrEquip, slot)
-    tinsert(Self.lastLocked, {bagOrEquip, slot})
-end
-
-function Self.ITEM_UNLOCKED(event, bagOrEquip, slot)
-    local pos = {bagOrEquip, slot}
-    
-    if #Self.lastLocked == 1 and not Util.TblEquals(pos, Self.lastLocked[1]) then
-        -- The item has been moved
-        Item.OnMove(Self.lastLocked[1], pos)
-    elseif #Self.lastLocked == 2 then
-        -- The item has switched places with another
-        Item.OnSwitch(Self.lastLocked[1], Self.lastLocked[2])
-    end
-
-    wipe(Self.lastLocked)
-end
-
-function Self.BAG_UPDATE_DELAYED(event)
-    for i, entry in pairs(Item.queue) do
-        Addon:CancelTimer(entry.timer)
-        entry.fn(unpack(entry.args))
-    end
-    wipe(Item.queue)
 end
 
 -------------------------------------------------------
@@ -183,16 +121,6 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
         end
     end
 
-    -- Check if a player joined the group/raid
-    for _,pattern in pairs(Comm.PATTERNS_JOINED) do
-        local unit = msg:match(pattern)
-        if unit then
-            -- Queue inspection
-            Inspect.Queue(unit)
-            return
-        end
-    end
-
     -- Check if a player left the group/raid
     for _,pattern in pairs(Comm.PATTERNS_LEFT) do
         local unit = msg:match(pattern)
@@ -213,16 +141,6 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
                     end
                 end
             end
-
-            -- Clear inspect cache
-            Inspect.Clear(unit)
-
-            -- Clear masterlooter
-            if unit == Session.GetMasterlooter() then
-                Session.SetMasterlooter(nil, nil, true)
-            end
-            Session.SetMasterlooting(unit, nil)
-            Session.ClearMasterlooting(unit)
 
             -- Clear version and disabled
             Addon:SetVersion(unit, nil)
@@ -245,7 +163,7 @@ function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
         item = Item.FromLink(item, unit)
 
         if item.isOwner then
-            item:SetPosition(Self.lastLootedBag, 0)
+            item:SetPosition(Item.lastLootedBag, 0)
 
             local owner = Session.GetMasterlooter() or unit
             local isOwner = Unit.IsSelf(owner)
@@ -436,22 +354,6 @@ function Self.RegisterEvents()
     Addon:RegisterEvent("GROUP_LEFT", Self.GROUP_LEFT)
     Addon:RegisterEvent("PARTY_MEMBER_ENABLE", Self.PARTY_MEMBER_ENABLE)
     Addon:RegisterEvent("RAID_ROSTER_UPDATE", Self.RAID_ROSTER_UPDATE)
-    -- Combat
-    Addon:RegisterEvent("ENCOUNTER_START", Inspect.Stop)
-    Addon:RegisterEvent("ENCOUNTER_END", Inspect.Start)
-    -- Inspect
-    Addon:RegisterEvent("INSPECT_READY", Self.INSPECT_READY)
-    -- Trade
-    Addon:RegisterEvent("TRADE_SHOW", Trade.Start)
-    Addon:RegisterEvent("TRADE_PLAYER_ITEM_CHANGED", Trade.OnPlayerItem)
-    Addon:RegisterEvent("TRADE_TARGET_ITEM_CHANGED", Trade.OnTargetItem)
-    Addon:RegisterEvent("TRADE_CLOSED", Trade.OnClose)
-    Addon:RegisterEvent("TRADE_REQUEST_CANCEL", Trade.Clear)
-    -- Item
-    Addon:RegisterEvent("ITEM_PUSH", Self.ITEM_PUSH)
-    Addon:RegisterEvent("ITEM_LOCKED", Self.ITEM_LOCKED)
-    Addon:RegisterEvent("ITEM_UNLOCKED", Self.ITEM_UNLOCKED)
-    Addon:RegisterEvent("BAG_UPDATE_DELAYED", Self.BAG_UPDATE_DELAYED)
     -- Chat
     Addon:RegisterEvent("CHAT_MSG_SYSTEM", Self.CHAT_MSG_SYSTEM)
     Addon:RegisterEvent("CHAT_MSG_LOOT", Self.CHAT_MSG_LOOT)
@@ -472,22 +374,6 @@ function Self.UnregisterEvents()
     Addon:UnregisterEvent("GROUP_LEFT")
     Addon:UnregisterEvent("PARTY_MEMBER_ENABLE")
     Addon:UnregisterEvent("RAID_ROSTER_UPDATE")
-    -- Combat
-    Addon:UnregisterEvent("ENCOUNTER_START")
-    Addon:UnregisterEvent("ENCOUNTER_END")
-    -- Inspect
-    Addon:UnregisterEvent("INSPECT_READY")
-    Addon:UnregisterEvent("TRADE_SHOW")
-    -- Trade
-    Addon:UnregisterEvent("TRADE_PLAYER_ITEM_CHANGED")
-    Addon:UnregisterEvent("TRADE_TARGET_ITEM_CHANGED")
-    Addon:UnregisterEvent("TRADE_CLOSED")
-    Addon:UnregisterEvent("TRADE_REQUEST_CANCEL")
-    -- Item
-    Addon:UnregisterEvent("ITEM_PUSH")
-    Addon:UnregisterEvent("ITEM_LOCKED")
-    Addon:UnregisterEvent("ITEM_UNLOCKED")
-    Addon:UnregisterEvent("BAG_UPDATE_DELAYED")
     -- Chat
     Addon:UnregisterEvent("CHAT_MSG_SYSTEM")
     Addon:UnregisterEvent("CHAT_MSG_LOOT")
@@ -630,105 +516,5 @@ Comm.ListenData(Comm.EVENT_INTEREST, function (event, data, channel, sender, uni
     local roll = Roll.Find(data.ownerId)
     if roll then
         roll.item:SetEligible(unit)
-    end
-end)
-
--- Masterlooter
-Comm.Listen(Comm.EVENT_MASTERLOOT_ASK, function (event, msg, channel, sender, unit)
-    if Session.IsMasterlooter() then
-        Session.SetMasterlooting(unit, nil)
-        Session.SendOffer(unit)
-    elseif channel == Comm.TYPE_WHISPER then
-        Session.SendCancellation(nil, unit)
-    elseif Session.GetMasterlooter() then
-        Session.SendConfirmation(unit)
-    end
-end)
-Comm.ListenData(Comm.EVENT_MASTERLOOT_OFFER, function (event, data, channel, sender, unit)
-    Session.SetMasterlooting(unit, unit)
-
-    if Session.IsMasterlooter(unit) then
-        Session.SendConfirmation()
-        Session.SetRules(data.session)
-    elseif Session.UnitAllow(unit) then
-        if Session.UnitAccept(unit) then
-            Session.SetMasterlooter(unit, data.session)
-        elseif not data.silent then
-            local dialog = StaticPopupDialogs[GUI.DIALOG_MASTERLOOT_ASK]
-            dialog.text = L["DIALOG_MASTERLOOT_ASK"]:format(unit)
-            dialog.OnAccept = function ()
-                Session.SetMasterlooter(unit, data.session)
-            end
-            StaticPopup_Show(GUI.DIALOG_MASTERLOOT_ASK)
-        end
-    end
-end)
-Comm.Listen(Comm.EVENT_MASTERLOOT_ACK, function (event, ml, channel, sender, unit)
-    ml = Unit(ml)
-    if ml then
-        if UnitIsUnit(ml, "player") and not Session.IsMasterlooter() then
-            Session.SendCancellation(nil, channel == Comm.TYPE_WHISPER and unit or nil)
-        else
-            Session.SetMasterlooting(unit, ml)
-        end
-    end
-end)
-Comm.Listen(Comm.EVENT_MASTERLOOT_DEC, function (event, player, channel, sender, unit)
-    player = Unit(player)
-
-    -- Clear the player's masterlooter
-    if Session.IsMasterlooter(unit) and (Util.StrIsEmpty(player) or UnitIsUnit(player, "player")) then
-        Session.SetMasterlooter(nil, nil, true)
-    elseif player == unit or Session.masterlooting[player] == unit then
-        Session.SetMasterlooting(player, nil)
-    end
-
-    -- Clear everybody who has the sender as masterlooter
-    if Util.StrIsEmpty(player) then
-        Session.ClearMasterlooting(unit)
-    end
-end)
-
--------------------------------------------------------
---          Personal Loot Helper integration         --
--------------------------------------------------------
-
-Comm.Listen(Comm.PLH_EVENT, function (event, msg, channel, _, unit)
-    if not IsAddOnLoaded(Comm.PLH_NAME) then
-        local action, itemId, owner, param = msg:match('^([^~]+)~([^~]+)~([^~]+)~?([^~]*)$')
-        itemId = tonumber(itemId)
-        owner = Unit(owner)
-        local fromOwner = owner == unit
-
-        if not Addon.versions[unit] then
-            -- Check: Version check
-            if action == Comm.PLH_ACTION_CHECK then
-                Comm.SendPlh(Comm.PLH_ACTION_VERSION, Unit.FullName("player"), Comm.PLH_VERSION)
-            -- Version: Answer to version check
-            elseif action == Comm.PLH_ACTION_VERSION then
-                Addon.plhUsers[unit] = param
-            else
-                local item = Item.IsLink(param) and param or itemId
-                local roll = Roll.Find(nil, nil, item, nil, owner, Roll.STATUS_RUNNING) or Roll.Find(nil, nil, item, nil, owner)
-                
-                -- Trade: The owner offers the item up for requests
-                if action == Comm.PLH_ACTION_TRADE and not roll and fromOwner and Item.IsLink(param) then
-                    Addon:Debug("Events.PLH.Trade", msg, itemId, owner, param)
-                    Roll.Add(param, owner):Start()
-                elseif roll and (roll.isOwner or not roll.ownerId) then
-                    -- Keep: The owner wants to keep the item
-                    if action == Comm.PLH_ACTION_KEEP and fromOwner then
-                        roll:End(owner)
-                    -- Request: The sender bids on an item
-                    elseif action == Comm.PLH_ACTION_REQUEST then
-                        local bid = Util.Select(param, Comm.PLH_BID_NEED, Roll.BID_NEED, Comm.PLH_BID_DISENCHANT, Roll.BID_DISENCHANT, Roll.BID_GREED)
-                        roll:Bid(bid, unit)
-                    -- Offer: The owner has picked a winner
-                    elseif action == Comm.PLH_ACTION_OFFER and fromOwner then
-                        roll:End(param)
-                    end
-                end
-            end
-        end
     end
 end)
