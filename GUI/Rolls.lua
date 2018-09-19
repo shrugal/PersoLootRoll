@@ -747,7 +747,7 @@ function Self.UpdateDetails(details, roll)
         end
 
         -- Custom columns
-        for i,col in ipairs(Self.playerColumns) do
+        for i,col in ipairs(GUI.playerColumns) do
             GUI(children[it()])
                 .SetText(Util.FnVal(col.desc, roll, player.unit, player) or player[col.name] or "-")
                 .Show()

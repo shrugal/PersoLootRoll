@@ -84,7 +84,7 @@ end
 
 -- Hide the frame
 function Self.Hide()
-    if Self:IsShown() then
+    if Self.IsShown() then
         if Self.moving then Self.StopMoving() end
         Self.frames.window.frame:Hide()
     end
@@ -92,7 +92,7 @@ end
 
 -- Toggle the frame
 function Self.Toggle()
-    if Self:IsShown() then Self.Hide() else Self.Show() end
+    if Self.IsShown() then Self.Hide() else Self.Show() end
 end
 
 -------------------------------------------------------
