@@ -183,6 +183,7 @@ L["OPT_DONT_SHARE"] = "Don't share loot"
 L["OPT_DONT_SHARE_DESC"] = "Don't roll on loot from others and don't share your own loot. The addon will deny incoming requests for your loot (if enabled), and you can still be masterlooter and loot council member."
 L["OPT_ENABLE"] = "Enable"
 L["OPT_ENABLE_DESC"] = "Enable or disable the addon"
+L["OPT_ENABLE_MODULE_DESC"] = "Enable or disable this module"
 L["OPT_ACTIVE_GROUPS"] = "Activate by group type"
 L["OPT_ACTIVE_GROUPS_DESC"] = [=[Activate only when you are in one of these group types.
 
@@ -412,6 +413,15 @@ L["ROLL_WINNER_OWN"] = "You have won your own %s."
 L["ROLL_WINNER_SELF"] = "You have won %s from %s -> %s."
 L["TRADE_CANCEL"] = "Canceling trade with %s."
 L["TRADE_START"] = "Starting trade with %s."
+
+-- Plugins - EPGP
+L["EPGP"] = "EPGP"
+L["EPGP_EP"] = "EP"
+L["EPGP_GP"] = "GP"
+L["EPGP_PR"] = "PR"
+L["EPGP_OPT_DESC"] = "Use EPGP for your loot distribution when masterloot mode is active. This includes showing and sorting by the player's PR value, as well as crediting GP when loot is awarded."
+L["EPGP_OPT_ONLY_GUILD_RAID"] = "Only in guild raids"
+L["EPGP_OPT_ONLY_GUILD_RAID_DESC"] = "Only activate when in a raid and at least %d%% of the group are from your guild."
 
 -- Globals
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "The owner of this item doesn't use the PersoLootRoll addon."

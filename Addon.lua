@@ -31,7 +31,7 @@ Self.disabled = {}
 Self.compAddonUsers = {}
 
 -- Events
-Self.events = CB:New(Self, "On", "Off")
+Self.events = CB:New(Self, "On", "Off", "Unsubscribe")
 
 --- Fired when loot and roll tracking starts
 Self.EVENT_TRACKING_START = "TRACKING_START"
@@ -53,98 +53,7 @@ Self.tracking = nil
 function Self:OnInitialize()
     self:ToggleDebug(PersoLootRollDebug or self.DEBUG)
     
-    self.db = LibStub("AceDB-3.0"):New(Name .. "DB", {
-        -- VERSION 7
-        profile = {
-            -- General
-            enabled = true,
-            activeGroups = {lfd = true, party = true, lfr = true, raid = true, guild = true, community = true},
-            onlyMasterloot = false,
-            dontShare = false,
-            awardSelf = false,
-            bidPublic = false,
-            chillMode = false,
-            allowDisenchant = false,
-
-            -- UI
-            ui = {
-                showRollFrames = true,
-                showActionsWindow = true,
-                showRollsWindow = false
-            },
-            
-            -- Item filter
-            filter = {
-                ilvlThreshold = 30,
-                ilvlThresholdTrinkets = true,
-                ilvlThresholdRings = false,
-                pawn = false,
-                transmog = false,
-                disenchant = false
-            },
-
-            -- Messages
-            messages = {
-                echo = Self.ECHO_INFO,
-                group = {
-                    announce = true,
-                    groupType = {lfd = true, party = true, lfr = true, raid = true, guild = true, community = true},
-                    roll = true
-                },
-                whisper = {
-                    ask = false,
-                    groupType = {lfd = true, party = true, lfr = true, raid = true, guild = false, community = false},
-                    target = {friend = false, guild = false, community = false, other = true},
-                    answer = true,
-                    suppress = false,
-                    variants = true
-                },
-                lines = {}
-            },
-
-            -- Masterloot
-            masterloot = {
-                allow = {friend = true, community = true, guild = true, raidleader = false, raidassistant = false, guildgroup = true},
-                accept = {friend = false, guildmaster = false, guildofficer = false},
-                allowAll = false,
-                whitelists = {},
-                rules = {
-                    timeoutBase = Roll.TIMEOUT,
-                    timeoutPerItem = Roll.TIMEOUT_PER_ITEM,
-                    bidPublic = false,
-                    votePublic = false,
-                    needAnswers = {},
-                    greedAnswers = {},
-                    allowDisenchant = false,
-                    disenchanter = {},
-                    autoAward = false,
-                    autoAwardTimeout = Roll.TIMEOUT,
-                    autoAwardTimeoutPerItem = Roll.TIMEOUT_PER_ITEM,
-                },
-                council = {
-                    roles = {raidleader = false, raidassistant = false},
-                    clubs = {},
-                    whitelists = {}
-                }
-            },
-
-            -- GUI status
-            gui = {
-                actions = {anchor = "LEFT", v = 10, h = 0}
-            }
-        },
-        -- VERSION 4
-        factionrealm = {},
-        -- VERSION 4
-        char = {
-            specs = {true, true, true, true},
-            masterloot = {
-                council = {
-                    clubId = nil
-                }
-            }
-        }
-    }, true)
+    self.db = LibStub("AceDB-3.0"):New(Name .. "DB", Self.Options.DEFAULTS, true)
     
     -- Migrate options
     Options.Migrate()

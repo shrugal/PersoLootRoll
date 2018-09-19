@@ -42,7 +42,7 @@ Self.ANSWER_NEED = "NEED"
 Self.ANSWER_GREED = "GREED"
 
 -- Events
-Self.events = CB:New(Self, "On", "Off")
+Self.events = CB:New(Self, "On", "Off", "Unsubscribe")
 
 --- Fires when a new roll is added
 -- @table roll The roll
@@ -92,8 +92,9 @@ Self.EVENT_VOTE = "VOTE"
 Self.EVENT_END = "END"
 
 --- Fires when a roll winner (or no winner) is picked
--- @table  roll   The roll
--- @string winner The winner (optional)
+-- @table  roll       The roll
+-- @string winner     The winner (optional)
+-- @string prevWinner The previous winner (optional)
 Self.EVENT_AWARD = "AWARD"
 
 --- Fires when the roll item is traded
@@ -119,11 +120,16 @@ Self.EVENT_CHANGE = "CHANGE"
 
 Self.EVENTS = {Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_RESTART, Self.EVENT_CANCEL, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_AWARD, Self.EVENT_TRADE, Self.EVENT_VISIBILITY, Self.EVENT_CHAT}
 
-
 local changeFn = function (...) Self.events:Fire(Self.EVENT_CHANGE, ...) end
-for _,ev in pairs(Self.EVENTS) do
-    Self:On(ev, changeFn)
-end
+for _,ev in pairs(Self.EVENTS) do Self:On(ev, changeFn) end
+
+-- Custom award methods
+Self.AWARD_VOTES = "VOTES"
+Self.AWARD_BIDS = "BIDS"
+Self.AWARD_ROLLS = "ROLLS"
+Self.AWARD_RANDOM = "RANDOM"
+
+Self.customAwardMethods = {}
 
 -- Get a roll by id or prefixed id
 function Self.Get(id)
@@ -631,6 +637,7 @@ function Self:End(winner, cleanup, force)
     end
 
     local statusSend = false
+    local prevWinner = self.winner
 
     -- Set winner
     if not Util.In(winner, self.winner, true) then
@@ -655,7 +662,7 @@ function Self:End(winner, cleanup, force)
         end
     end
 
-    Self.events:Fire(Self.EVENT_AWARD, self, self.winner)
+    Self.events:Fire(Self.EVENT_AWARD, self, self.winner, prevWinner)
     if not statusSend then self:SendStatus() end
 
     return self
@@ -1019,53 +1026,42 @@ function Self:ValidateVote(vote, fromUnit, isImport)
 end
 
 -------------------------------------------------------
---                     Decisions                     --
--------------------------------------------------------
-
--- Check if we should bid on the roll
-function Self:ShouldBeBidOn()
-    return self.item:ShouldBeBidOn() or self.disenchant and Addon.db.profile.filter.disenchant and Unit.IsEnchanter()
-end
-
--------------------------------------------------------
---                      Helper                       --
+--                 Picking a winner                  --
 -------------------------------------------------------
 
 -- Figure out a winner
 function Self:DetermineWinner()
     local candidates = Util.TblCopyExcept(self.bids, Self.BID_PASS, true)
 
-    -- Narrow down by votes
-    if next(self.votes) then
-        Util.TblMap(candidates, Util.FnZero)
-        for _,to in pairs(self.votes) do candidates[to] = (candidates[to] or 0) + 1 end
-        Util.TblOnly(candidates, Util.TblMax(candidates))
+    for _,v in Util.Each(Self.AWARD_VOTES, Self.AWARD_BIDS, Self.AWARD_ROLLS, Self.AWARD_RANDOM) do
+        self:ApplyCustomAwardMethod(v, candidates)
+
+        if Util.TblCount(candidates) > 1 then
+            -- Narrow down by votes
+            if v == Self.AWARD_VOTES then
+                Util.TblMap(candidates, Util.FnZero)
+                for _,to in pairs(self.votes) do candidates[to] = (candidates[to] or 0) + 1 end
+                Util.TblOnly(candidates, Util.TblMax(candidates))
+            -- Narrow down by bids
+            elseif v == Self.AWARD_BIDS then
+                Util(candidates)
+                    .Map(function (_, i) return self.bids[i] end, true)
+                    .Only(candidates, Util.TblMin(candidates))
+            -- Narrow down by roll result
+            elseif v == Self.AWARD_ROLLS then
+                Util(candidates)
+                    .Map(function (_, i) return self.rolls[i] or random(100) end, true)
+                    .Only(candidates, Util.TblMax(candidates))
+            -- Pick one at random
+            elseif v == Self.AWARD_RANDOM then
+                Util(candidates)
+                    .Select(Util.TblRandomKey(candidates))
+            end
+        end
+
         if Util.TblCount(candidates) == 1 then
             return next(candidates), Util.TblRelease(candidates)
         end
-    end
-
-    -- Narrow down by bids
-    if next(self.bids) then
-        Util.TblMap(candidates, function (_, i) return self.bids[i] end, true)
-        Util.TblOnly(candidates, Util.TblMin(candidates))
-        if Util.TblCount(candidates) == 1 then
-            return next(candidates), Util.TblRelease(candidates)
-        end
-    end
-
-    -- Narrow down by roll result
-    if next(self.rolls) then
-        Util.TblMap(candidates, function (_, i) return self.rolls[i] or random(100) end, true)
-        Util.TblOnly(candidates, Util.TblMax(candidates))
-        if Util.TblCount(candidates) == 1 then
-            return next(candidates), Util.TblRelease(candidates)
-        end
-    end
-
-    -- Pick one at random
-    if next(candidates) then
-        return Util.TblRandomKey(candidates), Util.TblRelease(candidates)
     end
 
     Util.TblRelease(candidates)
@@ -1078,6 +1074,40 @@ function Self:DetermineWinner()
             return self:DetermineWinner()
         end
     end
+end
+
+--- Add a custom method for picking a roll winner
+-- @param    key    A unique identifier
+-- @function fn     A callback that removes everyone but the possible winners from the candidates list, with parameters: roll, candidates, key, before
+-- @param    before The custom method will be applied before this method (optional: defaults to Self.AWARD_RANDOM)
+function Self.AddCustomAwardMethod(key, fn, before)
+    Util.TblSet(Self.customAwardMethods, before or Self.AWARD_RANDOM, key, fn)
+end
+
+--- Remove a custom award method
+-- @param    key    The unique identifier
+-- @param    before The method this custom method is applied before
+function Self.RemoveCustomAwardMethod(key, before)
+    Util.TblSet(Self.customAwardMethods, before or Self.AWARD_RANDOM, key, nil)
+end
+
+-- Apply a custom award method
+function Self:ApplyCustomAwardMethod(before, candidates)
+    if Self.customAwardMethods[before] then
+        for key,fn in Self.customAwardMethods[before] do
+            self:ApplyCustomAwardMethod(key, candidates)
+            fn(self, candidates, key, before)
+        end
+    end
+end
+
+-------------------------------------------------------
+--                      Helper                       --
+-------------------------------------------------------
+
+-- Check if we should bid on the roll
+function Self:ShouldBeBidOn()
+    return self.item:ShouldBeBidOn() or self.disenchant and Addon.db.profile.filter.disenchant and Unit.IsEnchanter()
 end
 
 -- Check if the given unit is eligible

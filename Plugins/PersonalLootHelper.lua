@@ -97,6 +97,11 @@ function Self:OnEnable()
     end
 end
 
+function Self:OnDisable()
+    Self:UnregisterEvent("GROUP_JOINED")
+    Roll.Unsubscribe(Self)
+end
+
 function Self.GROUP_JOINED()
     Self.Send(Self.ACTION_CHECK, nil, Unit.FullName("player"))
 end

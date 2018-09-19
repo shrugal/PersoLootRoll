@@ -6,7 +6,7 @@ local Comm, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Com
 local Self = Addon.GUI
 
 -- Events
-Self.events = CB:New(Self, "On", "Off")
+Self.events = CB:New(Self, "On", "Off", "Unsubscribe")
 
 --- Fires when a custom player column was added
 -- @table entry The entry that was added/removed
@@ -271,16 +271,16 @@ end
 
 --- Add a player column entry
 -- @param  name        A unique identifier
--- @string header      Localized title, e.g. for table headers
--- @param  value       Value for sorting etc., either a primitive or callback with parameters: roll, unit, listEntry
--- @param  desc        Localized value shown to the user, either a string/int or callback with parameters: roll, unit, listEntry
--- @param  width       Column width, @see table layout for details (optional)
--- @string sortBefore  Other column name with lower sorting priority, one of "bid", "votes", "roll", "ilvl" or "unit" (optional)
+-- @param  value       Value for sorting etc., either a primitive or callback with parameters: unit, roll, listEntry
+-- @string header      Localized title, e.g. for table headers (optional: Column won't be shown)
+-- @param  desc        Localized value shown to the user, either a string/int or callback with parameters: unit, roll, listEntry (optional: Value will be used)
+-- @param  width       Column width, @see table layout for details (optional: Default will be used)
+-- @string sortBefore  Other column name with lower sorting priority, one of "bid", "votes", "roll", "ilvl" or "unit" (optional: Column won't be used for sorting)
 -- @param  sortDefault Sorting default value (optional)
 -- @bool   sortDesc    Sort in descending order (optional)
 -- @return table       The column entry
-function Self.AddPlayerColumn(name, header, value, desc, width, sortBefore, sortDefault, sortDesc)
-    local entry = Util.TblHash("name", name, "header", header, "value", value, "desc", desc, "width", width, "sortBefore", sortBefore, "sortDefault", sortDefault "sortDesc", sortDesc)
+function Self.AddPlayerColumn(name, value, header, desc, width, sortBefore, sortDefault, sortDesc)
+    local entry = Util.TblHash("name", name, "value", value, "header", header, "desc", desc, "width", width, "sortBefore", sortBefore, "sortDefault", sortDefault, "sortDesc", sortDesc)
     tinsert(Self.playerColumns, entry)
 
     Self.events:Fire(Self.EVENT_PLAYER_COLUMN_ADD, entry)
@@ -312,14 +312,14 @@ function Self.SetPlayerColumn(name, ...)
 end
 
 --- Remove a player column entry
--- @param name The unique identifier
-function Self.RemovePlayerColumn(name)
-    local i = Self.GetPlayerColumn(name)
-    if i then
-        local entry = tremove(Self.playerColumns, i)
-
-        Self.events:Fire(Self.EVENT_PLAYER_COLUMN_REMOVE, entry, i)
-        return entry
+-- @param ... The unique identifiers
+function Self.RemovePlayerColumns(...)
+    for _,name in Util.Each(...) do
+        local i = Self.GetPlayerColumn(name)
+        if i then
+            local entry = tremove(Self.playerColumns, i)
+            Self.events:Fire(Self.EVENT_PLAYER_COLUMN_REMOVE, entry, i)
+        end
     end
 end
 
@@ -328,13 +328,13 @@ end
 -- @return table A sorted list of eligible players
 function Self.GetPlayerList(roll)
     local list = Util(roll.item:GetEligible()).Copy().Merge(roll.bids).Map(function (val, unit)
-        local t = Util.Tbl()
-        t.unit = unit
-        t.ilvl = roll.item:GetLevelForLocation(unit)
-        t.bid = type(val) == "number" and val or nil
-        t.votes = Util.TblCountOnly(roll.votes, unit)
-        t.roll = roll.rolls[unit]
-        return t
+        return Util.TblHash(
+            "unit", unit,
+            "ilvl", roll.item:GetLevelForLocation(unit),
+            "bid", type(val) == "number" and val or nil,
+            "votes", Util.TblCountOnly(roll.votes, unit),
+            "roll", roll.rolls[unit]
+        )
     end, true).List()()
 
     local sortBy = Util.Tbl(
@@ -348,7 +348,7 @@ function Self.GetPlayerList(roll)
     -- Add custom columns
     for i,col in ipairs(Self.playerColumns) do
         for j,entry in pairs(list) do
-            t[col.name] = Util.FnVal(col.value, roll, entry.unit, entry)
+            entry[col.name] = Util.FnVal(col.value, entry.unit, roll, entry)
         end
 
         local sortPos = col.sortBefore and Util.TblFind(sortBy, col.sortBefore)

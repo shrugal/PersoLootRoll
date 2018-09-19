@@ -152,6 +152,13 @@ function Self.IsGuildMember(unit)
     return guild ~= nil and Self.GuildName(unit) == guild
 end
 
+-- Check if given unit or rank has officer privileges
+function Self.IsGuildOfficer(unitOrRank)
+    local rank = type(unitOrRank) == "number" and unitOrRank or IsGuildMember(unitOrRank) and C_GuildInfo.GetGuildRankOrder(UnitGUID(unitOrRank))
+    local info = rank and C_GuildInfo.GuildControlGetRankFlags(rank)
+    return info and info[21]
+end
+
 -- Check if the given unit is on our friend list
 function Self.IsFriend(unit)
     if not unit then return false end

@@ -5,7 +5,7 @@ local Comm, GUI, Roll, Unit, Util = Addon.Comm, Addon.GUI, Addon.Roll, Addon.Uni
 local Self = Addon.Session
 
 -- Events
-Self.events = CB:New(Self, "On", "Off")
+Self.events = CB:New(Self, "On", "Off", "Unsubscribe")
 
 --- Fired when a session is started
 -- @string unit   The masterlooter

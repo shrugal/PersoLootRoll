@@ -630,16 +630,20 @@ function Self.UpdateDetails(details, roll)
     -- Header
 
     local header = Util.Tbl("PLAYER", "ITEM_LEVEL", "EQUIPPED", "CUSTOM", "BID", "ROLL", "VOTES", "")
-    local numCols = #header - 1 + #GUI.playerColumns
+    local numCols = #header - 1 + Util.TblCountWhere(GUI.playerColumns, "header")
 
     if #children == 0 then
         local columns = {1, {25, 100}, {34, 100}, {25, 100}, {25, 100}, {25, 100}, 100}
         
         for i,v in pairs(header) do
             if v == "CUSTOM" then
-                for j,col in ipairs(GUI.playerColumns) do
-                    details:AddChild(GUI("Label").SetFontObject(GameFontNormal).SetText(col.header).SetColor(1, 0.82, 0)())
-                    tinsert(columns, col.width or {25, 100})
+                local j = 0
+                for _,col in ipairs(GUI.playerColumns) do
+                    if col.header then
+                        details:AddChild(GUI("Label").SetFontObject(GameFontNormal).SetText(col.header).SetColor(1, 0.82, 0)())
+                        tinsert(columns, i + j, col.width or {25, 100})
+                        j = j + 1
+                    end
                 end
             else
                 details:AddChild(GUI("Label").SetFontObject(GameFontNormal).SetText(L[v]).SetColor(1, 0.82, 0)())
@@ -683,7 +687,9 @@ function Self.UpdateDetails(details, roll)
 
             -- Custom columns
             for i,col in ipairs(GUI.playerColumns) do
-                GUI("Label").SetFontObject(GameFontNormal).AddTo(details)
+                if col.header then
+                    GUI("Label").SetFontObject(GameFontNormal).AddTo(details)
+                end
             end
         
             -- Bid, Roll
@@ -748,9 +754,11 @@ function Self.UpdateDetails(details, roll)
 
         -- Custom columns
         for i,col in ipairs(GUI.playerColumns) do
-            GUI(children[it()])
-                .SetText(Util.FnVal(col.desc, roll, player.unit, player) or player[col.name] or "-")
-                .Show()
+            if col.header then
+                GUI(children[it()])
+                    .SetText(Util.FnVal(col.desc, player.unit, roll, player) or player[col.name] or "-")
+                    .Show()
+            end
         end
 
         -- Bid
@@ -859,4 +867,14 @@ end)
 Session.On(Self, Session.EVENT_CHANGE, Self.Update)
 
 -- Register for player column changes
-GUI.On(Self, GUI.EVENT_PLAYER_COLUMNS_CHANGE, Self.Update)
+GUI.On(Self, GUI.EVENT_PLAYER_COLUMNS_CHANGE, function ()
+    if Self.frames.scroll then
+        for i,child in Self.frames.scroll do
+            if child:GetUserData("isDetails") then
+                child:ReleaseChildren()
+            end
+        end
+
+        Self.Update()
+    end
+end)

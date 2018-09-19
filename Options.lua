@@ -8,6 +8,103 @@ local LDBIcon = LibStub("LibDBIcon-1.0")
 local Comm, GUI, Inspect, Item, Locale, Session, Roll, Unit, Util = Addon.Comm, Addon.GUI, Addon.Inspect, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
 local Self = Addon.Options
 
+-- Config
+Self.DEFAULTS = {
+    -- VERSION 7
+    profile = {
+        -- General
+        enabled = true,
+        activeGroups = {lfd = true, party = true, lfr = true, raid = true, guild = true, community = true},
+        onlyMasterloot = false,
+        dontShare = false,
+        awardSelf = false,
+        bidPublic = false,
+        chillMode = false,
+        allowDisenchant = false,
+
+        -- UI
+        ui = {
+            showRollFrames = true,
+            showActionsWindow = true,
+            showRollsWindow = false
+        },
+        
+        -- Item filter
+        filter = {
+            ilvlThreshold = 30,
+            ilvlThresholdTrinkets = true,
+            ilvlThresholdRings = false,
+            pawn = false,
+            transmog = false,
+            disenchant = false
+        },
+
+        -- Messages
+        messages = {
+            echo = Addon.ECHO_INFO,
+            group = {
+                announce = true,
+                groupType = {lfd = true, party = true, lfr = true, raid = true, guild = true, community = true},
+                roll = true
+            },
+            whisper = {
+                ask = false,
+                groupType = {lfd = true, party = true, lfr = true, raid = true, guild = false, community = false},
+                target = {friend = false, guild = false, community = false, other = true},
+                answer = true,
+                suppress = false,
+                variants = true
+            },
+            lines = {}
+        },
+
+        -- Masterloot
+        masterloot = {
+            allow = {friend = true, community = true, guild = true, raidleader = false, raidassistant = false, guildgroup = true},
+            accept = {friend = false, guildmaster = false, guildofficer = false},
+            allowAll = false,
+            whitelists = {},
+            rules = {
+                timeoutBase = Roll.TIMEOUT,
+                timeoutPerItem = Roll.TIMEOUT_PER_ITEM,
+                bidPublic = false,
+                votePublic = false,
+                needAnswers = {},
+                greedAnswers = {},
+                allowDisenchant = false,
+                disenchanter = {},
+                autoAward = false,
+                autoAwardTimeout = Roll.TIMEOUT,
+                autoAwardTimeoutPerItem = Roll.TIMEOUT_PER_ITEM,
+            },
+            council = {
+                roles = {raidleader = false, raidassistant = false},
+                clubs = {},
+                whitelists = {}
+            }
+        },
+
+        -- GUI status
+        gui = {
+            actions = {anchor = "LEFT", v = 10, h = 0}
+        },
+
+        modules = {}
+    },
+    -- VERSION 4
+    factionrealm = {},
+    -- VERSION 4
+    char = {
+        specs = {true, true, true, true},
+        masterloot = {
+            council = {
+                clubId = nil
+            }
+        }
+    }
+}
+
+-- Option widths
 Self.WIDTH_FULL = "full"
 Self.WIDTH_HALF = 1.7
 Self.WIDTH_THIRD = 1.1
@@ -16,12 +113,10 @@ Self.WIDTH_HALF_SCROLL = Self.WIDTH_HALF - .1
 Self.WIDTH_THIRD_SCROLL = Self.WIDTH_THIRD - .05
 Self.WIDTH_QUARTER_SCROLL = Self.WIDTH_QUARTER - .05
 
+-- Divider for storage in club info
 Self.DIVIDER = "------ PersoLootRoll ------"
 
-Self.it = Util.Iter()
-Self.registered = false
-Self.frames = {}
-
+-- Keys+values for multiselects/dropdowns
 Self.groupKeys = {"party", "lfd", "guild", "raid", "lfr", "community"}
 Self.groupValues = {PARTY, LOOKING_FOR_DUNGEON_PVEFRAME, GUILD_GROUP, RAID, RAID_FINDER_PVEFRAME, L["COMMUNITY_GROUP"]}
 
@@ -36,6 +131,18 @@ Self.acceptValues = {FRIEND, L["GUILD_MASTER"], L["GUILD_OFFICER"]}
 
 Self.councilKeys = {"raidleader", "raidassistant"}
 Self.councilValues = {L["RAID_LEADER"], L["RAID_ASSISTANT"]}
+
+-- Custom options
+Self.CUSTOM_GENERAL = "GENERAL"
+Self.CUSTOM_MASTERLOOT = "MASTERLOOT"
+Self.CUSTOM_MESSAGES = "MESSAGES"
+
+Self.customOptions = {}
+
+-- Other
+Self.it = Util.Iter()
+Self.registered = false
+Self.frames = {}
 
 -- Register options
 function Self.Register()
@@ -74,7 +181,7 @@ end
 function Self.RegisterGeneral()
     local it = Self.it
 
-    return {
+    local options = {
         name = Name,
         type = "group",
         args = {
@@ -304,6 +411,10 @@ function Self.RegisterGeneral()
             }
         }
     }
+
+    Self.ApplyCustomOptions(Self.CUSTOM_GENERAL, options.args)
+
+    return options
 end
 
 -------------------------------------------------------
@@ -314,7 +425,7 @@ function Self.RegisterMessages()
     local it = Self.it
     local lang = Locale.GetRealmLanguage()
 
-    return {
+    local options = {
         name = L["OPT_MESSAGES"],
         type = "group",
         childGroups = "tab",
@@ -467,6 +578,10 @@ function Self.RegisterMessages()
             }
         }
     }
+
+    Self.ApplyCustomOptions(Self.CUSTOM_MESSAGES, options.args)
+
+    return options
 end
 
 -- Build options structure for custom messages
@@ -582,7 +697,7 @@ function Self.RegisterMasterloot()
     -- This fixes the spacing bug with AceConfigDialog
     CD:ConfigTableChanged("ConfigTableChanged", Name .. " Masterloot")
     
-    return {
+    local options = {
         name = L["OPT_MASTERLOOT"],
         type = "group",
         childGroups = "tab",
@@ -904,6 +1019,11 @@ function Self.RegisterMasterloot()
             }
         }
     }
+
+    -- Add custom options
+    Self.ApplyCustomOptions(Self.CUSTOM_MASTERLOOT, options.args)
+
+    return options
 end
 
 function Self.ImportRules()
@@ -1121,6 +1241,29 @@ function Self.DecodeParam(name, str)
 end
 
 -------------------------------------------------------
+--                  Custom options                   --
+-------------------------------------------------------
+
+--- Add custom options for the given key
+-- @string         key  The options category that should be extended
+-- @string         path Dot-separated path inside the options data, ending with the custom option's name
+-- @table|function data Options data, either a table or a callback with parameters: key, path
+function Self.AddCustomOptions(key, path, data)
+    Util.TblSet(Self.customOptions, key, path, data)
+end
+
+-- Apply custom options to an options table
+function Self.ApplyCustomOptions(key, options)
+    if Self.customOptions[key] then
+        for path,data in pairs(Self.customOptions[key]) do
+            data = Util.FnVal(data, key, path)
+            data.order = data.order or Self.it()
+            Util.TblSet(options, path, data)
+        end
+    end
+end
+
+-------------------------------------------------------
 --                    Migration                      --
 -------------------------------------------------------
 
@@ -1271,7 +1414,3 @@ function Self.RegisterMinimapIcon()
     if not PersoLootRollIconDB then PersoLootRollIconDB = {} end
     LDBIcon:Register(Name, plugin, PersoLootRollIconDB)
 end
-
--------------------------------------------------------
---                      Helper                       --
--------------------------------------------------------

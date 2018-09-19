@@ -551,7 +551,7 @@ end
 function Self.TblCountWhere(t, ...)
     local n = 0
     for i,u in pairs(t) do
-        if Self.TblFindWhere(u, ...) then n = n + 1 end
+        if Self.TblMatches(u, ...) then n = n + 1 end
     end
     return n
 end
@@ -604,14 +604,19 @@ end
 
 -- Check if a table matches the given key-value pairs
 function Self.TblMatches(t, ...)
-    for i=1, select("#", ...), 2 do
-        local key, val = select(i, ...)
-        local v = Self.TblGet(t, key)
-        if v == nil or val ~= nil and v ~= val then
-            return false
+    if type(...) == "table" then
+        return Self.TblContains(t, ...)
+    else
+        for i=1, select("#", ...), 2 do
+            local key, val = select(i, ...)
+            local v = Self.TblGet(t, key)
+            if v == nil or val ~= nil and v ~= val then
+                return false
+            end
         end
+
+        return true
     end
-    return true
 end
 
 -- Check a table's existence and content
@@ -626,11 +631,8 @@ end
 
 -- Find a set of key/value pairs in a table
 function Self.TblFindWhere(t, ...)
-    local isTbl, tbl, deep = type(...) == "table", ...
     for i,v in pairs(t) do
-        if isTbl and Self.TblContains(v, tbl, deep) or not isTbl and Self.TblMatches(v, ...) then
-            return i, v
-        end
+        if Self.TblMatches(v, ...) then return i, v end
     end
 end
 
