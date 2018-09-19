@@ -9,20 +9,6 @@ Self.filter = {all = false, hidden = false, done = true, awarded = true, traded 
 Self.status = {width = 700, height = 300}
 Self.open = {}
 
--- Register for roll changes
-Roll.On(Self, Roll.EVENT_START, function (_, roll)
-    if roll.isOwner and Session.IsMasterlooter() or Addon.db.profile.ui.showRollsWindow and (roll.item.isOwner or roll:ShouldBeBidOn()) then
-        Self.Show()
-    end
-end)
-Roll.On(Self, Roll.EVENT_CHANGE, function () Self.Update() end)
-Roll.On(Self, Roll.EVENT_CLEAR, function (_, roll)
-    Self.open[roll.id] = nil
-end)
-
--- Register for ML changes
-Session.On(Self, Session.EVENT_CHANGE, function () Self.Update() end)
-
 -------------------------------------------------------
 --                     Show/Hide                     --
 -------------------------------------------------------
@@ -668,7 +654,7 @@ function Self.UpdateDetails(details, roll)
 
     local canBeAwarded, canVote = roll:CanBeAwarded(true), roll:UnitCanVote()
 
-    local players = GUI.GetRollEligibleList(roll)
+    local players = GUI.GetPlayerList(roll)
 
     local it = Util.Iter(numCols)
     for _,player in ipairs(players) do
@@ -853,3 +839,24 @@ function Self.OnStatusUpdate(frame)
         GUI(frame.obj).SetColor(1, 1, 1).SetText("-")
     end
 end
+
+-------------------------------------------------------
+--                      Events                       --
+-------------------------------------------------------
+
+-- Register for roll changes
+Roll.On(Self, Roll.EVENT_START, function (_, roll)
+    if roll.isOwner and Session.IsMasterlooter() or Addon.db.profile.ui.showRollsWindow and (roll.item.isOwner or roll:ShouldBeBidOn()) then
+        Self.Show()
+    end
+end)
+Roll.On(Self, Roll.EVENT_CHANGE, function () Self.Update() end)
+Roll.On(Self, Roll.EVENT_CLEAR, function (_, roll)
+    Self.open[roll.id] = nil
+end)
+
+-- Register for ML changes
+Session.On(Self, Session.EVENT_CHANGE, Self.Update)
+
+-- Register for player column changes
+GUI.On(Self, GUI.EVENT_PLAYER_COLUMNS_CHANGE, Self.Update)

@@ -1,5 +1,4 @@
 local Name, Addon = ...
-local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Events, Locale, Session, Roll, Unit, Util = Addon.Events, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
 local Self = Addon.Comm
 
@@ -198,6 +197,7 @@ end
 
 -- Messages when bidding on a roll
 function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport)
+    local L = LibStub("AceLocale-3.0"):GetLocale(Name)
     local fromSelf = Unit.IsSelf(fromUnit)
     
     -- Show a confirmation message
@@ -233,7 +233,7 @@ function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport)
 
                 -- Roll on it in chat
                 if roll.posted then
-                    if Addon.db.profile.messages.group.roll and Events.lastPostedRoll == roll then
+                    if Addon.db.profile.messages.group.roll and Addon.lastPostedRoll == roll then
                         RandomRoll("1", floor(bid) == Roll.BID_GREED and "50" or "100")
                     end
                 -- Whisper the owner
@@ -287,6 +287,8 @@ end
 
 -- Messages when ending a roll
 function Self.RollEnd(roll)
+    local L = LibStub("AceLocale-3.0"):GetLocale(Name)
+
     -- We won the item
     if roll.isWinner then
         if Session.GetMasterlooter() or not (roll.item.isOwner and roll.bid and floor(roll.bid) == Roll.BID_NEED) then
@@ -354,6 +356,7 @@ function Self.GetTradeLink(unit)
 end
 
 function Self.GetBidLink(roll, unit, bid)
+    local L = LibStub("AceLocale-3.0"):GetLocale(Name)
     return ("|cff4D85E6|Hplrbid:%d:%s:%d|h[%s]|h|r"):format(roll.id, unit, bid, L["ROLL_BID_" .. bid])
 end
 

@@ -1,16 +1,36 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local AceGUI = LibStub("AceGUI-3.0")
+local CB = LibStub("CallbackHandler-1.0")
 local Comm, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.GUI
 
 -- Events
 Self.events = CB:New(Self, "On", "Off")
 
---- Fires when custom player columns are added or removed
--- @bool  added Whether the entry was added
+--- Fires when a custom player column was added
 -- @table entry The entry that was added/removed
-Self.EVENT_PLAYER_COLUMNS = "PLAYER_COLUMNS"
+Self.EVENT_PLAYER_COLUMN_ADD = "PLAYER_COLUMN_ADD"
+
+--- Fires when a custom player column was changed
+-- @table entry The entry that was added/removed
+-- @param ...   The changed properties as key-value pairs
+Self.EVENT_PLAYER_COLUMN_SET = "PLAYER_COLUMN_SET"
+
+--- Fires when a custom player column was removed
+-- @table entry The entry that was removed
+-- @int   i     The position it was at
+Self.EVENT_PLAYER_COLUMN_REMOVE = "PLAYER_COLUMN_REMOVE"
+
+--- Catchall event that fires for all of the above
+-- @string event The original event
+-- @param  ...   The original event parameters
+Self.EVENT_PLAYER_COLUMNS_CHANGE = "PLAYER_COLUMNS_CHANGE"
+
+local changeFn = function (...) Self.events:Fire(Self.EVEVENT_PLAYER_COLUMNS_CHANGEENT_CHANGE, ...) end
+for i,ev in Util.Each(Self.EVENT_PLAYER_COLUMN_ADD, Self.EVENT_PLAYER_COLUMN_SET, Self.EVENT_PLAYER_COLUMN_REMOVE) do
+    Self:On(ev, changeFn)
+end
 
 -- Custom player columns
 Self.playerColumns = {}
@@ -177,7 +197,7 @@ function Self.ToggleAwardOrVoteDropdown(roll, ...)
     if not dropdown:IsShown() or roll ~= dropdown:GetUserData("roll") then
         Self(dropdown).Clear().SetUserData("roll", roll)
 
-        local players = Self.GetRollEligibleList(roll)
+        local players = Self.GetPlayerList(roll)
         local width = 0
 
         for i,player in pairs(players) do
@@ -246,11 +266,11 @@ function Self.ToggleAwardUnitDropdown(unit, ...)
 end
 
 -------------------------------------------------------
---                Roll Eligible list                 --
+--                 Roll player list                  --
 -------------------------------------------------------
 
---- Add a custom column to the list of eligible players for a roll
--- @string name A unique identifier
+--- Add a player column entry
+-- @param  name        A unique identifier
 -- @string header      Localized title, e.g. for table headers
 -- @param  value       Value for sorting etc., either a primitive or callback with parameters: roll, unit, listEntry
 -- @param  desc        Localized value shown to the user, either a string/int or callback with parameters: roll, unit, listEntry
@@ -261,23 +281,52 @@ end
 -- @return table       The column entry
 function Self.AddPlayerColumn(name, header, value, desc, width, sortBefore, sortDefault, sortDesc)
     local entry = Util.TblHash("name", name, "header", header, "value", value, "desc", desc, "width", width, "sortBefore", sortBefore, "sortDefault", sortDefault "sortDesc", sortDesc)
-    tinsert(playerColumns, entry)
-    Self.events:Fire(Self.EVENT_PLAYER_COLUMNS, true, entry)
+    tinsert(Self.playerColumns, entry)
+
+    Self.events:Fire(Self.EVENT_PLAYER_COLUMN_ADD, entry)
     return entry
 end
 
--- Remove a custom column from the list of eligible player for a roll
-function Self.RemovePlayerColumn(name)
-    local i = Util.TblFindWhere(Self.playerColumns, "name", name)
-    if i then
-        local entry = tremove(Self.playerColumns, i)
-        Self.events:Fire(Self.EVENT_PLAYER_COLUMNS_CHANGE, false, entry)
+--- Get the player column entry with the given name
+-- @param  name  The unique identifier
+-- @return int   The entry's position
+-- @return table The player column entry
+function Self.GetPlayerColumn(name)
+    return Util.TblFindWhere(Self.playerColumns, "name", name)
+end
+
+--- Update a player column entry
+-- @param name The unique identifier
+-- @param ...  Key-value pairs of properties to update (@see Self.AddPlayerColumn)
+function Self.SetPlayerColumn(name, ...)
+    local entry = select(2, Self.GetPlayerColumn(name))
+    if entry then
+        for i=1, select("#", ...), 2 do
+            local k,v = select(i, ...)
+            entry[k] = v
+        end
+
+        Self.events:Fire(Self.EVENT_PLAYER_COLUMN_SET, entry, ...)
         return entry
     end
 end
 
--- Get list of eligible players for a roll
-function Self.GetRollEligibleList(roll)
+--- Remove a player column entry
+-- @param name The unique identifier
+function Self.RemovePlayerColumn(name)
+    local i = Self.GetPlayerColumn(name)
+    if i then
+        local entry = tremove(Self.playerColumns, i)
+
+        Self.events:Fire(Self.EVENT_PLAYER_COLUMN_REMOVE, entry, i)
+        return entry
+    end
+end
+
+--- Get list of eligible players for a roll
+-- @table  roll  The roll in question
+-- @return table A sorted list of eligible players
+function Self.GetPlayerList(roll)
     local list = Util(roll.item:GetEligible()).Copy().Merge(roll.bids).Map(function (val, unit)
         local t = Util.Tbl()
         t.unit = unit

@@ -380,13 +380,13 @@ end)
 
 function Self:OnEnable()
     -- Register events
-    Self:RegisterEvent("GROUP_JOINED")
+    Self:RegisterEvent("GROUP_JOINED", Self.Restore)
     Self:RegisterEvent("GROUP_LEFT")
     Self:RegisterEvent("CHAT_MSG_SYSTEM")
-end
 
-function Self.GROUP_JOINED()
-    Self.Restore()
+    if IsInGroup() then
+        Self.Restore()
+    end
 end
 
 function Self.GROUP_LEFT()
@@ -394,7 +394,7 @@ function Self.GROUP_LEFT()
     wipe(Self.masterlooting)
 end
 
-function Self.CHAT_MSG_SYSTEM(_, msg)
+function Self.CHAT_MSG_SYSTEM(_, _, msg)
     -- Check if a player left the group/raid
     for _,pattern in pairs(Comm.PATTERNS_LEFT) do
         local unit = msg:match(pattern)

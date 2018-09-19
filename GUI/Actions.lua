@@ -8,14 +8,6 @@ Self.frames = {}
 Self.moving = nil
 Self.anchors = Util.TblFlip({"TOPLEFT", "TOP", "TOPRIGHT", "RIGHT", "BOTTOMRIGHT", "BOTTOM", "BOTTOMLEFT", "LEFT", "CENTER"}, false)
 
--- Register for roll changes
-Roll.On(Self, Roll.EVENT_CHANGE, function (_, e, roll)
-    if Addon.db.profile.ui.showActionsWindow and Util.In(e, Roll.EVENT_AWARD, Roll.EVENT_VISIBILITY) and roll:GetActionRequired() then
-        Self.Show()
-    end
-    Self.Update()
-end)
-
 -------------------------------------------------------
 --                     Show/Hide                     --
 -------------------------------------------------------
@@ -360,3 +352,15 @@ function Self.CreateHeaderIconButton(text, n, onClick, icon, ...)
 
     return f
 end
+
+-------------------------------------------------------
+--                      Events                       --
+-------------------------------------------------------
+
+-- Register for roll changes
+Roll.On(Self, Roll.EVENT_CHANGE, function (_, e, roll)
+    if Addon.db.profile.ui.showActionsWindow and Util.In(e, Roll.EVENT_AWARD, Roll.EVENT_VISIBILITY) and roll:GetActionRequired() then
+        Self.Show()
+    end
+    Self.Update()
+end)

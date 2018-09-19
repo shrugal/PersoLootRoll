@@ -143,11 +143,11 @@ function Self.TRADE_SHOW()
     end
 end
 
-function Self.TRADE_PLAYER_ITEM_CHANGED(_, slot)
+function Self.TRADE_PLAYER_ITEM_CHANGED(_, _, slot)
     Self.items.player[slot] = GetTradePlayerItemLink(slot)
 end
 
-function Self.TRADE_TARGET_ITEM_CHANGED(_, slot)
+function Self.TRADE_TARGET_ITEM_CHANGED(_, _, slot)
     Self.items.target[slot] = GetTradeTargetItemLink(slot)
 end
 

@@ -235,13 +235,15 @@ function Self:OnEnable()
     Self:RegisterEvent("PARTY_MEMBER_ENABLE")
     Self:RegisterEvent("INSPECT_READY")
     Self:RegisterEvent("CHAT_MSG_SYSTEM")
+    Addon.On(Self, Addon.EVENT_TRACKING_START, "TRACKING_START")
+    Addon.On(Self, Addon.EVENT_TRACKING_STOP, "TRACKING_STOP")
 end
 
-function Self.PARTY_MEMBER_ENABLE(event, unit)
+function Self.PARTY_MEMBER_ENABLE(_, _, unit)
     if Addon:IsTracking() then Self.Queue(unit) end
 end
 
-function Self.INSPECT_READY(_, guid)
+function Self.INSPECT_READY(_, _, guid)
     local _, _, _, _, _, name, realm = GetPlayerInfoByGUID(guid)
     local unit = realm and realm ~= "" and name .. "-" .. realm or name
 
@@ -261,7 +263,7 @@ function Self.INSPECT_READY(_, guid)
     end
 end
 
-function Self.CHAT_MSG_SYSTEM(_, msg)
+function Self.CHAT_MSG_SYSTEM(_, _, msg)
     if not Addon:IsTracking() then return end
 
     -- Check if a player joined the group/raid
@@ -282,4 +284,16 @@ function Self.CHAT_MSG_SYSTEM(_, msg)
             Self.Clear(unit)
         end
     end
+end
+
+function Self.TRACKING_START()
+    Self.Queue()
+    Self.Start()
+end
+
+function Self.TRACKING_STOP(_, clear)
+    if clear then
+        Self.Clear()
+    end
+    Self.Stop()
 end

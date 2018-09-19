@@ -1,44 +1,56 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local RI = LibStub("LibRealmInfo")
+local CB = LibStub("CallbackHandler-1.0")
 local Comm, GUI, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+local Self = Addon
 
 -- Logging
-Addon.ECHO_NONE = 0
-Addon.ECHO_ERROR = 1
-Addon.ECHO_INFO = 2
-Addon.ECHO_VERBOSE = 3
-Addon.ECHO_DEBUG = 4
-Addon.ECHO_LEVELS = {"ERROR", "INFO", "VERBOSE", "DEBUG"}
+Self.ECHO_NONE = 0
+Self.ECHO_ERROR = 1
+Self.ECHO_INFO = 2
+Self.ECHO_VERBOSE = 3
+Self.ECHO_DEBUG = 4
+Self.ECHO_LEVELS = {"ERROR", "INFO", "VERBOSE", "DEBUG"}
 
-Addon.LOG_MAX_ENTRIES = 1000
+Self.LOG_MAX_ENTRIES = 1000
 
-Addon.log = {}
+Self.log = {}
 
 -- Versioning
-Addon.CHANNEL_ALPHA = "alpha"
-Addon.CHANNEL_BETA = "beta"
-Addon.CHANNEL_STABLE = "stable"
-Addon.CHANNELS = Util.TblFlip({Addon.CHANNEL_ALPHA, Addon.CHANNEL_BETA, Addon.CHANNEL_STABLE})
+Self.CHANNEL_ALPHA = "alpha"
+Self.CHANNEL_BETA = "beta"
+Self.CHANNEL_STABLE = "stable"
+Self.CHANNELS = Util.TblFlip({Self.CHANNEL_ALPHA, Self.CHANNEL_BETA, Self.CHANNEL_STABLE})
 
-Addon.versions = {}
-Addon.versionNoticeShown = false
-Addon.disabled = {}
+Self.versions = {}
+Self.versionNoticeShown = false
+Self.disabled = {}
 
 -- Users of compatible addons
-Addon.compAddonUsers = {}
+Self.compAddonUsers = {}
+
+-- Events
+Self.events = CB:New(Self, "On", "Off")
+
+--- Fired when loot and roll tracking starts
+Self.EVENT_TRACKING_START = "TRACKING_START"
+
+--- Fired when loot and roll tracking stops
+-- @bool clear Whether to clear data
+Self.EVENT_TRACKING_STOP = "TRACKING_STOP"
 
 -- Other
-Addon.rolls = Util.TblCounter()
-Addon.timers = {}
-Addon.tracking = nil
+Self.rolls = Util.TblCounter()
+Self.timers = {}
+Self.tracking = nil
 
 -------------------------------------------------------
 --                    Addon stuff                    --
 -------------------------------------------------------
 
 -- Called when the addon is loaded
-function Addon:OnInitialize()
+function Self:OnInitialize()
     self:ToggleDebug(PersoLootRollDebug or self.DEBUG)
     
     self.db = LibStub("AceDB-3.0"):New(Name .. "DB", {
@@ -73,7 +85,7 @@ function Addon:OnInitialize()
 
             -- Messages
             messages = {
-                echo = Addon.ECHO_INFO,
+                echo = Self.ECHO_INFO,
                 group = {
                     announce = true,
                     groupType = {lfd = true, party = true, lfr = true, raid = true, guild = true, community = true},
@@ -146,19 +158,15 @@ function Addon:OnInitialize()
 end
 
 -- Called when the addon is enabled
-function Addon:OnEnable()
+function Self:OnEnable()
     -- Register options table
     if not Options.registered then
         Options.Register()
     end
 
-    -- Enable hooks
-    self.Hooks.EnableGroupLootRoll()
-    self.Hooks.EnableChatLinks()
-    self.Hooks.EnableUnitMenus()
-
-    -- Register events
-    self.Events.RegisterEvents()
+    -- Enable hooks and events
+    self:EnableHooks()
+    self:RegisterEvents()
 
     -- Periodically clear old rolls
     self.timers.clearRolls = self:ScheduleRepeatingTimer(Roll.Clear, Roll.CLEAR)
@@ -171,42 +179,10 @@ function Addon:OnEnable()
     end
 
     -- Update state
-    if IsInGroup() then
-        self.Events.GROUP_JOINED()
-    end
+    self:OnTrackingChanged(true)
 end
 
--- Called when the addon is disabled
-function Addon:OnDisable()
-    -- Disable hooks
-    self.Hooks.DisableGroupLootRoll()
-    self.Hooks.DisableChatLinks()
-    self.Hooks.DisableUnitMenus()
-
-    -- Unregister events
-    self.Events.UnregisterEvents()
-
-    -- Stop clear timer
-    if self.timers.clearRolls then
-        self:CancelTimer(self.timers.clearRolls)
-    end
-    self.timers.clearRolls = nil
-
-    -- Stop inspecting
-    if self.timers.inspectStart then
-        self:CancelTimer(self.timers.inspectStart)
-        self.timers.inspectStart = nil
-    end
-
-    -- Update state
-    if IsInGroup() then
-        self.Events.GROUP_LEFT()
-    else
-        self:OnTrackingChanged(true)
-    end
-end
-
-function Addon:ToggleDebug(debug)
+function Self:ToggleDebug(debug)
     if debug ~= nil then
         self.DEBUG = debug
     else
@@ -225,8 +201,8 @@ end
 -------------------------------------------------------
 
 -- Chat command handling
-function Addon:HandleChatCommand(msg)
-    local args = Util.Tbl(Addon:GetArgs(msg, 10))
+function Self:HandleChatCommand(msg)
+    local args = Util.Tbl(Self:GetArgs(msg, 10))
     args[11] = nil
     local cmd = tremove(args, 1)
 
@@ -246,7 +222,7 @@ function Addon:HandleChatCommand(msg)
             name, pre, line = name .. " " .. Util.StrUcFirst(args[1]), pre .. " " .. args[1], line:sub(args[1]:len() + 2)
         end
 
-        LibStub("AceConfigCmd-3.0").HandleCommand(Addon, pre, name, line)
+        LibStub("AceConfigCmd-3.0").HandleCommand(Self, pre, name, line)
 
         -- Add submenus as additional options
         if Util.StrIsEmpty(args[1]) then
@@ -321,7 +297,7 @@ function Addon:HandleChatCommand(msg)
         else
             local roll = (Roll.Find(nil, owner, item) or Roll.Add(item, owner))
     
-            if self.db.profile.messages.echo < Addon.ECHO_VERBOSE then
+            if self.db.profile.messages.echo < Self.ECHO_VERBOSE then
                 self:Info(L["BID_START"], roll:GetBidName(bid), item, Comm.GetPlayerLink(owner))
             end
             
@@ -351,7 +327,7 @@ function Addon:HandleChatCommand(msg)
     end
 end
 
-function Addon:Help()
+function Self:Help()
     self:Print(L["HELP"])
 end
 
@@ -360,7 +336,7 @@ end
 -------------------------------------------------------
 
 -- Check if we should currently track loot etc.
-function Addon:IsTracking(refresh)
+function Self:IsTracking(refresh)
     if self.tracking == nil or refresh then
         local group, p = self.db.profile.activeGroups, Util.Push
 
@@ -383,7 +359,7 @@ function Addon:IsTracking(refresh)
 end
 
 -- Check if the given unit is tracking
-function Addon:UnitIsTracking(unit, inclCompAddons)
+function Self:UnitIsTracking(unit, inclCompAddons)
     if not unit or Unit.IsSelf(unit) then
         return self:IsTracking()
     else
@@ -393,7 +369,7 @@ function Addon:UnitIsTracking(unit, inclCompAddons)
 end
 
 -- Tracking state potentially changed
-function Addon:OnTrackingChanged(clear)
+function Self:OnTrackingChanged(clear)
     local wasTracking, isTracking = self.tracking, self:IsTracking(true)
 
     -- Start/Stop tracking process
@@ -401,19 +377,30 @@ function Addon:OnTrackingChanged(clear)
         Comm.Send(Comm["EVENT_" .. (isTracking and "ENABLE" or "DISABLE")])
 
         if isTracking then
-            Comm.Send(Comm.EVENT_SYNC)
-            Inspect.Queue()
-        elseif not isTracking and clear then
-            Util.TblIter(self.rolls, Roll.Clear)
-            Inspect.Clear()
-        end
+            -- Schedule version check
+            Self.timers.versionCheck = Self:ScheduleTimer(function ()
+                Comm.SendData(Comm.EVENT_CHECK)
+            end, Self.VERSION_CHECK_DELAY)
 
-        Inspect[isTracking and "Start" or "Stop"]()
+            -- Send sync request
+            Comm.Send(Comm.EVENT_SYNC)
+
+            -- Fire event
+            Self.events:Fire(Self.EVENT_TRACKING_START)
+        else
+            -- Clear data
+            if clear then
+                Util.TblIter(self.rolls, Roll.Clear)
+            end
+
+            -- Fire event
+            Self.events:Fire(Self.EVENT_TRACKING_STOP, clear)
+        end
     end
 end
 
 -- Set a unit's version string
-function Addon:SetVersion(unit, version)
+function Self:SetVersion(unit, version)
     version = tonumber(version) or version
 
     self.versions[unit] = version
@@ -430,7 +417,7 @@ function Addon:SetVersion(unit, version)
 end
 
 -- Get major, channel and minor versions for the given version string or unit
-function Addon:GetVersion(versionOrUnit)
+function Self:GetVersion(versionOrUnit)
     local t = type(versionOrUnit)
     local version = (not versionOrUnit or UnitIsUnit(versionOrUnit, "player")) and self.VERSION
                  or (t == "number" or t == "string" and tonumber(versionOrUnit:sub(1, 1))) and versionOrUnit
@@ -438,7 +425,7 @@ function Addon:GetVersion(versionOrUnit)
 
     t = type(version)
     if t == "number" then
-        return version, Addon.CHANNEL_STABLE, 0
+        return version, Self.CHANNEL_STABLE, 0
     elseif t == "string" then
         local version, channel, revision = version:match("([%d.]+)-(%a+)(%d+)")
         return tonumber(version), channel, tonumber(revision)
@@ -446,11 +433,11 @@ function Addon:GetVersion(versionOrUnit)
 end
 
 -- Get 1 if the version is higher, -1 if the version is lower or 0 if they are the same or on non-comparable channels
-function Addon:CompareVersion(versionOrUnit)
+function Self:CompareVersion(versionOrUnit)
     local version, channel, revision = self:GetVersion(versionOrUnit)
     if version then
         local myVersion, myChannel, myRevision = self:GetVersion()
-        local channelNum, myChannelNum = Addon.CHANNELS[channel], Addon.CHANNELS[myChannel]
+        local channelNum, myChannelNum = Self.CHANNELS[channel], Self.CHANNELS[myChannel]
 
         if channel == myChannel then
             return version == myVersion and Util.Compare(revision, myRevision) or Util.Compare(version, myVersion)
@@ -465,10 +452,10 @@ function Addon:CompareVersion(versionOrUnit)
 end
 
 -- Get the number of addon users in the group
-function Addon:GetNumAddonUsers(inclCompAddons)
+function Self:GetNumAddonUsers(inclCompAddons)
     local n = Util.TblCount(self.versions) - Util.TblCount(self.disabled)
     if inclCompAddons then
-        n = n + Util.TblCount(Addon.compAddonUsers)
+        n = n + Util.TblCount(Self.compAddonUsers)
     end
     return n
 end
@@ -478,7 +465,7 @@ end
 -------------------------------------------------------
 
 -- Write to log and print if lvl is high enough
-function Addon:Echo(lvl, ...)
+function Self:Echo(lvl, ...)
     local line = ""
     if lvl == self.ECHO_DEBUG then
         for i=1, select("#", ...) do
@@ -496,13 +483,13 @@ function Addon:Echo(lvl, ...)
 end
 
 -- Shortcuts for different log levels
-function Addon:Error(...) self:Echo(self.ECHO_ERROR, ...) end
-function Addon:Info(...) self:Echo(self.ECHO_INFO, ...) end
-function Addon:Verbose(...) self:Echo(self.ECHO_VERBOSE, ...) end
-function Addon:Debug(...) self:Echo(self.ECHO_DEBUG, ...) end
+function Self:Error(...) self:Echo(self.ECHO_ERROR, ...) end
+function Self:Info(...) self:Echo(self.ECHO_INFO, ...) end
+function Self:Verbose(...) self:Echo(self.ECHO_VERBOSE, ...) end
+function Self:Debug(...) self:Echo(self.ECHO_DEBUG, ...) end
 
 -- Add an entry to the debug log
-function Addon:Log(lvl, line)
+function Self:Log(lvl, line)
     tinsert(self.log, ("[%.1f] %s: %s"):format(GetTime(), self.ECHO_LEVELS[lvl or self.ECHO_INFO], line or "-"))
     while #self.log > self.LOG_MAX_ENTRIES do
         Util.TblShift(self.log)
@@ -510,7 +497,7 @@ function Addon:Log(lvl, line)
 end
 
 -- Export the debug log
-function Addon:LogExport()
+function Self:LogExport()
     local _, name, _, _, lang, _, region = RI:GetRealmInfo(realm or GetRealmName())    
     local txt = ("~ PersoLootRoll ~ Version: %s ~ Date: %s ~ Locale: %s ~ Realm: %s-%s (%s) ~"):format(self.VERSION, date(), GetLocale(), region, name, lang)
     txt = txt .. "\n" .. Util.TblConcat(self.log, "\n")
@@ -522,21 +509,21 @@ end
 --                       Timer                       --
 -------------------------------------------------------
 
-function Addon:ExtendTimerTo(timer, to)
+function Self:ExtendTimerTo(timer, to)
     if not timer.canceled and timer.ends - GetTime() < to then
-        Addon:CancelTimer(timer)
-        local fn = timer.looping and Addon.ScheduleRepeatingTimer or Addon.ScheduleTimer
-        timer = fn(Addon, timer.func, to, unpack(timer, 1, timer.argsCount))
+        Self:CancelTimer(timer)
+        local fn = timer.looping and Self.ScheduleRepeatingTimer or Self.ScheduleTimer
+        timer = fn(Self, timer.func, to, unpack(timer, 1, timer.argsCount))
         return timer, true
     else
         return timer, false
     end
 end
 
-function Addon:ExtendTimerBy(timer, by)
+function Self:ExtendTimerBy(timer, by)
     return self:ExtendTimerTo(timer, (timer.ends - GetTime()) + by)
 end
 
-function Addon:TimerIsRunning(timer)
+function Self:TimerIsRunning(timer)
     return timer and not timer.canceled and timer.ends > GetTime()
 end

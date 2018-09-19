@@ -1,6 +1,6 @@
 local Name, Addon = ...
 local Comm, Roll, Unit, Util = Addon.Comm, Addon.Roll, Addon.Unit, Addon.Util
-local Self = Addon.PersonalLootHelper
+local Self = Addon.PLH
 
 Self.NAME = "Personal Loot Helper"
 Self.VERSION = "2.08"
@@ -88,22 +88,28 @@ end)
 function Self:OnEnable()
     -- Register events
     Self:RegisterEvent("GROUP_JOINED")
+    Roll.On(Self, Roll.EVENT_START, "ROLL_START")
+    Roll.On(Self, Roll.EVENT_BID, "ROLL_BID")
+    Roll.On(Self, Roll.EVENT_END, "ROLL_END")
+
+    if IsInGroup() then
+        Self.GROUP_JOINED()
+    end
 end
 
 function Self.GROUP_JOINED()
     Self.Send(Self.ACTION_CHECK, nil, Unit.FullName("player"))
 end
 
--- Roll START
-Roll.On(Self, Roll.EVENT_START, function (_, roll)
+function Self.ROLL_START(_, roll)
     if roll.isOwner then
         -- Send TRADE message
         Self.Send(Self.ACTION_TRADE, roll, roll.item.link)
     end
-end)
+end
 
--- Roll BID
-Roll.On(Self, Roll.EVENT_BID, function (_, roll, bid, fromUnit, _, isImport)
+
+function Self.ROLL_BID(_, roll, bid, fromUnit, _, isImport)
     local fromSelf = Unit.IsSelf(fromUnit)
 
     if not isImport then
@@ -118,12 +124,11 @@ Roll.On(Self, Roll.EVENT_BID, function (_, roll, bid, fromUnit, _, isImport)
             Self.Send(Self.ACTION_REQUEST, roll, request)
         end
     end
-end)
+end
 
--- Roll END
-Roll.On(Self, Roll.EVENT_END, function (_, roll)
+function Self.ROLL_END(_, roll)
     if roll.winner and not roll.isWinner and roll.isOwner and Self.IsUsedByUnit(roll.winner) then
         -- Send OFFER message
         Self.Send(Self.ACTION_OFFER, roll, Unit.FullName(roll.winner))
     end
-end)
+end

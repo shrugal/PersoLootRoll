@@ -1,13 +1,19 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Comm, GUI, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
-local Self = Addon.Hooks
+local Self = Addon
+
+function Self.EnableHooks()
+    Self.EnableGroupLootRollHook()
+    Self.EnableChatLinksHook()
+    Self.EnableUnitMenusHook()
+end
 
 -------------------------------------------------------
 --                   GroupLootRoll                   --
 -------------------------------------------------------
 
-function Self.EnableGroupLootRoll()
+function Self.EnableGroupLootRollHook()
     -- GetLootRollTimeLeft
     if not Addon:IsHooked("GetLootRollTimeLeft") then
         Addon:RawHook("GetLootRollTimeLeft", function (id)
@@ -224,25 +230,11 @@ function Self.EnableGroupLootRoll()
     end
 end
 
-function Self.DisableGroupLootRoll()
-    Addon:Unhook("GetLootRollTimeLeft")
-    Addon:Unhook("GetLootRollItemInfo")
-    Addon:Unhook("GetLootRollItemLink")
-    Addon:Unhook("RollOnLoot")
-    for i=1, NUM_GROUP_LOOT_FRAMES do
-        Addon:Unhook(_G["GroupLootFrame" .. i], "OnShow")
-        Addon:Unhook(_G["GroupLootFrame" .. i], "OnHide")
-        Addon:Unhook(_G["GroupLootFrame" .. i], "OnClick")
-    end
-    Addon:Unhook("GroupLootContainer_RemoveFrame")
-    Addon:Unhook(GameTooltip, "SetLootRollItem")
-end
-
 -------------------------------------------------------
 --                    Chat links                     --
 -------------------------------------------------------
 
-function Self.EnableChatLinks()
+function Self.EnableChatLinksHook()
 
     -- CLICK
 
@@ -293,15 +285,11 @@ function Self.EnableChatLinks()
     end
 end
 
-function Self.DisableChatLinks()
-    Addon:Unhook("SetItemRef")
-end
-
 -------------------------------------------------------
 --                    Unit menus                     --
 -------------------------------------------------------
 
-function Self.EnableUnitMenus()
+function Self.EnableUnitMenusHook()
     local menus = {"SELF", "PLAYER", "FRIEND", "PARTY", "RAID_PLAYER", "RAID"}
 
     local button = GUI(CreateFrame("Button", "PLR_AwardLootButton", UIParent, "UIDropDownMenuButtonTemplate"))
@@ -347,8 +335,4 @@ function Self.EnableUnitMenus()
             end
         end)
     end
-end
-
-function Self.DisableUnitMenus()
-    Addon:Unhook("UnitPopup_ShowMenu")
 end

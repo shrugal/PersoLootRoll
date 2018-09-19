@@ -89,10 +89,6 @@ Self.playerCache = {}
 
 -- New items waiting for the BAG_UPDATE_DELAYED event
 Self.queue = {}
--- Remember the last locked item slot
-Self.lastLocked = {}
--- Remember the bag of the last looted item
-Self.lastLootedBag = nil
 
 -- Check if item scaling is currently active
 function Self.IsScalingActive(unit)
@@ -1221,70 +1217,4 @@ end
 -- Check if the item has azerite traits
 function Self:IsAzeriteGear()
     return self:GetBasicInfo().expacId == Self.EXPAC_BFA and self.quality >= LE_ITEM_QUALITY_RARE and Util.In(self.equipLoc, Self.TYPE_HEAD, Self.TYPE_SHOULDER, Self.TYPE_CHEST, Self.TYPE_ROBE)
-end
-
--------------------------------------------------------
---                   Events/Hooks                    --
--------------------------------------------------------
-
-function Self:OnEnable()
-    -- Register events
-    Self:RegisterEvent("ITEM_PUSH")
-    Self:RegisterEvent("ITEM_LOCKED")
-    Self:RegisterEvent("ITEM_UNLOCKED")
-    Self:RegisterEvent("BAG_UPDATE_DELAYED")
-end
-
-function Self.ITEM_PUSH(event, bagId)
-    Self.lastLootedBag = bagId == 0 and 0 or (bagId - CharacterBag0Slot:GetID() + 1)
-end
-
-function Self.ITEM_LOCKED(event, bagOrEquip, slot)
-    tinsert(Self.lastLocked, {bagOrEquip, slot})
-end
-
-function Self.ITEM_UNLOCKED(event, bagOrEquip, slot)
-    local pos = {bagOrEquip, slot}
-    
-    if #Self.lastLocked == 1 and not Util.TblEquals(pos, Self.lastLocked[1]) then
-        -- The item has been moved
-        local from, to = Self.lastLocked[1], pos
-
-        for i,roll in pairs(Addon.rolls) do
-            if roll.item.isOwner and not roll.traded then
-                if Util.TblEquals(from, roll.item.position) then
-                    roll.item:SetPosition(to)
-                    break
-                end
-            end
-        end
-    elseif #Self.lastLocked == 2 then
-        -- The item has switched places with another
-        local pos1, pos2 = Self.lastLocked[1], Self.lastLocked[2]
-        local item1, item2
-
-        for i,roll in pairs(Addon.rolls) do
-            if not item1 and Util.TblEquals(pos1, roll.item.position) then
-                item1 = roll.item
-            elseif not item2 and Util.TblEquals(pos2, roll.item.position) then
-                item2 = roll.item
-            end
-            if item1 and item2 then
-                break
-            end
-        end
-    
-        if item1 then item1:SetPosition(pos2) end
-        if item2 then item2:SetPosition(pos1) end
-    end
-
-    wipe(Self.lastLocked)
-end
-
-function Self.BAG_UPDATE_DELAYED(event)
-    for i, entry in pairs(Item.queue) do
-        Self:CancelTimer(entry.timer)
-        entry.fn(unpack(entry.args))
-    end
-    wipe(Item.queue)
 end

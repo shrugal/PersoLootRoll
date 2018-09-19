@@ -7,24 +7,25 @@ Addon.ABBR = "PLR"
 Addon.VERSION = tonumber(Version) or Version
 Addon.DEBUG = false
 
+-- Core
 Addon.GUI = {}
+Addon.Options = {}
+Addon.Roll = {}
 
 -- Util
 Addon.Comm = {}
+Addon.Item = {}
 Addon.Locale = {}
 Addon.Unit = {}
 Addon.Util = {}
 
 -- Modules
 Addon.Inspect = Addon:NewModule("Inspect", nil, "AceEvent-3.0")
-Addon.Item = Addon:NewModule("Item", nil, "AceEvent-3.0", "AceTimer-3.0")
-Addon.Options = Addon:NewModule("Options", nil)
 Addon.Session = Addon:NewModule("Session", nil, "AceEvent-3.0")
-Addon.Roll = Addon:NewModule("Roll", nil)
 Addon.Trade = Addon:NewModule("Trade", nil, "AceEvent-3.0")
 
 -- Plugins
-Addon.PersonalLootHelper = Addon:NewModule("PersonalLootHelper", nil, "AceEvent-3.0")
+Addon.PLH = Addon:NewModule("PLH", nil, "AceEvent-3.0")
 
 -- TODO: DEBUG
 if true or Addon.DEBUG then

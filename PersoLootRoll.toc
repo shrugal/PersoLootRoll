@@ -6,40 +6,26 @@
 ## SavedVariables: PersoLootRollDB, PersoLootRollIconDB, PersoLootRollML, PersoLootRollDebug
 
 # Libs
-Libs\libs.xml
+Libs\Libs.xml
 
 # Initialization
 Init.lua
 
-# Util, Locale
-Util\Util.lua
-Util\Unit.lua
-Util\Locale.lua
-Locale\enUS.lua
-Locale\deDE.lua
-Locale\esES.lua
-Locale\ruRU.lua
-Locale\zhCN.lua
-Locale\zhTW.lua
-Util\Comm.lua
+# Util, Locale, Data
+Util\util.xml
+Locale\locale.xml
+Data\data.xml
 
-# Data
-Data\Items.lua
-Data\Instances.lua
-
-# Application, GUI
+# Application
 Addon.lua
+Roll.lua
 Events.lua
 Hooks.lua
-GUI\GUI.xml
+Options.lua
 
-# Modules
-Modules\Inspect.lua
-Modules\Item.lua
-Modules\Options.lua
-Modules\Roll.lua
-Modules\Session.lua
-Modules\Trade.lua
+# Modules, Plugins
+Modules\modules.xml
+Plugins\plugins.xml
 
-# Plugins
-Plugins\PersonalLootHelper.lua
+# GUI
+GUI\gui.xml
