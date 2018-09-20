@@ -128,6 +128,7 @@ Self.AWARD_VOTES = "VOTES"
 Self.AWARD_BIDS = "BIDS"
 Self.AWARD_ROLLS = "ROLLS"
 Self.AWARD_RANDOM = "RANDOM"
+Self.AWARD_METHODS = {Self.AWARD_VOTES, Self.AWARD_BIDS, Self.AWARD_ROLLS, Self.AWARD_RANDOM}
 
 Self.customAwardMethods = {}
 
@@ -722,6 +723,163 @@ function Self:OnTraded(target)
 end
 
 -------------------------------------------------------
+--                     Awarding                      --
+-------------------------------------------------------
+
+-- Figure out a winner
+function Self:DetermineWinner()
+    local candidates = Util.TblCopyExcept(self.bids, Self.BID_PASS, true)
+
+    for _,v in ipairs(Self.AWARD_METHODS) do
+        self:ApplyCustomAwardMethod(v, candidates)
+
+        if Util.TblCount(candidates) > 1 then
+            -- Narrow down by votes
+            if v == Self.AWARD_VOTES then
+                Util.TblMap(candidates, Util.FnZero)
+                for _,to in pairs(self.votes) do candidates[to] = (candidates[to] or 0) + 1 end
+                Util.TblOnly(candidates, Util.TblMax(candidates))
+            -- Narrow down by bids
+            elseif v == Self.AWARD_BIDS then
+                Util(candidates)
+                    .Map(function (_, i) return self.bids[i] end, true)
+                    .Only(candidates, Util.TblMin(candidates))
+            -- Narrow down by roll result
+            elseif v == Self.AWARD_ROLLS then
+                Util(candidates)
+                    .Map(function (_, i) return self.rolls[i] or random(100) end, true)
+                    .Only(candidates, Util.TblMax(candidates))
+            -- Pick one at random
+            elseif v == Self.AWARD_RANDOM then
+                Util(candidates)
+                    .Select(Util.TblRandomKey(candidates))
+            end
+        end
+
+        if Util.TblCount(candidates) == 1 then
+            return next(candidates), Util.TblRelease(candidates)
+        end
+    end
+
+    Util.TblRelease(candidates)
+
+    -- Check for disenchanter
+    if Session.GetMasterlooter() then
+        local dis = Util.TblCopyFilter(Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()] or Util.TBL_EMPTY, Unit.InGroup, false, true, true)
+        if next(dis) then
+            for unit in pairs(dis) do self:Bid(Self.BID_DISENCHANT, unit, nil, true) end
+            return self:DetermineWinner()
+        end
+    end
+end
+
+--- Add a custom method for picking a roll winner
+-- @param    key    A unique identifier
+-- @function fn     A callback that removes everyone but the possible winners from the candidates list, with parameters: roll, candidates, key, before
+-- @param    before The custom method will be applied before this method (optional: defaults to Self.AWARD_RANDOM)
+function Self.AddCustomAwardMethod(key, fn, before)
+    Self.customAwardMethods[key] = Util.TblHash("fn", fn, "before", before or Self.AWARD_RANDOM)
+end
+
+--- Get a custom award method
+-- @param    key    The unique identifier
+function Self.UpdateCustomAwardMethod(key, ...)
+    if Self.customAwardMethods[key] then
+        for i=1, select("#", ...), 2 do
+            Self.customAwardMethods[key][select(i, ...)] = select(i+1, ...)
+        end
+    end
+end
+
+--- Remove a custom award method
+-- @param    key    The unique identifier
+function Self.RemoveCustomAwardMethod(key) Self.customAwardMethods[key] = nil end
+
+-- Apply a custom award method
+function Self:ApplyCustomAwardMethod(before, candidates)
+    for key,v in pairs(Self.customAwardMethods) do
+        if v.before == before then
+            self:ApplyCustomAwardMethod(key, candidates)
+            v.fn(self, candidates, key, before)
+        end
+    end
+end
+
+-------------------------------------------------------
+--                    Validation                     --
+-------------------------------------------------------
+
+-- Some common error checks for a loot roll
+function Self:Validate(status, ...)
+    if Addon.DEBUG then
+        return true
+    end
+
+    if status and self.status ~= status then
+        return false, L["ERROR_ROLL_STATUS_NOT_" .. status]
+    elseif not self.item.isTradable then
+        return false, L["ERROR_ITEM_NOT_TRADABLE"]
+    elseif not IsInGroup() then 
+        return false, L["ERROR_NOT_IN_GROUP"]
+    else
+        for _,unit in pairs({self.owner, ...}) do
+            if not UnitExists(unit) or not Unit.InGroup(unit) then
+                return false, L["ERROR_PLAYER_NOT_FOUND"]:format(unit)
+            end
+        end
+
+        return true
+    end
+end
+
+-- Validate an incoming bid
+function Self:ValidateBid(bid, fromUnit, roll, isImport, answer, answers)
+    local valid, msg = self:Validate(nil, fromUnit)
+    if not valid then
+        Addon:Error(msg)
+    -- Don't validate imports any further
+    elseif isImport then
+        return true
+    -- Check if it's a valid bid
+    elseif not Util.TblFind(Self.BIDS, floor(bid)) or Session.GetMasterlooter(self.owner) and answer > 0 and not (answers and answers[answer]) then
+        if Unit.IsSelf(fromUnit) then
+            Addon:Error(L["ERROR_ROLL_BID_UNKNOWN_SELF"])
+        else
+            Addon:Verbose(L["ERROR_ROLL_BID_UNKNOWN_OTHER"], fromUnit, self.item.link)
+        end
+    -- Check if the unit can bid
+    elseif not self:UnitCanBid(fromUnit, bid) then
+        if Unit.IsSelf(fromUnit) then
+            Addon:Error(L["ERROR_ROLL_BID_IMPOSSIBLE_SELF"])
+        else
+            Addon:Verbose(L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"], fromUnit, self.item.link)
+        end
+    else
+        return true
+    end
+end
+
+-- Validate an incoming vote
+function Self:ValidateVote(vote, fromUnit, isImport)
+    local valid, msg = self:Validate(nil, vote, fromUnit)
+    if not valid then
+        Addon:Error(msg)
+    -- Don't validate imports any further
+    elseif isImport then
+        return true
+    -- Check if the unit can bid
+    elseif not self:UnitCanVote(fromUnit) then
+        if fromSelf then
+            Addon:Error(L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"])
+        else
+            Addon:Verbose(L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"], fromUnit, self.item.link)
+        end
+    else
+        return true
+    end
+end
+
+-------------------------------------------------------
 --                      GUI                       --
 -------------------------------------------------------
 
@@ -948,156 +1106,6 @@ function Self.CalculateTimeout(selfOrOwner)
     else
         local base, perItem = ml and Session.rules.timeoutBase or Self.TIMEOUT, ml and Session.rules.timeoutPerItem or Self.TIMEOUT_PER_ITEM
         return (base + Util.GetNumDroppedItems() * perItem) * (chill and Self.TIMEOUT_CHILL_MODE or 1)
-    end
-end
-
--------------------------------------------------------
---                    Validation                     --
--------------------------------------------------------
-
--- Some common error checks for a loot roll
-function Self:Validate(status, ...)
-    if Addon.DEBUG then
-        return true
-    end
-
-    if status and self.status ~= status then
-        return false, L["ERROR_ROLL_STATUS_NOT_" .. status]
-    elseif not self.item.isTradable then
-        return false, L["ERROR_ITEM_NOT_TRADABLE"]
-    elseif not IsInGroup() then 
-        return false, L["ERROR_NOT_IN_GROUP"]
-    else
-        for _,unit in pairs({self.owner, ...}) do
-            if not UnitExists(unit) or not Unit.InGroup(unit) then
-                return false, L["ERROR_PLAYER_NOT_FOUND"]:format(unit)
-            end
-        end
-
-        return true
-    end
-end
-
--- Validate an incoming bid
-function Self:ValidateBid(bid, fromUnit, roll, isImport, answer, answers)
-    local valid, msg = self:Validate(nil, fromUnit)
-    if not valid then
-        Addon:Error(msg)
-    -- Don't validate imports any further
-    elseif isImport then
-        return true
-    -- Check if it's a valid bid
-    elseif not Util.TblFind(Self.BIDS, floor(bid)) or Session.GetMasterlooter(self.owner) and answer > 0 and not (answers and answers[answer]) then
-        if Unit.IsSelf(fromUnit) then
-            Addon:Error(L["ERROR_ROLL_BID_UNKNOWN_SELF"])
-        else
-            Addon:Verbose(L["ERROR_ROLL_BID_UNKNOWN_OTHER"], fromUnit, self.item.link)
-        end
-    -- Check if the unit can bid
-    elseif not self:UnitCanBid(fromUnit, bid) then
-        if Unit.IsSelf(fromUnit) then
-            Addon:Error(L["ERROR_ROLL_BID_IMPOSSIBLE_SELF"])
-        else
-            Addon:Verbose(L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"], fromUnit, self.item.link)
-        end
-    else
-        return true
-    end
-end
-
--- Validate an incoming vote
-function Self:ValidateVote(vote, fromUnit, isImport)
-    local valid, msg = self:Validate(nil, vote, fromUnit)
-    if not valid then
-        Addon:Error(msg)
-    -- Don't validate imports any further
-    elseif isImport then
-        return true
-    -- Check if the unit can bid
-    elseif not self:UnitCanVote(fromUnit) then
-        if fromSelf then
-            Addon:Error(L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"])
-        else
-            Addon:Verbose(L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"], fromUnit, self.item.link)
-        end
-    else
-        return true
-    end
-end
-
--------------------------------------------------------
---                 Picking a winner                  --
--------------------------------------------------------
-
--- Figure out a winner
-function Self:DetermineWinner()
-    local candidates = Util.TblCopyExcept(self.bids, Self.BID_PASS, true)
-
-    for _,v in Util.Each(Self.AWARD_VOTES, Self.AWARD_BIDS, Self.AWARD_ROLLS, Self.AWARD_RANDOM) do
-        self:ApplyCustomAwardMethod(v, candidates)
-
-        if Util.TblCount(candidates) > 1 then
-            -- Narrow down by votes
-            if v == Self.AWARD_VOTES then
-                Util.TblMap(candidates, Util.FnZero)
-                for _,to in pairs(self.votes) do candidates[to] = (candidates[to] or 0) + 1 end
-                Util.TblOnly(candidates, Util.TblMax(candidates))
-            -- Narrow down by bids
-            elseif v == Self.AWARD_BIDS then
-                Util(candidates)
-                    .Map(function (_, i) return self.bids[i] end, true)
-                    .Only(candidates, Util.TblMin(candidates))
-            -- Narrow down by roll result
-            elseif v == Self.AWARD_ROLLS then
-                Util(candidates)
-                    .Map(function (_, i) return self.rolls[i] or random(100) end, true)
-                    .Only(candidates, Util.TblMax(candidates))
-            -- Pick one at random
-            elseif v == Self.AWARD_RANDOM then
-                Util(candidates)
-                    .Select(Util.TblRandomKey(candidates))
-            end
-        end
-
-        if Util.TblCount(candidates) == 1 then
-            return next(candidates), Util.TblRelease(candidates)
-        end
-    end
-
-    Util.TblRelease(candidates)
-
-    -- Check for disenchanter
-    if Session.GetMasterlooter() then
-        local dis = Util.TblCopyFilter(Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()] or Util.TBL_EMPTY, Unit.InGroup, false, true, true)
-        if next(dis) then
-            for unit in pairs(dis) do self:Bid(Self.BID_DISENCHANT, unit, nil, true) end
-            return self:DetermineWinner()
-        end
-    end
-end
-
---- Add a custom method for picking a roll winner
--- @param    key    A unique identifier
--- @function fn     A callback that removes everyone but the possible winners from the candidates list, with parameters: roll, candidates, key, before
--- @param    before The custom method will be applied before this method (optional: defaults to Self.AWARD_RANDOM)
-function Self.AddCustomAwardMethod(key, fn, before)
-    Util.TblSet(Self.customAwardMethods, before or Self.AWARD_RANDOM, key, fn)
-end
-
---- Remove a custom award method
--- @param    key    The unique identifier
--- @param    before The method this custom method is applied before
-function Self.RemoveCustomAwardMethod(key, before)
-    Util.TblSet(Self.customAwardMethods, before or Self.AWARD_RANDOM, key, nil)
-end
-
--- Apply a custom award method
-function Self:ApplyCustomAwardMethod(before, candidates)
-    if Self.customAwardMethods[before] then
-        for key,fn in Self.customAwardMethods[before] do
-            self:ApplyCustomAwardMethod(key, candidates)
-            fn(self, candidates, key, before)
-        end
     end
 end
 

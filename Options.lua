@@ -89,7 +89,7 @@ Self.DEFAULTS = {
             actions = {anchor = "LEFT", v = 10, h = 0}
         },
 
-        modules = {}
+        plugins = {}
     },
     -- VERSION 4
     factionrealm = {},
@@ -109,9 +109,11 @@ Self.WIDTH_FULL = "full"
 Self.WIDTH_HALF = 1.7
 Self.WIDTH_THIRD = 1.1
 Self.WIDTH_QUARTER = 0.85
-Self.WIDTH_HALF_SCROLL = Self.WIDTH_HALF - .1
-Self.WIDTH_THIRD_SCROLL = Self.WIDTH_THIRD - .05
-Self.WIDTH_QUARTER_SCROLL = Self.WIDTH_QUARTER - .05
+Self.WIDTH_FIFTH = 0.67
+Self.WIDTH_HALF_SCROLL = Self.WIDTH_HALF - (0.2/2)
+Self.WIDTH_THIRD_SCROLL = Self.WIDTH_THIRD - (0.2/3)
+Self.WIDTH_QUARTER_SCROLL = Self.WIDTH_QUARTER - (0.2/4)
+Self.WIDTH_FIFTH_SCROLL = Self.WIDTH_FIFTH - (0.2/5)
 
 -- Divider for storage in club info
 Self.DIVIDER = "------ PersoLootRoll ------"
@@ -144,6 +146,10 @@ Self.it = Util.Iter()
 Self.registered = false
 Self.frames = {}
 
+-------------------------------------------------------
+--                Register and Show                  --
+-------------------------------------------------------
+
 -- Register options
 function Self.Register()
     Self.registered = true
@@ -172,6 +178,29 @@ function Self.Show(name)
     -- Have to call it twice because of a blizzard UI bug
     InterfaceOptionsFrame_OpenToCategory(panel)
     InterfaceOptionsFrame_OpenToCategory(panel)
+end
+
+-------------------------------------------------------
+--                  Custom options                   --
+-------------------------------------------------------
+
+--- Add custom options for the given key
+-- @string         key  The options category that should be extended
+-- @string         path Dot-separated path inside the options data, ending with a new namespace for these custom options
+-- @table|function data Options data, either a table or a callback with parameters: key, path
+function Self.AddCustomOptions(key, path, data)
+    Util.TblSet(Self.customOptions, key, path, data)
+end
+
+-- Apply custom options to an options table
+function Self.ApplyCustomOptions(key, options)
+    if Self.customOptions[key] then
+        for path,data in pairs(Self.customOptions[key]) do
+            data = Util.FnVal(data, key, path)
+            data.order = data.order or Self.it()
+            Util.TblSet(options, path, data)
+        end
+    end
 end
 
 -------------------------------------------------------
@@ -1237,29 +1266,6 @@ function Self.DecodeParam(name, str)
         return val
     elseif str ~= "" then
         return str
-    end
-end
-
--------------------------------------------------------
---                  Custom options                   --
--------------------------------------------------------
-
---- Add custom options for the given key
--- @string         key  The options category that should be extended
--- @string         path Dot-separated path inside the options data, ending with the custom option's name
--- @table|function data Options data, either a table or a callback with parameters: key, path
-function Self.AddCustomOptions(key, path, data)
-    Util.TblSet(Self.customOptions, key, path, data)
-end
-
--- Apply custom options to an options table
-function Self.ApplyCustomOptions(key, options)
-    if Self.customOptions[key] then
-        for path,data in pairs(Self.customOptions[key]) do
-            data = Util.FnVal(data, key, path)
-            data.order = data.order or Self.it()
-            Util.TblSet(options, path, data)
-        end
     end
 end
 

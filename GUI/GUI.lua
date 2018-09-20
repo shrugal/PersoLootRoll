@@ -279,7 +279,7 @@ end
 -- @param  sortDefault Sorting default value (optional)
 -- @bool   sortDesc    Sort in descending order (optional)
 -- @return table       The column entry
-function Self.AddPlayerColumn(name, value, header, desc, width, sortBefore, sortDefault, sortDesc)
+function Self.AddCustomPlayerColumn(name, value, header, desc, width, sortBefore, sortDefault, sortDesc)
     local entry = Util.TblHash("name", name, "value", value, "header", header, "desc", desc, "width", width, "sortBefore", sortBefore, "sortDefault", sortDefault, "sortDesc", sortDesc)
     tinsert(Self.playerColumns, entry)
 
@@ -287,35 +287,24 @@ function Self.AddPlayerColumn(name, value, header, desc, width, sortBefore, sort
     return entry
 end
 
---- Get the player column entry with the given name
--- @param  name  The unique identifier
--- @return int   The entry's position
--- @return table The player column entry
-function Self.GetPlayerColumn(name)
-    return Util.TblFindWhere(Self.playerColumns, "name", name)
-end
-
 --- Update a player column entry
 -- @param name The unique identifier
--- @param ...  Key-value pairs of properties to update (@see Self.AddPlayerColumn)
-function Self.SetPlayerColumn(name, ...)
-    local entry = select(2, Self.GetPlayerColumn(name))
+-- @param ...  Key-value pairs of properties to update (@see Self.AddCustomPlayerColumn)
+function Self.UpdateCustomPlayerColumn(name, ...)
+    local entry = select(2, Util.TblFindWhere(Self.playerColumns, "name", name))
     if entry then
         for i=1, select("#", ...), 2 do
-            local k,v = select(i, ...)
-            entry[k] = v
+            entry[select(i, ...)] = select(i+1, ...)
         end
-
         Self.events:Fire(Self.EVENT_PLAYER_COLUMN_SET, entry, ...)
-        return entry
     end
 end
 
 --- Remove a player column entry
 -- @param ... The unique identifiers
-function Self.RemovePlayerColumns(...)
+function Self.RemoveCustomPlayerColumns(...)
     for _,name in Util.Each(...) do
-        local i = Self.GetPlayerColumn(name)
+        local i = Util.TblFindWhere(Self.playerColumns, "name", name)
         if i then
             local entry = tremove(Self.playerColumns, i)
             Self.events:Fire(Self.EVENT_PLAYER_COLUMN_REMOVE, entry, i)

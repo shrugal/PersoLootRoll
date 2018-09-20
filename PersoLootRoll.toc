@@ -6,7 +6,7 @@
 ## SavedVariables: PersoLootRollDB, PersoLootRollIconDB, PersoLootRollML, PersoLootRollDebug
 
 # Libs
-Libs\Libs.xml
+Libs\libs.xml
 
 # Initialization
 Init.lua

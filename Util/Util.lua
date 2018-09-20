@@ -422,7 +422,7 @@ function Self.TblSet(t, ...)
         end
     end
 
-    return t
+    return t, val
 end
 
 -- Get a random key from the table
@@ -1103,6 +1103,17 @@ end
 -- Split string on delimiter
 function Self.StrSplit(str, del)
     return Self.Tbl(del:split(str))
+end
+
+-- Join a bunch of strings with given delimiter
+function Self.StrJoin(del, ...)
+    local s = ""
+    for _,v in Self.Each(...) do
+        if not Self.StrIsEmpty(v) then
+            s = s .. (s == "" and "" or del or " ") .. v
+        end
+    end
+    return s
 end
 
 -- Uppercase first char
