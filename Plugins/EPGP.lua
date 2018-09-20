@@ -1,9 +1,9 @@
 local Name, Addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local EPGP = LibStub("AceAddon-3.0"):GetAddon("EPGP", true)
-local LGP = LibStub:GetLibrary("LibGearPoints-1.2", true)
-local GS = LibStub:GetLibrary("LibGuildStorage-1.2", true)
-local GUI, Options, Roll, Util = Addon.GUI, Addon.Options, Addon.Roll, Addon.Util
+local LGP = LibStub("LibGearPoints-1.2", true)
+local GS = LibStub("LibGuildStorage-1.2", true)
+local GUI, Options, Roll, Session, Unit, Util = Addon.GUI, Addon.Options, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
 local Self = Addon.EPGP
 
 -- How often GP credit operations should be retried by default
@@ -55,8 +55,8 @@ function Self.RollGP(roll)
     if not roll.winner or not roll.bids[roll.winner] then
         return 0
     else
-        local bid, weights = roll.bids[roll.winner], Addon.db.profile.plugins.EPGP.bidWeights
-        return (LGP:GetValue(roll.item.link) or 0) * (weights[bid] or weights[floor(bid)] or 0)
+        local bid, weights = roll.bids[roll.winner], Self.db.profile.bidWeights
+        return Util.NumRound((LGP:GetValue(roll.item.link) or 0) * (weights[bid] or weights[floor(bid)] or 0))
     end
 end
 
@@ -78,13 +78,23 @@ end
 -- Add EP to the unit's account
 function Self.UnitCreditGP(unit, link, amount, undo, trys)
     if trys == 0 then
-        Addon:Error("EPGP_CREDIT_EP_FAILED", unit, link, amount, undo)
+        Addon:Error(L["EPGP_ERROR_CREDIT_GP_FAILED"], amount, unit, link)
     elseif not GS:IsCurrentState() then
         Self:ScheduleTimer(Self.UnitCreditEP, 0.5, unit, link, amount, undo, (trys or Self.CREDIT_MAX_TRYS) - 1)
     elseif not EPGP:CanIncGPBy(link, amount) then
-        Addon:Error("EPGP_CREDIT_EP_FAILED", unit, link, amount)
+        Addon:Error(L["EPGP_ERROR_CREDIT_GP_FAILED"], amount, unit, link)
     else
+        Addon:Verbose(L["EPGP_CREDIT_GP"], amount, Unit(unit), link)
         EPGP:IncGPBy(unit, link, amount, false, undo)
+    end
+end
+
+-- Try undoing a previous GP credit for the given roll
+function Self.UndoGPCredit(roll)
+    if Self.credited[roll.id] then
+        local prevWinner, gp = (":"):split(Self.credited[roll.id])
+        Self.UnitCreditGP(prevWinner, roll.item.link, -tonumber(gp), true)
+        Self.credited[roll.id] = nil
     end
 end
 
@@ -93,7 +103,6 @@ end
 -------------------------------------------------------
 
 function Self.GetBidWeightOptions(bid, it)
-    local config = Addon.db.profile.plugins.EPGP
     local rules = Addon.db.profile.masterloot.rules
     local answer = Util.Select(bid, Roll.BID_NEED, Roll.ANSWER_NEED, Roll.BID_GREED, Roll.ANSWER_GREED)
     local answers = Util.Select(bid, Roll.BID_NEED, rules.needAnswers, Roll.BID_GREED, rules.greedAnswers)
@@ -114,10 +123,11 @@ function Self.GetBidWeightOptions(bid, it)
         end
     end
     local get = function (info)
-        return "" .. (config.bidWeights[bid + info.arg/10] or config.bidWeights[bid] or "")
+        return "" .. (Self.db.profile.bidWeights[bid + info.arg/10] or Self.db.profile.bidWeights[bid] or "")
     end
     local set = function (info, val)
-        config.bidWeights[bid + info.arg/10] = tonumber(val) or info.arg == 0 and 0 or nil
+        local i = bid + info.arg/10
+        Self.db.profile.bidWeights[i] = tonumber(val) or Self.db.defaults.bidWeights[i] or nil
     end
     local hidden = function (info)
         return not answers or not answers[info.arg]
@@ -139,18 +149,10 @@ function Self.GetBidWeightOptions(bid, it)
     return options
 end
 
--------------------------------------------------------
---                    Events/Hooks                   --
--------------------------------------------------------
-
-function Self:OnInitialize()
-    -- Set enabled state
-    Self:SetEnabledState(Addon.db.profile.plugins.EPGP.enabled)
-
-    -- Register options
+-- Register module options
+function Self.RegisterOptions()
     Options.AddCustomOptions(Options.CUSTOM_MASTERLOOT, "epgp", function ()
         local it = Util.Iter()
-        local config = Addon.db.profile.plugins.EPGP
 
         return {
             name = L["EPGP"],
@@ -163,10 +165,10 @@ function Self:OnInitialize()
                     type = "toggle",
                     order = it(),
                     set = function (_, val)
-                        config.enabled = val
+                        Self.db.profile.enabled = val
                         Self[val and "Enable" or "Disable"](Self)
                     end,
-                    get = function (_) return config.enabled end,
+                    get = function (_) return Self.db.profile.enabled end,
                     width = Options.WIDTH_THIRD_SCROLL
                 },
                 onlyGuildRaid = {
@@ -174,8 +176,8 @@ function Self:OnInitialize()
                     desc = L["EPGP_OPT_ONLY_GUILD_RAID_DESC"]:format(Util.GROUP_THRESHOLD*100),
                     type = "toggle",
                     order = it(),
-                    set = function (_, val) config.onlyGuildRaid = val end,
-                    get = function (_, key) return config.onlyGuildRaid end,
+                    set = function (_, val) Self.db.profile.onlyGuildRaid = val end,
+                    get = function (_, key) return Self.db.profile.onlyGuildRaid end,
                     width = Options.WIDTH_THIRD_SCROLL
                 },
                 awardBefore = {
@@ -184,11 +186,11 @@ function Self:OnInitialize()
                     type = "select",
                     order = it(),
                     values = Util.TblCopy(Roll.AWARD_METHODS, function (v) return L["ROLL_AWARD_" .. v] end),
-                    get = function () return Util.TblFind(Roll.AWARD_METHODS, config.awardBefore) end,
+                    get = function () return Util.TblFind(Roll.AWARD_METHODS, Self.db.profile.awardBefore) end,
                     set = function (_, val)
                         val = Roll.AWARD_METHODS[val] or Roll.AWARD_BIDS
 
-                        config.awardBefore = val
+                        Self.db.profile.awardBefore = val
                         Roll.UpdateCustomAwardMethod("epgp", "before", val)
                         GUI.UpdateCustomPlayerColumn("epgp", "sortBefore", Util.Select(val, Roll.AWARD_VOTES, "votes", Roll.AWARD_BIDS, "bid", Roll.AWARD_ROLLS, "roll", "ilvl"))
                     end,
@@ -203,7 +205,42 @@ function Self:OnInitialize()
             },
             hidden = function () return not IsAddOnLoaded("EPGP") end
         }
+    end, function (s, isImport)
+        if isImport then
+            -- Import
+            Self.db.profile.awardBefore = Util.Default(s.epgpAwardBefore, Self.db.defaults.awardBefore)
+
+            Self.db.profile.bidWeights = Util.TblCopy(Self.db.defaults.bidWeights)
+            if s.epgpBidWeights then
+                for i,v in s.epgpBidWeights:gmatch("(-?%d*%.?%d*) ?= ?(-?%d*%.?%d*)") do
+                    i, v = tonumber(i), tonumber(v)
+                    if i and v then Self.db.profile.bidWeights[i] = v end
+                end
+            end
+        else
+            -- Export
+            if Self.db.profile.awardBefore ~= Self.db.defaults.awardBefore then
+                s.epgpAwardBefore = Self.db.profile.awardBefore
+            end
+
+            if not Util.TblEquals(Self.db.profile.bidWeights, Self.db.defaults.bidWeights) then
+                s.epgpBidWeights = Util(Self.db.profile.bidWeights)
+                    .Copy(function (v, i) return v ~= Self.db.defaults.bidWeights[i] and ("%s=%s"):format(i, v) or nil end, true)
+                    .Concat(", ")()
+            end
+        end
     end)
+end
+
+-------------------------------------------------------
+--                    Events/Hooks                   --
+-------------------------------------------------------
+
+function Self:OnInitialize()
+    Self.db = {profile = Addon.db.profile.plugins.EPGP, defaults = Addon.db.defaults.profile.plugins.EPGP}
+
+    Self:SetEnabledState(Self.db.profile.enabled)
+    Self.RegisterOptions()
 end
 
 function Self:OnEnable()
@@ -211,10 +248,11 @@ function Self:OnEnable()
 
     GUI.AddCustomPlayerColumn("epgpPr", Self.UnitEP, L["EPGP_PR"], nil, nil, "bid", 0, true)
     GUI.AddCustomPlayerColumn("epgpMinEp", Self.UnitHasMinEP, nil, nil, nil, "epgpPr", nil, true)
-    Roll.AddCustomAwardMethod("epgp", Self.DetermineWinner, Addon.db.profile.plugins.EPGP.awardBefore)
+    Roll.AddCustomAwardMethod("epgp", Self.DetermineWinner, Self.db.profile.awardBefore)
 
     -- Register events
     Roll.On(Self, Roll.EVENT_AWARD, "ROLL_AWARD")
+    Roll.On(Self, Roll.EVENT_RESTART, "ROLL_RESTART")
     Roll.On(Self, Roll.EVENT_CLEAR, "ROLL_CLEAR")
 end
 
@@ -227,21 +265,21 @@ function Self:OnDisable()
 end
 
 function Self.ROLL_AWARD(_, _, roll, winner, prevWinner)
-    if Session.IsMasterlooter() then
-        -- Undo a previous credit if necessary
-        if prevWinner and Self.credited[roll.id] then
-            Self.UnitCreditGP(prevWinner, roll.item.link, -Self.credited[roll.id], true)
-        end
+    if Session.IsMasterlooter() and roll.isOwner then
+        Self.UndoGPCredit(roll)
 
         -- Credit the winner
         local gp = Self.RollGP(roll)
         if gp > 0 and winner and IsGuildMember(winner) then
-            Self.UnitCreditGP(winner, roll.item.link, gp)
-            Self.credited[roll.id] = gp
-        else
-            Self.credited[roll.id] = nil
+            local name = Unit.FullName(winner)
+            Self.UnitCreditGP(name, roll.item.link, gp)
+            Self.credited[roll.id] = name .. ":" .. gp
         end
     end
+end
+
+function Self.ROLL_RESTART(_, _, roll)
+    Self.UndoGPCredit(roll)
 end
 
 function Self.ROLL_CLEAR(_, _, roll)

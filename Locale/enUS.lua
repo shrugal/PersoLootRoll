@@ -430,6 +430,8 @@ L["EPGP_OPT_AWARD_BEFORE"] = "Awarding precedence"
 L["EPGP_OPT_AWARD_BEFORE_DESC"] = "Pick before which default awarding method the EPGP PR value should be concidered when picking a winner."
 L["EPGP_OPT_BID_WEIGHTS"] = "Bid GP weights"
 L["EPGP_OPT_BID_WEIGHTS_DESC"] = "Assign different weights to roll bids. The GPs an item winner gets are multiplied by this value."
+L["EPGP_CREDIT_GP"] = "Crediting %d GP to <%s> for %s."
+L["EPGP_ERROR_CREDIT_GP_FAILED"] = "Crediting %d GP to <%s> for %s failed!"
 
 -- Globals
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "The owner of this item doesn't use the PersoLootRoll addon."

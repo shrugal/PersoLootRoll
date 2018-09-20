@@ -185,20 +185,32 @@ end
 -------------------------------------------------------
 
 --- Add custom options for the given key
--- @string         key  The options category that should be extended
--- @string         path Dot-separated path inside the options data, ending with a new namespace for these custom options
--- @table|function data Options data, either a table or a callback with parameters: key, path
-function Self.AddCustomOptions(key, path, data)
-    Util.TblSet(Self.customOptions, key, path, data)
+-- @string         key     The options category that should be extended
+-- @string         path    Dot-separated path inside the options data, ending with a new namespace for these custom options
+-- @table|function options Options data, either a table or a callback with parameters: key, path
+-- @function       sync    Callback handling import/export operations with parameters: data, isImport, key, path (optional)
+function Self.AddCustomOptions(key, path, options, sync)
+    Util.TblSet(Self.customOptions, key, path, Util.TblHash("options", options, "sync", sync))
 end
 
 -- Apply custom options to an options table
 function Self.ApplyCustomOptions(key, options)
     if Self.customOptions[key] then
-        for path,data in pairs(Self.customOptions[key]) do
-            data = Util.FnVal(data, key, path)
+        for path,entry in pairs(Self.customOptions[key]) do
+            local data = Util.FnVal(entry.options, key, path)
             data.order = data.order or Self.it()
             Util.TblSet(options, path, data)
+        end
+    end
+end
+
+-- Call custom options for sync operation
+function Self.SyncCustomOptions(s, isImport)
+    for key,options in pairs(Self.customOptions) do
+        for path,entry in pairs(options) do
+            if entry.sync then
+                entry.sync(s, isImport or false, key, path)
+            end
         end
     end
 end
@@ -721,7 +733,7 @@ function Self.RegisterMasterloot()
         .SortBy("clubType", nil, true)()
     local clubValues = Util(clubs).Copy()
         .Map(function (info) return info.name .. (info.clubType == Enum.ClubType.Guild and " (" .. GUILD .. ")" or "") end)()
-    Addon.db.char.masterloot.council.clubId = Addon.db.char.masterloot.council.clubId or clubs[1] and clubs[1].clubId
+    Addon.db.char.masterloot.clubId = Addon.db.char.masterloot.clubId or clubs[1] and clubs[1].clubId
 
     -- This fixes the spacing bug with AceConfigDialog
     CD:ConfigTableChanged("ConfigTableChanged", Name .. " Masterloot")
@@ -739,11 +751,11 @@ function Self.RegisterMasterloot()
                 order = it(),
                 values = clubValues,
                 set = function (_, val)
-                    Addon.db.char.masterloot.council.clubId = clubs[val].clubId
+                    Addon.db.char.masterloot.clubId = clubs[val].clubId
                     Session.RefreshRules()
                 end,
                 get = function ()
-                    return Util.TblFindWhere(clubs, "clubId", Addon.db.char.masterloot.council.clubId)
+                    return Util.TblFindWhere(clubs, "clubId", Addon.db.char.masterloot.clubId)
                 end,
                 width = Self.WIDTH_HALF
             },
@@ -761,7 +773,7 @@ function Self.RegisterMasterloot()
                 type = "execute",
                 order = it(),
                 func = function ()
-                    if Self.CanWriteToClub(Addon.db.char.masterloot.council.clubId) then
+                    if Self.CanWriteToClub(Addon.db.char.masterloot.clubId) then
                         StaticPopup_Show(GUI.DIALOG_OPT_MASTERLOOT_SAVE)
                     else
                         Self.ExportRules()
@@ -1016,15 +1028,15 @@ function Self.RegisterMasterloot()
                         type = "multiselect",
                         order = it(),
                         values = function ()
-                            return Util.GetClubRanks(Addon.db.char.masterloot.council.clubId)
+                            return Util.GetClubRanks(Addon.db.char.masterloot.clubId)
                         end,
                         set = function (_, key, val)
-                            local clubId = Addon.db.char.masterloot.council.clubId
+                            local clubId = Addon.db.char.masterloot.clubId
                             Util.TblSet(Addon.db.profile.masterloot.council.clubs, clubId, "ranks", key, val)
                             Session.RefreshRules()
                         end,
                         get = function (_, key)
-                            local clubId = Addon.db.char.masterloot.council.clubId
+                            local clubId = Addon.db.char.masterloot.clubId
                             return Util.TblGet(Addon.db.profile.masterloot.council.clubs, clubId, "ranks", key)
                         end
                     },
@@ -1056,33 +1068,33 @@ function Self.RegisterMasterloot()
 end
 
 function Self.ImportRules()
-    local clubId = Addon.db.char.masterloot.council.clubId
+    local clubId = Addon.db.char.masterloot.clubId
     local c = Addon.db.profile.masterloot
     local s = Self.ReadFromClub(clubId)
 
     -- Rules
     for i in pairs(c.rules) do
         if i ~= "disenchanter" then
-            c.rules[i] = Util.Default(s[i], Addon.db.defaults.profile.masterloot.rules[i])
+            Self.SetValOrDefault("profile.masterloot.rules." .. i, s[i])
         end
     end
 
-    c.rules.disenchanter[GetRealmName()] = Util.TblIsFilled(s.disenchanter) and Util.TblFlip(s.disenchanter, true)
+    c.rules.disenchanter[GetRealmName()] = Util.TblIsFilled(s.disenchanter) and Util(s.disenchanter).Map(Unit.FullName).Flip(true)()
 
     -- Council
     local ranks = Util.GetClubRanks(clubId)
-    Util.TblSet(c.council.clubs, clubId, "ranks", Util(s.councilRanks or Util.TBL_EMPTY).Map(function (v)
-        return tonumber(v) or Util.TblFind(ranks, v)
-    end).Flip(true)())
+    Util.TblSet(c.council.clubs, clubId, "ranks", s.councilRanks and Util(s.councilRanks).Map(function (v)return tonumber(v) or Util.TblFind(ranks, v) end).Flip(true)() or {})
+    c.council.roles = s.councilRoles and Util.TblFlip(s.councilRoles, true) or {}
+    c.council.whitelists[GetRealmName()] = Util.TblIsFilled(s.councilWhitelist) and Util(s.councilWhitelist).Map(Unit.FullName).Flip(true)()
 
-    c.council.roles = Util.TblFlip(s.councilRoles or Util.TBL_EMPTY, true)
-    c.council.whitelists[GetRealmName()] = Util.TblIsFilled(s.councilWhitelist) and Util.TblFlip(s.councilWhitelist, true)
+    -- Custom
+    Self.SyncCustomOptions(s, true)
 
     CR:NotifyChange(Name .. " Masterloot")
 end
 
 function Self.ExportRules()
-    local clubId = Addon.db.char.masterloot.council.clubId
+    local clubId = Addon.db.char.masterloot.clubId
     local info = C_Club.GetClubInfo(clubId)
     local c = Addon.db.profile.masterloot
     local s = Util.Tbl()
@@ -1105,6 +1117,9 @@ function Self.ExportRules()
     if next(roles) then s.councilRoles = roles end
     local wl = Util.TblKeys(c.council.whitelists[GetRealmName()] or Util.TBL_EMPTY)
     if next(wl) then s.councilWhitelist = wl end
+
+    -- Custom
+    Self.SyncCustomOptions(s, false)
 
     -- Export
     local r, canWrite = Self.WriteToClub(clubId, s)
@@ -1357,7 +1372,7 @@ function Self.Migrate()
                 if guildRank and guildRank > 0 then
                     Util.TblSet(p.masterloot.council.clubs, guildId, ranks, guildRank, true)
                 end
-                c.masterloot.council.clubId = guildId
+                c.masterloot.clubId = guildId
             end
             c.masterloot.council.guildRank = nil
         end
@@ -1419,4 +1434,17 @@ function Self.RegisterMinimapIcon()
     -- Icon
     if not PersoLootRollIconDB then PersoLootRollIconDB = {} end
     LDBIcon:Register(Name, plugin, PersoLootRollIconDB)
+end
+
+-------------------------------------------------------
+--                      Helper                       --
+-------------------------------------------------------
+
+function Self.SetValOrDefault(path, val)
+    if val == nil then
+        local d = Util.TblGet(Addon.db, "defaults." .. path)
+        Util.TblSet(Addon.db, path, type(d) == "table" and Util.TblCopy(d) or d)
+    else
+        Util.TblSet(Addon.db, path, val)
+    end
 end

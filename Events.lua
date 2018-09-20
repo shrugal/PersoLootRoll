@@ -177,7 +177,7 @@ end
 
 function Self.CHAT_MSG_LOOT(_, _, msg, _, _, _, sender)
     local unit = Unit(sender)
-    if not Unit.InGroup(unit) or Util.BoolXOR(Unit.IsSelf(unit), Self:UnitIsTracking(unit, true)) then return end
+    if not Self:IsTracking() or not Unit.InGroup(unit) or not Unit.IsSelf(unit) and Self:UnitIsTracking(unit, true) then return end
 
     local item = Item.GetLink(msg)
 

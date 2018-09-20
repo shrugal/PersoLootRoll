@@ -400,29 +400,26 @@ end
 
 -- Set a value on a table
 function Self.TblSet(t, ...)
-    local n = select("#", ...) - 1
-    local val = select(n + 1, ...)
-
-    if n == 1 then
-        if type(...) == "table" then
-            return Self.TblSet(t, unpack((...)), val)
-        elseif type(...) == "string" and (...):find("%.") then
-            return Self.TblSet(t, ("."):split((...)), val)
-        end
+    local path = ...
+   
+    if type(...) == "string" and (...):find("%.") then
+        path = Self.TblTmp(("."):split((...)))
+    elseif type(...) ~= "table" then
+        path = Self.TblTmp(...)
+        tremove(path)
     end
-
+   
     local u = t
-    for i=1,n do
-        local k = select(i, ...)
-        if i == n then
-            u[k] = val
+    for i,k in ipairs(path) do
+        if i == #path then
+            u[k] = select(select("#", ...), ...)
         else
             if u[k] == nil then u[k] = {} end
             u = u[k]
         end
     end
-
-    return t, val
+   
+    return t, val, Self.TblReleaseTmp(path)
 end
 
 -- Get a random key from the table
@@ -1055,7 +1052,7 @@ end
 
 -- Join a table of strings
 function Self.TblConcat(t, del)
-    return table.concat(t, del)
+    return Self.StrJoin(del, t)
 end
 
 -- Use Blizzard's inspect tool

@@ -37,7 +37,7 @@ function Self.Send(action, roll, param)
         txt = (not txt or txt == "") and " " or txt
 
         -- Send the message
-        Addon:SendCommMessage(Self.EVENT, txt, Self.GetDestination())
+        Addon:SendCommMessage(Self.EVENT, txt, Comm.GetDestination())
     end
 end
 
