@@ -659,13 +659,13 @@ function Self.TblFilter(t, fn, index, notVal, k, ...)
 
     if not k and Self.TblIsList(t) then
         for i=#t,1,-1 do
-            if Self.FnCall(fn, t[i], i, index, notVal, ...) then
+            if not Self.FnCall(fn, t[i], i, index, notVal, ...) then
                 tremove(t, i)
             end
         end
     else
         for i,v in pairs(t) do
-            if Self.FnCall(fn, v, i, index, notVal, ...) then
+            if not Self.FnCall(fn, v, i, index, notVal, ...) then
                 Self.TblRemove(t, i, k)
             end
         end

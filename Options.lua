@@ -93,13 +93,11 @@ Self.DEFAULTS = {
     },
     -- VERSION 4
     factionrealm = {},
-    -- VERSION 4
+    -- VERSION 5
     char = {
         specs = {true, true, true, true},
         masterloot = {
-            council = {
-                clubId = nil
-            }
+            clubId = nil
         }
     }
 }
@@ -729,7 +727,7 @@ function Self.RegisterMasterloot()
     
     -- Clubs
     local clubs = Util(C_Club.GetSubscribedClubs())
-        .ExceptWhere("clubType", Enum.ClubType.Other).SortBy("clubType", nil, true)
+        .ExceptWhere(false, "clubType", Enum.ClubType.Other)
         .SortBy("clubType", nil, true)()
     local clubValues = Util(clubs).Copy()
         .Map(function (info) return info.name .. (info.clubType == Enum.ClubType.Guild and " (" .. GUILD .. ")" or "") end)()
@@ -1375,9 +1373,14 @@ function Self.Migrate()
                 c.masterloot.clubId = guildId
             end
             c.masterloot.council.guildRank = nil
+            c.version = 4
+        end
+        if c.version < 5 then
+            Self.MigrateOption("clubId", c.masterloot.council, c.masterloot)
+            c.masterloot.council = nil
         end
     end
-    c.version = 4
+    c.version = 5
 end
 
 -- Migrate a single option
