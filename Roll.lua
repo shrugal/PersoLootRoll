@@ -765,7 +765,7 @@ function Self:DetermineWinner()
 
     -- Check for disenchanter
     if Session.GetMasterlooter() then
-        local dis = Util.TblCopyFilter(Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()] or Util.TBL_EMPTY, Unit.InGroup, false, true, true)
+        local dis = Util.TblCopyFilter(Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()] or Util.TBL_EMPTY, Unit.InGroup, true, true, true)
         if next(dis) then
             for unit in pairs(dis) do self:Bid(Self.BID_DISENCHANT, unit, nil, true) end
             return self:DetermineWinner()

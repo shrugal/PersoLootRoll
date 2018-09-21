@@ -293,7 +293,7 @@ function Self.Update()
            and (Self.filter.awarded or not roll.winner)
            and (Self.filter.traded or not roll.traded)
            and (Self.filter.hidden or roll.status >= Roll.STATUS_RUNNING and (roll.isWinner or roll.isOwner or roll.item.isOwner or roll.bid ~= Roll.BID_PASS) and not roll.hidden)
-    end, true).SortBy("id")()
+    end).SortBy("id")()
 
     GUI(Self.frames.empty).Toggle(Util.TblCount(rolls) == 0)
 
@@ -529,7 +529,7 @@ function Self.Update()
             local actionTarget = roll:GetActionTarget()
             local awardRandomly = roll.status == Roll.STATUS_DONE and canBeAwarded and (
                 Util.TblCountExcept(roll.bids, Roll.BID_PASS) > 0
-                or Session.GetMasterlooter() and Util.TblFindFn(Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()] or Util.TBL_EMPTY, Unit.InGroup, false, true)
+                or Session.GetMasterlooter() and Util.TblFindFn(Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()] or Util.TBL_EMPTY, Unit.InGroup, true, false)
             )
 
             -- Need

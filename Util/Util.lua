@@ -105,7 +105,7 @@ end
 function Self.IsLegacyLoot()
     if IsInInstance() and GetLootMethod() == "personalloot" then
         local iExp = Self.GetInstanceExp()
-        local pExp = Self.TblFindFn(Self.EXP_LEVELS, function (v) return v >= UnitLevel("player") end, true)
+        local pExp = Self.TblFindFn(Self.EXP_LEVELS, function (v) return v >= UnitLevel("player") end)
 
         return iExp and pExp and iExp < pExp - 1
     end
@@ -634,20 +634,20 @@ function Self.TblFindWhere(t, ...)
 end
 
 -- Find the first element matching a fn
-function Self.TblFindFn(t, fn, val, index, ...)
+function Self.TblFindFn(t, fn, index, notVal, ...)
     for i,v in pairs(t) do
-        if Self.FnCall(Self.Fn(fn, v), v, i, val, index, ...) then
+        if Self.FnCall(Self.Fn(fn, v), v, i, index, notVal, ...) then
             return i, v
         end
     end
 end
 
 -- Find the first element (optinally matching a fn)
-function Self.TblFirst(t, fn, val, index, ...)
+function Self.TblFirst(t, fn, index, notVal, ...)
     if not fn then
         return select(2, next(t))
     else
-        return select(2, Self.TblFindFn(t, fn, val, index, ...))
+        return select(2, Self.TblFindFn(t, fn, index, notVal, ...))
     end
 end
 
@@ -659,18 +659,18 @@ end
 -- FILTER
 
 -- Filter by a function
-function Self.TblFilter(t, fn, index, k, ...)
+function Self.TblFilter(t, fn, index, notVal, k, ...)
     fn = Self.Fn(fn) or Self.FnId
 
     if not k and Self.TblIsList(t) then
         for i=#t,1,-1 do
-            if index and not fn(t[i], i, ...) or not index and not fn(t[i], ...) then
+            if Self.FnCall(fn, t[i], i, index, notVal, ...) then
                 tremove(t, i)
             end
         end
     else
         for i,v in pairs(t) do
-            if index and not fn(v, i, ...) or not index and not fn(v, ...) then
+            if Self.FnCall(fn, v, i, index, notVal, ...) then
                 Self.TblRemove(t, i, k)
             end
         end
@@ -695,34 +695,34 @@ end
 
 -- Filter by a value
 function Self.TblOnly(t, val, k)
-    return Self.TblFilter(t, Self.Equals, false, k, val)
+    return Self.TblFilter(t, Self.Equals, nil, nil, k, val)
 end
 
 -- Filter by not being a value
 local Fn = function (v, val) return v ~= val end
 function Self.TblExcept(t, val, k)
-    return Self.TblFilter(t, Fn, false, k, val)
+    return Self.TblFilter(t, Fn, nil, nil, k, val)
 end
 
 -- Filter by a set of key/value pairs in a table
 function Self.TblWhere(t, k, ...)
-    return Self.TblFilter(t, Self.TblMatches, false, k, ...)
+    return Self.TblFilter(t, Self.TblMatches, nil, nil, k, ...)
 end
 
 -- Filter by not having a set of key/value pairs in a table
 local Fn = function (...) return not Self.TblMatches(...) end
 function Self.TblExceptWhere(t, k, ...)
-    return Self.TblFilter(t, Fn, false, k, ...)
+    return Self.TblFilter(t, Fn, nil, nil, k, ...)
 end
 
 -- COPY
 
 -- Copy a table and optionally apply a function to every entry
-function Self.TblCopy(t, fn, index, ...)
+function Self.TblCopy(t, fn, index, notVal, ...)
     local fn, u = Self.Fn(fn), Self.Tbl()
     for i,v in pairs(t) do
         if fn then
-            if index then u[i] = fn(v, i, ...) else u[i] = fn(v, ...) end
+            u[i] = Self.FnCall(fn, v, i, index, notVal, ...)
         else
             u[i] = v
         end
@@ -731,11 +731,11 @@ function Self.TblCopy(t, fn, index, ...)
 end
 
 -- Filter by a function
-function Self.TblCopyFilter(t, fn, val, index, k, ...)
+function Self.TblCopyFilter(t, fn, index, notVal, k, ...)
     fn = Self.Fn(fn) or Self.FnId
     local u = Self.Tbl()
     for i,v in pairs(t) do
-        if Self.FnCall(fn, v, i, val, index, ...) then
+        if Self.FnCall(fn, v, i, index, notVal, ...) then
             Self.TblInsert(u, i, v, k)
         end
     end
@@ -807,28 +807,20 @@ end
 -- MAP
 
 -- Change table values by applying a function
-function Self.TblMap(t, fn, index, ...)
+function Self.TblMap(t, fn, index, notVal, ...)
     fn = Self.Fn(fn)
     for i,v in pairs(t) do
-        if index then
-            t[i] = fn(v, i, ...)
-        else
-            t[i] = fn(v, ...)
-        end
+        t[i] = Self.FnCall(fn, v, i, index, notVal, ...)
     end
     return t
 end
 
 -- Change table keys by applying a function
-function Self.TblMapKeys(t, fn, value, ...)
+function Self.TblMapKeys(t, fn, val, notIndex, ...)
     fn = Self.Fn(fn)
     local u = Self.Tbl()
     for i,v in pairs(t) do
-        if value then
-            u[fn(i, v, ...)] = v
-        else
-            u[fn(i, ...)] = v
-        end
+        u[Self.FnCall(fn, i, v, val, notIndex, ...)] = v
     end
     return u
 end
@@ -1200,11 +1192,15 @@ function Self.FnFalse() return false end
 function Self.FnZero() return 0 end
 function Self.FnNoop() end
 
-function Self.FnCall(fn, v, i, val, index, ...)
-    if val and index then return fn(v, i, ...)
-    elseif val then       return fn(v, ...)
-    elseif index then     return fn(i, ...)
-    else                  return fn(...)
+function Self.FnCall(fn, v, i, index, notVal, ...)
+    if index and notVal then
+        return fn(i, ...)
+    elseif index then
+        return fn(v, i, ...)
+    elseif notVal then
+        return fn(...)
+    else
+        return fn(v, ...)
     end
 end
 

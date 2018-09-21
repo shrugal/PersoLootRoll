@@ -30,18 +30,18 @@ Self.credited = {}
 
 -- Get a unit's EP
 function Self.UnitEP(unit)
-    return (EPGP:GetEPGP(unit))
+    return (EPGP:GetEPGP(Unit.FullName(unit)))
 end
 
 -- Get a unit's GP
 function Self.UnitGP(unit)
-    return (select(2, EPGP:GetEPGP(unit)))
+    return (select(2, EPGP:GetEPGP(Unit.FullName(unit))))
 end
 
 -- Get a unit's PR
 function Self.UnitPR(unit)
-    local ep, gp = EPGP:GetEPGP(unit)
-    return ep and gp and gp ~= 0 and ep/gp or nil
+    local ep, gp = EPGP:GetEPGP(Unit.FullName(unit))
+    return ep and gp and gp ~= 0 and Util.NumRound(ep/gp, 2) or nil
 end
 
 -- Check if a unit has enough EP
@@ -71,7 +71,9 @@ function Self.DetermineWinner(roll, candidates)
     end
 
     Util(candidates)
-        .Map(function (_, unit) return Self.UnitPR(unit) or 0 end)
+        .Map(function (unit) return Self.UnitHasMinEP(unit) and 1 or 0 end, true, true)
+        .Only(Util.TblMax(candidates))
+        .Map(function (unit) return Self.UnitPR(unit) or 0 end, true, true)
         .Only(Util.TblMax(candidates))
 end
 
@@ -84,8 +86,8 @@ function Self.UnitCreditGP(unit, link, amount, undo, trys)
     elseif not EPGP:CanIncGPBy(link, amount) then
         Addon:Error(L["EPGP_ERROR_CREDIT_GP_FAILED"], amount, unit, link)
     else
-        Addon:Verbose(L["EPGP_CREDIT_GP"], amount, Unit(unit), link)
-        EPGP:IncGPBy(unit, link, amount, false, undo)
+        Addon:Verbose(L["EPGP_CREDIT_GP"], amount, unit, link)
+        EPGP:IncGPBy(Unit.FullName(unit), link, amount, false, undo)
     end
 end
 
@@ -99,7 +101,7 @@ function Self.UndoGPCredit(roll)
 end
 
 -------------------------------------------------------
---                       Helper                      --
+--                      Options                      --
 -------------------------------------------------------
 
 function Self.GetBidWeightOptions(bid, it)
@@ -159,6 +161,7 @@ function Self.RegisterOptions()
             type = "group",
             args = {
                 desc = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_DESC"] .. "\n"},
+                desc = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_WARNING"] .. "\n", hidden = CanEditOfficerNote},
                 enable = {
                     name = L["OPT_ENABLE"],
                     desc = L["OPT_ENABLE_MODULE_DESC"],
@@ -166,7 +169,7 @@ function Self.RegisterOptions()
                     order = it(),
                     set = function (_, val)
                         Self.db.profile.enabled = val
-                        Self[val and "Enable" or "Disable"](Self)
+                        Self.CheckToggleEnabled()
                     end,
                     get = function (_) return Self.db.profile.enabled end,
                     width = Options.WIDTH_THIRD_SCROLL
@@ -176,7 +179,10 @@ function Self.RegisterOptions()
                     desc = L["EPGP_OPT_ONLY_GUILD_RAID_DESC"]:format(Util.GROUP_THRESHOLD*100),
                     type = "toggle",
                     order = it(),
-                    set = function (_, val) Self.db.profile.onlyGuildRaid = val end,
+                    set = function (_, val)
+                        Self.db.profile.onlyGuildRaid = val
+                        Self.CheckToggleEnabled()
+                    end,
                     get = function (_, key) return Self.db.profile.onlyGuildRaid end,
                     width = Options.WIDTH_THIRD_SCROLL
                 },
@@ -233,37 +239,75 @@ function Self.RegisterOptions()
 end
 
 -------------------------------------------------------
+--                       Helper                      --
+-------------------------------------------------------
+
+-- Check if the module should be enabled
+function Self.ShouldBeEnabled()
+    return IsAddOnLoaded("EPGP")
+        and Self.db.profile.enabled
+        and (not Self.db.profile.onlyGuildRaid or IsInGuild() and Util.IsGuildGroup((GetGuildInfo("player"))))
+        and true or false
+end
+
+function Self.CheckToggleEnabled()
+    if Self.enabledState ~= Self.shouldBeEnabled() then
+        Self:SetEnabledState(not Self.enabledState)
+    end
+end
+
+-------------------------------------------------------
 --                    Events/Hooks                   --
 -------------------------------------------------------
 
 function Self:OnInitialize()
     Self.db = {profile = Addon.db.profile.plugins.EPGP, defaults = Addon.db.defaults.profile.plugins.EPGP}
 
-    Self:SetEnabledState(Self.db.profile.enabled)
+    Self:SetEnabledState(Self.ShouldBeEnabled())
     Self.RegisterOptions()
 end
 
 function Self:OnEnable()
-    if not IsAddOnLoaded("EPGP") then return end
+    -- Add custom player columns
+    GUI.AddCustomPlayerColumn("epgpEP", Self.UnitEP, L["EPGP_EP"])
+    GUI.AddCustomPlayerColumn("epgpGP", Self.UnitGP, L["EPGP_GP"])
+    GUI.AddCustomPlayerColumn("epgpPR", Self.UnitPR, L["EPGP_PR"], nil, nil, "bid", 0, true)
+    GUI.AddCustomPlayerColumn("epgpMinEP", Self.UnitHasMinEP, nil, nil, nil, "epgpPR", nil, true)
 
-    GUI.AddCustomPlayerColumn("epgpPr", Self.UnitEP, L["EPGP_PR"], nil, nil, "bid", 0, true)
-    GUI.AddCustomPlayerColumn("epgpMinEp", Self.UnitHasMinEP, nil, nil, nil, "epgpPr", nil, true)
+    -- Add custom award method
     Roll.AddCustomAwardMethod("epgp", Self.DetermineWinner, Self.db.profile.awardBefore)
 
     -- Register events
+    Self:RegisterEvent("GROUP_JOINED", Self.CheckToggleEnabled)
+    Self:RegisterEvent("GROUP_LEFT", Self.CheckToggleEnabled)
+    Self:RegisterEvent("RAID_ROSTER_UPDATE", Self.CheckToggleEnabled)
     Roll.On(Self, Roll.EVENT_AWARD, "ROLL_AWARD")
     Roll.On(Self, Roll.EVENT_RESTART, "ROLL_RESTART")
     Roll.On(Self, Roll.EVENT_CLEAR, "ROLL_CLEAR")
+    EPGP.RegisterCallback(Self, "StandingsChanged", "EPGP_STANDINGS_CHANGED")
 end
 
 function Self:OnDisable()
-    GUI.RemoveCustomPlayerColumns("epgpPr", "epgpMinEp")
+    -- Remove custom player colums and award method
+    GUI.RemoveCustomPlayerColumns("epgpEP", "epgpGP", "epgpPR", "epgpMinEP")
     Roll.RemoveCustomAwardMethod("epgp")
 
     -- Unregister events
+    Self:UnregisterEvent("GROUP_JOINED")
+    Self:UnregisterEvent("GROUP_LEFT")
+    Self:UnregisterEvent("RAID_ROSTER_UPDATE")
     Roll.Unsubscribe(Self)
+    EPGP.UnregisterCallback(Self, "StandingsChanged")
 end
 
+-- GROUP_JOINED, GROUP_LEFT, RAID_ROSTER_UPDATE
+function Self:GROUP_CHANGED()
+    if Self.enabledState ~= Self.shouldBeEnabled() then
+        Self:SetEnabledState(not Self.enabledState)
+    end
+end
+
+-- Roll.EVENT_AWARD
 function Self.ROLL_AWARD(_, _, roll, winner, prevWinner)
     if Session.IsMasterlooter() and roll.isOwner then
         Self.UndoGPCredit(roll)
@@ -271,17 +315,23 @@ function Self.ROLL_AWARD(_, _, roll, winner, prevWinner)
         -- Credit the winner
         local gp = Self.RollGP(roll)
         if gp > 0 and winner and IsGuildMember(winner) then
-            local name = Unit.FullName(winner)
-            Self.UnitCreditGP(name, roll.item.link, gp)
-            Self.credited[roll.id] = name .. ":" .. gp
+            Self.UnitCreditGP(Unit.FullName(winner), roll.item.link, gp)
+            Self.credited[roll.id] = winner .. ":" .. gp
         end
     end
 end
 
+-- Roll.EVENT_RESTART
 function Self.ROLL_RESTART(_, _, roll)
     Self.UndoGPCredit(roll)
 end
 
+-- Roll.EVENT_CLEAR
 function Self.ROLL_CLEAR(_, _, roll)
     Self.credited[roll.id] = nil
+end
+
+-- EPGP.StandingsChanged
+function Self.EPGP_STANDINGS_CHANGED()
+    GUI.Rolls.Update()
 end

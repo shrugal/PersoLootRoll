@@ -605,7 +605,7 @@ function Self:GetLevelForLocation(unit)
                 local owned = self:GetOwnedForLocation()
                 cache.time = GetTime()
                 cache.ilvl = owned and Util(owned)
-                    .Map(Self.GetInfo, false, "maxLevel")
+                    .Map(Self.GetInfo, nil, nil, "maxLevel")
                     .Sort(true)(self:GetSlotCountForLocation()) or 0
                 Self.playerCache[loc] = cache
             end

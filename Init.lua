@@ -26,7 +26,7 @@ Addon.Trade = Addon:NewModule("Trade", nil, "AceEvent-3.0")
 
 -- Plugins
 Addon.PLH = Addon:NewModule("PLH", nil, "AceEvent-3.0")
-Addon.EPGP = Addon:NewModule("EPGP", nil, "AceTimer-3.0")
+Addon.EPGP = Addon:NewModule("EPGP", nil, "AceEvent-3.0", "AceTimer-3.0")
 
 -- TODO: DEBUG
 if true or Addon.DEBUG then

@@ -193,7 +193,7 @@ function Self.Loop()
     end
 
     -- Get the next unit to inspect (with max inspects left -> wide search, random -> so we don't get stuck on one unit)
-    local units = Util.TblCopyFilter(Self.queue, filterFn, true, true, true)
+    local units = Util.TblCopyFilter(Self.queue, filterFn, true, nil, true)
     local unit = next(units) and Util(units).Only(Util.TblMax(units), true).RandomKey()()
     
     if unit then

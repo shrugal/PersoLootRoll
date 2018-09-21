@@ -309,7 +309,7 @@ function Self.EnableUnitMenusHook()
             if UIDROPDOWNMENU_MENU_LEVEL == 1 then
                 button:Hide()
 
-                if Util.In(menu, menus) and Util.TblFirst(Addon.rolls, "CanBeAwardedTo", true, false, unit, true) then
+                if Util.In(menu, menus) and Util.TblFirst(Addon.rolls, "CanBeAwardedTo", nil, nil, unit, true) then
                     local parent = _G["DropDownList1"]
                     local placed = false
                     
