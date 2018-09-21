@@ -66,10 +66,6 @@ end
 
 -- Pick the player with the highest PR value
 function Self.DetermineWinner(roll, candidates)
-    if Addon.db.profile.module.EPGP.onlyGuildRaid and not (IsInRaid() and IsInGuild() and Util.IsGuildGroup(Unit.GuildName("player"))) then
-        return
-    end
-
     Util(candidates)
         .Map(function (unit) return Self.UnitHasMinEP(unit) and 1 or 0 end, true, true)
         .Only(Util.TblMax(candidates))
@@ -251,8 +247,8 @@ function Self.ShouldBeEnabled()
 end
 
 function Self.CheckToggleEnabled()
-    if Self.enabledState ~= Self.shouldBeEnabled() then
-        Self:SetEnabledState(not Self.enabledState)
+    if Self.enabledState ~= Self.ShouldBeEnabled() then
+        Self[Self.enabledState and "Disable" or "Enable"](Self)
     end
 end
 

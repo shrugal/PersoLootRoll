@@ -507,14 +507,9 @@ function Self.TblIter(t, fn, ...)
 end
 
 -- Call a function on every table entry
-function Self.TblCall(t, fn, val, index, ...)
+function Self.TblCall(t, fn, index, notVal, ...)
     for i,v in pairs(t) do
-        local f = Self.Fn(fn, v)
-        if val then
-            if index then f(v, i, ...) else f(v, ...) end
-        else
-            if index then f(i, ...) else f(...) end
-        end
+        Self.FnCall(Self.Fn(fn, v), v, i, index, notVal, ...)
     end
 end
 

@@ -38,7 +38,7 @@ function Self.Show(move)
         end
         Self.frames.window.OnRelease = function (self)
             Self.frames.window = nil
-            Util.TblCall(Self.frames, "Release", true)
+            Util.TblCall(Self.frames, "Release")
             wipe(Self.frames)
             self.frame:SetFrameStrata("FULLSCREEN_DIALOG")
             self.LayoutFinished = fn

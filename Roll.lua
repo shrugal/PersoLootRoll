@@ -1101,7 +1101,7 @@ function Self.CalculateTimeout(selfOrOwner)
     local ml = Session.GetMasterlooter()
     local chill = Addon.db.profile.chillMode and not ml
 
-    if chill and (Unit.IsSelf(owner) and Addon.db.profile.awardSelf or not Addon:IsTracking(owner)) then
+    if chill and Util.Check(Unit.IsSelf(owner), Addon.db.profile.awardSelf, not Addon:UnitIsTracking(owner)) then
         return 0
     else
         local base, perItem = ml and Session.rules.timeoutBase or Self.TIMEOUT, ml and Session.rules.timeoutPerItem or Self.TIMEOUT_PER_ITEM

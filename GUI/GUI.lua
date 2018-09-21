@@ -27,13 +27,13 @@ Self.EVENT_PLAYER_COLUMN_REMOVE = "PLAYER_COLUMN_REMOVE"
 -- @param  ...   The original event parameters
 Self.EVENT_PLAYER_COLUMNS_CHANGE = "PLAYER_COLUMNS_CHANGE"
 
-local changeFn = function (...) Self.events:Fire(Self.EVEVENT_PLAYER_COLUMNS_CHANGEENT_CHANGE, ...) end
+local changeFn = function (...) Self.events:Fire(Self.EVENT_PLAYER_COLUMNS_CHANGE, ...) end
 for i,ev in Util.Each(Self.EVENT_PLAYER_COLUMN_ADD, Self.EVENT_PLAYER_COLUMN_SET, Self.EVENT_PLAYER_COLUMN_REMOVE) do
     Self:On(ev, changeFn)
 end
 
 -- Custom player columns
-Self.playerColumns = {}
+Self.customPlayerColumns = {}
 
 -- Windows
 Self.Rolls = {}
@@ -281,7 +281,7 @@ end
 -- @return table       The column entry
 function Self.AddCustomPlayerColumn(name, value, header, desc, width, sortBefore, sortDefault, sortDesc)
     local entry = Util.TblHash("name", name, "value", value, "header", header, "desc", desc, "width", width, "sortBefore", sortBefore, "sortDefault", sortDefault, "sortDesc", sortDesc)
-    tinsert(Self.playerColumns, entry)
+    tinsert(Self.customPlayerColumns, entry)
 
     Self.events:Fire(Self.EVENT_PLAYER_COLUMN_ADD, entry)
     return entry
@@ -291,7 +291,7 @@ end
 -- @param name The unique identifier
 -- @param ...  Key-value pairs of properties to update (@see Self.AddCustomPlayerColumn)
 function Self.UpdateCustomPlayerColumn(name, ...)
-    local entry = select(2, Util.TblFindWhere(Self.playerColumns, "name", name))
+    local entry = select(2, Util.TblFindWhere(Self.customPlayerColumns, "name", name))
     if entry then
         for i=1, select("#", ...), 2 do
             entry[select(i, ...)] = select(i+1, ...)
@@ -304,9 +304,9 @@ end
 -- @param ... The unique identifiers
 function Self.RemoveCustomPlayerColumns(...)
     for _,name in Util.Each(...) do
-        local i = Util.TblFindWhere(Self.playerColumns, "name", name)
+        local i = Util.TblFindWhere(Self.customPlayerColumns, "name", name)
         if i then
-            local entry = tremove(Self.playerColumns, i)
+            local entry = tremove(Self.customPlayerColumns, i)
             Self.events:Fire(Self.EVENT_PLAYER_COLUMN_REMOVE, entry, i)
         end
     end
@@ -335,7 +335,7 @@ function Self.GetPlayerList(roll)
     )
 
     -- Add custom columns
-    for i,col in ipairs(Self.playerColumns) do
+    for i,col in ipairs(Self.customPlayerColumns) do
         for j,entry in pairs(list) do
             entry[col.name] = Util.FnVal(col.value, entry.unit, roll, entry)
         end
@@ -592,12 +592,11 @@ end
 -- Add row-highlighting to a table
 function Self.TableRowHighlight(parent, skip)
     skip = skip or 0
-    local frame = parent.frame
     local isOver = false
     local tblObj = parent:GetUserData("table")
     local spaceV = tblObj.spaceV or tblObj.space or 0
 
-    frame:SetScript("OnEnter", function (self)
+    parent.frame:SetScript("OnEnter", function (self)
         if not isOver then
             self:SetScript("OnUpdate", function (self)
                 if not MouseIsOver(self) then
@@ -611,7 +610,7 @@ function Self.TableRowHighlight(parent, skip)
                 else
                     local cY = select(2, GetCursorPosition()) / UIParent:GetEffectiveScale()
                     local frameTop, frameBottom = parent.frame:GetTop(), parent.frame:GetBottom()
-                    local row, top, bottom
+                    local top, bottom
 
                     for i=skip+1,#parent.children do
                         local childTop, childBottom = parent.children[i].frame:GetTop(), parent.children[i].frame:GetBottom()
@@ -636,6 +635,85 @@ function Self.TableRowHighlight(parent, skip)
         end
         isOver = true
     end)
+
+    local OnRelease = parent.OnRelease
+    parent.OnRelease = function (self, ...)
+        self.frame:SetScript("OnEnter", nil)
+        self.frame:SetScript("OnUpdate", nil)
+        self.OnRelease = OnRelease
+        if self.OnRelease then self.OnRelease(self, ...) end
+    end
+end
+
+-- Add row-backgrounds to a table
+function Self.TableRowBackground(parent, colors, skip)
+    local default = {1, 1, 1, 0.5}
+    colors = colors or default
+    skip = skip or 0
+    local tblObj = parent:GetUserData("table")
+    local spaceV = tblObj.spaceV or tblObj.space or 0
+    local textures = {}
+    TEX = textures -- TODO
+
+    local LayoutFinished = parent.LayoutFinished
+    parent.LayoutFinished = function (self, ...)
+        if LayoutFinished then LayoutFinished(self, ...) end
+
+        Util.TblCall(textures, "Hide")
+
+        local frameTop, frameBottom = parent.frame:GetTop(), parent.frame:GetBottom()
+        local cols, tex, row, top, bottom, last, child, childTop, childBottom, color = 0, 1
+
+        for i=skip + 1, #parent.children + 1 do
+            child = parent.children[i]
+            last = i == #parent.children + 1
+
+            if child then
+                childTop, childBottom = child.frame:GetTop(), child.frame:GetBottom()
+            end
+
+            if row and last or child and child:IsShown() and childTop and childBottom then
+                if row and (last or childTop < bottom) then
+                    -- Determine color
+                    if type(colors) == "function" then
+                        color = colors(parent, row, cols, top - frameTop, top - bottom)
+                    elseif type(colors) == "table" and type(colors[1]) ~= "number" then
+                        color = colors[row % #colors]
+                    else
+                        color = colors
+                    end
+
+                    if color then
+                        textures[tex] = textures[tex] or parent.content:CreateTexture(nil, "BACKGROUND")
+                        Self(textures[tex])
+                            .SetPoint("LEFT")
+                            .SetPoint("RIGHT")
+                            .SetPoint("TOP", 0, top - frameTop)
+                            .SetHeight(top - bottom)
+                            .SetColorTexture(unpack(color == true and default or color))
+                            .Show()
+                        tex = tex + 1
+                    end
+
+                    row, cols, top, bottom = row + 1, 0
+                end
+
+                if not last then
+                    row = row or 1
+                    cols = cols + 1
+                    top =  min(frameTop, max(top or 0, childTop + spaceV/2))
+                    bottom = max(frameBottom, min(bottom or frameTop, childBottom - spaceV/2))
+                end
+            end
+        end
+    end
+
+    local OnRelease = parent.OnRelease
+    parent.OnRelease = function (self, ...)
+        self.LayoutFinished = LayoutFinished
+        self.OnRelease = OnRelease
+        if self.OnRelease then self.OnRelease(self, ...) end
+    end
 end
 
 -------------------------------------------------------

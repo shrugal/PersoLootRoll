@@ -201,12 +201,18 @@ function Self.Show()
 
         -- SCROLL
 
-        Self.frames.scroll = GUI("ScrollFrame")
+        f = GUI("ScrollFrame")
             .SetLayout("PLR_Table")
             .SetUserData("table", {space = 10})
             .AddTo(Self.frames.window)
             .SetPoint("TOPRIGHT")
             .SetPoint("BOTTOMLEFT", Self.frames.filter.frame, "TOPLEFT", 0, 8)()
+        f.backgrounds = {}
+        local layoutFinished = f.layoutFinished
+        f.layoutFinished = function (self, width, height)
+
+        end
+        Self.frames.scroll = f
 
         -- EMPTY MESSAGE
 
@@ -283,6 +289,9 @@ function Self.Update()
         end)
         f.image:SetPoint("TOP", 0, 2)
         f.frame:SetPoint("TOPRIGHT")
+
+        local color = {0.25, 0.25, 0.25, 0.9}
+        GUI.TableRowBackground(scroll, function (_, _, cols) return cols > 1 and color end, #header + 1)
     end
 
     -- Rolls
@@ -298,13 +307,13 @@ function Self.Update()
     GUI(Self.frames.empty).Toggle(Util.TblCount(rolls) == 0)
 
     local it = Util.Iter(#header + 1)
-    for _,roll in ipairs(rolls) do
+    for i,roll in ipairs(rolls) do
         -- Create the row
         if not children[it(0) + 1] then
             -- ID
             GUI("Label")
                 .SetFontObject(GameFontNormal)
-                .AddTo(scroll)
+                .AddTo(scroll)()
         
             -- Item
             GUI.CreateItemLabel(scroll, "ANCHOR_LEFT")
@@ -630,7 +639,7 @@ function Self.UpdateDetails(details, roll)
     -- Header
 
     local header = Util.Tbl("PLAYER", "ITEM_LEVEL", "EQUIPPED", "CUSTOM", "BID", "ROLL", "VOTES", "")
-    local numCols = #header - 1 + Util.TblCountWhere(GUI.playerColumns, "header")
+    local numCols = #header - 1 + Util.TblCountWhere(GUI.customPlayerColumns, "header")
 
     if #children == 0 then
         local columns = {1, {25, 100}, {34, 100}, {25, 100}, {25, 100}, {25, 100}, 100}
@@ -638,7 +647,7 @@ function Self.UpdateDetails(details, roll)
         for i,v in pairs(header) do
             if v == "CUSTOM" then
                 local j = 0
-                for _,col in ipairs(GUI.playerColumns) do
+                for _,col in ipairs(GUI.customPlayerColumns) do
                     if col.header then
                         details:AddChild(GUI("Label").SetFontObject(GameFontNormal).SetText(col.header).SetColor(1, 0.82, 0)())
                         tinsert(columns, i + j, col.width or {25, 100})
@@ -686,7 +695,7 @@ function Self.UpdateDetails(details, roll)
             end
 
             -- Custom columns
-            for i,col in ipairs(GUI.playerColumns) do
+            for i,col in ipairs(GUI.customPlayerColumns) do
                 if col.header then
                     GUI("Label").SetFontObject(GameFontNormal).AddTo(details)
                 end
@@ -753,7 +762,7 @@ function Self.UpdateDetails(details, roll)
         end
 
         -- Custom columns
-        for i,col in ipairs(GUI.playerColumns) do
+        for i,col in ipairs(GUI.customPlayerColumns) do
             if col.header then
                 GUI(children[it()])
                     .SetText(Util.FnVal(col.desc, player.unit, roll, player) or player[col.name] or "-")
@@ -869,7 +878,7 @@ Session.On(Self, Session.EVENT_CHANGE, Self.Update)
 -- Register for player column changes
 GUI.On(Self, GUI.EVENT_PLAYER_COLUMNS_CHANGE, function ()
     if Self.frames.scroll then
-        for i,child in Self.frames.scroll do
+        for i,child in pairs(Self.frames.scroll.children) do
             if child:GetUserData("isDetails") then
                 child:ReleaseChildren()
             end
