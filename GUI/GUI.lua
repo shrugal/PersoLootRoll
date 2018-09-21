@@ -710,6 +710,7 @@ function Self.TableRowBackground(parent, colors, skip)
 
     local OnRelease = parent.OnRelease
     parent.OnRelease = function (self, ...)
+        Util.TblCall(textures, "Hide")
         self.LayoutFinished = LayoutFinished
         self.OnRelease = OnRelease
         if self.OnRelease then self.OnRelease(self, ...) end
