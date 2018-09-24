@@ -235,7 +235,7 @@ end
 
 function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
     local unit = Unit(sender)
-    if not Self:IsTracking() or not Unit.InGroup(unit) or not Unit.IsSelf(unit) and Self:UnitIsTracking(unit, true) then return end
+    if not Addon:IsTracking() or not Unit.InGroup(unit) or not Unit.IsSelf(unit) and Addon:UnitIsTracking(unit, true) then return end
 
     local item = Item.GetLink(msg)
 
