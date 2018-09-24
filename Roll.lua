@@ -57,7 +57,7 @@ Self.EVENT_CLEAR = "CLEAR"
 -- @int   started The time when it started
 Self.EVENT_START = "START"
 
---- Fires when a roll is restared
+--- Fires when a roll is restarted
 -- @table roll The roll
 Self.EVENT_RESTART = "RESTART"
 
@@ -102,10 +102,10 @@ Self.EVENT_AWARD = "AWARD"
 -- @string target The unit being traded to
 Self.EVENT_TRADE = "TRADE"
 
---- Fires when a roll's visiblity in GUIs is changed
+--- Fires when a roll's visibility in GUIs is changed
 -- @table roll   The roll
 -- @bool  hidden Whether the roll is now hidden or not
-Self.EVENT_VISIBILITY = "VISIBILITY"
+Self.EVENT_TOGGLE = "TOGGLE"
 
 --- Fires when a whisper message is received from the owner/winner
 -- @table  roll The roll
@@ -118,7 +118,7 @@ Self.EVENT_CHAT = "CHAT"
 -- @param  ...   The original event parameters
 Self.EVENT_CHANGE = "CHANGE"
 
-Self.EVENTS = {Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_RESTART, Self.EVENT_CANCEL, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_AWARD, Self.EVENT_TRADE, Self.EVENT_VISIBILITY, Self.EVENT_CHAT}
+Self.EVENTS = {Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_RESTART, Self.EVENT_CANCEL, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_AWARD, Self.EVENT_TRADE, Self.EVENT_TOGGLE, Self.EVENT_CHAT}
 
 local changeFn = function (...) Self.events:Fire(Self.EVENT_CHANGE, ...) end
 for _,ev in pairs(Self.EVENTS) do Self:On(ev, changeFn) end
@@ -181,7 +181,7 @@ function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner, status)
     return id and Addon.rolls[id]
 end
 
--- Add a roll to the list
+-- Create and add a roll to the list
 function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
     owner = Unit.Name(owner or "player")
     local isOwner = Unit.IsSelf(owner)
@@ -359,6 +359,34 @@ function Self.Clear(self)
     end
 end
 
+-- Create a test roll
+function Self.Test()
+    local slots = Util.Tbl()
+    for i,v in pairs(Item.SLOTS) do
+        for j,slot in pairs(v) do
+            if GetInventoryItemLink("player", slot) then
+                tinsert(slots, slot)
+            end
+        end
+    end
+
+    local slot = Util.TblRandom(slots)
+    if slot then
+        local roll = Self.Add(Item.FromSlot(slot, "player", true), "player")
+        roll.isTest = true
+
+        roll.item:SetEligible("player")
+        for i=1,GetNumGroupMembers() do
+            local name = GetRaidRosterInfo(i)
+            if name then
+                roll.item:SetEligible(name)
+            end
+        end
+        
+        roll:Start()
+    end
+end
+
 -- Check for and convert from/to PLR roll id
 function Self.IsPlrId(id) return id < 0 end
 function Self.ToPlrId(id) return -id end
@@ -389,18 +417,20 @@ function Self:Start(started)
                 -- Start the roll
                 self.started = started or time()
                 self.status = Self.STATUS_RUNNING
-
-                -- Schedule timer to end the roll and/or hide the frame
-                if self.timeout > 0 then
-                    self.timers.bid = Addon:ScheduleTimer(Self.End, self:GetTimeLeft(), self, nil, true)
-                elseif not Addon.db.profile.chillMode then
-                    self.timers.bid = Addon:ScheduleTimer(Self.HideRollFrame, self:GetTimeLeft(), self)
-                end
-
-                -- Let everyone know
-                self:Advertise(false, true)
                 
                 Self.events:Fire(Self.EVENT_START, self, self.started)
+
+                if self:IsTest() or not (self:ShouldEnd() and self:End()) then
+                    -- Schedule timer to end the roll and/or hide the frame
+                    if self.timeout > 0 then
+                        self.timers.bid = Addon:ScheduleTimer(Self.End, self:GetTimeLeft(), self, nil, true)
+                    elseif not Addon.db.profile.chillMode then
+                        self.timers.bid = Addon:ScheduleTimer(Self.HideRollFrame, self:GetTimeLeft(), self)
+                    end
+
+                    -- Let everyone know
+                    self:Advertise(false, true)
+                end
             end
 
             -- Let others know
@@ -781,7 +811,7 @@ function Self.AddCustomAwardMethod(key, fn, before)
     Self.customAwardMethods[key] = Util.TblHash("fn", fn, "before", before or Self.AWARD_RANDOM)
 end
 
---- Get a custom award method
+--- Update a custom award method
 -- @param    key    The unique identifier
 function Self.UpdateCustomAwardMethod(key, ...)
     if Self.customAwardMethods[key] then
@@ -811,9 +841,7 @@ end
 
 -- Some common error checks for a loot roll
 function Self:Validate(status, ...)
-    if Addon.DEBUG then
-        return true
-    end
+    if Addon.DEBUG or self:IsTest() then return true end
 
     if status and self.status ~= status then
         return false, L["ERROR_ROLL_STATUS_NOT_" .. status]
@@ -937,7 +965,7 @@ end
 -- Toggle the rolls visiblity in GUIs
 function Self:ToggleVisibility(show)
     if show == nil then self.hidden = not self.hidden else self.hidden = not show end
-    Self.events:Fire(Self.EVENT_VISIBILITY, self, self.hidden)
+    Self.events:Fire(Self.EVENT_TOGGLE, self, self.hidden)
 end
 
 -- Log a chat message about the roll
@@ -957,6 +985,7 @@ end
 --                       Comm                        --
 -------------------------------------------------------
 
+-- Check if we should advertise the roll to group chat.
 function Self:ShouldAdvertise(manually)
     return not self.posted and self:CanBeAwarded() and not self:ShouldEnd() and (
         manually or Comm.ShouldInitChat() and (self.bid or Session.GetMasterlooter())
@@ -1007,7 +1036,7 @@ end
 
 -- Send the roll status to others
 function Self:SendStatus(noCheck, target, full)
-    if noCheck or self.isOwner then
+    if (noCheck or self.isOwner) and not self:IsTest() then
         local data = Util.Tbl()
         data.owner = Unit.FullName(self.owner)
         data.ownerId = self.ownerId
@@ -1250,4 +1279,9 @@ function Self.GetBidName(roll, bid)
             return answers[i]
         end
     end
+end
+
+-- Check if it's just a test roll
+function Self:IsTest()
+    return self.isTest
 end

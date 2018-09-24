@@ -107,7 +107,7 @@ function Self.GROUP_JOINED()
 end
 
 function Self.ROLL_START(_, roll)
-    if roll.isOwner then
+    if roll.isOwner and not roll:IsTest() then
         -- Send TRADE message
         Self.Send(Self.ACTION_TRADE, roll, roll.item.link)
     end
@@ -117,7 +117,7 @@ end
 function Self.ROLL_BID(_, roll, bid, fromUnit, _, isImport)
     local fromSelf = Unit.IsSelf(fromUnit)
 
-    if not isImport then
+    if not isImport and not roll:IsTest() then
         if roll.isOwner then
             if fromSelf and floor(bid) == Roll.BID_NEED and not Session.GetMasterlooter() then
                 -- Send KEEP message
@@ -132,7 +132,7 @@ function Self.ROLL_BID(_, roll, bid, fromUnit, _, isImport)
 end
 
 function Self.ROLL_END(_, roll)
-    if roll.winner and not roll.isWinner and roll.isOwner and Self.IsUsedByUnit(roll.winner) then
+    if roll.winner and not roll.isWinner and roll.isOwner and Self.IsUsedByUnit(roll.winner) and not roll:IsTest() then
         -- Send OFFER message
         Self.Send(Self.ACTION_OFFER, roll, Unit.FullName(roll.winner))
     end

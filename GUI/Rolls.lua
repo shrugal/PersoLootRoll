@@ -876,7 +876,7 @@ end)
 Session.On(Self, Session.EVENT_CHANGE, Self.Update)
 
 -- Register for player column changes
-GUI.On(Self, GUI.EVENT_PLAYER_COLUMNS_CHANGE, function ()
+GUI.On(Self, GUI.EVENT_PLAYER_COLUMN_CHANGE, function ()
     if Self.frames.scroll then
         for i,child in pairs(Self.frames.scroll.children) do
             if child:GetUserData("isDetails") then

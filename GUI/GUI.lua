@@ -13,9 +13,9 @@ Self.events = CB:New(Self, "On", "Off", "Unsubscribe")
 Self.EVENT_PLAYER_COLUMN_ADD = "PLAYER_COLUMN_ADD"
 
 --- Fires when a custom player column was changed
--- @table entry The entry that was added/removed
+-- @table entry The entry that was changed
 -- @param ...   The changed properties as key-value pairs
-Self.EVENT_PLAYER_COLUMN_SET = "PLAYER_COLUMN_SET"
+Self.EVENT_PLAYER_COLUMN_UPDATE = "PLAYER_COLUMN_UPDATE"
 
 --- Fires when a custom player column was removed
 -- @table entry The entry that was removed
@@ -25,10 +25,10 @@ Self.EVENT_PLAYER_COLUMN_REMOVE = "PLAYER_COLUMN_REMOVE"
 --- Catchall event that fires for all of the above
 -- @string event The original event
 -- @param  ...   The original event parameters
-Self.EVENT_PLAYER_COLUMNS_CHANGE = "PLAYER_COLUMNS_CHANGE"
+Self.EVENT_PLAYER_COLUMN_CHANGE = "PLAYER_COLUMN_CHANGE"
 
-local changeFn = function (...) Self.events:Fire(Self.EVENT_PLAYER_COLUMNS_CHANGE, ...) end
-for i,ev in Util.Each(Self.EVENT_PLAYER_COLUMN_ADD, Self.EVENT_PLAYER_COLUMN_SET, Self.EVENT_PLAYER_COLUMN_REMOVE) do
+local changeFn = function (...) Self.events:Fire(Self.EVENT_PLAYER_COLUMN_CHANGE, ...) end
+for i,ev in Util.Each(Self.EVENT_PLAYER_COLUMN_ADD, Self.EVENT_PLAYER_COLUMN_UPDATE, Self.EVENT_PLAYER_COLUMN_REMOVE) do
     Self:On(ev, changeFn)
 end
 
@@ -296,7 +296,7 @@ function Self.UpdateCustomPlayerColumn(name, ...)
         for i=1, select("#", ...), 2 do
             entry[select(i, ...)] = select(i+1, ...)
         end
-        Self.events:Fire(Self.EVENT_PLAYER_COLUMN_SET, entry, ...)
+        Self.events:Fire(Self.EVENT_PLAYER_COLUMN_UPDATE, entry, ...)
     end
 end
 

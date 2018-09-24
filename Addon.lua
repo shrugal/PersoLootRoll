@@ -215,6 +215,9 @@ function Self:HandleChatCommand(msg)
     -- Trade
     elseif cmd == "trade" then
         Trade.Initiate(args[1] or "target")
+    -- Create a test roll
+    elseif cmd == "test" then
+        Roll.Test()
     -- Rolls/None
     elseif cmd == "rolls" or not cmd then
         GUI.Rolls.Show()
