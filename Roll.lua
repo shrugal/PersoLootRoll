@@ -238,11 +238,11 @@ function Self.Update(data, unit)
         -- Only the item owner and our ml can create rolls
         if not (unit == data.item.owner or ml and unit == ml) then
             Addon:Debug("Roll.Update.Reject.SenderNotAllowed")
-            return
+            return false
         -- Only accept items while having a masterlooter if enabled
         elseif Addon.db.profile.onlyMasterloot and not ml then
             Addon:Debug("Roll.Update.Reject.NoMasterlooter")
-            return
+            return false
         end
 
         roll = Self.Add(Item.FromLink(data.item.link, data.item.owner, nil, nil, Util.Default(data.item.isTradable, true)), data.owner, data.ownerId, data.itemOwnerId, data.timeout, data.disenchant or nil)
@@ -324,6 +324,8 @@ function Self.Update(data, unit)
                 roll:OnTraded(data.traded)
             end
         end) end
+
+        return true
     -- The winner can inform us that it has been traded, or the item owner if the winner doesn't have the addon or he traded it to someone else
     elseif roll.winner and (unit == roll.winner or unit == roll.item.owner and not Addon:UnitIsTracking(roll.winner) or data.traded ~= roll.winner) then
         roll.item:OnLoaded(function()
@@ -332,9 +334,11 @@ function Self.Update(data, unit)
                 roll:OnTraded(data.traded)
             end
         end)
-    end
 
-    return roll
+        return true
+    else
+        return false
+    end
 end
 
 -- Clear old rolls
@@ -729,6 +733,8 @@ function Self:Trade()
     if target then
         Trade.Initiate(target)
     end
+
+    return self
 end
 
 -- Called when the roll's item is traded
@@ -966,6 +972,8 @@ end
 function Self:ToggleVisibility(show)
     if show == nil then self.hidden = not self.hidden else self.hidden = not show end
     Self.events:Fire(Self.EVENT_TOGGLE, self, self.hidden)
+
+    return self
 end
 
 -- Log a chat message about the roll
@@ -979,6 +987,8 @@ function Self:AddChat(msg, unit)
     tinsert(self.chat, msg)
     
     Self.events:Fire(Self.EVENT_CHAT, self, msg, unit)
+
+    return self
 end
 
 -------------------------------------------------------
