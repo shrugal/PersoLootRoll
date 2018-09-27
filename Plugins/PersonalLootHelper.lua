@@ -61,7 +61,7 @@ Comm.Listen(Self.EVENT, function (event, msg, channel, _, unit)
                 
                 -- Trade: The owner offers the item up for requests
                 if action == Self.ACTION_TRADE and not roll and fromOwner and Item.IsLink(param) then
-                    Addon:Debug("PLH.Event.Trade", msg, itemId, owner, param)
+                    Addon:Debug("PLH.Event.Trade", itemId, owner, param, msg)
                     Roll.Add(param, owner):Start()
                 elseif roll and (roll.isOwner or not roll.ownerId) then
                     -- Keep: The owner wants to keep the item

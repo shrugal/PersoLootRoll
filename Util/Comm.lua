@@ -133,10 +133,7 @@ function Self.Chat(msg, target)
         msg = Util.StrPrefix(msg, Self.CHAT_PREFIX)
     end
 
-    if Addon.DEBUG then
-        Addon:Print("@" .. (player or channel) .. ": " .. msg)
-        do return end
-    end
+    Addon:Debug("Comm.Chat", channel, player, msg)
 
     SendChatMessage(msg, channel, nil, player)
 end

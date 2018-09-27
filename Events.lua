@@ -101,9 +101,12 @@ function Self.CHAT_MSG_SYSTEM(_, _, msg)
             else
                 result, from, to = tonumber(result), tonumber(from), tonumber(to)
             end
+            
+            Self:Debug("Events.RandomRoll", unit, result, from, to, msg)
 
             -- Rolls lower than 50 will screw with the result scaling
             if not (unit and result and from and to) or to < 50 then
+                Self:Debug("Events.RandomRoll.Ignore")
                 return
             end
 
@@ -117,6 +120,7 @@ function Self.CHAT_MSG_SYSTEM(_, _, msg)
                 end
 
                 if not UnitExists(unit) then
+                    Self:Debug("Events.RandomRoll.UnitNotFound", unit)
                     return
                 end
             end
@@ -134,11 +138,12 @@ function Self.CHAT_MSG_SYSTEM(_, _, msg)
             local bid = to < 100 and Roll.BID_GREED or Roll.BID_NEED
             result = Util.NumRound(result * 100 / to)
             
-            Self:Debug("Events.RandomRoll", msg, unit, result, from, to, bid, result, roll, roll and (roll.isOwner or Unit.IsSelf(unit)), roll and roll:UnitCanBid(unit, bid))
-            
             -- Register the unit's bid
             if roll and (roll.isOwner or Unit.IsSelf(unit)) and roll:UnitCanBid(unit, bid) then
+                Self:Debug("Events.RandomRoll.Bid", bid, result, roll)
                 roll:Bid(bid, unit, result)
+            else
+                Self:Debug("Events.RandomRoll.Reject", bid, result, roll and (roll.isOwner or Unit.IsSelf(unit)), roll and roll:UnitCanBid(unit, bid), roll)
             end
 
             return
@@ -182,7 +187,7 @@ function Self.CHAT_MSG_LOOT(_, _, msg, _, _, _, sender)
     local item = Item.GetLink(msg)
 
     if not msg:match(Self.PATTERN_BONUS_LOOT) and Item.ShouldBeChecked(item, unit) then
-        Self:Debug("Event.Loot", msg, item, unit, Unit.IsSelf(unit))
+        Self:Debug("Event.Loot", item, unit, Unit.IsSelf(unit), msg)
 
         item = Item.FromLink(item, unit)
 
@@ -254,7 +259,7 @@ function Self.CHAT_MSG_WHISPER_FILTER(_, _, msg, sender, _, _, _, _, _, _, _, _,
     -- Log the conversation
     for i,roll in pairs(Self.rolls) do
         if roll:IsRecent() and unit == roll:GetActionTarget() then
-            Self:Debug("Events.Whisper", msg, unit, lineId)
+            Self:Debug("Events.Whisper", roll.id, unit, lineId)
 
             roll:AddChat(msg, unit)
         end
@@ -360,7 +365,7 @@ function Self.CHAT_MSG_WHISPER_INFORM_FILTER(_, _, msg, receiver, _, _, _, _, _,
     -- Log the conversation
     for i,roll in pairs(Self.rolls) do
         if roll:IsRecent() and unit == roll:GetActionTarget() then
-            Self:Debug("Events.WhisperInform", msg, unit, lineId)
+            Self:Debug("Events.WhisperInform", roll.id, unit, lineId)
             roll:AddChat(msg)
         end
     end
@@ -448,7 +453,7 @@ Comm.ListenData(Comm.EVENT_CHECK, function (event, data, channel, sender, unit)
         Comm.SendData(Comm.EVENT_VERSION, Self.VERSION, target)
         
         -- Send disabled state
-        if Self.disabled[UnitName("player")] then
+        if not Addon.db.profile.enabled then
             Comm.Send(Comm.EVENT_DISABLE, target)
         end
     end

@@ -230,7 +230,7 @@ function Self.Update(data, unit)
     -- Get or create the roll
     local roll = Self.Find(data.ownerId, data.owner, data.item, data.itemOwnerId, data.item.owner)
 
-    Addon:Debug("Roll.Update", data, unit, roll)
+    Addon:Debug("Roll.Update", unit, data, roll)
 
     if not roll then
         local ml = Session.GetMasterlooter()
@@ -636,7 +636,7 @@ function Self:End(winner, cleanup, force)
         Addon:Verbose(L["ROLL_END"], self.item.link, Comm.GetPlayerLink(self.item.owner))
 
         -- Check if we can end the roll
-        local valid, msg = self:Validate(Self.STATUS_RUNNING, winner)
+        local valid, msg = self:Validate(Self.STATUS_RUNNING, Self.STATUS_PENDING, winner)
         if not valid then
             Addon:Error(msg)
             return self
@@ -846,20 +846,30 @@ end
 -------------------------------------------------------
 
 -- Some common error checks for a loot roll
-function Self:Validate(status, ...)
+function Self:Validate(...)
     if Addon.DEBUG or self:IsTest() then return true end
 
-    if status and self.status ~= status then
-        return false, L["ERROR_ROLL_STATUS_NOT_" .. status]
-    elseif not self.item.isTradable then
+    if not self.item.isTradable then
         return false, L["ERROR_ITEM_NOT_TRADABLE"]
     elseif not IsInGroup() then 
         return false, L["ERROR_NOT_IN_GROUP"]
+    elseif not UnitExists(self.owner) or not Unit.InGroup(self.owner) then
+        return false, L["ERROR_PLAYER_NOT_FOUND"]:format(self.owner)
     else
-        for _,unit in pairs({self.owner, ...}) do
-            if not UnitExists(unit) or not Unit.InGroup(unit) then
-                return false, L["ERROR_PLAYER_NOT_FOUND"]:format(unit)
+        local status
+
+        for i,v in Util.Each(...) do
+            if type(v) == "number" then
+                status = v == self.status and true or status or v
+            elseif type(v) == "string" then
+                if not UnitExists(v) or not Unit.InGroup(v) then
+                    return false, L["ERROR_PLAYER_NOT_FOUND"]:format(v)
+                end
             end
+        end
+
+        if status and status ~= true then
+            return false, L["ERROR_ROLL_STATUS_NOT_" .. status]
         end
 
         return true
@@ -868,7 +878,7 @@ end
 
 -- Validate an incoming bid
 function Self:ValidateBid(bid, fromUnit, roll, isImport, answer, answers)
-    local valid, msg = self:Validate(nil, fromUnit)
+    local valid, msg = self:Validate(fromUnit)
     if not valid then
         Addon:Error(msg)
     -- Don't validate imports any further
@@ -895,7 +905,7 @@ end
 
 -- Validate an incoming vote
 function Self:ValidateVote(vote, fromUnit, isImport)
-    local valid, msg = self:Validate(nil, vote, fromUnit)
+    local valid, msg = self:Validate(vote, fromUnit)
     if not valid then
         Addon:Error(msg)
     -- Don't validate imports any further
