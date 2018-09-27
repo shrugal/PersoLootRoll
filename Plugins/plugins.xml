@@ -2,4 +2,5 @@
 ..\FrameXML\UI.xsd">
     <Script file="EPGP.lua"/>
     <Script file="PersonalLootHelper.lua"/>
+    <Script file="RCLootCouncil.lua"/>
 </Ui>

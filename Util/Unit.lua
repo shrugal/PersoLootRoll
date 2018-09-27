@@ -36,6 +36,10 @@ Self.SPECS = {
     71, 72, 73          -- Warrior
 }
 
+-- Group ranks
+Self.GROUP_RANK_LEADER = 2
+Self.GROUP_RANK_ASSISTANT = 1
+
 -------------------------------------------------------
 --                       Realm                       --
 -------------------------------------------------------
@@ -217,6 +221,36 @@ function Self.ClubMemberInfo(unit, clubId)
 end
 
 -------------------------------------------------------
+--                       Group                       --
+-------------------------------------------------------
+
+-- Shortcut for checking whether a unit is in our party or raid
+function Self.InGroup(unit, onlyOthers)
+    local isSelf = Self.IsSelf(unit)
+    return not (isSelf and onlyOthers) and (isSelf or UnitInParty(unit) or UnitInRaid(unit))
+end
+
+-- Get a unit's group rank
+function Self.GroupRank(unit)
+    for i=1,GetNumGroupMembers() do
+        local grpUnit, rank = GetRaidRosterInfo(i)
+        if grpUnit == unit then
+            return rank
+        end
+    end
+end
+
+-- Get the current group leader
+function Self.GroupLeader()
+    for i=1,GetNumGroupMembers() do
+        local unit, rank = GetRaidRosterInfo(i)
+        if rank == Self.GROUP_RANK_LEADER then
+            return unit
+        end
+    end
+end
+
+-------------------------------------------------------
 --                       Other                       --
 -------------------------------------------------------
 
@@ -252,12 +286,6 @@ end
 -- Check if the player is following someone
 function Self.IsFollowing(unit)
     return AutoFollowStatus:IsShown() and (not unit or unit == AutoFollowStatusText:GetText():match(Self.PATTERN_FOLLOW))
-end
-
--- Shortcut for checking whether a unit is in our party or raid
-function Self.InGroup(unit, onlyOthers)
-    local isSelf = Self.IsSelf(unit)
-    return not (isSelf and onlyOthers) and (isSelf or UnitInParty(unit) or UnitInRaid(unit))
 end
 
 -- Check if the player is an enchanter

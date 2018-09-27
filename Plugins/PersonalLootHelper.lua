@@ -4,7 +4,7 @@ local Self = Addon.PLH
 
 Self.NAME = "Personal Loot Helper"
 Self.VERSION = "2.08"
-Self.EVENT = "PLH"
+Self.PREFIX = "PLH"
 
 Self.BID_NEED = "MAIN SPEC"
 Self.BID_GREED = "OFF SPEC"
@@ -27,22 +27,18 @@ end
 
 -- Send a PLH message
 function Self.Send(action, roll, param)
-    if not IsAddOnLoaded(Self.NAME) then
-        local txt = not roll and ("%s~ ~%s"):format(action, param)
+    if Self:IsEnabled() then
+        local msg = not roll and ("%s~ ~%s"):format(action, param)
                 or type(roll) == "string" and ("%s~ ~%s~%s"):format(action, roll, param)
                 or param and ("%s~%d~%s~%s"):format(action, roll.item.id, Unit.FullName(roll.item.owner), param)
                 or ("%s~%d~%s"):format(action, roll.item.id, Unit.FullName(roll.item.owner))
 
-        -- TODO: This fixes a beta bug that causes a dc when sending empty strings
-        txt = (not txt or txt == "") and " " or txt
-
-        -- Send the message
-        Addon:SendCommMessage(Self.EVENT, txt, Comm.GetDestination())
+        Comm.Send(Self.PREFIX, msg)
     end
 end
 
-Comm.Listen(Self.EVENT, function (event, msg, channel, _, unit)
-    if not IsAddOnLoaded(Self.NAME) then
+Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
+    if Self:IsEnabled() then
         local action, itemId, owner, param = msg:match('^([^~]+)~([^~]+)~([^~]+)~?([^~]*)$')
         itemId = tonumber(itemId)
         owner = Unit(owner)
@@ -54,7 +50,7 @@ Comm.Listen(Self.EVENT, function (event, msg, channel, _, unit)
                 Self.Send(Self.ACTION_VERSION, Unit.FullName("player"), Self.VERSION)
             -- Version: Answer to version check
             elseif action == Self.ACTION_VERSION then
-                Addon.compAddonUsers[unit] = ("%s (%s)"):format(Self.NAME, param)
+                Addon:SetCompAddonUser(unit, Self.NAME, param)
             else
                 local item = Item.IsLink(param) and param or itemId
                 local roll = Roll.Find(nil, nil, item, nil, owner, Roll.STATUS_RUNNING) or Roll.Find(nil, nil, item, nil, owner)
@@ -85,6 +81,10 @@ end)
 --                    Events/Hooks                   --
 -------------------------------------------------------
 
+function Self:OnInitialize()
+    Self:SetEnabledState(not IsAddOnLoaded(Self.NAME))
+end
+
 function Self:OnEnable()
     -- Register events
     Self:RegisterEvent("GROUP_JOINED")
@@ -98,6 +98,7 @@ function Self:OnEnable()
 end
 
 function Self:OnDisable()
+    -- Unregister events
     Self:UnregisterEvent("GROUP_JOINED")
     Roll.Unsubscribe(Self)
 end
@@ -106,6 +107,7 @@ function Self.GROUP_JOINED()
     Self.Send(Self.ACTION_CHECK, nil, Unit.FullName("player"))
 end
 
+-- Roll.EVENT_START
 function Self.ROLL_START(_, _, roll)
     if roll.isOwner and not roll:IsTest() then
         -- Send TRADE message
@@ -113,7 +115,7 @@ function Self.ROLL_START(_, _, roll)
     end
 end
 
-
+-- Roll.EVENT_BID
 function Self.ROLL_BID(_, _, roll, bid, fromUnit, _, isImport)
     local fromSelf = Unit.IsSelf(fromUnit)
 
@@ -131,6 +133,7 @@ function Self.ROLL_BID(_, _, roll, bid, fromUnit, _, isImport)
     end
 end
 
+-- Roll.EVENT_END
 function Self.ROLL_END(_, _, roll)
     if roll.winner and not roll.isWinner and roll.isOwner and Self.IsUsedByUnit(roll.winner) and not roll:IsTest() then
         -- Send OFFER message

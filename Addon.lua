@@ -363,6 +363,13 @@ function Self:CompareVersion(versionOrUnit)
     end
 end
 
+function Self:SetCompAddonUser(unit, name, version)
+    unit = Unit.Name(unit)
+    if not self.versions[unit] then
+        Addon.compAddonUsers[unit] = ("%s (%s)"):format(name, version)
+    end
+end
+
 -- Get the number of addon users in the group
 function Self:GetNumAddonUsers(inclCompAddons)
     local n = Util.TblCount(self.versions) - Util.TblCount(self.disabled)

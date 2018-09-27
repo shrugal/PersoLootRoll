@@ -139,7 +139,8 @@ end
 
 -- Get a roll by id and owner
 function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner, status)
-    owner = Unit.Name(owner or "player")
+    owner = Unit.Name(owner) or owner
+    itemOwner = Unit.Name(itemOwner) or itemOwner
     local id
     
     -- It's our own item

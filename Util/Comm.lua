@@ -33,6 +33,7 @@ Self.EVENT_MASTERLOOT_ASK = "ML-ASK"
 Self.EVENT_MASTERLOOT_OFFER = "ML-OFFER"
 Self.EVENT_MASTERLOOT_ACK = "ML-ACK"
 Self.EVENT_MASTERLOOT_DEC = "ML-DEC"
+Self.EVENTS = {Self.EVENT_CHECK, Self.EVENT_VERSION, Self.EVENT_ENABLE, Self.EVENT_DISABLE, Self.EVENT_SYNC, Self.EVENT_ROLL_STATUS, Self.EVENT_BID, Self.EVENT_BID_WHISPER, Self.EVENT_VOTE, Self.EVENT_INTEREST, Self.EVENT_MASTERLOOT_ASK, Self.EVENT_MASTERLOOT_OFFER, Self.EVENT_MASTERLOOT_ACK, Self.EVENT_MASTERLOOT_DEC}
 
 -- Message patterns
 Self.PATTERN_PARTY_JOINED = ERR_JOINED_GROUP_S:gsub("%%s", "(.+)")
@@ -50,7 +51,7 @@ Self.PATTERNS_LEFT = {Self.PATTERN_PARTY_LEFT, Self.PATTERN_INSTANCE_LEFT, Self.
 
 -- Get the complete message prefix for an event
 function Self.GetPrefix(event)
-    return event:sub(1, 3) == Self.PREFIX and event or Self.PREFIX .. event
+    return Util.In(event, Self.EVENTS) and Self.PREFIX .. event or event
 end
 
 -- Figure out the channel and target for a message
@@ -149,15 +150,15 @@ function Self.ChatLine(line, target, ...)
 end
 
 -- Send an addon message
-function Self.Send(event, txt, target, prio, callbackFn, callbackArg)
+function Self.Send(event, msg, target, prio, callbackFn, callbackArg)
     event = Self.GetPrefix(event)
     local channel, player = Self.GetDestination(target)
 
     -- TODO: This fixes a beta bug that causes a dc when sending empty strings
-    txt = (not txt or txt == "") and " " or txt
+    msg = (not msg or msg == "") and " " or msg
 
     -- Send the message
-    Addon:SendCommMessage(event, txt, channel, player, prio, callbackFn, callbackArg)
+    Addon:SendCommMessage(event, msg, channel, player, prio, callbackFn, callbackArg)
 end
 
 -- Send structured addon data

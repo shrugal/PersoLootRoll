@@ -270,16 +270,8 @@ function Self.IsOnCouncil(unit, refresh, groupRank)
         end
 
         -- Check group rank
-        if c.council.roles.raidleader or c.council.roles.raidassistant then
-            if not groupRank then
-                for i=1,GetNumGroupMembers() do
-                    local unitGroup, rank = GetRaidRosterInfo(i)
-                    if unitGroup == unit then groupRank = rank break end
-                end
-            end
-            if c.council.roles.raidleader and groupRank == 2 or c.council.roles.raidassistant and groupRank == 1 then
-                return true
-            end
+        if (c.council.roles.raidleader or c.council.roles.raidassistant) and Util.Select(groupRank or Unit.GroupRank(unit), Unit.GROUP_RANK_LEADER, c.council.roles.raidleader, Unit.GROUP_RANK_ASSISTANT, c.council.roles.raidassistant) then
+            return true
         end
     end
 
