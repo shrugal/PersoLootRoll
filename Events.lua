@@ -139,9 +139,12 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
             else
                 result, from, to = tonumber(result), tonumber(from), tonumber(to)
             end
+            
+            Addon:Debug("Events.RandomRoll", unit, result, from, to, msg)
 
             -- Rolls lower than 50 will screw with the result scaling
             if not (unit and result and from and to) or to < 50 then
+                Addon:Debug("Events.RandomRoll.Ignore")
                 return
             end
 
@@ -155,6 +158,7 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
                 end
 
                 if not UnitExists(unit) then
+                    Addon:Debug("Events.RandomRoll.UnitNotFound", unit)
                     return
                 end
             end
@@ -172,11 +176,12 @@ function Self.CHAT_MSG_SYSTEM(event, msg)
             local bid = to < 100 and Roll.BID_GREED or Roll.BID_NEED
             result = Util.NumRound(result * 100 / to)
             
-            Addon:Debug("Events.RandomRoll", msg, unit, result, from, to, bid, result, roll, roll and (roll.isOwner or Unit.IsSelf(unit)), roll and roll:UnitCanBid(unit, bid))
-            
             -- Register the unit's bid
             if roll and (roll.isOwner or Unit.IsSelf(unit)) and roll:UnitCanBid(unit, bid) then
+                Addon:Debug("Events.RandomRoll.Bid", bid, result, roll)
                 roll:Bid(bid, unit, result)
+            else
+                Addon:Debug("Events.RandomRoll.Reject", bid, result, roll and (roll.isOwner or Unit.IsSelf(unit)), roll and roll:UnitCanBid(unit, bid), roll)
             end
 
             return
@@ -240,7 +245,7 @@ function Self.CHAT_MSG_LOOT(event, msg, _, _, _, sender)
     local item = Item.GetLink(msg)
 
     if not msg:match(Self.PATTERN_BONUS_LOOT) and Item.ShouldBeChecked(item, unit) then
-        Addon:Debug("Event.Loot", msg, item, unit, Unit.IsSelf(unit))
+        Addon:Debug("Event.Loot", item, unit, Unit.IsSelf(unit), msg)
 
         item = Item.FromLink(item, unit)
 
@@ -312,7 +317,7 @@ function Self.CHAT_MSG_WHISPER_FILTER(self, event, msg, sender, _, _, _, _, _, _
     -- Log the conversation
     for i,roll in pairs(Addon.rolls) do
         if roll:IsRecent() and unit == roll:GetActionTarget() then
-            Addon:Debug("Events.Whisper", msg, unit, lineId)
+            Addon:Debug("Events.Whisper", roll.id, unit, lineId)
 
             roll:AddChat(msg, unit)
         end
@@ -418,7 +423,7 @@ function Self.CHAT_MSG_WHISPER_INFORM_FILTER(self, event, msg, receiver, _, _, _
     -- Log the conversation
     for i,roll in pairs(Addon.rolls) do
         if roll:IsRecent() and unit == roll:GetActionTarget() then
-            Addon:Debug("Events.WhisperInform", msg, unit, lineId)
+            Addon:Debug("Events.WhisperInform", roll.id, unit, lineId)
             roll:AddChat(msg)
         end
     end
@@ -522,7 +527,7 @@ Comm.ListenData(Comm.EVENT_CHECK, function (event, data, channel, sender, unit)
         Comm.SendData(Comm.EVENT_VERSION, Addon.VERSION, target)
         
         -- Send disabled state
-        if Addon.disabled[UnitName("player")] then
+        if not Addon.db.profile.enabled then
             Comm.Send(Comm.EVENT_DISABLE, target)
         end
     end
@@ -713,7 +718,7 @@ Comm.Listen(Comm.PLH_EVENT, function (event, msg, channel, _, unit)
                 
                 -- Trade: The owner offers the item up for requests
                 if action == Comm.PLH_ACTION_TRADE and not roll and fromOwner and Item.IsLink(param) then
-                    Addon:Debug("Events.PLH.Trade", msg, itemId, owner, param)
+                    Addon:Debug("Events.PLH.Trade", itemId, owner, param, msg)
                     Roll.Add(param, owner):Start()
                 elseif roll and (roll.isOwner or not roll.ownerId) then
                     -- Keep: The owner wants to keep the item

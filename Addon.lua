@@ -476,14 +476,13 @@ end
 -------------------------------------------------------
 
 -- Write to log and print if lvl is high enough
-function Addon:Echo(lvl, ...)
-    local line = ""
+function Addon:Echo(lvl, line, ...)
     if lvl == self.ECHO_DEBUG then
         for i=1, select("#", ...) do
-            line = line .. (line == "" and "" or ", ") .. Util.ToString((select(i, ...)))
+            line = line .. (i == 1 and " - " or ", ") .. Util.ToString((select(i, ...)))
         end
     else
-        line = select(1, ...):format(select(2, ...))
+        line = line:format(...)
     end
 
     self:Log(lvl, line)
