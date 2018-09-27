@@ -302,6 +302,7 @@ function Self.RegisterGeneral()
                 get = function () return Addon.db.profile.filter.disenchant end,
                 width = Self.WIDTH_THIRD
             }
+
         }
     }
 end
@@ -898,6 +899,23 @@ function Self.RegisterMasterloot()
                         get = function ()
                             return Util(Addon.db.profile.masterloot.council.whitelists[GetRealmName()] or Util.TBL_EMPTY).Keys().Sort().Concat(", ")()
                         end,
+                        width = Self.WIDTH_FULL
+                    }
+                }
+            },
+            epgp = {
+                name = L["OPT_MASTERLOOT_EPGP"],
+                type = "group",
+                order = it(),
+                args = {
+                    desc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_MASTERLOOT_EPGP_DESC"] .. "\n"},
+                    enable = {
+                        name = L["OPT_MASTERLOOT_EPGP_ENABLE"],
+                        desc = L["OPT_MASTERLOOT_EPGP_ENABLE_DESC"],
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) Addon.db.profile.masterloot.epgp.enabled = val end,
+                        get = function () return Addon.db.profile.masterloot.epgp.enabled end,
                         width = Self.WIDTH_FULL
                     }
                 }

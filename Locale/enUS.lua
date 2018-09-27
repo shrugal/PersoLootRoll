@@ -280,6 +280,11 @@ L["OPT_MASTERLOOT_RULES_VOTE_PUBLIC_DESC"] = "You can make council votes public,
 L["OPT_MASTERLOOT_SAVE"] = "Save"
 L["OPT_MASTERLOOT_SAVE_DESC"] = "Save your current masterloot settings to your guild/community's description."
 
+L["OPT_MASTERLOOT_EPGP"] = "EPGP"
+L["OPT_MASTERLOOT_EPGP_DESC"] = "Use the EPGP loot system to award items. When enabled and Masterlooter, awarding loot to a Need roll will award GP."
+L["OPT_MASTERLOOT_EPGP_ENABLE"] = "Enable EPGP"
+L["OPT_MASTERLOOT_EPGP_ENABLE_DESC"] = "Enable EPGP support"
+
 -- Options - Messages
 L["OPT_CUSTOM_MESSAGES"] = "Custom messages"
 L["OPT_CUSTOM_MESSAGES_DEFAULT"] = "Default language (%s)"
@@ -412,6 +417,11 @@ L["ROLL_WINNER_OWN"] = "You have won your own %s."
 L["ROLL_WINNER_SELF"] = "You have won %s from %s -> %s."
 L["TRADE_CANCEL"] = "Canceling trade with %s."
 L["TRADE_START"] = "Starting trade with %s."
+
+--epgp
+L["EPGP"] = "EPGP"
+L["EPGP_PR"] = "PR"
+
 
 -- Globals
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "The owner of this item doesn't use the PersoLootRoll addon."

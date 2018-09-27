@@ -23,6 +23,7 @@ Locale\zhCN.lua
 Locale\zhTW.lua
 Util\Comm.lua
 Util\Item.lua
+Util\Epgp.lua
 
 # Data
 Data\Items.lua
