@@ -47,7 +47,16 @@ function Self.IsUsedByUnit(unit)
     return Util.StrStartsWith(Addon.compAddonUsers[Unit.Name(unit)], Self.NAME)
 end
 
---- From RCLootCouncil:
+function Self.FindOrAddRoll(link, itemOwner, owner)
+    return Roll.Find(nil, owner, link, nil, itemOwner) or Roll.Add(Item.FromLink(link, itemOwner or owner), owner or itemOwner)
+end
+
+-------------------------------------------------------
+--                    Translation                    --
+-------------------------------------------------------
+
+--- Translate a RCLC mldb to PLR session rules
+-- From RCLootCouncil:
 -- selfVote        = db.selfVote or nil
 -- multiVote       = db.multiVote or nil
 -- anonymousVoting = db.anonymousVoting or nil
@@ -59,7 +68,7 @@ end
 -- responses       = changedResponses
 -- timeout         = db.timeout
 -- rejectTrade     = db.rejectTrade or nil
-function Self.ImportRules(mldb)
+function Self.MldbToRules(mldb)
     Self.mldb = mldb
 
     local needAnswers, greedAnswers = Util.Tbl(), Util.Tbl()
@@ -81,29 +90,22 @@ function Self.ImportRules(mldb)
     })
 end
 
-function Self.ImportCouncil(council)
-    wipe(Session.rules.council)
-    for _,v in pairs(council) do
-        Session.rules.council[Unit.FullName(v)] = true
-    end
-    Session.SetRules(Session.rules)
-end
-
-function Self.FindOrAddRoll(link, itemOwner, owner)
-    return Roll.Find(nil, owner, link, nil, itemOwner) or Roll.Add(Item.FromLink(link, itemOwner or owner), owner or itemOwner)
-end
-
+-- Translate a RCLC response to a PLR bid
 function Self.ResponseToBid(resp)
     local numNeedAnswers = #Session.rules.needAnswers
 
     if resp == Self.RESP_PASS then
         return Roll.BID_PASS
-    elseif resp - 1 <= numNeedAnswers then
-        return Roll.BID_NEED + (resp - 1)/10
-    else
-        return Roll.BID_GREED + (resp - numNeedAnswers - 2)/10
+    elseif type(resp) == "number" then
+        if resp - 1 <= numNeedAnswers then
+            return Roll.BID_NEED + (resp - 1)/10
+        else
+            return Roll.BID_GREED + (resp - numNeedAnswers - 2)/10
+        end
+    end
 end
 
+-- Translate a PLR bid to a RCLC response
 function Self.BidToResponse(bid)
     if bid == Roll.BID_PASS then
         return Self.RESP_PASS
@@ -125,9 +127,9 @@ function Self.Send(cmd, target, ...)
     Util.TblRelease(1, data)
 end
 
+-- Process incoming RCLC message
 Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
-    unit = Unit(unit)
-    if not Self:IsEnabled() then return end
+    if not Self:IsEnabled() or Addon.versions[unit] then return end
 
     local success, cmd, data = Self:Deserialize(msg)
     if not success then return end
@@ -192,11 +194,15 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
         -- RULES
         if cmd == Self.CMD_RULES then
             Session.SetMasterlooter(unit)
-            Self.ImportRules(data)
+            Self.MldbToRules(data)
 
         -- COUNCIL
         elseif cmd == Self.CMD_COUNCIL then
-            Self.ImportCouncil(data)
+            wipe(Session.rules.council)
+            for _,v in pairs(council) do
+                Session.rules.council[Unit.FullName(v)] = true
+            end
+            Session.SetRules(Session.rules)
 
         -- SYNC
         elseif cmd == Self.CMD_SYNC then
@@ -204,7 +210,7 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
 
         -- SESSION_START/SESSION_ADD
         elseif cmd == Self.CMD_SESSION_START or cmd == Self.CMD_SESSION_ADD then
-            local ack = {gear1 = {}, gear2 = {}, diff = {}, response = {}}
+            local ack = Util.TblHash("gear1", Util.Tbl(), "gear2", Util.Tbl(), "diff", Util.Tbl(), "response", Util.Tbl())
 
             for sId,v in pairs(data[1]) do
                 sId = v.session or sId
@@ -215,8 +221,10 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
                     local gear = roll.item:GetEquippedForLocation("player")
                     gear1[sId] = gear[1] or nil
                     gear2[sId] = gear[2] or nil
-                    diff[sId] = (roll.item:GetBasicInfo().level or 0) - max(Item.GetInfo(gear[1], "level") or 0, Item.GetInfo(gear[2], "level") or 0)
+                    diff[sId] = (roll.item:GetBasicInfo().level or 0) - max(Item.GetInfo(gear[1], "level") or 0, Item.GetInfo(gear[2], "level") or 0) -- TODO: This is wrong when slots are not filled
                     response[sId] = not roll.item:GetEligible("player") or nil
+                    
+                    if not roll.item.isRelic then Util.TblRelease(gear) end
                 end
             end
 
@@ -224,6 +232,8 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
                 local spec, ilvl = GetSpecializationInfo(GetSpecialization()), select(2, GetAverageItemLevel())
                 Self.Send(Self.CMD_SESSION_ACK, Comm.TYPE_GROUP, Unit.FullName("player"), spec, ilvl, ack)
             end
+
+            Util.TblRelease(1, ack)
 
         -- SESSION_END
         elseif cmd == Self.CMD_SESSION_END then
@@ -258,13 +268,43 @@ end)
 -------------------------------------------------------
 
 function Self:OnInitialize()
-    Self:SetEnabledState(true or not IsAddOnLoaded(Self.NAME)) -- TODO: DEBUG
+    Self:SetEnabledState(not IsAddOnLoaded(Self.NAME))
 end
 
 function Self:OnEnable()
     -- Register events
+    Self:RegisterEvent("GROUP_JOINED")
+    Roll.On(Self, Roll.EVENT_ADD, "ROLL_ADD")
+    Roll.On(Self, Roll.EVENT_BID, "ROLL_BID")
+    Roll.On(Self, Roll.EVENT_VOTE, "ROLL_VOTE")
+    Roll.On(Self, Roll.EVENT_TRADE, "ROLL_TRADE")
 end
 
 function Self:OnDisable()
     -- Unregister events
+    Roll.Unsubscribe(Self)
+end
+
+function Self.GROUP_JOINED()
+    Self.Send(Self.CMD_VERSION_CHECK, Comm.TYPE_GROUP, Self.VERSION)
+end
+
+-- Roll.EVENT_ADD
+function Self.ROLL_ADD(_, _, roll)
+    -- TODO
+end
+
+-- Roll.EVENT_BID
+function Self.ROLL_BID(_, _, roll, bid, fromUnit, rollResult, isImport)
+    -- TODO
+end
+
+-- Roll.EVENT_VOTE
+function Self.ROLL_VOTE(_, _, roll, vote, fromUnit, isImport)
+    -- TODO
+end
+
+-- Roll.EVENT_TRADE
+function Self.ROLL_TRADE(_, _, roll, target)
+    -- TODO
 end

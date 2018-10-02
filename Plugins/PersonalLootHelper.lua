@@ -37,41 +37,40 @@ function Self.Send(action, roll, param)
     end
 end
 
+-- Process incoming PLH message
 Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
-    if Self:IsEnabled() then
-        local action, itemId, owner, param = msg:match('^([^~]+)~([^~]+)~([^~]+)~?([^~]*)$')
-        itemId = tonumber(itemId)
-        owner = Unit(owner)
-        local fromOwner = owner == unit
+    if not Self:IsEnabled() or Addon.versions[unit] then return end
 
-        if not Addon.versions[unit] then
-            -- Check: Version check
-            if action == Self.ACTION_CHECK then
-                Self.Send(Self.ACTION_VERSION, Unit.FullName("player"), Self.VERSION)
-            -- Version: Answer to version check
-            elseif action == Self.ACTION_VERSION then
-                Addon:SetCompAddonUser(unit, Self.NAME, param)
-            else
-                local item = Item.IsLink(param) and param or itemId
-                local roll = Roll.Find(nil, nil, item, nil, owner, Roll.STATUS_RUNNING) or Roll.Find(nil, nil, item, nil, owner)
-                
-                -- Trade: The owner offers the item up for requests
-                if action == Self.ACTION_TRADE and not roll and fromOwner and Item.IsLink(param) then
-                    Addon:Debug("PLH.Event.Trade", itemId, owner, param, msg)
-                    Roll.Add(param, owner):Start()
-                elseif roll and (roll.isOwner or not roll.ownerId) then
-                    -- Keep: The owner wants to keep the item
-                    if action == Self.ACTION_KEEP and fromOwner then
-                        roll:End(owner)
-                    -- Request: The sender bids on an item
-                    elseif action == Self.ACTION_REQUEST then
-                        local bid = Util.Select(param, Self.BID_NEED, Roll.BID_NEED, Self.BID_DISENCHANT, Roll.BID_DISENCHANT, Roll.BID_GREED)
-                        roll:Bid(bid, unit)
-                    -- Offer: The owner has picked a winner
-                    elseif action == Self.ACTION_OFFER and fromOwner then
-                        roll:End(param)
-                    end
-                end
+    local action, itemId, owner, param = msg:match('^([^~]+)~([^~]+)~([^~]+)~?([^~]*)$')
+    itemId = tonumber(itemId)
+    owner = Unit(owner)
+    local fromOwner = owner == unit
+
+    -- Check: Version check
+    if action == Self.ACTION_CHECK then
+        Self.Send(Self.ACTION_VERSION, Unit.FullName("player"), Self.VERSION)
+    -- Version: Answer to version check
+    elseif action == Self.ACTION_VERSION then
+        Addon:SetCompAddonUser(unit, Self.NAME, param)
+    else
+        local item = Item.IsLink(param) and param or itemId
+        local roll = Roll.Find(nil, nil, item, nil, owner, Roll.STATUS_RUNNING) or Roll.Find(nil, nil, item, nil, owner)
+        
+        -- Trade: The owner offers the item up for requests
+        if action == Self.ACTION_TRADE and not roll and fromOwner and Item.IsLink(param) then
+            Addon:Debug("PLH.Event.Trade", itemId, owner, param, msg)
+            Roll.Add(param, owner):Start()
+        elseif roll and (roll.isOwner or not roll.ownerId) then
+            -- Keep: The owner wants to keep the item
+            if action == Self.ACTION_KEEP and fromOwner then
+                roll:End(owner)
+            -- Request: The sender bids on an item
+            elseif action == Self.ACTION_REQUEST then
+                local bid = Util.Select(param, Self.BID_NEED, Roll.BID_NEED, Self.BID_DISENCHANT, Roll.BID_DISENCHANT, Roll.BID_GREED)
+                roll:Bid(bid, unit)
+            -- Offer: The owner has picked a winner
+            elseif action == Self.ACTION_OFFER and fromOwner then
+                roll:End(param)
             end
         end
     end
@@ -90,7 +89,7 @@ function Self:OnEnable()
     Self:RegisterEvent("GROUP_JOINED")
     Roll.On(Self, Roll.EVENT_START, "ROLL_START")
     Roll.On(Self, Roll.EVENT_BID, "ROLL_BID")
-    Roll.On(Self, Roll.EVENT_END, "ROLL_END")
+    Roll.On(Self, Roll.EVENT_AWARD, "ROLL_AWARD")
 
     if IsInGroup() then
         Self.GROUP_JOINED()
@@ -109,7 +108,7 @@ end
 
 -- Roll.EVENT_START
 function Self.ROLL_START(_, _, roll)
-    if roll.isOwner and not roll:IsTest() then
+    if roll.isOwner and not roll.isTest then
         -- Send TRADE message
         Self.Send(Self.ACTION_TRADE, roll, roll.item.link)
     end
@@ -119,7 +118,7 @@ end
 function Self.ROLL_BID(_, _, roll, bid, fromUnit, _, isImport)
     local fromSelf = Unit.IsSelf(fromUnit)
 
-    if not isImport and not roll:IsTest() then
+    if not isImport and not roll.isTest then
         if roll.isOwner then
             if fromSelf and floor(bid) == Roll.BID_NEED and not Session.GetMasterlooter() then
                 -- Send KEEP message
@@ -133,9 +132,9 @@ function Self.ROLL_BID(_, _, roll, bid, fromUnit, _, isImport)
     end
 end
 
--- Roll.EVENT_END
-function Self.ROLL_END(_, _, roll)
-    if roll.winner and not roll.isWinner and roll.isOwner and Self.IsUsedByUnit(roll.winner) and not roll:IsTest() then
+-- Roll.EVENT_AWARD
+function Self.ROLL_AWARD(_, _, roll)
+    if roll.winner and not roll.isWinner and roll.isOwner and Self.IsUsedByUnit(roll.winner) and not roll.isTest then
         -- Send OFFER message
         Self.Send(Self.ACTION_OFFER, roll, Unit.FullName(roll.winner))
     end

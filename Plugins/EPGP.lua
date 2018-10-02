@@ -305,7 +305,7 @@ end
 
 -- Roll.EVENT_AWARD
 function Self.ROLL_AWARD(_, _, roll, winner, prevWinner)
-    if Session.IsMasterlooter() and roll.isOwner and not roll:IsTest() then
+    if Session.IsMasterlooter() and roll.isOwner and not roll.isTest then
         Self.UndoGPCredit(roll)
 
         -- Credit the winner

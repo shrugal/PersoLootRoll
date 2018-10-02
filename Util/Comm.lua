@@ -207,7 +207,7 @@ function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport)
         end
     end
 
-    if not isImport and not roll:IsTest() then
+    if not isImport and not roll.isTest then
         -- Inform others
         if roll.isOwner then
             local data = Util.TblHash("ownerId", roll.ownerId, "bid", bid, "roll", randomRoll, "fromUnit", Unit.FullName(fromUnit))
@@ -260,7 +260,7 @@ function Self.RollVote(roll, vote, fromUnit, isImport)
     local fromSelf = Unit.IsSelf(fromUnit)
 
     -- Inform others
-    if not isImport and not roll:IsTest() then
+    if not isImport and not roll.isTest then
         if roll.isOwner then
             local data = Util.TblHash("ownerId", roll.ownerId, "vote", Unit.FullName(vote), "fromUnit", Unit.FullName(fromUnit))
 
@@ -307,7 +307,7 @@ function Self.RollEnd(roll)
             Addon:Info(L["ROLL_WINNER_MASTERLOOT"], Self.GetPlayerLink(roll.winner), roll.item.link, Self.GetPlayerLink(roll.item.owner))
         end
 
-        if roll.isOwner and not roll:IsTest() then
+        if roll.isOwner and not roll.isTest then
             local line = roll.bids[roll.winner] == Roll.BID_DISENCHANT and "DISENCHANT" or "WINNER"
 
             -- Announce to chat

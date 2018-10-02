@@ -425,7 +425,7 @@ function Self:Start(started)
                 
                 Self.events:Fire(Self.EVENT_START, self, self.started)
 
-                if self:IsTest() or not (self:ShouldEnd() and self:End()) then
+                if self.isTest or not (self:ShouldEnd() and self:End()) then
                     -- Schedule timer to end the roll and/or hide the frame
                     if self.timeout > 0 then
                         self.timers.bid = Addon:ScheduleTimer(Self.End, self:GetTimeLeft(), self, nil, true)
@@ -848,7 +848,7 @@ end
 
 -- Some common error checks for a loot roll
 function Self:Validate(...)
-    if Addon.DEBUG or self:IsTest() then return true end
+    if Addon.DEBUG or self.isTest then return true end
 
     if not self.item.isTradable then
         return false, L["ERROR_ITEM_NOT_TRADABLE"]
@@ -1057,7 +1057,7 @@ end
 
 -- Send the roll status to others
 function Self:SendStatus(noCheck, target, full)
-    if (noCheck or self.isOwner) and not self:IsTest() then
+    if (noCheck or self.isOwner) and not self.isTest then
         local data = Util.Tbl()
         data.owner = Unit.FullName(self.owner)
         data.ownerId = self.ownerId
@@ -1300,9 +1300,4 @@ function Self.GetBidName(roll, bid)
             return answers[i]
         end
     end
-end
-
--- Check if it's just a test roll
-function Self:IsTest()
-    return self.isTest
 end
