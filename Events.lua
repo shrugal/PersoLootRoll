@@ -288,9 +288,10 @@ function Self.CHAT_MSG_GROUP(event, msg, sender)
 
     local link = Item.GetLink(msg)
     if link then
+        link = Item.GetInfo(link, "link") or link
         Self.lastPostedRoll = nil
 
-        local roll = Roll.Find(nil, unit, Item.GetInfo(link, "link") or link)
+        local roll = Roll.Find(nil, unit, link, nil, nil, Roll.STATUS_RUNNING) or Roll.Find(nil, unit, link)
         if roll then
             -- Remember the last roll posted to chat
             Self.lastPostedRoll = roll
