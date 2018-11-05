@@ -490,6 +490,8 @@ end
 
 -- Restart a roll
 function Self:Restart(started, pending)
+    Addon:Debug("Roll.Restart", self.id, started, pending)
+
     self.started = nil
     self.ended = nil
     self.bid = nil
@@ -520,6 +522,8 @@ end
 
 -- Bid on a roll
 function Self:Bid(bid, fromUnit, roll, isImport)
+    Addon:Debug("Roll.Bid", self.id, bid, fromUnit, roll, isImport)
+
     bid = bid or Self.BID_NEED
     fromUnit = Unit.Name(fromUnit or "player")
     roll = roll or self.isOwner and bid ~= Self.BID_PASS and random(100) or nil
@@ -570,6 +574,8 @@ end
 
 -- Vote for a unit
 function Self:Vote(vote, fromUnit, isImport)
+    Addon:Debug("Roll.Vote", self.id, vote, fromUnit, isImport)
+
     vote = Unit.Name(vote)
     fromUnit = Unit.Name(fromUnit or "player")
 
@@ -617,6 +623,8 @@ end
 
 -- End a roll
 function Self:End(winner, cleanup, force)
+    Addon:Debug("Roll.End", self.id, winner, cleanup, force)
+
     -- Hide UI elements etc.
     if cleanup then
         if self.timers.bid then

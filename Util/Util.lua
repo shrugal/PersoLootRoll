@@ -452,20 +452,16 @@ end
 
 -- Turn a table into a continuously indexed list (in-place)
 function Self.TblList(t)
-    local k, n, i, v = 1, Self.TblCount(t), next(t, nil)
-    while i do
-        local nextI, nextV = next(t, i)
-        if type(i) ~= "number" or i >= k then
-            if i ~= k then
-                for j=k, n do
-                    if t[j] == nil then
-                        k, t[j], t[i] = j, v break
-                    end
+    local n = Self.TblCount(t)
+    for k=1, n do
+        if not t[k] then
+            for i,v in pairs(t) do
+                if type(i) ~= "number" or i > n then
+                    t[k], t[i] = t[i], nil
+                    break
                 end
             end
-            k = k + 1
         end
-        i, v = nextI, nextV
     end
     return t
 end
