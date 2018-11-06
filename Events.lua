@@ -27,7 +27,7 @@ Self.lastLocked = {}
 -- Remember the bag of the last looted item
 Self.lastLootedBag = nil
 
--- Register
+-- (Un)Register
 
 function Self.RegisterEvents()
     -- Roster
@@ -53,33 +53,44 @@ function Self.RegisterEvents()
     Self:RegisterEvent("BAG_UPDATE_DELAYED")
 end
 
+function Self.UnregisterEvents()
+    -- Roster
+    Self:UnregisterEvent("GROUP_JOINED")
+    Self:UnregisterEvent("GROUP_LEFT")
+    Self:UnregisterEvent("RAID_ROSTER_UPDATE")
+    -- Chat
+    Self:UnregisterEvent("CHAT_MSG_SYSTEM")
+    Self:UnregisterEvent("CHAT_MSG_LOOT")
+    Self:UnregisterEvent("CHAT_MSG_PARTY")
+    Self:UnregisterEvent("CHAT_MSG_PARTY_LEADER")
+    Self:UnregisterEvent("CHAT_MSG_RAID")
+    Self:UnregisterEvent("CHAT_MSG_RAID_LEADER")
+    Self:UnregisterEvent("CHAT_MSG_RAID_WARNING")
+    Self:UnregisterEvent("CHAT_MSG_INSTANCE_CHAT")
+    Self:UnregisterEvent("CHAT_MSG_INSTANCE_CHAT_LEADER")
+    ChatFrame_RemoveMessageEventFilter("CHAT_MSG_WHISPER", Self.CHAT_MSG_WHISPER_FILTER)
+    ChatFrame_RemoveMessageEventFilter("CHAT_MSG_WHISPER_INFORM", Self.CHAT_MSG_WHISPER_INFORM_FILTER)
+    -- Item
+    Self:UnregisterEvent("ITEM_PUSH")
+    Self:UnregisterEvent("ITEM_LOCKED")
+    Self:UnregisterEvent("ITEM_UNLOCKED")
+    Self:UnregisterEvent("BAG_UPDATE_DELAYED")
+end
+
 -------------------------------------------------------
 --                      Roster                       --
 -------------------------------------------------------
 
 function Self.GROUP_JOINED()
-    Self:OnTrackingChanged(true)
+    Self:CheckState(true)
 end
 
 function Self.GROUP_LEFT()
-    -- Stop tracking process
-    Self:OnTrackingChanged(true)
-
-    -- Clear versions and disabled
-    wipe(Self.versions)
-    wipe(Self.disabled)
-    wipe(Self.compAddonUsers)
-
-    -- Clear lastXYZ stuff
-    Self.lastPostedRoll = nil
-    Self.lastVersionCheck = nil
-    Self.lastSuppressed = nil
-    wipe(Self.lastChatted)
-    wipe(Self.lastChattedRoll)
+    Self:CheckState(true)
 end
 
 function Self.RAID_ROSTER_UPDATE()
-    Self:OnTrackingChanged()
+    Self:CheckState(true)
 end
 
 -------------------------------------------------------

@@ -237,8 +237,8 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val)
                     Addon.db.profile.enabled = val
-                    Addon:OnTrackingChanged(true)
                     Addon:Info(L[val and "ENABLED" or "DISABLED"])
+                    Addon[val and "Enable" or "Disable"](Addon)
                 end,
                 get = function (_) return Addon.db.profile.enabled end,
                 width = Self.WIDTH_HALF
@@ -252,7 +252,7 @@ function Self.RegisterGeneral()
                 values = Self.groupValuesList,
                 set = function (_, key, val)
                     Addon.db.profile.activeGroups[Self.groupKeysList[key]] = val
-                    Addon:OnTrackingChanged()
+                    Addon:CheckState(true)
                 end,
                 get = function (_, key) return Addon.db.profile.activeGroups[Self.groupKeysList[key]] end
             },
@@ -263,7 +263,7 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val)
                     Addon.db.profile.onlyMasterloot = val
-                    Addon:OnTrackingChanged()
+                    Addon:CheckState(true)
                 end,
                 get = function () return Addon.db.profile.onlyMasterloot end,
                 width = Self.WIDTH_HALF

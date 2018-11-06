@@ -22,7 +22,6 @@ Self.EVENT_CLEAR = "CLEAR"
 -- @bool   silent Whether other players are informed about it
 Self.EVENT_RULES = "RULES"
 
-
 --- Catchall event that fires for all of the above
 -- @string event The original event
 -- @param  ...   The original event parameters
@@ -62,7 +61,7 @@ function Self.SetMasterlooter(unit, rules, silent)
     PersoLootRollML = unit
     Self.masterlooter = unit
 
-    Addon:OnTrackingChanged()
+    Addon:CheckState(true)
 
     -- Let others know
     if unit then
@@ -232,9 +231,11 @@ end
 
 -- Refresh the session rules
 function Self.RefreshRules()
-    if Self.IsMasterlooter() then Self.SetRules() end
+    if Self.IsMasterlooter() then
+        Self.SetRules()
+    end
 end
-Self.RefreshRules = Util.FnDebounce(Self.RefreshRules, 1, true)
+Self.RefreshRules = Util.FnDebounce(Self.RefreshRules, 0.1, true)
 
 -- Check if the unit is on the loot council
 function Self.IsOnCouncil(unit, refresh, groupRank)

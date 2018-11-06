@@ -83,6 +83,8 @@ function Self.GetGuildRanks()
 end
 
 function Self.GetClubRanks(clubId)
+    if not clubId then return end
+
     local info = C_Club.GetClubInfo(clubId)
     if not info then
         return
@@ -1246,7 +1248,7 @@ function Self.FnDebounce(fn, n, leading)
             end, n, ...)
         else
             called = true
-            Addon:ExtendTimerTo(timer, n)
+            timer = Addon:ExtendTimerTo(timer, n, ...)
         end
     end
 end

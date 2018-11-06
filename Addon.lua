@@ -26,24 +26,40 @@ Self.CHANNELS = Util.TblFlip({Self.CHANNEL_ALPHA, Self.CHANNEL_BETA, Self.CHANNE
 Self.versions = {}
 Self.versionNoticeShown = false
 Self.disabled = {}
-
--- Users of compatible addons
 Self.compAddonUsers = {}
+
+-- State
+Self.STATE_DISABLED = 0
+Self.STATE_ENABLED = 1
+Self.STATE_ACTIVE = 2
+Self.STATE_TRACKING = 3
+Self.STATES = {"ENABLED", "ACTIVE", "TRACKING"}
+
+Self.state = nil
 
 -- Events
 Self.events = CB:New(Self, "On", "Off", "Unsubscribe")
 
---- Fired when loot and roll tracking starts
-Self.EVENT_TRACKING_START = "TRACKING_START"
+--- Fired when the addon state changes
+-- @int toState The new state
+-- @int fromState The previous state
+Self.EVENT_STATE_CHANGE = "STATE_CHANGE"
 
---- Fired when loot and roll tracking stops
--- @bool clear Whether to clear data
-Self.EVENT_TRACKING_STOP = "TRACKING_STOP"
+--- Fired when the addon is enabled or disabled
+-- @bool enabled Whether the addon is enabled
+Self.EVENT_ENABLED_CHANGE = "STATE_ENABLED_CHANGE"
+
+--- Fired when the addon is (de)activated
+-- @bool active Whether the addon is active
+Self.EVENT_ACTIVE_CHANGE = "STATE_ACTIVE_CHANGE"
+
+--- Fired when the addon starts/stops loot tracking
+-- @bool tracking Whether the addon is tracking
+Self.EVENT_TRACKING_CHANGE = "STATE_TRACKING_CHANGE"
 
 -- Other
 Self.rolls = Util.TblCounter()
 Self.timers = {}
-Self.tracking = nil
 
 -------------------------------------------------------
 --                    Addon stuff                    --
@@ -53,26 +69,24 @@ Self.tracking = nil
 function Self:OnInitialize()
     self:ToggleDebug(PersoLootRollDebug or self.DEBUG)
     
+    -- Load DB
     self.db = LibStub("AceDB-3.0"):New(Name .. "DB", Self.Options.DEFAULTS, true)
-    
-    -- Migrate options
+
+    -- Set enabled state
+    self:SetEnabledState(self.db.profile.enabled)
+
+    -- Migrate and register options
     Options.Migrate()
+    Options.Register()
+    Options.RegisterMinimapIcon()
 
     -- Register chat commands
     self:RegisterChatCommand(Name, "HandleChatCommand")
     self:RegisterChatCommand("plr", "HandleChatCommand")
-
-    -- Minimap icon
-    Options.RegisterMinimapIcon()
 end
 
 -- Called when the addon is enabled
 function Self:OnEnable()
-    -- Register options table
-    if not Options.registered then
-        Options.Register()
-    end
-
     -- Enable hooks and events
     self:EnableHooks()
     self:RegisterEvents()
@@ -80,15 +94,25 @@ function Self:OnEnable()
     -- Periodically clear old rolls
     self.timers.clearRolls = self:ScheduleRepeatingTimer(Roll.Clear, Roll.CLEAR)
 
-    -- Start inspecting
-    Inspect.Start()
-    if not Inspect.timer then
-        -- IsInGroup doesn't work right after logging in, so check again after waiting a bit.
-        self.timers.inspectStart = self:ScheduleTimer(Inspect.Start, 10)
+    -- Update state
+    self:CheckState(true)
+
+    -- IsInGroup doesn't work correctly right after logging in, so check again a few seconds later
+    if not self:IsActive() then
+        self:ScheduleTimer(Self.CheckState, 10, self, true)
     end
+end
+
+function Self:OnDisable()
+    -- Disable hooks and events
+    self:UnregisterEvents()
+    self:DisableHooks()
+    
+    -- Chancel timers
+    self:CancelTimer(self.timers.clearRolls)
 
     -- Update state
-    self:OnTrackingChanged(true)
+    self:CheckState(true)
 end
 
 function Self:ToggleDebug(debug)
@@ -247,14 +271,18 @@ end
 --                       State                       --
 -------------------------------------------------------
 
--- Check if we should currently track loot etc.
-function Self:IsTracking(refresh)
-    if self.tracking == nil or refresh then
+-- Get (and optionally refresh) the current addon state
+function Self:CheckState(refresh)
+    if self.state == nil or refresh then
+        local state = self.state or Self.STATE_DISABLED
         local group, p = self.db.profile.activeGroups, Util.Push
 
-        self.tracking = self.db.profile.enabled
-            and (not self.db.profile.onlyMasterloot or Session.GetMasterlooter())
-            and IsInGroup()
+        if not self.db.profile.enabled then
+            self.state = Self.STATE_DISABLED
+        elseif not IsInGroup() then
+            self.state = Self.STATE_ENABLED
+        elseif not (
+            (not self.db.profile.onlyMasterloot or Session.GetMasterlooter())
             and Util.In(GetLootMethod(), "freeforall", "roundrobin", "personalloot", "group")
             and (
                 IsInRaid(LE_PARTY_CATEGORY_INSTANCE)                 and p(group.lfr)
@@ -264,11 +292,74 @@ function Self:IsTracking(refresh)
                 or IsInRaid()                                        and p(group.raid)
                 or p(group.party)
             ).Pop()
-            or false
+        ) then 
+            self.state = Self.STATE_ACTIVE
+        else
+            self.state = Self.STATE_TRACKING
+        end
+
+        if self.state ~= state then
+            Self.events:Fire(Self.STATE_CHANGE, to, from)
+
+            local cmp = Util.Compare(self.state, state)
+
+            for i=max(state, state+cmp), max(self.state, self.state-cmp), cmp do
+                local s = Self.STATES[i]
+                local fn = Self["On" .. Util.StrUcFirst(s:lower()) .. "Changed"]
+
+                if fn then fn(Self, self.state >= i) end
+                Self.events:Fire("STATE_" .. s .. "_CHANGE", self.state >= i)
+            end
+        end
     end
 
-    return self.tracking
+    return self.state
 end
+
+-- Check if the addon is currently active
+function Self:IsActive(refresh)
+    return Self:CheckState(refresh) >= Self.STATE_ACTIVE
+end
+
+-- Check if the addon is currently tracking loot etc.
+function Self:IsTracking(refresh)
+    return Self:CheckState(refresh) >= Self.STATE_TRACKING
+end
+
+-- Active state changed
+function Self:OnActiveChanged(active)
+    if active then
+        -- Schedule version check
+        if not Self.timers.versionCheck then
+            Self.timers.versionCheck = Self:ScheduleTimer(Comm.SendData, Self.VERSION_CHECK_DELAY, Comm.EVENT_CHECK)
+        end
+    else
+        -- Clear roll data
+        Util.TblIter(self.rolls, Roll.Clear)
+
+        -- Clear versions and disabled
+        wipe(Self.versions)
+        wipe(Self.disabled)
+        wipe(Self.compAddonUsers)
+    
+        -- Clear lastXYZ stuff
+        Self.lastPostedRoll = nil
+        Self.lastVersionCheck = nil
+        Self.lastSuppressed = nil
+        wipe(Self.lastChatted)
+        wipe(Self.lastChattedRoll)
+    end
+end
+
+-- Tracking state changed
+function Self:OnTrackingChanged(tracking)
+    Comm.Send(Comm["EVENT_" .. (tracking and "ENABLE" or "DISABLE")])
+
+    if tracking then
+        Comm.Send(Comm.EVENT_SYNC)
+    end
+end
+Self.OnTrackingChanged = Util.FnDebounce(Self.OnTrackingChanged, 0.1)
 
 -- Check if the given unit is tracking
 function Self:UnitIsTracking(unit, inclCompAddons)
@@ -280,36 +371,9 @@ function Self:UnitIsTracking(unit, inclCompAddons)
     end
 end
 
--- Tracking state potentially changed
-function Self:OnTrackingChanged(clear)
-    local wasTracking, isTracking = self.tracking, self:IsTracking(true)
-
-    -- Start/Stop tracking process
-    if wasTracking ~= isTracking then
-        Comm.Send(Comm["EVENT_" .. (isTracking and "ENABLE" or "DISABLE")])
-
-        if isTracking then
-            -- Schedule version check
-            Self.timers.versionCheck = Self:ScheduleTimer(function ()
-                Comm.SendData(Comm.EVENT_CHECK)
-            end, Self.VERSION_CHECK_DELAY)
-
-            -- Send sync request
-            Comm.Send(Comm.EVENT_SYNC)
-
-            -- Fire event
-            Self.events:Fire(Self.EVENT_TRACKING_START)
-        else
-            -- Clear data
-            if clear then
-                Util.TblIter(self.rolls, Roll.Clear)
-            end
-
-            -- Fire event
-            Self.events:Fire(Self.EVENT_TRACKING_STOP, clear)
-        end
-    end
-end
+-------------------------------------------------------
+--                    Versioning                     --
+-------------------------------------------------------
 
 -- Set a unit's version string
 function Self:SetVersion(unit, version)
@@ -427,19 +491,25 @@ end
 --                       Timer                       --
 -------------------------------------------------------
 
-function Self:ExtendTimerTo(timer, to)
-    if not timer.canceled and timer.ends - GetTime() < to then
+function Self:ExtendTimerTo(timer, to, ...)
+    if not timer.canceled and (select("#", ...) > 0 or timer.ends - GetTime() < to) then
         Self:CancelTimer(timer)
         local fn = timer.looping and Self.ScheduleRepeatingTimer or Self.ScheduleTimer
-        timer = fn(Self, timer.func, to, unpack(timer, 1, timer.argsCount))
+
+        if select("#", ...) > 0 then
+            timer = fn(Self, timer.func, to, ...)
+        else
+            timer = fn(Self, timer.func, to, unpack(timer, 1, timer.argsCount))
+        end
+
         return timer, true
     else
         return timer, false
     end
 end
 
-function Self:ExtendTimerBy(timer, by)
-    return self:ExtendTimerTo(timer, (timer.ends - GetTime()) + by)
+function Self:ExtendTimerBy(timer, by, ...)
+    return self:ExtendTimerTo(timer, (timer.ends - GetTime()) + by, ...)
 end
 
 function Self:TimerIsRunning(timer)

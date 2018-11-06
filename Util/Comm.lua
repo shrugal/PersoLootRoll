@@ -158,7 +158,9 @@ function Self.Send(event, msg, target, prio, callbackFn, callbackArg)
     msg = (not msg or msg == "") and " " or msg
 
     -- Send the message
-    Addon:SendCommMessage(event, msg, channel, player, prio, callbackFn, callbackArg)
+    if Addon:IsEnabled() then
+        Addon:SendCommMessage(event, msg, channel, player, prio, callbackFn, callbackArg)
+    end
 end
 
 -- Send structured addon data
@@ -171,7 +173,7 @@ function Self.Listen(event, method, fromSelf, fromAll)
     Addon:RegisterComm(Self.GetPrefix(event), function (event, msg, channel, sender)
         msg = msg ~= "" and msg ~= " " and msg or nil
         local unit = Unit(sender)
-        if fromAll or Unit.InGroup(unit, not fromSelf) then
+        if Addon:IsEnabled() and fromAll or Unit.InGroup(unit, not fromSelf) then
             method(event, msg, channel, sender, unit)
         end
     end)

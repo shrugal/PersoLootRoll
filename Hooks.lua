@@ -9,6 +9,12 @@ function Self.EnableHooks()
     Self.EnableUnitMenusHook()
 end
 
+function Self.DisableHooks()
+    Self.DisableGroupLootRoll()
+    Self.DisableChatLinks()
+    Self.DisableUnitMenus()
+end
+
 -------------------------------------------------------
 --                   GroupLootRoll                   --
 -------------------------------------------------------
@@ -230,6 +236,20 @@ function Self.EnableGroupLootRollHook()
     end
 end
 
+function Self.DisableGroupLootRoll()
+    Addon:Unhook("GetLootRollTimeLeft")
+    Addon:Unhook("GetLootRollItemInfo")
+    Addon:Unhook("GetLootRollItemLink")
+    Addon:Unhook("RollOnLoot")
+    for i=1, NUM_GROUP_LOOT_FRAMES do
+        Addon:Unhook(_G["GroupLootFrame" .. i], "OnShow")
+        Addon:Unhook(_G["GroupLootFrame" .. i], "OnHide")
+        Addon:Unhook(_G["GroupLootFrame" .. i], "OnClick")
+    end
+    Addon:Unhook("GroupLootContainer_RemoveFrame")
+    Addon:Unhook(GameTooltip, "SetLootRollItem")
+end
+
 -------------------------------------------------------
 --                    Chat links                     --
 -------------------------------------------------------
@@ -285,6 +305,10 @@ function Self.EnableChatLinksHook()
     end
 end
 
+function Self.DisableChatLinks()
+    Addon:Unhook("SetItemRef")
+end
+
 -------------------------------------------------------
 --                    Unit menus                     --
 -------------------------------------------------------
@@ -335,4 +359,8 @@ function Self.EnableUnitMenusHook()
             end
         end)
     end
+end
+
+function Self.DisableUnitMenus()
+    Addon:Unhook("UnitPopup_ShowMenu")
 end

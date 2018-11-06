@@ -1,5 +1,5 @@
 local Name, Addon = ...
-local Comm, Roll, Unit, Util = Addon.Comm, Addon.Roll, Addon.Unit, Addon.Util
+local Comm, Roll, Session, Unit, Util = Addon.Comm, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
 local Self = Addon.RCLC
 
 Self.NAME = "RCLootCouncil"

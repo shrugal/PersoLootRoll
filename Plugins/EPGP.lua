@@ -165,7 +165,7 @@ function Self.RegisterOptions()
                     order = it(),
                     set = function (_, val)
                         Self.db.profile.enabled = val
-                        Self.CheckToggleEnabled()
+                        Self.CheckState()
                     end,
                     get = function (_) return Self.db.profile.enabled end,
                     width = Options.WIDTH_THIRD_SCROLL
@@ -177,7 +177,7 @@ function Self.RegisterOptions()
                     order = it(),
                     set = function (_, val)
                         Self.db.profile.onlyGuildRaid = val
-                        Self.CheckToggleEnabled()
+                        Self.CheckState()
                     end,
                     get = function (_, key) return Self.db.profile.onlyGuildRaid end,
                     width = Options.WIDTH_THIRD_SCROLL
@@ -246,7 +246,8 @@ function Self.ShouldBeEnabled()
         and true or false
 end
 
-function Self.CheckToggleEnabled()
+-- Check and toggle enabled state if necessary
+function Self.CheckState()
     if Self.enabledState ~= Self.ShouldBeEnabled() then
         Self[Self.enabledState and "Disable" or "Enable"](Self)
     end
@@ -257,10 +258,15 @@ end
 -------------------------------------------------------
 
 function Self:OnInitialize()
+    -- DB and options
     Self.db = {profile = Addon.db.profile.plugins.EPGP, defaults = Addon.db.defaults.profile.plugins.EPGP}
-
-    Self:SetEnabledState(Self.ShouldBeEnabled())
     Self.RegisterOptions()
+
+    -- State
+    Self:SetEnabledState(Self.ShouldBeEnabled())
+    Self:RegisterEvent("GROUP_JOINED", Self.CheckState)
+    Self:RegisterEvent("GROUP_LEFT", Self.CheckState)
+    Self:RegisterEvent("RAID_ROSTER_UPDATE", Self.CheckState)
 end
 
 function Self:OnEnable()
@@ -274,9 +280,6 @@ function Self:OnEnable()
     Roll.AddCustomAwardMethod("epgp", Self.DetermineWinner, Self.db.profile.awardBefore)
 
     -- Register events
-    Self:RegisterEvent("GROUP_JOINED", Self.CheckToggleEnabled)
-    Self:RegisterEvent("GROUP_LEFT", Self.CheckToggleEnabled)
-    Self:RegisterEvent("RAID_ROSTER_UPDATE", Self.CheckToggleEnabled)
     Roll.On(Self, Roll.EVENT_AWARD, "ROLL_AWARD")
     Roll.On(Self, Roll.EVENT_RESTART, "ROLL_RESTART")
     Roll.On(Self, Roll.EVENT_CLEAR, "ROLL_CLEAR")
@@ -289,18 +292,8 @@ function Self:OnDisable()
     Roll.RemoveCustomAwardMethod("epgp")
 
     -- Unregister events
-    Self:UnregisterEvent("GROUP_JOINED")
-    Self:UnregisterEvent("GROUP_LEFT")
-    Self:UnregisterEvent("RAID_ROSTER_UPDATE")
     Roll.Unsubscribe(Self)
     EPGP.UnregisterCallback(Self, "StandingsChanged")
-end
-
--- GROUP_JOINED, GROUP_LEFT, RAID_ROSTER_UPDATE
-function Self:GROUP_CHANGED()
-    if Self.enabledState ~= Self.shouldBeEnabled() then
-        Self:SetEnabledState(not Self.enabledState)
-    end
 end
 
 -- Roll.EVENT_AWARD

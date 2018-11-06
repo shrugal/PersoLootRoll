@@ -20,7 +20,7 @@ Addon.Unit = {}
 Addon.Util = {}
 
 -- Modules
-Addon.Inspect = Addon:NewModule("Inspect", nil, "AceEvent-3.0")
+Addon.Inspect = Addon:NewModule("Inspect", nil, "AceEvent-3.0", "AceTimer-3.0")
 Addon.Session = Addon:NewModule("Session", nil, "AceEvent-3.0")
 Addon.Trade = Addon:NewModule("Trade", nil, "AceEvent-3.0")
 
