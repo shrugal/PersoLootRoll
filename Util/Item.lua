@@ -324,7 +324,7 @@ function Self:GetBasicInfo()
             self.isRelic = self.subType == "Artifact Relic"
             self.isEquippable = IsEquippableItem(self.link) or self.isRelic
             self.isSoulbound = self.bindType == LE_ITEM_BIND_ON_ACQUIRE or self.isEquipped and self.bindType == LE_ITEM_BIND_ON_EQUIP
-            self.isTradable = not self.isSoulbound or nil
+            self.isTradable = Util.Default(self.isTradable, not self.isSoulbound or nil)
             self.infoLevel = Self.INFO_BASIC
         end
     end
