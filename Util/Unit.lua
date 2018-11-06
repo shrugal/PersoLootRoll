@@ -213,9 +213,14 @@ end
 --                       Other                       --
 -------------------------------------------------------
 
+-- Check if units are equal
+function Self.IsUnit(unit, otherUnit)
+    return unit and otherUnit and UnitIsUnit(unit, otherUnit)
+end
+
 -- Check if the unit is the current player
 function Self.IsSelf(unit)
-    return unit and UnitIsUnit(unit, "player")
+    return Self.IsUnit(unit, "player")
 end
 
 -- Get the unit's class id

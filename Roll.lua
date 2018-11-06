@@ -1045,8 +1045,12 @@ end
 
 -- Check if the given unit is eligible
 function Self:UnitIsEligible(unit, checkIlvl)
-    local val = self.item:GetEligible(unit or "player")
-    if checkIlvl then return val else return val ~= nil end
+    if not checkIlvl and not self:HasMasterlooter() and Unit.IsUnit(unit, self.owner) then
+        return true
+    else
+        local val = self.item:GetEligible(unit or "player")
+        if checkIlvl then return val else return val ~= nil end
+    end
 end
 
 -- Check if the roll can still be won
