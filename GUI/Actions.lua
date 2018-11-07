@@ -24,7 +24,7 @@ function Self.Show(move)
             .SetClampedToScreen(true)
             .SetFrameStrata("MEDIUM")
             .SetUserData("table", {
-                columns = {20, {25, 300}, {25, 100}, {25, 100}, 0},
+                columns = {20, {75, 300}, {25, 100}, {25, 100}, 0},
                 space = 10
             })
             .SetTitle("PersoLootRoll - " .. L["ACTIONS"])
