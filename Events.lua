@@ -249,7 +249,7 @@ function Self.CHAT_MSG_GROUP(_, _, msg, sender)
             -- Remember the last roll posted to chat
             Self.lastPostedRoll = roll
 
-            if not roll.ownerId then
+            if not roll:GetOwnerAddon() and roll:CanBeWon(true) then
                 -- Roll for the item in chat
                 if not roll.posted and Self.db.profile.messages.group.roll and roll.bid and Util.In(floor(roll.bid), Roll.BID_NEED, Roll.BID_GREED) then
                     RandomRoll("1", floor(roll.bid) == Roll.BID_GREED and "50" or "100")

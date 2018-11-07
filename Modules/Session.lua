@@ -7,6 +7,10 @@ local Self = Addon.Session
 -- Events
 Self.events = CB:New(Self, "On", "Off", "Unsubscribe")
 
+--- Fired when requesting a ML
+-- @string target The target, group if omitted
+Self.EVENT_REQUEST = "REQUEST"
+
 --- Fired when a session is started
 -- @string unit   The masterlooter
 -- @table  rules  The session rules
@@ -22,11 +26,10 @@ Self.EVENT_CLEAR = "CLEAR"
 -- @bool   silent Whether other players are informed about it
 Self.EVENT_RULES = "RULES"
 
---- Catchall event that fires for all of the above
+--- Catchall event that fires for all events in Self.EVENTS
 -- @string event The original event
 -- @param  ...   The original event parameters
 Self.EVENT_CHANGE = "CHANGE"
-
 Self.EVENTS = {Self.EVENT_START, Self.EVENT_CLEAR, Self.EVENT_RULES}
 
 local changeFn = function (...) Self.events:Fire(Self.EVENT_CHANGE, ...) end
@@ -179,6 +182,13 @@ function Self.UnitAccept(unit)
     return false
 end
 
+function Self.ShowOfferDialog(unit, onAccept)
+    local dialog = StaticPopupDialogs[GUI.DIALOG_MASTERLOOT_ASK]
+    dialog.text = L["DIALOG_MASTERLOOT_ASK"]:format(unit)
+    dialog.OnAccept = onAccept
+    StaticPopup_Show(GUI.DIALOG_MASTERLOOT_ASK)
+end
+
 -------------------------------------------------------
 --                       Session                     --
 -------------------------------------------------------
@@ -244,7 +254,9 @@ function Self.IsOnCouncil(unit, refresh, groupRank)
     local c = Addon.db.profile.masterloot
     local r = GetRealmName()
 
-    if not refresh then
+    if Unit.IsUnit(unit, Self.GetMasterlooter()) then
+        return true
+    elseif not refresh then
         return Self.rules.council and Self.rules.council[fullName] or false
     else
         -- Check if unit is part of our masterlooting group
@@ -286,6 +298,7 @@ end
 -- Ask someone to be your masterlooter
 function Self.SendRequest(target)
     Comm.Send(Comm.EVENT_MASTERLOOT_ASK, nil, target)
+    Self.events:Fire(Self.EVENT_REQUEST, target)
 end
 
 -- Send masterlooter offer to unit
@@ -328,12 +341,9 @@ Comm.ListenData(Comm.EVENT_MASTERLOOT_OFFER, function (event, data, channel, sen
         if Self.UnitAccept(unit) then
             Self.SetMasterlooter(unit, data.session)
         elseif not data.silent then
-            local dialog = StaticPopupDialogs[GUI.DIALOG_MASTERLOOT_ASK]
-            dialog.text = L["DIALOG_MASTERLOOT_ASK"]:format(unit)
-            dialog.OnAccept = function ()
-                Self.SetMasterlooter(unit, data.session)
-            end
-            StaticPopup_Show(GUI.DIALOG_MASTERLOOT_ASK)
+            Self.ShowOfferDialog(unit, function ()
+        Self.SetMasterlooter(unit, data.session)
+    end)
         end
     end
 end)

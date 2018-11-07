@@ -41,14 +41,14 @@ function Self.EnableGroupLootRollHook()
                 local roll = Roll.Get(id)
                 if roll then
                     local item = roll.item
-                    local disReason = not roll:OwnerUsesAddon() and "PLR_NO_ADDON"
+                    local disReason = not roll:GetOwnerAddon() and "PLR_NO_ADDON"
                         or not roll.disenchant and "PLR_NO_DISENCHANT"
                         or not Unit.IsEnchanter() and "PLR_NOT_ENCHANTER"
                         or nil
 
                     return item.texture, item.name, 1, item.quality, item.bindType == LE_ITEM_BIND_ON_ACQUIRE,
                         true,                   -- Can need
-                        roll:OwnerUsesAddon(),  -- Can greed
+                        roll:GetOwnerAddon(),  -- Can greed
                         not disReason,          -- Can disenchant
                         5,                      -- Reason need
                         "PLR_NO_ADDON",         -- Reason greed

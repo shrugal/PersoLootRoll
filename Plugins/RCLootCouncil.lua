@@ -1,5 +1,5 @@
 local Name, Addon = ...
-local Comm, Roll, Session, Unit, Util = Addon.Comm, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
+local Comm, GUI, Item, Roll, Session, Unit, Util = Addon.Comm, Addon.GUI, Addon.Item, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
 local Self = Addon.RCLC
 
 Self.NAME = "RCLootCouncil"
@@ -14,6 +14,7 @@ Self.CMD_RULES_REQ = "MLdb_request"
 Self.CMD_RULES = "MLdb"
 Self.CMD_COUNCIL_REQ = "council_request"
 Self.CMD_COUNCIL = "council"
+Self.CMD_CANDIDATES = "candidates"
 Self.CMD_SYNC_REQ = "reconnect"
 Self.CMD_SYNC = "reconnectData"
 
@@ -41,11 +42,11 @@ Self.RESP_REMOVED = "REMOVED"
 Self.RESP_WAIT = "WAIT"
 
 Self.mldb = nil
-Self.session = {}
+Self.council = nil
+Self.offerShown = nil
 
-function Self.IsUsedByUnit(unit)
-    return Util.StrStartsWith(Addon.compAddonUsers[Unit.Name(unit)], Self.NAME)
-end
+Self.session = {}
+Self.timers = {}
 
 function Self.FindOrAddRoll(link, itemOwner, owner)
     return Roll.Find(nil, owner, link, nil, itemOwner) or Roll.Add(Item.FromLink(link, itemOwner or owner), owner or itemOwner)
@@ -55,44 +56,77 @@ end
 --                    Translation                    --
 -------------------------------------------------------
 
+-- Set a new ML
+function Self.SetMasterlooter(unit)
+    Session.SetMasterlooter(unit)
+
+    Self.SetRules()
+    Self.SetCouncil()
+end
+
 --- Translate a RCLC mldb to PLR session rules
 -- From RCLootCouncil:
 -- selfVote        = db.selfVote or nil
 -- multiVote       = db.multiVote or nil
--- anonymousVoting = db.anonymousVoting or nil
 -- allowNotes      = db.allowNotes or nil
--- numButtons      = db.buttons.default.numButtons
+-- anonymousVoting = db.anonymousVoting or nil
+-- numButtons      = db.numButtons
 -- hideVotes       = db.hideVotes or nil
 -- observe         = db.observe or nil
 -- buttons         = changedButtons
 -- responses       = changedResponses
 -- timeout         = db.timeout
 -- rejectTrade     = db.rejectTrade or nil
-function Self.MldbToRules(mldb)
-    Self.mldb = mldb
+function Self.SetRules(mldb, council)
+    Self.mldb = mldb or Self.mldb
 
-    local needAnswers, greedAnswers = Util.Tbl(), Util.Tbl()
-    for i=1,mldb.buttons.maxButtons do
-        local answer = Util.TblGet(mldb.buttons.default, i, "text")
-        if answer then
-            tinsert((answer == GREED or greedAnswers[1]) and greedAnswers or needAnswers, answer)
+    if Self.mldb then
+        local needAnswers, greedAnswers = Util.Tbl(), Util.Tbl()
+        for i=1,Self.mldb.numButtons do
+            local answer = Util.TblGet(Self.mldb.buttons.default, i, "text")
+            if answer then
+                tinsert((answer == GREED or greedAnswers[1]) and greedAnswers or needAnswers, answer)
+            end
         end
-    end
 
-    Session.SetRules({
-        timeoutBase = mldb.timeout or Roll.TIMEOUT,
-        timeoutPerItem = 0,
-        bidPublic = mldb.observe or false,
-        votePublic = not mldb.anonymousVoting,
-        answers1 = needAnswers,
-        answers2 = greedAnswers,
-        council = Session.rules.council or {}
-    })
+        Session.SetRules({
+            timeoutBase = Self.mldb.timeout or 0,
+            timeoutPerItem = 0,
+            bidPublic = true, -- Self.mldb.observe or false,
+            votePublic = true, -- not Self.mldb.anonymousVoting,
+            answers1 = needAnswers,
+            answers2 = greedAnswers,
+            council = Session.rules.council or Util.Tbl()
+        })
+    else
+        Self.Send(Self.CMD_RULES_REQ)
+    end
+end
+
+-- Set the council members
+function Self.SetCouncil(council)
+    Self.council = council or Self.council
+
+    local ml = Session.GetMasterlooter()
+
+    if not Self.council then
+        Self.Send(Self.CMD_COUNCIL_REQ)
+    elseif ml and Session.rules.council then
+        wipe(Session.rules.council)
+
+        for _,v in pairs(Self.council) do
+            if not Unit.IsUnit(Unit(v), ml) then
+                Session.rules.council[v] = true
+            end
+        end
+
+        Session.SetRules(Session.rules)
+    end
 end
 
 -- Translate a RCLC response to a PLR bid
 function Self.ResponseToBid(resp)
-    local numNeedAnswers = #Session.rules.needAnswers
+    local numNeedAnswers = #Session.rules.answers1
 
     if resp == Self.RESP_PASS then
         return Roll.BID_PASS
@@ -110,7 +144,7 @@ function Self.BidToResponse(bid)
     if bid == Roll.BID_PASS then
         return Self.RESP_PASS
     else
-        return 1 + (floor(bid) - 1) * (#needAnswers + 1) + (bid - floor(bid)) * 10
+        return 1 + (floor(bid) - 1) * (#Session.rules.answers1 + 1) + (bid - floor(bid)) * 10
     end
 end
 
@@ -121,10 +155,11 @@ end
 -- Send a RCLC message
 function Self.Send(cmd, target, ...)
     if not Self:IsEnabled() then return end
+    print("RCLC:OUT", cmd, target, ...)
 
-    local data = Util.Tbl(cmd, Util.Tbl(...))
-    Comm.SendData(Self.PREFIX, data, target)
-    Util.TblRelease(1, data)
+    local data = Util.Tbl(...)
+    Comm.Send(Self.PREFIX, Self:Serialize(cmd, data), target)
+    Util.TblRelease(data)
 end
 
 -- Process incoming RCLC message
@@ -134,19 +169,30 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
     local success, cmd, data = Self:Deserialize(msg)
     if not success then return end
 
-    local ml = Session.GetMasterlooter() or Unit.GroupLeader()
-    local fromML = ml and UnitIsUnit(ml, unit)
+    local ml = Session.GetMasterlooter()
+    local fromGL = Unit.IsUnit(unit, Unit.GroupLeader())
+    local fromML = Unit.IsUnit(unit, ml)
     local isML = Unit.IsSelf(ml)
+    
+    print("RCLC:IN", cmd, data, channel, unit, fromGL, fromML)
 
     -- VERSION_CHECK
     if cmd == Self.CMD_VERSION_CHECK then
+        if channel ~= Self.TYPE_WHISPER and Self.timers.version then
+            Self:CancelTimer(Self.timers.version)
+            Self.timers.version = nil
+        end
+
         Addon:SetCompAddonUser(unit, Self.NAME, data[1])
+        Session.SetMasterlooting(unit, Unit.GroupLeader())
+
         local class, rank = select(2, UnitClass("player")), select(2, GetGuildInfo("player"))
         Self.Send(Self.CMD_VERSION, channel == Comm.TYPE_WHISPER and unit or channel, Unit.FullName("player"), class, rank, Self.VERSION)
     
     -- VERSION
     elseif cmd == Self.CMD_VERSION then
         Addon:SetCompAddonUser(unit, Self.NAME, data[4])
+        Session.SetMasterlooting(unit, Unit.GroupLeader())
     
     -- PLAYER_INFO_REQ
     elseif cmd == Self.CMD_PLAYER_INFO_REQ then
@@ -171,7 +217,7 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
         roll:Bid(Roll.BID_NEED, unit, nil, true):End(unit, true)
 
     -- BID
-    elseif cmd == Self.CMD_ROLL_BID or Self.CMD_ROLL_BID_CHANGE then
+    elseif Util.In(cmd, Self.CMD_ROLL_BID, Self.CMD_ROLL_BID_CHANGE) then
         local sId, fromUnit, resp = unpack(data)
         local roll, bid = Self.session[sId], Self.ResponseToBid(type(resp) == "table" and resp.response or resp)
         if roll and bid and (fromML or unit == Unit(fromUnit)) then
@@ -190,26 +236,19 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
     elseif cmd == Self.CMD_ROLL_RANDOM then
         -- TODO
         
+    -- ML messages
     elseif fromML then
         -- RULES
         if cmd == Self.CMD_RULES then
-            Session.SetMasterlooter(unit)
-            Self.MldbToRules(data)
+            Self.SetRules(data[1])
 
         -- COUNCIL
         elseif cmd == Self.CMD_COUNCIL then
-            wipe(Session.rules.council)
-            for _,v in pairs(council) do
-                Session.rules.council[Unit.FullName(v)] = true
-            end
-            Session.SetRules(Session.rules)
-
-        -- SYNC
-        elseif cmd == Self.CMD_SYNC then
-            -- TODO
+            Self.SetCouncil(data[1])
 
         -- SESSION_START/SESSION_ADD
-        elseif cmd == Self.CMD_SESSION_START or cmd == Self.CMD_SESSION_ADD then
+        elseif Util.In(cmd, Self.CMD_SESSION_START, Self.CMD_SESSION_ADD, Self.CMD_SYNC) then
+            Util.Dump(data[1])
             local ack = Util.TblHash("gear1", Util.Tbl(), "gear2", Util.Tbl(), "diff", Util.Tbl(), "response", Util.Tbl())
 
             for sId,v in pairs(data[1]) do
@@ -219,10 +258,10 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
                     Self.session[sId] = roll
 
                     local gear = roll.item:GetEquippedForLocation("player")
-                    gear1[sId] = gear[1] or nil
-                    gear2[sId] = gear[2] or nil
-                    diff[sId] = (roll.item:GetBasicInfo().level or 0) - max(Item.GetInfo(gear[1], "level") or 0, Item.GetInfo(gear[2], "level") or 0) -- TODO: This is wrong when slots are not filled
-                    response[sId] = not roll.item:GetEligible("player") or nil
+                    ack.gear1[sId] = gear[1] or nil
+                    ack.gear2[sId] = gear[2] or nil
+                    ack.diff[sId] = (roll.item:GetBasicInfo().level or 0) - max(Item.GetInfo(gear[1], "level") or 0, Item.GetInfo(gear[2], "level") or 0) -- TODO: This is wrong when slots are not filled
+                    ack.response[sId] = not roll.item:GetEligible("player") or nil
                     
                     if not roll.item.isRelic then Util.TblRelease(gear) end
                 end
@@ -260,6 +299,27 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
                 roll:End(winner, nil, true)
             end
         end
+
+    -- GL messages
+    elseif fromGL then
+        -- RULES
+        if cmd == Self.CMD_RULES then
+            Self.mldb = data[1]
+
+            if not Session.GetMasterlooter() and Session.UnitAllow(unit) then
+                if Session.UnitAccept(unit) then
+                    Self.SetMasterlooter(unit)
+                elseif not Self.offerShown then
+                    Self.offerShown = true
+                    Session.ShowOfferDialog(unit, function ()
+                        Self.offerShown = nil
+                        Self.SetMasterlooter(unit)
+                    end)
+                end
+            end
+        elseif cmd == Self.CMD_COUNCIL then
+            Self.council = data[1]
+        end
     end
 end)
 
@@ -268,25 +328,46 @@ end)
 -------------------------------------------------------
 
 function Self:OnInitialize()
-    Self:SetEnabledState(not IsAddOnLoaded(Self.NAME))
+    Self:SetEnabledState(false and not IsAddOnLoaded(Self.NAME)) -- TODO
 end
 
 function Self:OnEnable()
     -- Register events
     Self:RegisterEvent("GROUP_JOINED")
+    Self:RegisterEvent("PARTY_LEADER_CHANGED")
     Roll.On(Self, Roll.EVENT_ADD, "ROLL_ADD")
     Roll.On(Self, Roll.EVENT_BID, "ROLL_BID")
     Roll.On(Self, Roll.EVENT_VOTE, "ROLL_VOTE")
     Roll.On(Self, Roll.EVENT_TRADE, "ROLL_TRADE")
+    Session.On(Self, Session.EVENT_REQUEST, "SESSION_REQUEST")
+    
+    -- Send version check
+    if IsInGroup() then
+        Self.timers.version = Self:ScheduleTimer(Self.Send, 5, Self.CMD_VERSION_CHECK, Comm.TYPE_GROUP, Self.VERSION)
+        Self.timers.sync = Self:ScheduleTimer(Self.Send, 5, Self.CMD_SYNC_REQ)
+    end
 end
 
 function Self:OnDisable()
     -- Unregister events
+    Self:UnregisterEvent("GROUP_JOINED")
+    Self:UnregisterEvent("PARTY_LEADER_CHANGED")
     Roll.Unsubscribe(Self)
+    Session.Unsubscribe(Self)
 end
 
 function Self.GROUP_JOINED()
     Self.Send(Self.CMD_VERSION_CHECK, Comm.TYPE_GROUP, Self.VERSION)
+end
+
+function Self.PARTY_LEADER_CHANGED()
+    Self.mldb, Self.council, Self.offerShown = nil
+    wipe(Self.session)
+
+    local ml = Session.GetMasterlooter()
+    if ml and Addon:GetCompAddon(ml) == Self.NAME then
+        Session.SetMasterlooter(nil)
+    end
 end
 
 -- Roll.EVENT_ADD
@@ -296,7 +377,10 @@ end
 
 -- Roll.EVENT_BID
 function Self.ROLL_BID(_, _, roll, bid, fromUnit, rollResult, isImport)
-    -- TODO
+    local sId = Util.TblFind(Self.session, roll)
+    if sId and Unit.IsSelf(fromUnit) and not isImport then
+        Self.Send(Self.CMD_ROLL_BID, Comm.TYPE_GROUP, sId, Unit.FullName("player"), {response = Self.BidToResponse(roll.bid)})
+    end
 end
 
 -- Roll.EVENT_VOTE
@@ -307,4 +391,12 @@ end
 -- Roll.EVENT_TRADE
 function Self.ROLL_TRADE(_, _, roll, target)
     -- TODO
+end
+
+-- Session.EVENT_REQUEST
+function Self.SESSION_REQUEST(_, _, target)
+    if not target or UnitIsGroupLeader(target) then
+        Self.offerShown = nil
+        Self.Send(Self.CMD_RULES_REQ)
+    end
 end

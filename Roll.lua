@@ -113,11 +113,10 @@ Self.EVENT_TOGGLE = "TOGGLE"
 -- @string unit The sender
 Self.EVENT_CHAT = "CHAT"
 
---- Catchall event that fires for all of the above
+--- Catchall event that fires for all events in Self.EVENTS
 -- @string event The original event
 -- @param  ...   The original event parameters
 Self.EVENT_CHANGE = "CHANGE"
-
 Self.EVENTS = {Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_RESTART, Self.EVENT_CANCEL, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_AWARD, Self.EVENT_TRADE, Self.EVENT_TOGGLE, Self.EVENT_CHAT}
 
 local changeFn = function (...) Self.events:Fire(Self.EVENT_CHANGE, ...) end
@@ -163,6 +162,8 @@ function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner, status)
         local t = type(item)
         if t == "table" and not item.infoLevel then
             item = Item.FromLink(item.link, item.owner):GetBasicInfo()
+        elseif t == "string" then
+            item = select(2, GetItemInfo(item)) or item
         end
 
         id = Util.TblSearch(Addon.rolls, function (roll)
@@ -195,7 +196,7 @@ function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
         owner = owner,
         ownerId = ownerId,
         itemOwnerId = itemOwnerId,
-        timeout = timeout or Self.CalculateTimeout(owner),
+        timeout = timeout or Self.CalculateTimeout(owner, true),
         disenchant = Util.Default(disenchant, isOwner and Util.Check(Session.GetMasterlooter(), Addon.db.profile.masterloot.rules.allowDisenchant, Addon.db.profile.allowDisenchant)),
         status = Self.STATUS_PENDING,
         bids = {},
@@ -598,13 +599,13 @@ end
 -- Check if we should end the roll prematurely
 function Self:ShouldEnd()
     -- We voted need on our own item
-    if Util.In(self.status, Self.STATUS_PENDING, Self.STATUS_RUNNING) and not Session.GetMasterlooter() and self.item.isOwner and self.bid and floor(self.bid) == Self.BID_NEED then
+    if Util.In(self.status, Self.STATUS_PENDING, Self.STATUS_RUNNING) and not self:HasMasterlooter() and self.item.isOwner and self.bid and floor(self.bid) == Self.BID_NEED then
         return true
     -- Not running or we haven't bid yet
     elseif self.status ~= Self.STATUS_RUNNING or not self.bid then
         return false
     -- The owner doesn't have the addon
-    elseif not self.ownerId then
+    elseif not self:GetOwnerAddon() then
         return true
     -- Not the owner
     elseif not self.isOwner then
@@ -624,6 +625,9 @@ end
 -- End a roll
 function Self:End(winner, cleanup, force)
     Addon:Debug("Roll.End", self.id, winner, cleanup, force)
+    
+    winner = winner and winner ~= true and Unit.Name(winner) or winner
+    local sendStatus = false
 
     -- Hide UI elements etc.
     if cleanup then
@@ -634,13 +638,8 @@ function Self:End(winner, cleanup, force)
 
         self:HideRollFrame()
     end
-
-    -- Don't overwrite an existing winner
-    if self.winner and not force then return self end
-
-    winner = winner and winner ~= true and Unit.Name(winner) or winner
     
-    -- End it if it is running
+    -- End the roll
     if self.status < Self.STATUS_DONE then
         Addon:Verbose(L["ROLL_END"], self.item.link, Comm.GetPlayerLink(self.item.owner))
 
@@ -662,52 +661,58 @@ function Self:End(winner, cleanup, force)
         self.started = self.started or time()
 
         Self.events:Fire(Self.EVENT_END, self, self.ended)
+        sendStatus = true
     end
 
     -- Determine a winner
-    if self.isOwner and (not winner or winner == true) then
-        if not Session.GetMasterlooter() and self.bid and floor(self.bid) == Self.BID_NEED then
-            -- Give it to ourselfs
-            winner = UnitName("player")
-        elseif winner == true or not (Addon.db.profile.awardSelf or Session.IsMasterlooter()) then
-            -- Pick a winner now
-            winner = self:DetermineWinner()
-        elseif Session.IsMasterlooter() and Addon.db.profile.masterloot.rules.autoAward and not self.timers.award then
-            -- Schedule a timer to pick a winner
-            local base = Addon.db.profile.masterloot.rules.autoAwardTimeout or Self.TIMEOUT
-            local perItem = Addon.db.profile.masterloot.rules.autoAwardTimeoutPerItem or Self.TIMEOUT_PER_ITEM
-            self.timers.award = Addon:ScheduleTimer(Self.End, base + Util.GetNumDroppedItems() * perItem, self, true)
+    if not self.winner or force then
+        if self.isOwner and (not winner or winner == true) then
+            if not Session.GetMasterlooter() and self.bid and floor(self.bid) == Self.BID_NEED then
+                -- Give it to ourselfs
+                winner = UnitName("player")
+            elseif winner == true or not (Addon.db.profile.awardSelf or Session.IsMasterlooter()) then
+                -- Pick a winner now
+                winner = self:DetermineWinner()
+            elseif Session.IsMasterlooter() and Addon.db.profile.masterloot.rules.autoAward and not self.timers.award then
+                -- Schedule a timer to pick a winner
+                local base = Addon.db.profile.masterloot.rules.autoAwardTimeout or Self.TIMEOUT
+                local perItem = Addon.db.profile.masterloot.rules.autoAwardTimeoutPerItem or Self.TIMEOUT_PER_ITEM
+                self.timers.award = Addon:ScheduleTimer(Self.End, base + Util.GetNumDroppedItems() * perItem, self, true)
+            end
+        end
+
+        local statusSend = false
+        local prevWinner = self.winner
+
+        -- Set winner
+        if not Util.In(winner, self.winner, true) then
+            self.winner = winner
+            self.isWinner = Unit.IsSelf(self.winner)
+
+            if self.winner then
+                -- Cancel auto award timer
+                if self.timers.award then
+                    Addon:CancelTimer(self.timers.award)
+                    self.timers.award = nil
+                end
+
+                -- It has already been traded
+                if self.winner == self.item.owner then
+                    self:OnTraded(self.winner)
+                    statusSend = true
+                end
+
+                -- Let everyone know
+                Comm.RollEnd(self)
+            end
+            
+            Self.events:Fire(Self.EVENT_AWARD, self, self.winner, prevWinner)
+            sendStatus = true
         end
     end
 
-    local statusSend = false
-    local prevWinner = self.winner
-
-    -- Set winner
-    if not Util.In(winner, self.winner, true) then
-        self.winner = winner
-        self.isWinner = Unit.IsSelf(self.winner)
-
-        if self.winner then
-            -- Cancel auto award timer
-            if self.timers.award then
-                Addon:CancelTimer(self.timers.award)
-                self.timers.award = nil
-            end
-
-            -- It has already been traded
-            if self.winner == self.item.owner then
-                self:OnTraded(self.winner)
-                statusSend = true
-            end
-
-            -- Let everyone know
-            Comm.RollEnd(self)
-        end
-    end
-
-    Self.events:Fire(Self.EVENT_AWARD, self, self.winner, prevWinner)
-    if not statusSend then self:SendStatus() end
+    -- Send status if something changed
+    if sendStatus then self:SendStatus() end
 
     return self
 end
@@ -1107,16 +1112,16 @@ end
 
 -- Get the total runtime for a roll
 function Self:GetRunTime(real)
-    if self.timeout == 0 and (Addon.db.profile.chillMode or real) then
+    if self.timeout == 0 and (real or Addon.db.profile.chillMode) then
         return 0
     else
-        return max(0, self.timeout == 0 and self:CalculateTimeout() or self.timeout + (real and 0 or Self.DELAY))
+        return max(0, self.timeout == 0 and self:CalculateTimeout(real) or self.timeout + (real and 0 or Self.DELAY))
     end
 end
 
 -- Get the time that is left on a roll
 function Self:GetTimeLeft(real)
-    if self.status ~= Self.STATUS_RUNNING and real or self.timeout == 0 and (Addon.db.profile.chillMode or real) then
+    if self.status ~= Self.STATUS_RUNNING and real or self.timeout == 0 and (real or Addon.db.profile.chillMode) then
         return 0
     else
         return max(0, (self.started and self.started - time() or 0) + self:GetRunTime(real))
@@ -1154,17 +1159,24 @@ function Self:ExtendTimeLeft(to)
 end
 
 -- Calculate the correct timeout
-function Self.CalculateTimeout(selfOrOwner)
+function Self.CalculateTimeout(selfOrOwner, real)
     local owner = type(selfOrOwner) == "table" and selfOrOwner.owner or selfOrOwner
     local ml = Session.GetMasterlooter()
-    local chill = Addon.db.profile.chillMode and not ml
+    local chill = Addon.db.profile.chillMode
+    local timeout
 
-    if chill and Util.Check(Unit.IsSelf(owner), Addon.db.profile.awardSelf, not Addon:UnitIsTracking(owner)) then
-        return 0
+    if not ml and chill and (Unit.IsSelf(owner) and Addon.db.profile.awardSelf or not Addon:UnitIsTracking(owner)) then
+        timeout = 0
     else
         local base, perItem = ml and Session.rules.timeoutBase or Self.TIMEOUT, ml and Session.rules.timeoutPerItem or Self.TIMEOUT_PER_ITEM
-        return (base + Util.GetNumDroppedItems() * perItem) * (chill and Self.TIMEOUT_CHILL_MODE or 1)
+        timeout = (base + Util.GetNumDroppedItems() * perItem) * (not ml and chill and Self.TIMEOUT_CHILL_MODE or 1)
     end
+
+    if not real and not chill and timeout == 0 then
+        timeout = Self.TIMEOUT + Util.GetNumDroppedItems() * Self.TIMEOUT_PER_ITEM
+    end
+
+    return timeout
 end
 
 -------------------------------------------------------
@@ -1214,7 +1226,7 @@ function Self:UnitCanBid(unit, bid, checkIlvl)
     if self.traded or not Unit.InGroup(unit) then
         return false
     -- Only need+pass for rolls from non-users
-    elseif not (self:OwnerUsesAddon() or Util.In(bid, nil, Self.BID_NEED, Self.BID_PASS)) then
+    elseif not (self:GetOwnerAddon() or Util.In(bid, nil, Self.BID_NEED, Self.BID_PASS)) then
         return false
     -- Can't bid disenchant if it's not allowed
     elseif bid == Self.BID_DISENCHANT and not self.disenchant then
@@ -1260,15 +1272,15 @@ function Self:HasMasterlooter()
 end
 
 -- Check if the roll is from an addon user
-function Self:OwnerUsesAddon()
-    return Util.Bool(self.ownerId or self.itemOwnerId or Addon.compAddonUsers[self.owner])
+function Self:GetOwnerAddon()
+    return Util.Bool(self.ownerId or self.itemOwnerId) or Addon:GetCompAddon(self.owner)
 end
 
 -- Check if the player has to take an action to complete the roll (e.g. trade)
 function Self:GetActionRequired()
     if self.traded then
         return false
-    elseif not self.ownerId and self.bid and self.bid ~= Self.BID_PASS then
+    elseif not self:GetOwnerAddon() and self.bid and self.bid ~= Self.BID_PASS then
         return Self.ACTION_ASK
     elseif self.item.isOwner and self.winner or self.isWinner then
         return Self.ACTION_TRADE

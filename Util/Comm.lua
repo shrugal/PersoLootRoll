@@ -228,7 +228,7 @@ function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport)
         elseif fromSelf then
             if roll.ownerId then
                 Self.SendData(Self.EVENT_BID, Util.TblHash("ownerId", roll.ownerId, "bid", bid), roll.owner)
-            elseif bid ~= Roll.BID_PASS and not Addon.compAddonUsers then
+            elseif bid ~= Roll.BID_PASS and not roll:GetOwnerAddon() then
                 local owner, link = roll.item.owner, roll.item.link
 
                 -- Roll on it in chat

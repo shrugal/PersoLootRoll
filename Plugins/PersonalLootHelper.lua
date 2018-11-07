@@ -1,5 +1,5 @@
 local Name, Addon = ...
-local Comm, Roll, Unit, Util = Addon.Comm, Addon.Roll, Addon.Unit, Addon.Util
+local Comm, Roll, Session, Unit, Util = Addon.Comm, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
 local Self = Addon.PLH
 
 Self.NAME = "Personal Loot Helper"
@@ -16,10 +16,6 @@ Self.ACTION_KEEP = "KEEP"
 Self.ACTION_TRADE = "TRADE"
 Self.ACTION_REQUEST = "REQUEST"
 Self.ACTION_OFFER = "OFFER"
-
-function Self.IsUsedByUnit(unit)
-    return Util.StrStartsWith(Addon.compAddonUsers[Unit.Name(unit)], Self.NAME)
-end
 
 -------------------------------------------------------
 --                        Comm                       --
@@ -124,7 +120,7 @@ function Self.ROLL_BID(_, _, roll, bid, fromUnit, _, isImport)
                 -- Send KEEP message
                 Self.Send(Self.ACTION_KEEP, roll)
             end
-        elseif fromSelf and not roll.ownerId and bid ~= Roll.BID_PASS and Self.IsUsedByUnit(roll.owner) then
+        elseif fromSelf and not roll.ownerId and bid ~= Roll.BID_PASS and roll:GetOwnerAddon() == Self.NAME then
             -- Send REQUEST message
             local request = Util.Select(bid, Roll.BID_NEED, Self.BID_NEED, Roll.BID_DISENCHANT, Self.BID_DISENCHANT, Self.BID_GREED)
             Self.Send(Self.ACTION_REQUEST, roll, request)
@@ -134,7 +130,7 @@ end
 
 -- Roll.EVENT_AWARD
 function Self.ROLL_AWARD(_, _, roll)
-    if roll.winner and not roll.isWinner and roll.isOwner and Self.IsUsedByUnit(roll.winner) and not roll.isTest then
+    if roll.winner and not roll.isWinner and roll.isOwner and Addon.GetCompAddon(roll.winner) == Self.NAME and not roll.isTest then
         -- Send OFFER message
         Self.Send(Self.ACTION_OFFER, roll, Unit.FullName(roll.winner))
     end

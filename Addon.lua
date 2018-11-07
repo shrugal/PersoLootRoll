@@ -434,6 +434,13 @@ function Self:SetCompAddonUser(unit, name, version)
     end
 end
 
+function Self:GetCompAddon(unit)
+    local s = Addon.compAddonUsers[Unit.Name(unit)]
+    if s then
+        return s:match("(.+) %((.+)%)")
+    end
+end
+
 -- Get the number of addon users in the group
 function Self:GetNumAddonUsers(inclCompAddons)
     local n = Util.TblCount(self.versions) - Util.TblCount(self.disabled)
