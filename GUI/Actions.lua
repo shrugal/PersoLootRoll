@@ -359,7 +359,7 @@ end
 
 -- Register for roll changes
 Roll.On(Self, Roll.EVENT_CHANGE, function (_, e, roll)
-    if Addon.db.profile.ui.showActionsWindow and Util.In(e, Roll.EVENT_AWARD, Roll.EVENT_TOGGLE) and roll:GetActionRequired() then
+    if Addon.db.profile.ui.showActionsWindow and Util.In(e, Roll.EVENT_END, Roll.EVENT_TOGGLE) and roll:GetActionRequired() then
         Self.Show()
     end
     Self.Update()
