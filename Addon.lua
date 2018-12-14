@@ -379,7 +379,9 @@ function Self:SetVersion(unit, version)
     version = tonumber(version) or version
 
     self.versions[unit] = version
-    self.compAddonUsers[unit] = nil
+    for _,t in pairs(self.compAddonUsers) do
+        t[unit] = nil
+    end
 
     if not version then
         self.disabled[unit] = nil
@@ -426,26 +428,39 @@ function Self:CompareVersion(versionOrUnit)
     end
 end
 
-function Self:SetCompAddonUser(unit, name, version)
+function Self:SetCompAddonUser(unit, addon, version)
     unit = Unit.Name(unit)
     if not self.versions[unit] then
-        Addon.compAddonUsers[unit] = ("%s (%s)"):format(name, version)
+        Util.TblSet(self.compAddonUsers, addon, unit, version)
     end
 end
 
-function Self:GetCompAddon(unit)
-    local s = Addon.compAddonUsers[Unit.Name(unit)]
-    if s then
-        return s:match("(.+) %((.+)%)")
+function Self:GetCompAddonUser(unit, addon)
+    unit = Unit.Name(unit)
+    if addon then
+        return Util.TblGet(Addon.compAddonUsers, addon, unit)
+    else
+        return Util.TblFindWhere(Addon.compAddonUsers, unit)
     end
 end
 
 -- Get the number of addon users in the group
 function Self:GetNumAddonUsers(inclCompAddons)
     local n = Util.TblCount(self.versions) - Util.TblCount(self.disabled)
+
     if inclCompAddons then
-        n = n + Util.TblCount(Self.compAddonUsers)
+        local users = Util.Tbl()
+        for _,t in pairs(self.compAddonUsers) do
+            for unit in pairs(t) do
+                if not self.versions[unit] then
+                    users[unit] = true
+                end
+            end
+        end
+        n = n + Util.TblCount(users)
+        Util.TblRelease(users)
     end
+
     return n
 end
 

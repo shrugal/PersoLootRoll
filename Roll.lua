@@ -1259,7 +1259,7 @@ end
 
 -- Check if the roll is from an addon user
 function Self:GetOwnerAddon()
-    return Util.Bool(self.ownerId or self.itemOwnerId) or Addon:GetCompAddon(self.owner)
+    return Util.Bool(self.ownerId or self.itemOwnerId) or Addon:GetCompAddonUser(self.owner)
 end
 
 -- Check if the player has to take an action to complete the roll (e.g. trade)

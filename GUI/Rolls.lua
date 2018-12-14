@@ -98,17 +98,9 @@ function Self.Show()
                             end
                         end
 
-                        -- Users of compatible addons
-                        if next(Addon.compAddonUsers) then
-                            GameTooltip:AddLine((count > 0 and "\n" or "") .. L["TIP_COMP_ADDON_USERS"])
-                            for unit,addon in pairs(Addon.compAddonUsers) do
-                                GameTooltip:AddLine(Unit.ColoredShortenedName(unit) .. ": " .. addon, 1, 1, 1, false)
-                            end
-                        end
-
                         -- Addon missing
                         if count + 1 < GetNumGroupMembers() then
-                            GameTooltip:AddLine(((count > 0 or next(Addon.compAddonUsers)) and "\n" or "") .. L["TIP_ADDON_MISSING"])
+                            GameTooltip:AddLine((count > 0 and "\n" or "") .. L["TIP_ADDON_MISSING"])
                             local s = ""
                             for i=1,GetNumGroupMembers() do
                                 local unit = GetRaidRosterInfo(i)
@@ -117,6 +109,19 @@ function Self.Show()
                                 end
                             end
                             GameTooltip:AddLine(s, 1, 1, 1, true)
+                        end
+
+                        -- Users of compatible addons
+                        if next(Addon.compAddonUsers) then
+                            GameTooltip:AddLine((GetNumGroupMembers() > 1 and "\n" or "") .. L["TIP_COMP_ADDON_USERS"])
+
+                            for addon,users in pairs(Addon.compAddonUsers) do
+                                local s = ""
+                                for unit,version in pairs(users) do
+                                    s = Util.StrPostfix(s, ", ") .. Unit.ColoredShortenedName(unit)
+                                end
+                                GameTooltip:AddLine(addon .. ": " .. s, 1, 1, 1, true)
+                            end
                         end
                         GameTooltip:Show()
                     end

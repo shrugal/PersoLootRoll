@@ -362,7 +362,7 @@ function Self.PARTY_LEADER_CHANGED()
     wipe(Self.session)
 
     local ml = Session.GetMasterlooter()
-    if ml and Addon:GetCompAddon(ml) == Self.NAME then
+    if ml and Addon:GetCompAddonUser(ml, Self.NAME) then
         Session.SetMasterlooter(nil)
     end
 end

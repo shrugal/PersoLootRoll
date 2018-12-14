@@ -126,7 +126,7 @@ function Self.ROLL_BID(_, _, roll, bid, fromUnit, _, isImport)
 end
 
 function Self.ROLL_AWARD(_, _, roll)
-    if roll.winner and not roll.isWinner and roll.isOwner and Addon.GetCompAddon(roll.winner) == Self.NAME and not roll.isTest then
+    if roll.winner and not roll.isWinner and roll.isOwner and Addon.GetCompAddonUser(roll.winner, Self.NAME) and not roll.isTest then
         -- Send OFFER message
         Self.Send(Self.ACTION_OFFER, roll, Unit.FullName(roll.winner))
     end
