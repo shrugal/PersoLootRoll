@@ -251,10 +251,10 @@ function Self:HandleChatCommand(msg)
     elseif cmd == "log" then
         self:LogExport()
     -- Update and export trinket list
-    elseif cmd == "trinkets" and Item.UpdateTrinkets then
+    elseif cmd == "trinkets" then
         Item.UpdateTrinkets()
     -- Update and export instance list
-    elseif cmd == "instances" and Util.ExportInstances then
+    elseif cmd == "instances" then
         Util.ExportInstances()
     -- Unknown
     else

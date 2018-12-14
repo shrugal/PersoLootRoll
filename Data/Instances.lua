@@ -2,27 +2,25 @@ local Name, Addon = ...
 local GUI = Addon.GUI
 local Self = Addon.Util
 
-if Addon.DEBUG then
-    -- Export the instance list
-    function Self.ExportInstances()
-        local txt = "Self.INSTANCES = {"
+-- Export the instance list
+function Self.ExportInstances()
+    local txt = "Self.INSTANCES = {"
 
-        for tier=1,EJ_GetNumTiers() do
-            EJ_SelectTier(tier)
-            for isRaid=0,1 do
-                local instance = 1
-                while EJ_GetInstanceByIndex(instance, isRaid == 1) do
-                    local id, name = EJ_GetInstanceByIndex(instance, isRaid == 1)
-                    local space1 = (" "):rep(4 - strlen(id))
-                    local space2 = (" "):rep(1 - strlen(tier))
-                    txt = txt .. ("\n    [%d] = %s%d, %s-- %s"):format(id, space1, tier, space2, name or "?")
-                    instance = instance + 1
-                end
+    for tier=1,EJ_GetNumTiers() do
+        EJ_SelectTier(tier)
+        for isRaid=0,1 do
+            local instance = 1
+            while EJ_GetInstanceByIndex(instance, isRaid == 1) do
+                local id, name = EJ_GetInstanceByIndex(instance, isRaid == 1)
+                local space1 = (" "):rep(4 - strlen(id))
+                local space2 = (" "):rep(1 - strlen(tier))
+                txt = txt .. ("\n    [%d] = %s%d, %s-- %s"):format(id, space1, tier, space2, name or "?")
+                instance = instance + 1
             end
         end
-
-        GUI.ShowExportWindow("Export instances", txt .. "\n}")
     end
+
+    GUI.ShowExportWindow("Export instances", txt .. "\n}")
 end
 
 Self.INSTANCES = {
@@ -178,4 +176,6 @@ Self.INSTANCES = {
     [1021] = 8, -- Waycrest Manor
     [1028] = 8, -- Azeroth
     [1031] = 8, -- Uldir
+    [1176] = 8, -- Battle of Dazar'alor
+    [1177] = 8, -- Crucible of Storms
 }

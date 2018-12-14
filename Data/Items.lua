@@ -343,133 +343,131 @@ Self.TRINKET_RANGED = Self.ROLE_RANGED      -- 128
 Self.MASK_ATTR = 0x0f
 Self.MASK_ROLE = 0xf0
 
-if Addon.DEBUG then
-    -- The specs we use to scan for trinket types
-    Self.TRINKET_SPECS = {
-        [Self.TRINKET_STR] =    {Unit.WARRIOR, 1},  -- Arms Warrior
-        [Self.TRINKET_AGI] =    {Unit.ROGUE, 1},    -- Assasination Rogue
-        [Self.TRINKET_INT] =    {Unit.MAGE, 1},     -- Arcane Mage
-        [Self.TRINKET_RANGED] = {Unit.HUNTER, 2},   -- Marksmanship Hunter
-        [Self.TRINKET_HEAL] =   {Unit.PRIEST, 2},   -- Holy Priest
-        [Self.TRINKET_TANK] =   {Unit.WARRIOR, 3}   -- Protection Warrior
-    }
+-- The specs we use to scan for trinket types
+Self.TRINKET_SPECS = {
+    [Self.TRINKET_STR] =    {Unit.WARRIOR, 1},  -- Arms Warrior
+    [Self.TRINKET_AGI] =    {Unit.ROGUE, 1},    -- Assasination Rogue
+    [Self.TRINKET_INT] =    {Unit.MAGE, 1},     -- Arcane Mage
+    [Self.TRINKET_RANGED] = {Unit.HUNTER, 2},   -- Marksmanship Hunter
+    [Self.TRINKET_HEAL] =   {Unit.PRIEST, 2},   -- Holy Priest
+    [Self.TRINKET_TANK] =   {Unit.WARRIOR, 3}   -- Protection Warrior
+}
 
-    Self.TRINKET_UPDATE_TRIES = 2
-    Self.TRINKET_UPDATE_PER_TRY = 1
+Self.TRINKET_UPDATE_TRIES = 2
+Self.TRINKET_UPDATE_PER_TRY = 1
 
-    -- Completely rebuild the trinket list
-    function Self.UpdateTrinkets(tier, isRaid, instance, difficulty)
-        tier = tier or 1
-        isRaid = (isRaid == true or isRaid == 1) and 1 or 0
-        instance = instance or 1
-        difficulty = difficulty or 1
+-- Completely rebuild the trinket list
+function Self.UpdateTrinkets(tier, isRaid, instance, difficulty)
+    tier = tier or 1
+    isRaid = (isRaid == true or isRaid == 1) and 1 or 0
+    instance = instance or 1
+    difficulty = difficulty or 1
 
-        local timeout = Self.TRINKET_UPDATE_TRIES * Self.TRINKET_UPDATE_PER_TRY
+    local timeout = Self.TRINKET_UPDATE_TRIES * Self.TRINKET_UPDATE_PER_TRY
 
-        -- First run
-        if tier == 1 and isRaid == 0 and instance == 1 and difficulty == 1 then
-            Addon:Info("Updating trinket list from Dungeon Journal ...")
-            wipe(Self.TRINKETS)
-            Util.TblInspect(Self.TRINKETS)
-        end
-        
-        -- Go through all tiers, dungeon/raid, instances and difficulties
-        for t=tier,EJ_GetNumTiers() do
-            EJ_SelectTier(t)
-            for r=isRaid,1 do
-                while EJ_GetInstanceByIndex(instance, r == 1) do
-                    local i, name = EJ_GetInstanceByIndex(instance, r == 1)
-                    EJ_SelectInstance(i)
-                    for d=difficulty,99 do
-                        if EJ_IsValidInstanceDifficulty(d) then
-                            Addon:Info("Scanning %q (%d, %d, %d)", name, t, i, d)
-                            Self.UpdateInstanceTrinkets(t, i, d)
-                            Addon.timers.trinketUpdate = PLR:ScheduleTimer(Self.UpdateTrinkets, timeout, t, r, instance, d + 1)
-                            return Addon.timers.trinketUpdate
-                        end
-                    end
-                    instance, difficulty = instance + 1, 1
-                end
-                instance = 1
-            end
-            isRaid = 0
-        end
-        
-        Addon:Info("Updating trinkets complete!")
-        Self.ExportTrinkets()
+    -- First run
+    if tier == 1 and isRaid == 0 and instance == 1 and difficulty == 1 then
+        Addon:Info("Updating trinket list from Dungeon Journal ...")
+        wipe(Self.TRINKETS)
+        Util.TblInspect(Self.TRINKETS)
     end
-
-    -- Cancel an ongoing update operation
-    function Self.CancelUpdateTrinkets()
-        if Addon.timers.trinketUpdate then
-            Addon:CancelTimer(Addon.timers.trinketUpdate)
-        end
-    end
-
-    -- Update trinkets for once instance+difficulty
-    function Self.UpdateInstanceTrinkets(tier, instance, difficulty, timeLeft)
-        timeLeft = timeLeft or Self.TRINKET_UPDATE_TRIES * Self.TRINKET_UPDATE_PER_TRY
-        if timeLeft < Self.TRINKET_UPDATE_PER_TRY then return end
     
-        -- Prevent the encounter journal to interfere
-        if _G.EncounterJournal then _G.EncounterJournal:UnregisterAllEvents() end
-
-        EJ_SelectTier(tier)
-        EJ_SelectInstance(instance)
-        EJ_SetDifficulty(difficulty)
-        EJ_SetSlotFilter(LE_ITEM_FILTER_TYPE_TRINKET)
-        
-        -- Get trinkets for all the reference specs
-        local t = {}
-        for n,info in pairs(Self.TRINKET_SPECS) do
-            EJ_SetLootFilter(info[1], GetSpecializationInfoForClassID(unpack(info)))
-            for i=1,EJ_GetNumLoot() do
-                local id, _, _, _, _, _, link = EJ_GetLootInfoByIndex(i)
-                t[id] = (t[id] or 0) + n
+    -- Go through all tiers, dungeon/raid, instances and difficulties
+    for t=tier,EJ_GetNumTiers() do
+        EJ_SelectTier(t)
+        for r=isRaid,1 do
+            while EJ_GetInstanceByIndex(instance, r == 1) do
+                local i, name = EJ_GetInstanceByIndex(instance, r == 1)
+                EJ_SelectInstance(i)
+                for d=difficulty,99 do
+                    if EJ_IsValidInstanceDifficulty(d) then
+                        Addon:Info("Scanning %q (%d, %d, %d)", name, t, i, d)
+                        Self.UpdateInstanceTrinkets(t, i, d)
+                        Addon.timers.trinketUpdate = PLR:ScheduleTimer(Self.UpdateTrinkets, timeout, t, r, instance, d + 1)
+                        return Addon.timers.trinketUpdate
+                    end
+                end
+                instance, difficulty = instance + 1, 1
             end
+            instance = 1
         end
+        isRaid = 0
+    end
+    
+    Addon:Info("Updating trinkets complete!")
+    Self.ExportTrinkets()
+end
 
-        -- Determine the least specific category for each trinket
-        for id,v in pairs(t) do
-            local str =     bit.band(v, Self.TRINKET_STR)
-            local agi =    (bit.band(v, Self.TRINKET_AGI) > 0    or bit.band(v, Self.TRINKET_RANGED) > 0) and Self.TRINKET_AGI or 0
-            local int =    (bit.band(v, Self.TRINKET_INT) > 0    or bit.band(v, Self.TRINKET_HEAL) > 0)   and Self.TRINKET_INT or 0
-            local tank =    bit.band(v, Self.TRINKET_TANK)
-            local heal =    bit.band(v, Self.TRINKET_HEAL)
-            local melee =  (bit.band(v, Self.TRINKET_STR) > 0    or bit.band(v, Self.TRINKET_AGI) > 0)    and Self.TRINKET_MELEE or 0
-            local ranged = (bit.band(v, Self.TRINKET_RANGED) > 0 or bit.band(v, Self.TRINKET_INT) > 0)    and Self.TRINKET_RANGED or 0
+-- Cancel an ongoing update operation
+function Self.CancelUpdateTrinkets()
+    if Addon.timers.trinketUpdate then
+        Addon:CancelTimer(Addon.timers.trinketUpdate)
+    end
+end
 
-            local attr, role = str + agi + int, tank + heal + melee + ranged
-            attr = attr == Self.TRINKET_STR + Self.TRINKET_AGI + Self.TRINKET_INT and 0 or attr
-            role = role == Self.TRINKET_TANK + Self.TRINKET_HEAL + Self.TRINKET_MELEE + Self.TRINKET_RANGED and 0 or role
+-- Update trinkets for one instance+difficulty
+function Self.UpdateInstanceTrinkets(tier, instance, difficulty, timeLeft)
+    timeLeft = timeLeft or Self.TRINKET_UPDATE_TRIES * Self.TRINKET_UPDATE_PER_TRY
+    if timeLeft < Self.TRINKET_UPDATE_PER_TRY then return end
 
-            local cat = attr + role
-            if cat > 0 then
-                Self.TRINKETS[id] = cat
-            end
-        end
+    -- Prevent the encounter journal to interfere
+    if _G.EncounterJournal then _G.EncounterJournal:UnregisterAllEvents() end
 
-        -- Schedule retry
-        if timeLeft >= Self.TRINKET_UPDATE_PER_TRY then
-            Addon:ScheduleTimer(Self.UpdateInstanceTrinkets, Self.TRINKET_UPDATE_PER_TRY, tier, instance, difficulty, timeLeft - Self.TRINKET_UPDATE_PER_TRY)
+    EJ_SelectTier(tier)
+    EJ_SelectInstance(instance)
+    EJ_SetDifficulty(difficulty)
+    EJ_SetSlotFilter(LE_ITEM_FILTER_TYPE_TRINKET)
+    
+    -- Get trinkets for all the reference specs
+    local t = {}
+    for n,info in pairs(Self.TRINKET_SPECS) do
+        EJ_SetLootFilter(info[1], GetSpecializationInfoForClassID(unpack(info)))
+        for i=1,EJ_GetNumLoot() do
+            local id, _, _, _, _, _, link = EJ_GetLootInfoByIndex(i)
+            t[id] = (t[id] or 0) + n
         end
     end
 
-    -- Export the trinkets list
-    function Self.ExportTrinkets(loaded)
-        if not loaded and next(Self.TRINKETS) then
-            for id in pairs(Self.TRINKETS) do GetItemInfo(id) end
-            Addon:ScheduleTimer(Self.ExportTrinkets, 1, true)
-        else
-            local txt = "Self.TRINKETS = {"
-            for id,cat in pairs(Self.TRINKETS) do
-                local space1 = (" "):rep(6 - strlen(id))
-                local space2 = (" "):rep(3 - strlen(cat))
-                txt = txt .. ("\n    [%d] = %s%d, %s-- %s"):format(id, space1, cat, space2, GetItemInfo(id) or "?")
-            end
+    -- Determine the least specific category for each trinket
+    for id,v in pairs(t) do
+        local str =     bit.band(v, Self.TRINKET_STR)
+        local agi =    (bit.band(v, Self.TRINKET_AGI) > 0    or bit.band(v, Self.TRINKET_RANGED) > 0) and Self.TRINKET_AGI or 0
+        local int =    (bit.band(v, Self.TRINKET_INT) > 0    or bit.band(v, Self.TRINKET_HEAL) > 0)   and Self.TRINKET_INT or 0
+        local tank =    bit.band(v, Self.TRINKET_TANK)
+        local heal =    bit.band(v, Self.TRINKET_HEAL)
+        local melee =  (bit.band(v, Self.TRINKET_STR) > 0    or bit.band(v, Self.TRINKET_AGI) > 0)    and Self.TRINKET_MELEE or 0
+        local ranged = (bit.band(v, Self.TRINKET_RANGED) > 0 or bit.band(v, Self.TRINKET_INT) > 0)    and Self.TRINKET_RANGED or 0
 
-            GUI.ShowExportWindow("Export trinkets", txt .. "\n}")
+        local attr, role = str + agi + int, tank + heal + melee + ranged
+        attr = attr == Self.TRINKET_STR + Self.TRINKET_AGI + Self.TRINKET_INT and 0 or attr
+        role = role == Self.TRINKET_TANK + Self.TRINKET_HEAL + Self.TRINKET_MELEE + Self.TRINKET_RANGED and 0 or role
+
+        local cat = attr + role
+        if cat > 0 then
+            Self.TRINKETS[id] = cat
         end
+    end
+
+    -- Schedule retry
+    if timeLeft >= Self.TRINKET_UPDATE_PER_TRY then
+        Addon:ScheduleTimer(Self.UpdateInstanceTrinkets, Self.TRINKET_UPDATE_PER_TRY, tier, instance, difficulty, timeLeft - Self.TRINKET_UPDATE_PER_TRY)
+    end
+end
+
+-- Export the trinkets list
+function Self.ExportTrinkets(loaded)
+    if not loaded and next(Self.TRINKETS) then
+        for id in pairs(Self.TRINKETS) do GetItemInfo(id) end
+        Addon:ScheduleTimer(Self.ExportTrinkets, 1, true)
+    else
+        local txt = "Self.TRINKETS = {"
+        for id,cat in pairs(Self.TRINKETS) do
+            local space1 = (" "):rep(6 - strlen(id))
+            local space2 = (" "):rep(3 - strlen(cat))
+            txt = txt .. ("\n    [%d] = %s%d, %s-- %s"):format(id, space1, cat, space2, GetItemInfo(id) or "?")
+        end
+
+        GUI.ShowExportWindow("Export trinkets", txt .. "\n}")
     end
 end
 
@@ -486,6 +484,7 @@ Self.TRINKETS = {
     [112850] = 65,  -- Thok's Tail Tip
     [68925] =  148, -- Variable Pulse Lightning Capacitor
     [124231] = 20,  -- Flickering Felspark
+    [95779] =  32,  -- Delicate Vial of the Sanguinaire
     [155881] = 194, -- Harlan's Loaded Dice
     [140792] = 132, -- Erratic Metronome
     [161380] = 148, -- Drust-Runed Icicle
@@ -502,6 +501,7 @@ Self.TRINKETS = {
     [68927] =  194, -- The Hungerer
     [124233] = 20,  -- Demonic Phylactery
     [140796] = 195, -- Entwined Elemental Foci
+    [86894] =  65,  -- Darkmist Vortex
     [65026] =  194, -- Prestor's Talisman of Machination
     [137344] = 32,  -- Talisman of the Cragshaper
     [96421] =  32,  -- Fortitude of the Zandalari
@@ -569,7 +569,7 @@ Self.TRINKETS = {
     [72900] =  32,  -- Veil of Lies
     [86327] =  20,  -- Spirits of the Sun
     [124242] = 32,  -- Tyrant's Decree
-    [159611] = 97,  -- Razdunk's Big Red Button
+    [95726] =  65,  -- Fabled Feather of Ji-Kun
     [133269] = 194, -- Tia's Grace
     [136978] = 32,  -- Ember of Nullification
     [159612] = 194, -- Azerokk's Resonating Heart
@@ -595,7 +595,7 @@ Self.TRINKETS = {
     [128145] = 194, -- Howling Soul Gem
     [156036] = 148, -- Eye of the Broodmother
     [94514] =  20,  -- Horridon's Last Gasp
-    [119194] = 132, -- Goren Soul Repository
+    [95665] =  194, -- Bad Juju
     [159617] = 194, -- Lustrous Golden Plumage
     [137367] = 134, -- Stormsinger Fulmination Charge
     [159618] = 32,  -- Mchimba's Ritual Bandages
@@ -606,6 +606,7 @@ Self.TRINKETS = {
     [27529] =  32,  -- Figurine of the Colossus
     [159619] = 97,  -- Briny Barnacle
     [137369] = 67,  -- Giant Ornamental Pearl
+    [86907] =  132, -- Essence of Terror
     [159620] = 148, -- Conch of Dark Whispers
     [45148] =  148, -- Living Flame
     [128147] = 148, -- Teardrop of Blood
@@ -629,6 +630,7 @@ Self.TRINKETS = {
     [133282] = 194, -- Skardyn's Grace
     [128149] = 227, -- Accusation of Inferiority
     [94518] =  32,  -- Delicate Vial of the Sanguinaire
+    [95669] =  132, -- Wushoolay's Final Choice
     [159625] = 97,  -- Vial of Animated Blood
     [40258] =  148, -- Forethought Talisman
     [159626] = 32,  -- Lingering Sporepods
@@ -658,7 +660,7 @@ Self.TRINKETS = {
     [69138] =  32,  -- Spidersilk Spindle
     [37734] =  20,  -- Talisman of Troll Divinity
     [144159] = 148, -- Price of Progress
-    [160655] = 97,  -- Syringe of Bloodborne Infirmity
+    [166793] = 148, -- Ancient Knot of Wisdom
     [59441] =  194, -- Prestor's Talisman of Machination
     [59473] =  194, -- Essence of the Cyclone
     [128153] = 97,  -- Unquenchable Doomfire Censer
@@ -670,12 +672,14 @@ Self.TRINKETS = {
     [133291] = 32,  -- Throngus's Finger
     [45535] =  148, -- Show of Faith
     [144161] = 97,  -- Lessons of the Darkmaster
+    [166795] = 97,  -- Knot of Ancient Fury
     [86147] =  20,  -- Qin-xi's Polarizing Seal
     [133420] = 194, -- Arrow of Time
     [151962] = 134, -- Prototype Personnel Decimator
     [94523] =  194, -- Bad Juju
     [156310] = 195, -- Mjolnir Runestone
     [109996] = 194, -- Thundertower's Targeting Reticle
+    [95802] =  194, -- Rune of Re-Origination
     [151963] = 195, -- Forgefiend's Fabricator
     [112426] = 132, -- Purified Bindings of Immerseus
     [50235] =  32,  -- Ick's Rotting Thumb
@@ -707,7 +711,7 @@ Self.TRINKETS = {
     [110000] = 132, -- Crushto's Runic Alarm
     [142508] = 97,  -- Chains of the Valorous
     [30665] =  20,  -- Earring of Soulful Meditation
-    [151971] = 132, -- Sheath of Asara
+    [86791] =  194, -- Bottle of Infinite Stars
     [113645] = 65,  -- Tectus' Beating Heart
     [87175] =  132, -- Essence of Terror
     [11832] =  20,  -- Burst of Knowledge
@@ -715,6 +719,7 @@ Self.TRINKETS = {
     [77201] =  32,  -- Resolve of Undying
     [110001] = 132, -- Tovra's Lightning Repository
     [124515] = 130, -- Talisman of the Master Tracker
+    [86792] =  132, -- Light of the Cosmos
     [158367] = 97,  -- Merektha's Fang
     [133304] = 148, -- Gale of Shadows
     [112815] = 132, -- Frenzied Crystal of Rage
@@ -725,7 +730,7 @@ Self.TRINKETS = {
     [124516] = 132, -- Tome of Shifting Words
     [151975] = 32,  -- Apocalypse Drive
     [56280] =  32,  -- Porcelain Crab
-    [137398] = 132, -- Portable Manacracker
+    [77970] =  32,  -- Soulshifter Vortex
     [56440] =  194, -- Skardyn's Grace
     [151976] = 32,  -- Riftworld Codex
     [94530] =  20,  -- Lightning-Imbued Chalice
@@ -734,7 +739,7 @@ Self.TRINKETS = {
     [151977] = 32,  -- Diima's Glacial Aegis
     [45507] =  32,  -- The General's Heart
     [65072] =  97,  -- Heart of Rage
-    [96385] =  20,  -- Horridon's Last Gasp
+    [77971] =  148, -- Insignia of the Corrupted Mind
     [151978] = 32,  -- Smoldering Titanguard
     [94531] =  132, -- Cha-Ye's Essence of Brilliance
     [77204] =  148, -- Seal of the Seven Signs
@@ -744,13 +749,13 @@ Self.TRINKETS = {
     [151340] = 20,  -- Echo of L'ura
     [56345] =  65,  -- Magnetite Mirror
     [139320] = 67,  -- Ravaged Seed Pod
-    [112754] = 194, -- Haromm's Talisman
+    [77972] =  65,  -- Creche of the Final Dragon
     [113905] = 32,  -- Tablet of Turnbuckle Teamwork
     [94532] =  194, -- Rune of Re-Origination
     [158374] = 194, -- Tiny Electromental in a Jar
     [110005] = 20,  -- Crystalline Blood Drop
     [69149] =  148, -- Eye of Blazing Power
-    [139321] = 132, -- Swarming Plaguehive
+    [95811] =  32,  -- Soul Barrier
     [124519] = 20,  -- Repudiation of War
     [73497] =  148, -- Cataclysmic Gladiator's Insignia of Dominance
     [113650] = 32,  -- Pillar of the Earth
@@ -766,7 +771,7 @@ Self.TRINKETS = {
     [155947] = 148, -- Living Flame
     [73498] =  148, -- Cataclysmic Gladiator's Badge of Dominance
     [139324] = 32,  -- Goblet of Nightmarish Ichor
-    [137406] = 67,  -- Terrorbound Nexus
+    [77974] =  194, -- Wrath of Unchaining
     [96516] =  132, -- Cha-Ye's Essence of Brilliance
     [112948] = 20,  -- Prismatic Prison of Pride
     [77207] =  194, -- Vial of Shadows
@@ -774,9 +779,10 @@ Self.TRINKETS = {
     [139325] = 67,  -- Spontaneous Appendages
     [32505] =  227, -- Madness of the Betrayer
     [139326] = 132, -- Wriggling Sinew
+    [77975] =  132, -- Will of Unbinding
     [77208] =  132, -- Cunning of the Cruel
     [110008] = 20,  -- Tharbek's Lucky Pebble
-    [139327] = 32,  -- Unbridled Fury
+    [95814] =  132, -- Unerring Vision of Lei Shen
     [59224] =  97,  -- Heart of Rage
     [137537] = 194, -- Tirathon's Betrayal
     [46021] =  32,  -- Royal Seal of King Llane
@@ -794,6 +800,7 @@ Self.TRINKETS = {
     [112503] = 65,  -- Fusion-Fire Core
     [37390] =  195, -- Meteorite Whetstone
     [133192] = 99,  -- Porcelain Crab
+    [77977] =  97,  -- Eye of Unmaking
     [61047] =  194, -- Vicious Gladiator's Insignia of Conquest
     [147003] = 20,  -- Barbaric Mindslaver
     [77210] =  97,  -- Bone-Link Fetish
@@ -801,46 +808,78 @@ Self.TRINKETS = {
     [137541] = 134, -- Moonlit Prism
     [147004] = 20,  -- Sea Star of the Depthmother
     [87057] =  194, -- Bottle of Infinite Stars
+    [77978] =  32,  -- Resolve of Undying
     [96456] =  20,  -- Inscribed Bag of Hydra-Spawn
     [147005] = 20,  -- Chalice of Moonlight
     [77211] =  32,  -- Indomitable Pride
     [110011] = 65,  -- Fires of the Sun
-    [139333] = 20,  -- Horn of Cenarius
+    [95817] =  20,  -- Lightning-Imbued Chalice
     [127594] = 195, -- Sphere of Red Dragon's Blood
+    [86802] =  65,  -- Lei Shen's Final Orders
     [147006] = 20,  -- Archive of Faith
     [139334] = 67,  -- Nature's Call
+    [77979] =  194, -- Vial of Shadows
     [45703] =  148, -- Spark of Hope
     [147007] = 20,  -- The Deceiver's Grand Design
     [110012] = 65,  -- Bonemaw's Big Toe
     [28590] =  148, -- Ribbon of Sacrifice
     [56285] =  65,  -- Might of the Ocean
     [139336] = 132, -- Bough of Corruption
+    [77980] =  132, -- Cunning of the Cruel
     [50339] =  148, -- Sliver of Pure Ice
     [147009] = 67,  -- Infernal Cinders
     [110013] = 65,  -- Emberscale Talisman
     [28830] =  227, -- Dragonspine Trophy
     [37264] =  132, -- Pendulum of Telluric Currents
+    [47216] =  32,  -- The Black Heart
     [147010] = 195, -- Cradle of Anguish
     [156345] = 32,  -- Royal Seal of King Llane
+    [86132] =  194, -- Bottle of Infinite Stars
     [113658] = 65,  -- Bottle of Infesting Spores
+    [161379] = 97,  -- Galecaller's Beak
+    [77981] =  20,  -- Windward Heart
+    [165580] = 97,  -- Ramping Amplitude Gigavolt Engine
     [96523] =  32,  -- Delicate Vial of the Sanguinaire
     [147011] = 67,  -- Vial of Ceaseless Toxins
     [161461] = 148, -- Doom's Hatred
     [110014] = 65,  -- Spores of Alacrity
+    [113854] = 20,  -- Mark of Rapid Replication
     [133201] = 148, -- Sea Star
+    [65118] =  97,  -- Crushing Weight
+    [112729] = 32,  -- Juggernaut's Focusing Crystal
+    [86805] =  20,  -- Qin-xi's Polarizing Seal
     [147012] = 67,  -- Umbral Moonglaives
     [37872] =  32,  -- Lavanthor's Talisman
+    [165572] = 194, -- Variable Intensity Gigavolt Oscillating Reactor
+    [165570] = 97,  -- Everchill Anchor
+    [113969] = 65,  -- Vial of Convulsive Shadows
     [56414] =  20,  -- Blood of Isiset
+    [133647] = 32,  -- Gift of Radiance
     [47271] =  148, -- Solace of the Fallen
     [47303] =  227, -- Death's Choice
     [46312] =  192, -- Vanquished Clutches of Yogg-Saron
     [110015] = 32,  -- Toria's Unseeing Eye
+    [95757] =  65,  -- Primordius' Talisman of Rage
+    [165579] = 194, -- Kimbul's Razor Claw
+    [165577] = 32,  -- Bwonsamdi's Bargain
+    [160655] = 97,  -- Syringe of Bloodborne Infirmity
+    [161462] = 194, -- Doom's Wake
     [154175] = 20,  -- Eonar's Compassion
+    [166794] = 194, -- Forest Lord's Razorleaf
+    [159611] = 97,  -- Razdunk's Big Red Button
     [45609] =  227, -- Comet's Trail
+    [151971] = 132, -- Sheath of Asara
+    [77983] =  32,  -- Indomitable Pride
+    [139327] = 32,  -- Unbridled Fury
+    [139333] = 20,  -- Horn of Cenarius
     [147015] = 195, -- Engine of Eradication
+    [139321] = 132, -- Swarming Plaguehive
     [110016] = 32,  -- Solar Containment Unit
+    [137406] = 67,  -- Terrorbound Nexus
+    [137398] = 132, -- Portable Manacracker
     [45929] =  20,  -- Sif's Remembrance
     [133461] = 132, -- Timbal's Focusing Crystal
+    [142160] = 134, -- Mrrgria's Favor
     [147016] = 134, -- Terror From Below
     [37873] =  148, -- Mark of the War Prisoner
     [142157] = 134, -- Aran's Relaxing Ruby
@@ -848,284 +887,304 @@ Self.TRINKETS = {
     [133206] = 194, -- Key to the Endless Chamber
     [96398] =  65,  -- Spark of Zandalar
     [113853] = 194, -- Captive Micro-Aberration
+    [137338] = 32,  -- Shard of Rokmora
     [147017] = 134, -- Tarnished Sentinel Medallion
+    [119194] = 132, -- Goren Soul Repository
     [110017] = 32,  -- Enforcer's Stun Grenade
+    [112754] = 194, -- Haromm's Talisman
     [47432] =  148, -- Solace of the Fallen
     [47464] =  227, -- Death's Choice
     [133463] = 195, -- Shard of Contempt
+    [95748] =  194, -- Talisman of Bloodlust
     [147018] = 134, -- Spectral Thurible
+    [95625] =  194, -- Renataki's Soul Charm
     [142159] = 67,  -- Bloodstained Handkerchief
+    [95727] =  32,  -- Ji-Kun's Rising Winds
     [112703] = 65,  -- Evil Eye of Galakras
+    [94512] =  194, -- Renataki's Soul Charm
     [133464] = 32,  -- Commendation of Kael'thas
+    [95641] =  20,  -- Horridon's Last Gasp
     [147019] = 134, -- Tome of Unraveling Sanity
+    [95654] =  65,  -- Spark of Zandalar
     [110018] = 32,  -- Kyrak's Vileblood Serum
     [45866] =  132, -- Elemental Focus Stone
     [137301] = 132, -- Corrupted Starlight
+    [95677] =  32,  -- Fortitude of the Zandalari
+    [95799] =  65,  -- Gaze of the Twins
+    [96385] =  20,  -- Horridon's Last Gasp
+    [86890] =  194, -- Terror in the Mists
+    [86332] =  194, -- Terror in the Mists
     [142161] = 32,  -- Inescapable Dread
     [87065] =  132, -- Light of the Cosmos
+    [24390] =  20,  -- Auslese's Light Channeler
     [137430] = 32,  -- Impenetrable Nerubian Husk
+    [86790] =  32,  -- Vial of Dragon's Blood
+    [77976] =  20,  -- Heart of Unliving
     [113983] = 65,  -- Forgemaster's Insignia
     [28288] =  195, -- Abacus of Violent Odds
     [110019] = 32,  -- Xeri'tac's Unhatched Egg Sac
     [127474] = 195, -- Vestige of Haldor
-    [160654] = 224, -- Vanquished Tendril of G'huun
+    [77973] =  194, -- Starcatcher Compass
+    [77969] =  20,  -- Seal of the Seven Signs
+    [77982] =  65,  -- Bone-Link Fetish
+    [160656] = 148, -- Twitching Tentacle of Xalzaix
     [147022] = 32,  -- Feverish Carapace
     [159616] = 97,  -- Gore-Crusted Butcher's Block
-    [159615] = 148, -- Ignition Mage's Fuse
+    [161376] = 97,  -- Prism of Dark Intensity
     [153544] = 32,  -- Eye of F'harg
-    [154176] = 65,  -- Khaz'goroth's Courage
-    [154174] = 194, -- Golganneth's Vitality
-    [140806] = 195, -- Convergence of Fates
-    [139330] = 20,  -- Heightened Senses
+    [161419] = 97,  -- Kraulok's Claw
+    [159631] = 148, -- Lady Waycrest's Music Box
+    [159628] = 194, -- Kul Tiran Cannonball Runner
+    [151969] = 134, -- Terminus Signaling Beacon
     [147023] = 32,  -- Leviathan's Hunger
-    [137400] = 32,  -- Coagulated Nightwell Residue
+    [151970] = 148, -- Vitality Resonator
     [142164] = 67,  -- Toe Knee's Promise
-    [151307] = 195, -- Void Stalker's Contract
-    [137378] = 20,  -- Bottled Hurricane
+    [154177] = 132, -- Norgannon's Prowess
+    [151958] = 20,  -- Tarratus Keystone
     [45931] =  195, -- Mjolnir Runestone
     [137433] = 150, -- Obelisk of the Void
     [128154] = 227, -- Grasp of the Defiler
     [147024] = 32,  -- Reliquary of the Damned
-    [113986] = 20,  -- Auto-Repairing Autoclave
+    [140791] = 32,  -- Royal Dagger Haft
     [142165] = 134, -- Deteriorated Construct Core
-    [112778] = 20,  -- Nazgrim's Burnished Insignia
+    [78002] =  97,  -- Bone-Link Fetish
     [137306] = 134, -- Oakheart's Gnarled Root
-    [112938] = 132, -- Black Blood of Y'Shaarj
+    [140809] = 132, -- Whispers in the Dark
     [56449] =  32,  -- Throngus's Finger
-    [96501] =  65,  -- Primordius' Talisman of Rage
+    [140808] = 67,  -- Draught of Souls
     [147025] = 32,  -- Recompiled Guardian Module
     [45292] =  148, -- Energy Siphon
-    [144146] = 32,  -- Iron Protector Talisman
-    [78000] =  148, -- Cunning of the Cruel
-    [77209] =  20,  -- Windward Heart
-    [156000] = 195, -- Wrathstone
     [34430] =  148, -- Glimmering Naaru Sliver
-    [160653] = 32,  -- Xalzaix's Veiled Eye
+    [95763] =  20,  -- Stolen Relic of Zuldazar
+    [128140] = 194, -- Smoldering Felblade Remnant
+    [128143] = 97,  -- Fragmented Runestone Etching
+    [128142] = 148, -- Pledge of Iron Loyalty
+    [116314] = 194, -- Blackheart Enforcer's Medallion
     [147026] = 32,  -- Shifting Cosmic Sliver
-    [161463] = 97,  -- Doom's Fury
+    [165568] = 194, -- Invocation of Yu'lon
     [142167] = 67,  -- Eye of Command
-    [32496] =  148, -- Memento of Tyrande
+    [113859] = 132, -- Quiescent Runestone
     [133216] = 148, -- Tendrils of Burrowing Dark
     [77989] =  148, -- Seal of the Seven Signs
-    [160652] = 194, -- Construct Overcharger
-    [160650] = 97,  -- Disc of Systematic Regression
-    [156234] = 195, -- Blood of the Old God
-    [160648] = 194, -- Frenetic Corpuscle
+    [112825] = 194, -- Sigil of Rampage
+    [112879] = 194, -- Ticking Ebon Detonator
+    [113986] = 20,  -- Auto-Repairing Autoclave
+    [165569] = 20,  -- Ward of Envelopment
     [142168] = 32,  -- Majordomo's Dinner Bell
-    [161462] = 194, -- Doom's Wake
-    [161381] = 194, -- Permafrost-Encrusted Heart
-    [161379] = 97,  -- Galecaller's Beak
     [161377] = 148, -- Azurethos' Singed Plumage
-    [154173] = 32,  -- Aggramar's Conviction
+    [87163] =  20,  -- Spirits of the Sun
+    [137540] = 20,  -- Concave Reflecting Lens
+    [65140] =  194, -- Essence of the Cyclone
+    [61033] =  194, -- Vicious Gladiator's Badge of Conquest
     [37844] =  148, -- Winged Talisman
     [56290] =  148, -- Sea Star
     [142169] = 32,  -- Raven Eidolon
-    [137540] = 20,  -- Concave Reflecting Lens
-    [137462] = 20,  -- Jewel of Insatiable Desire
+    [70402] =  148, -- Ruthless Gladiator's Insignia of Dominance
+    [156207] = 148, -- Pandora's Plea
     [77990] =  32,  -- Soulshifter Vortex
     [59519] =  148, -- Theralion's Mirror
-    [59354] =  20,  -- Jar of Ancient Remedies
+    [28727] =  148, -- Pendant of the Violet Eye
     [113987] = 32,  -- Battering Talisman
-    [133224] = 32,  -- Leaden Despair
-    [139335] = 32,  -- Grotesque Statuette
+    [165571] = 148, -- Incandescent Sliver
+    [160649] = 20,  -- Inoculating Extract
     [69167] =  97,  -- Vessel of Acceleration
     [116289] = 194, -- Bloodmaw's Tooth
     [137439] = 67,  -- Tiny Oozeling in a Jar
-    [113948] = 132, -- Darmac's Unstable Talisman
-    [28727] =  148, -- Pendant of the Violet Eye
-    [86132] =  194, -- Bottle of Infinite Stars
-    [73643] =  194, -- Cataclysmic Gladiator's Insignia of Conquest
-    [133300] = 65,  -- Mark of Khardros
     [133246] = 32,  -- Heart of Thunder
+    [158368] = 20,  -- Fangs of Intertwined Essence
+    [72901] =  65,  -- Rosary of Light
+    [73643] =  194, -- Cataclysmic Gladiator's Insignia of Conquest
+    [47213] =  132, -- Abyssal Rune
+    [94524] =  132, -- Unerring Vision of Lei Shen
     [137312] = 67,  -- Nightmare Egg Shell
     [137440] = 32,  -- Shivermaw's Jawbone
-    [158368] = 20,  -- Fangs of Intertwined Essence
-    [86388] =  132, -- Essence of Terror
-    [94512] =  194, -- Renataki's Soul Charm
-    [144160] = 194, -- Searing Words
     [96492] =  194, -- Talisman of Bloodlust
     [96546] =  194, -- Rune of Re-Origination
-    [116290] = 132, -- Emblem of Gushing Wounds
-    [96455] =  132, -- Breath of the Hydra
+    [88294] =  194, -- Flashing Steel Talisman
+    [165573] = 32,  -- Diamond-Laced Refracting Prism
+    [140802] = 194, -- Nightblooming Frond
     [77991] =  148, -- Insignia of the Corrupted Mind
-    [133766] = 20,  -- Nether Anti-Toxin
+    [116290] = 132, -- Emblem of Gushing Wounds
+    [137486] = 67,  -- Windscar Whetstone
     [156230] = 132, -- Flare of the Heavens
     [109999] = 194, -- Witherbark's Branch
-    [160651] = 132, -- Vigilant's Bloodshaper
-    [151956] = 20,  -- Garothi Feedback Conduit
+    [72899] =  97,  -- Varo'then's Brooch
+    [165574] = 97,  -- Grong's Primal Rage
+    [150522] = 132, -- The Skull of Gul'dan
+    [28223] =  148, -- Arcanist's Stone
     [133222] = 65,  -- Magnetite Mirror
     [11819] =  20,  -- Second Wind
     [113861] = 32,  -- Evergaze Arcane Eidolon
-    [65048] =  32,  -- Symbiotic Worm
-    [28223] =  148, -- Arcanist's Stone
     [156221] = 32,  -- The General's Heart
-    [96470] =  65,  -- Fabled Feather of Ji-Kun
-    [142162] = 20,  -- Fluctuating Energy
+    [37657] =  148, -- Spark of Life
+    [112768] = 132, -- Kardris' Toxic Totem
+    [28190] =  20,  -- Scarab of the Infinite Cycle
+    [77994] =  194, -- Wrath of Unchaining
     [137315] = 32,  -- Writhing Heart of Darkness
     [141535] = 97,  -- Ettin Fingernail
-    [28190] =  20,  -- Scarab of the Infinite Cycle
+    [136975] = 67,  -- Hunger of the Pack
     [40371] =  227, -- Bandit's Insignia
     [45518] =  132, -- Flare of the Heavens
-    [133462] = 20,  -- Vial of the Sunwell
-    [158320] = 20,  -- Revitalizing Voodoo Totem
+    [165576] = 132, -- Tidestorm Codex
+    [140807] = 32,  -- Infernal Contract
     [87072] =  65,  -- Lei Shen's Final Orders
-    [144477] = 194, -- Splinters of Agronox
+    [133224] = 32,  -- Leaden Despair
     [141536] = 148, -- Padawsen's Unlucky Charm
     [96471] =  32,  -- Ji-Kun's Rising Winds
-    [56320] =  148, -- Witching Hourglass
-    [110006] = 20,  -- Rukhran's Quill
-    [28034] =  195, -- Hourglass of the Unraveller
+    [144480] = 148, -- Dreadstone of Endless Shadows
     [87063] =  32,  -- Vial of Dragon's Blood
+    [28034] =  195, -- Hourglass of the Unraveller
     [159610] = 132, -- Vessel of Skittering Shadows
+    [116293] = 32,  -- Idol of Suppression
     [116292] = 65,  -- Mote of the Mountain
     [141537] = 194, -- Thrice-Accursed Compass
-    [133275] = 132, -- Sorrowsong
-    [56407] =  148, -- Anhuur's Hymnal
-    [69112] =  194, -- The Hungerer
-    [116318] = 32,  -- Stoneheart Idol
-    [113854] = 20,  -- Mark of Rapid Replication
+    [140805] = 20,  -- Ephemeral Paradox
+    [124236] = 65,  -- Unending Hunger
+    [86881] =  32,  -- Stuff of Nightmares
+    [165578] = 20,  -- Mirror of Entwined Fate
     [152645] = 32,  -- Eye of Shatug
     [59500] =  148, -- Fall of Mortality
+    [77205] =  97,  -- Creche of the Final Dragon
     [137446] = 134, -- Elementium Bomb Squirrel Generator
-    [96413] =  132, -- Wushoolay's Final Choice
+    [124225] = 66,  -- Soul Capacitor
     [50346] =  148, -- Sliver of Pure Ice
     [45263] =  195, -- Wrathstone
     [37111] =  20,  -- Soul Preserver
-    [47316] =  148, -- Reign of the Dead
     [94516] =  32,  -- Fortitude of the Zandalari
+    [113984] = 132, -- Blackiron Micro Crucible
     [133227] = 20,  -- Tear of Blood
-    [137484] = 20,  -- Flask of the Solemn Night
+    [77998] =  32,  -- Resolve of Undying
     [28370] =  20,  -- Bangle of Endless Blessings
-    [133645] = 20,  -- Naglfar Fare
+    [142158] = 20,  -- Faith's Crucible
     [156245] = 20,  -- Show of Faith
     [28418] =  148, -- Shiffar's Nexus-Horn
-    [140795] = 20,  -- Aluriel's Mirror
-    [27683] =  148, -- Quagmirran's Eye
-    [133305] = 20,  -- Corrupted Egg Shell
-    [96409] =  194, -- Bad Juju
-    [124235] = 65,  -- Rumbling Pebble
-    [94515] =  65,  -- Fabled Feather of Ji-Kun
-    [86332] =  194, -- Terror in the Mists
-    [68983] =  148, -- Eye of Blazing Power
-    [133644] = 67,  -- Memento of Angerboda
-    [77992] =  97,  -- Creche of the Final Dragon
-    [144482] = 97,  -- Fel-Oiled Infernal Machine
-    [47215] =  20,  -- Tears of the Vanquished
-    [137338] = 32,  -- Shard of Rokmora
-    [77999] =  194, -- Vial of Shadows
-    [127184] = 32,  -- Runed Fungalcap
-    [73648] =  194, -- Cataclysmic Gladiator's Badge of Conquest
-    [127245] = 148, -- Warp-Scarab Brooch
-    [87075] =  20,  -- Qin-xi's Polarizing Seal
-    [68926] =  148, -- Jaws of Defeat
-    [47214] =  195, -- Banner of Victory
-    [133252] = 20,  -- Rainsong
-    [140789] = 32,  -- Animated Exoskeleton
-    [124223] = 194, -- Fel-Spring Coil
-    [77996] =  20,  -- Heart of Unliving
-    [124237] = 65,  -- Discordant Chorus
-    [77993] =  194, -- Starcatcher Compass
-    [68982] =  148, -- Necromantic Focus
-    [86336] =  65,  -- Darkmist Vortex
-    [77995] =  132, -- Will of Unbinding
-    [77997] =  97,  -- Eye of Unmaking
-    [128141] = 148, -- Crackling Fel-Spark Plug
-    [137538] = 32,  -- Orb of Torment
-    [87167] =  194, -- Terror in the Mists
-    [11810] =  32,  -- Force of Will
-    [36972] =  148, -- Tome of Arcane Phenomena
-    [137452] = 20,  -- Thrumming Gossamer
-    [86144] =  65,  -- Lei Shen's Final Orders
-    [88355] =  194, -- Searing Words
-    [124224] = 194, -- Mirror of the Blademaster
-    [139329] = 194, -- Bloodthirsty Instinct
-    [69110] =  148, -- Variable Pulse Lightning Capacitor
-    [113985] = 194, -- Humming Blackiron Trigger
-    [133197] = 65,  -- Might of the Ocean
-    [133647] = 32,  -- Gift of Radiance
-    [68981] =  32,  -- Spidersilk Spindle
-    [116291] = 20,  -- Immaculate Living Mushroom
-    [50366] =  148, -- Althor's Abacus
-    [116317] = 65,  -- Storage House Key
-    [136715] = 67,  -- Spiked Counterweight
     [133281] = 32,  -- Impetuous Query
-    [142158] = 20,  -- Faith's Crucible
-    [77998] =  32,  -- Resolve of Undying
-    [113984] = 132, -- Blackiron Micro Crucible
+    [136715] = 67,  -- Spiked Counterweight
+    [116317] = 65,  -- Storage House Key
+    [96409] =  194, -- Bad Juju
+    [50366] =  148, -- Althor's Abacus
+    [116291] = 20,  -- Immaculate Living Mushroom
+    [68981] =  32,  -- Spidersilk Spindle
+    [165581] = 148, -- Crest of Pa'ku
+    [133197] = 65,  -- Might of the Ocean
+    [113985] = 194, -- Humming Blackiron Trigger
+    [144482] = 97,  -- Fel-Oiled Infernal Machine
+    [77999] =  194, -- Vial of Shadows
+    [139329] = 194, -- Bloodthirsty Instinct
+    [124224] = 194, -- Mirror of the Blademaster
+    [87075] =  20,  -- Qin-xi's Polarizing Seal
+    [73648] =  194, -- Cataclysmic Gladiator's Badge of Conquest
+    [86144] =  65,  -- Lei Shen's Final Orders
+    [27683] =  148, -- Quagmirran's Eye
+    [137452] = 20,  -- Thrumming Gossamer
+    [112778] = 20,  -- Nazgrim's Burnished Insignia
+    [36972] =  148, -- Tome of Arcane Phenomena
+    [11810] =  32,  -- Force of Will
+    [124223] = 194, -- Fel-Spring Coil
+    [87167] =  194, -- Terror in the Mists
+    [137538] = 32,  -- Orb of Torment
+    [128141] = 148, -- Crackling Fel-Spark Plug
+    [47214] =  195, -- Banner of Victory
+    [77995] =  132, -- Will of Unbinding
+    [86336] =  65,  -- Darkmist Vortex
+    [127245] = 148, -- Warp-Scarab Brooch
+    [77993] =  194, -- Starcatcher Compass
+    [124237] = 65,  -- Discordant Chorus
+    [77996] =  20,  -- Heart of Unliving
+    [140789] = 32,  -- Animated Exoskeleton
+    [133252] = 20,  -- Rainsong
+    [77997] =  97,  -- Eye of Unmaking
+    [68926] =  148, -- Jaws of Defeat
+    [88355] =  194, -- Searing Words
+    [68982] =  148, -- Necromantic Focus
+    [127184] = 32,  -- Runed Fungalcap
+    [69110] =  148, -- Variable Pulse Lightning Capacitor
+    [95772] =  132, -- Cha-Ye's Essence of Brilliance
+    [133645] = 20,  -- Naglfar Fare
+    [77992] =  97,  -- Creche of the Final Dragon
+    [133644] = 67,  -- Memento of Angerboda
+    [47316] =  148, -- Reign of the Dead
+    [86885] =  20,  -- Spirits of the Sun
+    [94515] =  65,  -- Fabled Feather of Ji-Kun
+    [124235] = 65,  -- Rumbling Pebble
+    [133305] = 20,  -- Corrupted Egg Shell
+    [140795] = 20,  -- Aluriel's Mirror
+    [47215] =  20,  -- Tears of the Vanquished
+    [137484] = 20,  -- Flask of the Solemn Night
     [113931] = 194, -- Beating Heart of the Mountain
-    [124225] = 66,  -- Soul Capacitor
-    [77205] =  97,  -- Creche of the Final Dragon
+    [68983] =  148, -- Eye of Blazing Power
+    [144477] = 194, -- Splinters of Agronox
     [69111] =  148, -- Jaws of Defeat
     [138222] = 20,  -- Vial of Nightmare Fog
     [127550] = 32,  -- Offering of Sacrifice
-    [24390] =  20,  -- Auslese's Light Channeler
-    [124236] = 65,  -- Unending Hunger
-    [140805] = 20,  -- Ephemeral Paradox
-    [116293] = 32,  -- Idol of Suppression
+    [116318] = 32,  -- Stoneheart Idol
+    [96470] =  65,  -- Fabled Feather of Ji-Kun
+    [56407] =  148, -- Anhuur's Hymnal
+    [133275] = 132, -- Sorrowsong
     [152289] = 20,  -- Highfather's Machination
     [113612] = 194, -- Scales of Doom
-    [144480] = 148, -- Dreadstone of Endless Shadows
-    [140807] = 32,  -- Infernal Contract
-    [65118] =  97,  -- Crushing Weight
-    [136975] = 67,  -- Hunger of the Pack
-    [77994] =  194, -- Wrath of Unchaining
+    [110006] = 20,  -- Rukhran's Quill
+    [56320] =  148, -- Witching Hourglass
+    [96413] =  132, -- Wushoolay's Final Choice
+    [158320] = 20,  -- Revitalizing Voodoo Totem
+    [133462] = 20,  -- Vial of the Sunwell
     [124226] = 194, -- Malicious Censer
-    [112768] = 132, -- Kardris' Toxic Totem
-    [37657] =  148, -- Spark of Life
+    [142162] = 20,  -- Fluctuating Energy
+    [69112] =  194, -- The Hungerer
     [138224] = 134, -- Unstable Horrorslime
     [137329] = 134, -- Figurehead of the Naglfar
-    [150522] = 132, -- The Skull of Gul'dan
-    [112729] = 32,  -- Juggernaut's Focusing Crystal
-    [72899] =  97,  -- Varo'then's Brooch
+    [65048] =  32,  -- Symbiotic Worm
+    [151956] = 20,  -- Garothi Feedback Conduit
+    [160651] = 132, -- Vigilant's Bloodshaper
     [59332] =  32,  -- Symbiotic Worm
     [56295] =  194, -- Grace of the Herald
-    [137486] = 67,  -- Windscar Whetstone
+    [133766] = 20,  -- Nether Anti-Toxin
     [138225] = 32,  -- Phantasmal Echo
-    [140802] = 194, -- Nightblooming Frond
-    [47216] =  32,  -- The Black Heart
-    [88294] =  194, -- Flashing Steel Talisman
+    [96455] =  132, -- Breath of the Hydra
+    [78000] =  148, -- Cunning of the Cruel
+    [156000] = 195, -- Wrathstone
     [88358] =  97,  -- Lessons of the Darkmaster
     [124227] = 132, -- Iron Reaver Piston
-    [94524] =  132, -- Unerring Vision of Lei Shen
-    [47213] =  132, -- Abyssal Rune
-    [72901] =  65,  -- Rosary of Light
+    [144160] = 194, -- Searing Words
+    [95711] =  132, -- Breath of the Hydra
+    [86388] =  132, -- Essence of Terror
     [27828] =  20,  -- Warp-Scarab Brooch
     [137459] = 67,  -- Chaos Talisman
-    [160649] = 20,  -- Inoculating Extract
+    [133300] = 65,  -- Mark of Khardros
     [45490] =  148, -- Pandora's Plea
     [45522] =  195, -- Blood of the Old God
-    [156207] = 148, -- Pandora's Plea
-    [70402] =  148, -- Ruthless Gladiator's Insignia of Dominance
-    [61033] =  194, -- Vicious Gladiator's Badge of Conquest
-    [65140] =  194, -- Essence of the Cyclone
+    [113948] = 132, -- Darmac's Unstable Talisman
+    [139335] = 32,  -- Grotesque Statuette
+    [59354] =  20,  -- Jar of Ancient Remedies
+    [96501] =  65,  -- Primordius' Talisman of Rage
     [78001] =  20,  -- Windward Heart
-    [87163] =  20,  -- Spirits of the Sun
+    [154173] = 32,  -- Aggramar's Conviction
     [96543] =  65,  -- Gaze of the Twins
     [124228] = 132, -- Desecrated Shadowmoon Insignia
-    [112879] = 194, -- Ticking Ebon Detonator
-    [112825] = 194, -- Sigil of Rampage
-    [113859] = 132, -- Quiescent Runestone
-    [113969] = 65,  -- Vial of Convulsive Shadows
-    [116314] = 194, -- Blackheart Enforcer's Medallion
-    [128142] = 148, -- Pledge of Iron Loyalty
-    [128143] = 97,  -- Fragmented Runestone Etching
-    [128140] = 194, -- Smoldering Felblade Remnant
-    [142160] = 134, -- Mrrgria's Favor
+    [161381] = 194, -- Permafrost-Encrusted Heart
+    [95712] =  20,  -- Inscribed Bag of Hydra-Spawn
+    [160648] = 194, -- Frenetic Corpuscle
+    [156234] = 195, -- Blood of the Old God
+    [160650] = 97,  -- Disc of Systematic Regression
+    [160652] = 194, -- Construct Overcharger
+    [159615] = 148, -- Ignition Mage's Fuse
+    [161463] = 97,  -- Doom's Fury
+    [160653] = 32,  -- Xalzaix's Veiled Eye
     [56328] =  194, -- Key to the Endless Chamber
-    [140808] = 67,  -- Draught of Souls
-    [140809] = 132, -- Whispers in the Dark
-    [78002] =  97,  -- Bone-Link Fetish
-    [140791] = 32,  -- Royal Dagger Haft
+    [77209] =  20,  -- Windward Heart
+    [144146] = 32,  -- Iron Protector Talisman
+    [137462] = 20,  -- Jewel of Insatiable Desire
+    [112938] = 132, -- Black Blood of Y'Shaarj
     [88360] =  20,  -- Price of Progress
     [124229] = 132, -- Unblinking Gaze of Sethe
-    [151958] = 20,  -- Tarratus Keystone
-    [154177] = 132, -- Norgannon's Prowess
-    [151970] = 148, -- Vitality Resonator
-    [151969] = 134, -- Terminus Signaling Beacon
-    [159628] = 194, -- Kul Tiran Cannonball Runner
-    [159631] = 148, -- Lady Waycrest's Music Box
-    [161419] = 97,  -- Kraulok's Claw
-    [161376] = 97,  -- Prism of Dark Intensity
+    [137378] = 20,  -- Bottled Hurricane
+    [151307] = 195, -- Void Stalker's Contract
+    [137400] = 32,  -- Coagulated Nightwell Residue
+    [139330] = 20,  -- Heightened Senses
+    [140806] = 195, -- Convergence of Fates
+    [154174] = 194, -- Golganneth's Vitality
+    [154176] = 65,  -- Khaz'goroth's Courage
+    [32496] =  148, -- Memento of Tyrande
     [144113] = 194, -- Windswept Pages
-    [160656] = 148, -- Twitching Tentacle of Xalzaix
+    [160654] = 224, -- Vanquished Tendril of G'huun
 }
