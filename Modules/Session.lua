@@ -5,37 +5,35 @@ local Comm, GUI, Roll, Unit, Util = Addon.Comm, Addon.GUI, Addon.Roll, Addon.Uni
 local Self = Addon.Session
 
 -- Events
-Self.events = CB:New(Self, "On", "Off", "Unsubscribe")
 
 --- Fired when requesting a ML
 -- @string target The target, group if omitted
-Self.EVENT_REQUEST = "REQUEST"
+Self.EVENT_REQUEST = "PLR_SESSION_REQUEST"
 
 --- Fired when a session is started
 -- @string unit   The masterlooter
 -- @table  rules  The session rules
 -- @bool   silent Whether other players are informed about it
-Self.EVENT_START = "START"
+Self.EVENT_START = "PLR_SESSION_START"
 
 --- Fired when a session is stopped/cleared
 -- @bool silent Whether other players are informed about it
-Self.EVENT_CLEAR = "CLEAR"
+Self.EVENT_CLEAR = "PLR_SESSION_CLEAR"
 
 --- Fired when rules are set or changed
 -- @table  rules  The session rules
 -- @bool   silent Whether other players are informed about it
-Self.EVENT_RULES = "RULES"
+Self.EVENT_RULES = "PLR_SESSION_RULES"
 
 --- Catchall event that fires for all events in Self.EVENTS
 -- @string event The original event
 -- @param  ...   The original event parameters
-Self.EVENT_CHANGE = "CHANGE"
+Self.EVENT_CHANGE = "PLR_SESSION_CHANGE"
+
 Self.EVENTS = {Self.EVENT_START, Self.EVENT_CLEAR, Self.EVENT_RULES}
 
-local changeFn = function (...) Self.events:Fire(Self.EVENT_CHANGE, ...) end
-for _,ev in pairs(Self.EVENTS) do
-    Self:On(ev, changeFn)
-end
+local changeFn = function (...) Self:SendMessage(Self.EVENT_CHANGE, ...) end
+for _,e in pairs(Self.EVENTS) do Self:SendMessage(e, changeFn) end
 
 Self.masterlooter = nil
 Self.rules = {}

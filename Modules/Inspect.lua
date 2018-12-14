@@ -235,7 +235,8 @@ function Self:OnEnable()
     Self:RegisterEvent("PARTY_MEMBER_ENABLE")
     Self:RegisterEvent("INSPECT_READY")
     Self:RegisterEvent("CHAT_MSG_SYSTEM")
-    Addon.On(Self, Addon.EVENT_TRACKING_CHANGE, "TRACKING_CHANGE")
+    Self:RegisterMessage(Self.EVENT_ACTIVE_CHANGE)
+    Self:RegisterMessage(Self.EVENT_TRACKING_CHANGE)
 
     -- IsInGroup doesn't work correctly right after logging in, so check again a few seconds later
     if not Self.timer then
@@ -290,13 +291,13 @@ function Self.CHAT_MSG_SYSTEM(_, _, msg)
     end
 end
 
-function Self.ACTIVE_CHANGE(active)
+function Self.PLR_ACTIVE_CHANGE(active)
     if not active then
         Self.Clear()
     end
 end
 
-function Self.TRACKING_CHANGE(tracking)
+function Self.PLR_TRACKING_CHANGE(tracking)
     if tracking then
         Self.Queue()
         Self.Start()

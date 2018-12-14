@@ -357,10 +357,14 @@ end
 --                      Events                       --
 -------------------------------------------------------
 
--- Register for roll changes
-Roll.On(Self, Roll.EVENT_CHANGE, function (_, e, roll)
+function Self:OnEnable()
+    Self:RegisterMessage(Roll.EVENT_CHANGE, Self.ROLL_CHANGE)
+end
+function Self:OnDisable() Self:UnregisterAllMessages() end
+
+function Self.ROLL_CHANGE(_, e, roll)
     if Addon.db.profile.ui.showActionsWindow and Util.In(e, Roll.EVENT_END, Roll.EVENT_TOGGLE) and roll:GetActionRequired() then
         Self.Show()
     end
     Self.Update()
-end)
+end

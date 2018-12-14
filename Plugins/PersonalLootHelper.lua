@@ -83,9 +83,9 @@ end
 function Self:OnEnable()
     -- Register events
     Self:RegisterEvent("GROUP_JOINED")
-    Roll.On(Self, Roll.EVENT_START, "ROLL_START")
-    Roll.On(Self, Roll.EVENT_BID, "ROLL_BID")
-    Roll.On(Self, Roll.EVENT_AWARD, "ROLL_AWARD")
+    Self:RegisterMessage(Roll.EVENT_START, "ROLL_START")
+    Self:RegisterMessage(Roll.EVENT_BID, "ROLL_BID")
+    Self:RegisterMessage(Roll.EVENT_AWARD, "ROLL_AWARD")
 
     if IsInGroup() then
         Self.GROUP_JOINED()
@@ -93,16 +93,14 @@ function Self:OnEnable()
 end
 
 function Self:OnDisable()
-    -- Unregister events
-    Self:UnregisterEvent("GROUP_JOINED")
-    Roll.Unsubscribe(Self)
+    Self:UnregisterAllEvents()
+    Self:UnregisterAllMessages()
 end
 
 function Self.GROUP_JOINED()
     Self.Send(Self.ACTION_CHECK, nil, Unit.FullName("player"))
 end
 
--- Roll.EVENT_START
 function Self.ROLL_START(_, _, roll)
     if roll.isOwner and not roll.isTest then
         -- Send TRADE message
@@ -110,7 +108,6 @@ function Self.ROLL_START(_, _, roll)
     end
 end
 
--- Roll.EVENT_BID
 function Self.ROLL_BID(_, _, roll, bid, fromUnit, _, isImport)
     local fromSelf = Unit.IsSelf(fromUnit)
 
@@ -128,7 +125,6 @@ function Self.ROLL_BID(_, _, roll, bid, fromUnit, _, isImport)
     end
 end
 
--- Roll.EVENT_AWARD
 function Self.ROLL_AWARD(_, _, roll)
     if roll.winner and not roll.isWinner and roll.isOwner and Addon.GetCompAddon(roll.winner) == Self.NAME and not roll.isTest then
         -- Send OFFER message

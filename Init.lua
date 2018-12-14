@@ -8,7 +8,7 @@ Addon.VERSION = tonumber(Version) or Version
 Addon.DEBUG = false
 
 -- Core
-Addon.GUI = {}
+Addon.GUI = Addon:NewModule("GUI", nil, "AceEvent-3.0")
 Addon.Options = {}
 Addon.Roll = {}
 

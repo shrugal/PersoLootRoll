@@ -42,34 +42,33 @@ Self.ANSWER_NEED = "NEED"
 Self.ANSWER_GREED = "GREED"
 
 -- Events
-Self.events = CB:New(Self, "On", "Off", "Unsubscribe")
 
 --- Fires when a new roll is added
 -- @table roll The roll
-Self.EVENT_ADD = "ADD"
+Self.EVENT_ADD = "PLR_ROLL_ADD"
 
 --- Fires when a roll is cleared
 -- @table roll The roll
-Self.EVENT_CLEAR = "CLEAR"
+Self.EVENT_CLEAR = "PLR_ROLL_CLEAR"
 
 --- Fires when a roll starts
 -- @table roll    The roll
 -- @int   started The time when it started
-Self.EVENT_START = "START"
+Self.EVENT_START = "PLR_ROLL_START"
 
 --- Fires when a roll is restarted
 -- @table roll The roll
-Self.EVENT_RESTART = "RESTART"
+Self.EVENT_RESTART = "PLR_ROLL_RESTART"
 
 --- Fires when a roll is canceled
 -- @table roll The roll
-Self.EVENT_CANCEL = "CANCEL"
+Self.EVENT_CANCEL = "PLR_ROLL_CANCEL"
 
 --- Fires when the player advertises a roll in chat
 -- @table roll     The roll
 -- @bool  manually Whether it was triggered manually by the player (e.g. through the UI)
 -- @bool  silent   Whether a status update was send afterwards
-Self.EVENT_ADVERTISE = "ADVERTISE"
+Self.EVENT_ADVERTISE = "PLR_ROLL_ADVERTISE"
 
 --- Fires when someone bids on a roll
 -- @table     roll       The roll
@@ -77,50 +76,51 @@ Self.EVENT_ADVERTISE = "ADVERTISE"
 -- @string    fromUnit   The unit the bid came from
 -- @int       rollResult The random roll result (1-100)
 -- @bool      isImport   Whether it was an import received from the roll owner
-Self.EVENT_BID = "BID"
+Self.EVENT_BID = "PLR_ROLL_BID"
 
 --- Fires when someone votes on a roll
 -- @table     roll       The roll
 -- @int|float bid        The unit being voted for
 -- @string    fromUnit   The unit the vote came from
 -- @bool      isImport   Whether it was an import received from the roll owner
-Self.EVENT_VOTE = "VOTE"
+Self.EVENT_VOTE = "PLR_ROLL_VOTE"
 
 --- Fires when a roll ends
 -- @table roll  The roll
 -- @int   ended The time when it ended
-Self.EVENT_END = "END"
+Self.EVENT_END = "PLR_ROLL_END"
 
 --- Fires when a roll winner (or no winner) is picked
 -- @table  roll       The roll
 -- @string winner     The winner (optional)
 -- @string prevWinner The previous winner (optional)
-Self.EVENT_AWARD = "AWARD"
+Self.EVENT_AWARD = "PLR_ROLL_AWARD"
 
 --- Fires when the roll item is traded
 -- @table  roll   The roll
 -- @string target The unit being traded to
-Self.EVENT_TRADE = "TRADE"
+Self.EVENT_TRADE = "PLR_ROLL_TRADE"
 
 --- Fires when a roll's visibility in GUIs is changed
 -- @table roll   The roll
 -- @bool  hidden Whether the roll is now hidden or not
-Self.EVENT_TOGGLE = "TOGGLE"
+Self.EVENT_TOGGLE = "PLR_ROLL_TOGGLE"
 
 --- Fires when a whisper message is received from the owner/winner
 -- @table  roll The roll
 -- @string msg  The message
 -- @string unit The sender
-Self.EVENT_CHAT = "CHAT"
+Self.EVENT_CHAT = "PLR_ROLL_CHAT"
 
 --- Catchall event that fires for all events in Self.EVENTS
 -- @string event The original event
 -- @param  ...   The original event parameters
-Self.EVENT_CHANGE = "CHANGE"
+Self.EVENT_CHANGE = "PLR_ROLL_CHANGE"
+
 Self.EVENTS = {Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_RESTART, Self.EVENT_CANCEL, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_AWARD, Self.EVENT_TRADE, Self.EVENT_TOGGLE, Self.EVENT_CHAT}
 
-local changeFn = function (...) Self.events:Fire(Self.EVENT_CHANGE, ...) end
-for _,ev in pairs(Self.EVENTS) do Self:On(ev, changeFn) end
+local changeFn = function (...) Addon:SendMessage(Self.EVENT_CHANGE, ...) end
+for _,e in pairs(Self.EVENTS) do Addon:RegisterMessage(e, changeFn) end
 
 -- Custom award methods
 Self.AWARD_VOTES = "VOTES"

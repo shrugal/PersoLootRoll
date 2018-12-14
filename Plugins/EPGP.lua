@@ -280,9 +280,9 @@ function Self:OnEnable()
     Roll.AddCustomAwardMethod("epgp", Self.DetermineWinner, Self.db.profile.awardBefore)
 
     -- Register events
-    Roll.On(Self, Roll.EVENT_AWARD, "ROLL_AWARD")
-    Roll.On(Self, Roll.EVENT_RESTART, "ROLL_RESTART")
-    Roll.On(Self, Roll.EVENT_CLEAR, "ROLL_CLEAR")
+    Self:RegisterMessage(Roll.EVENT_AWARD, "ROLL_AWARD")
+    Self:RegisterMessage(Roll.EVENT_RESTART, "ROLL_RESTART")
+    Self:RegisterMessage(Roll.EVENT_CLEAR, "ROLL_CLEAR")
     EPGP.RegisterCallback(Self, "StandingsChanged", "EPGP_STANDINGS_CHANGED")
 end
 
@@ -292,11 +292,10 @@ function Self:OnDisable()
     Roll.RemoveCustomAwardMethod("epgp")
 
     -- Unregister events
-    Roll.Unsubscribe(Self)
+    Self:UnregisterAllMessages()
     EPGP.UnregisterCallback(Self, "StandingsChanged")
 end
 
--- Roll.EVENT_AWARD
 function Self.ROLL_AWARD(_, _, roll, winner, prevWinner)
     if Session.IsMasterlooter() and roll.isOwner and not roll.isTest then
         Self.UndoGPCredit(roll)
@@ -310,17 +309,14 @@ function Self.ROLL_AWARD(_, _, roll, winner, prevWinner)
     end
 end
 
--- Roll.EVENT_RESTART
 function Self.ROLL_RESTART(_, _, roll)
     Self.UndoGPCredit(roll)
 end
 
--- Roll.EVENT_CLEAR
 function Self.ROLL_CLEAR(_, _, roll)
     Self.credited[roll.id] = nil
 end
 
--- EPGP.StandingsChanged
 function Self.EPGP_STANDINGS_CHANGED()
     GUI.Rolls.Update()
 end

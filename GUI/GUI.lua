@@ -6,38 +6,37 @@ local Comm, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Com
 local Self = Addon.GUI
 
 -- Events
-Self.events = CB:New(Self, "On", "Off", "Unsubscribe")
 
 --- Fires when a custom player column was added
 -- @table entry The entry that was added/removed
-Self.EVENT_PLAYER_COLUMN_ADD = "PLAYER_COLUMN_ADD"
+Self.EVENT_PLAYER_COLUMN_ADD = "PLR_GUI_PLAYER_COLUMN_ADD"
 
 --- Fires when a custom player column was changed
 -- @table entry The entry that was changed
 -- @param ...   The changed properties as key-value pairs
-Self.EVENT_PLAYER_COLUMN_UPDATE = "PLAYER_COLUMN_UPDATE"
+Self.EVENT_PLAYER_COLUMN_UPDATE = "PLR_GUI_PLAYER_COLUMN_UPDATE"
 
 --- Fires when a custom player column was removed
 -- @table entry The entry that was removed
 -- @int   i     The position it was at
-Self.EVENT_PLAYER_COLUMN_REMOVE = "PLAYER_COLUMN_REMOVE"
+Self.EVENT_PLAYER_COLUMN_REMOVE = "PLR_GUI_PLAYER_COLUMN_REMOVE"
 
 --- Catchall event that fires for all of the above
 -- @string event The original event
 -- @param  ...   The original event parameters
-Self.EVENT_PLAYER_COLUMN_CHANGE = "PLAYER_COLUMN_CHANGE"
+Self.EVENT_PLAYER_COLUMN_CHANGE = "PLR_GUI_PLAYER_COLUMN_CHANGE"
 
-local changeFn = function (...) Self.events:Fire(Self.EVENT_PLAYER_COLUMN_CHANGE, ...) end
-for i,ev in Util.Each(Self.EVENT_PLAYER_COLUMN_ADD, Self.EVENT_PLAYER_COLUMN_UPDATE, Self.EVENT_PLAYER_COLUMN_REMOVE) do
-    Self:On(ev, changeFn)
-end
+Self.EVENTS = {Self.EVENT_PLAYER_COLUMN_ADD, Self.EVENT_PLAYER_COLUMN_UPDATE, Self.EVENT_PLAYER_COLUMN_REMOVE}
+
+local changeFn = function (...) Self:SendMessage(Self.EVENT_PLAYER_COLUMN_CHANGE, ...) end
+for i,e in pairs(Self.EVENTS) do Self:RegisterMessage(e, changeFn) end
 
 -- Custom player columns
 Self.customPlayerColumns = {}
 
 -- Windows
-Self.Rolls = {}
-Self.Actions = {}
+Self.Rolls = Self:NewModule("Rolls", nil, "AceEvent-3.0")
+Self.Actions = Self:NewModule("Actions", nil, "AceEvent-3.0")
 
 -- Row highlight frame
 Self.HIGHLIGHT = CreateFrame("Frame", nil, UIParent)

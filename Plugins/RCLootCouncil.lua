@@ -335,11 +335,11 @@ function Self:OnEnable()
     -- Register events
     Self:RegisterEvent("GROUP_JOINED")
     Self:RegisterEvent("PARTY_LEADER_CHANGED")
-    Roll.On(Self, Roll.EVENT_ADD, "ROLL_ADD")
-    Roll.On(Self, Roll.EVENT_BID, "ROLL_BID")
-    Roll.On(Self, Roll.EVENT_VOTE, "ROLL_VOTE")
-    Roll.On(Self, Roll.EVENT_TRADE, "ROLL_TRADE")
-    Session.On(Self, Session.EVENT_REQUEST, "SESSION_REQUEST")
+    Self:RegisterMessage(Roll.EVENT_ADD, "ROLL_ADD")
+    Self:RegisterMessage(Roll.EVENT_BID, "ROLL_BID")
+    Self:RegisterMessage(Roll.EVENT_VOTE, "ROLL_VOTE")
+    Self:RegisterMessage(Roll.EVENT_TRADE, "ROLL_TRADE")
+    Self:RegisterMessage(Session.EVENT_REQUEST, "SESSION_REQUEST")
     
     -- Send version check
     if IsInGroup() then
@@ -349,11 +349,8 @@ function Self:OnEnable()
 end
 
 function Self:OnDisable()
-    -- Unregister events
-    Self:UnregisterEvent("GROUP_JOINED")
-    Self:UnregisterEvent("PARTY_LEADER_CHANGED")
-    Roll.Unsubscribe(Self)
-    Session.Unsubscribe(Self)
+    Self:UnregisterAllEvents()
+    Self:UnregisterAllMessages()
 end
 
 function Self.GROUP_JOINED()
@@ -370,12 +367,10 @@ function Self.PARTY_LEADER_CHANGED()
     end
 end
 
--- Roll.EVENT_ADD
 function Self.ROLL_ADD(_, _, roll)
     -- TODO
 end
 
--- Roll.EVENT_BID
 function Self.ROLL_BID(_, _, roll, bid, fromUnit, rollResult, isImport)
     local sId = Util.TblFind(Self.session, roll)
     if sId and Unit.IsSelf(fromUnit) and not isImport then
@@ -383,17 +378,14 @@ function Self.ROLL_BID(_, _, roll, bid, fromUnit, rollResult, isImport)
     end
 end
 
--- Roll.EVENT_VOTE
 function Self.ROLL_VOTE(_, _, roll, vote, fromUnit, isImport)
     -- TODO
 end
 
--- Roll.EVENT_TRADE
 function Self.ROLL_TRADE(_, _, roll, target)
     -- TODO
 end
 
--- Session.EVENT_REQUEST
 function Self.SESSION_REQUEST(_, _, target)
     if not target or UnitIsGroupLeader(target) then
         Self.offerShown = nil

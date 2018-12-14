@@ -29,33 +29,32 @@ Self.disabled = {}
 Self.compAddonUsers = {}
 
 -- State
-Self.STATE_DISABLED = 0
-Self.STATE_ENABLED = 1
-Self.STATE_ACTIVE = 2
-Self.STATE_TRACKING = 3
+Self.STATE_DISABLED = 0 -- Disabled in settings
+Self.STATE_ENABLED = 1  -- Enabled but not in a group
+Self.STATE_ACTIVE = 2   -- In a group but not tracking loot because of constraints from settings (e.g. "only masterloot" enabled and no masterlooter)
+Self.STATE_TRACKING = 3 -- Actively tracking loot
 Self.STATES = {"ENABLED", "ACTIVE", "TRACKING"}
 
 Self.state = nil
 
 -- Events
-Self.events = CB:New(Self, "On", "Off", "Unsubscribe")
 
 --- Fired when the addon state changes
 -- @int toState The new state
 -- @int fromState The previous state
-Self.EVENT_STATE_CHANGE = "STATE_CHANGE"
+Self.EVENT_STATE_CHANGE = "PLR_STATE_CHANGE"
 
 --- Fired when the addon is enabled or disabled
 -- @bool enabled Whether the addon is enabled
-Self.EVENT_ENABLED_CHANGE = "STATE_ENABLED_CHANGE"
+Self.EVENT_ENABLED_CHANGE = "PLR_STATE_ENABLED_CHANGE"
 
 --- Fired when the addon is (de)activated
 -- @bool active Whether the addon is active
-Self.EVENT_ACTIVE_CHANGE = "STATE_ACTIVE_CHANGE"
+Self.EVENT_ACTIVE_CHANGE = "PLR_STATE_ACTIVE_CHANGE"
 
 --- Fired when the addon starts/stops loot tracking
 -- @bool tracking Whether the addon is tracking
-Self.EVENT_TRACKING_CHANGE = "STATE_TRACKING_CHANGE"
+Self.EVENT_TRACKING_CHANGE = "PLR_STATE_TRACKING_CHANGE"
 
 -- Other
 Self.rolls = Util.TblCounter()
