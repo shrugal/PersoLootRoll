@@ -48,7 +48,7 @@ function Self.EnableGroupLootRollHook()
 
                     return item.texture, item.name, 1, item.quality, item.bindType == LE_ITEM_BIND_ON_ACQUIRE,
                         true,                   -- Can need
-                        roll:GetOwnerAddon(),  -- Can greed
+                        roll:GetOwnerAddon(),   -- Can greed
                         not disReason,          -- Can disenchant
                         5,                      -- Reason need
                         "PLR_NO_ADDON",         -- Reason greed

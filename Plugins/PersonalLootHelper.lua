@@ -2,7 +2,7 @@ local Name, Addon = ...
 local Comm, Roll, Session, Unit, Util = Addon.Comm, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
 local Self = Addon.PLH
 
-Self.NAME = "Personal Loot Helper"
+Self.NAME = "PersonalLootHelper"
 Self.VERSION = "2.08"
 Self.PREFIX = "PLH"
 
@@ -16,6 +16,8 @@ Self.ACTION_KEEP = "KEEP"
 Self.ACTION_TRADE = "TRADE"
 Self.ACTION_REQUEST = "REQUEST"
 Self.ACTION_OFFER = "OFFER"
+
+Self.initialized = false
 
 -------------------------------------------------------
 --                        Comm                       --
@@ -76,39 +78,41 @@ end)
 --                    Events/Hooks                   --
 -------------------------------------------------------
 
+function Self:ShouldBeEnabled()
+    return not IsAddOnLoaded(Self.NAME)
+        and Addon:IsActive()
+end
+
 function Self:OnInitialize()
-    Self:SetEnabledState(not IsAddOnLoaded(Self.NAME))
+    Self:CheckState()
+    Self:RegisterMessage(Addon.EVENT_ACTIVE_CHANGE, Self.CheckState)
 end
 
 function Self:OnEnable()
     -- Register events
-    Self:RegisterEvent("GROUP_JOINED")
     Self:RegisterMessage(Roll.EVENT_START, "ROLL_START")
     Self:RegisterMessage(Roll.EVENT_BID, "ROLL_BID")
     Self:RegisterMessage(Roll.EVENT_AWARD, "ROLL_AWARD")
-
-    if IsInGroup() then
-        Self.GROUP_JOINED()
-    end
-end
-
-function Self:OnDisable()
-    Self:UnregisterAllEvents()
-    Self:UnregisterAllMessages()
-end
-
-function Self.GROUP_JOINED()
+    
+    -- Send version check
     Self.Send(Self.ACTION_CHECK, nil, Unit.FullName("player"))
 end
 
-function Self.ROLL_START(_, _, roll)
+function Self:OnDisable()
+    -- Unregister events
+    Self:UnregisterMessage(Roll.EVENT_START)
+    Self:UnregisterMessage(Roll.EVENT_BID)
+    Self:UnregisterMessage(Roll.EVENT_AWARD)
+end
+
+function Self:ROLL_START(_, roll)
     if roll.isOwner and not roll.isTest then
         -- Send TRADE message
         Self.Send(Self.ACTION_TRADE, roll, roll.item.link)
     end
 end
 
-function Self.ROLL_BID(_, _, roll, bid, fromUnit, _, isImport)
+function Self:ROLL_BID(_, roll, bid, fromUnit, _, isImport)
     local fromSelf = Unit.IsSelf(fromUnit)
 
     if not isImport and not roll.isTest then
@@ -117,7 +121,7 @@ function Self.ROLL_BID(_, _, roll, bid, fromUnit, _, isImport)
                 -- Send KEEP message
                 Self.Send(Self.ACTION_KEEP, roll)
             end
-        elseif fromSelf and not roll.ownerId and bid ~= Roll.BID_PASS and roll:GetOwnerAddon() == Self.NAME then
+        elseif fromSelf and not roll.ownerId and bid ~= Roll.BID_PASS and Addon.GetCompAddonUser(roll.owner, Self.NAME) then
             -- Send REQUEST message
             local request = Util.Select(bid, Roll.BID_NEED, Self.BID_NEED, Roll.BID_DISENCHANT, Self.BID_DISENCHANT, Self.BID_GREED)
             Self.Send(Self.ACTION_REQUEST, roll, request)
@@ -125,7 +129,7 @@ function Self.ROLL_BID(_, _, roll, bid, fromUnit, _, isImport)
     end
 end
 
-function Self.ROLL_AWARD(_, _, roll)
+function Self:ROLL_AWARD(_, roll)
     if roll.winner and not roll.isWinner and roll.isOwner and Addon.GetCompAddonUser(roll.winner, Self.NAME) and not roll.isTest then
         -- Send OFFER message
         Self.Send(Self.ACTION_OFFER, roll, Unit.FullName(roll.winner))

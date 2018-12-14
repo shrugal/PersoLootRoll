@@ -7,8 +7,26 @@ Addon.ABBR = "PLR"
 Addon.VERSION = tonumber(Version) or Version
 Addon.DEBUG = false
 
+-- Modules
+
+Addon.Module = {}
+local Module = Addon.Module
+
+function Module:ShouldBeEnabled() return self.enableState end
+
+function Module:CheckState()
+    if Addon.Util.BoolXOR(self:ShouldBeEnabled(), self.enabledState) then
+        if not self.initialized then
+            self:SetEnabledState(not self.enabledState)
+        else
+            self[self.enabledState and "Disable" or "Enable"](self)
+        end
+    end
+    self.initialized = true
+end
+
 -- Core
-Addon.GUI = Addon:NewModule("GUI", nil, "AceEvent-3.0")
+Addon.GUI = Addon:NewModule("GUI", Module, "AceEvent-3.0")
 Addon.Options = {}
 Addon.Roll = {}
 
@@ -20,14 +38,14 @@ Addon.Unit = {}
 Addon.Util = {}
 
 -- Modules
-Addon.Inspect = Addon:NewModule("Inspect", nil, "AceEvent-3.0", "AceTimer-3.0")
-Addon.Session = Addon:NewModule("Session", nil, "AceEvent-3.0")
-Addon.Trade = Addon:NewModule("Trade", nil, "AceEvent-3.0")
+Addon.Inspect = Addon:NewModule("Inspect", Module, "AceEvent-3.0", "AceTimer-3.0")
+Addon.Session = Addon:NewModule("Session", Module, "AceEvent-3.0")
+Addon.Trade = Addon:NewModule("Trade", Module, "AceEvent-3.0")
 
 -- Plugins
-Addon.EPGP = Addon:NewModule("EPGP", nil, "AceEvent-3.0", "AceTimer-3.0")
-Addon.PLH = Addon:NewModule("PLH", nil, "AceEvent-3.0")
-Addon.RCLC = Addon:NewModule("RCLC", nil, "AceEvent-3.0", "AceTimer-3.0", "AceSerializer-3.0")
+Addon.EPGP = Addon:NewModule("EPGP", Module, "AceEvent-3.0", "AceTimer-3.0")
+Addon.PLH = Addon:NewModule("PLH", Module, "AceEvent-3.0")
+Addon.RCLC = Addon:NewModule("RCLC", Module, "AceEvent-3.0", "AceTimer-3.0", "AceSerializer-3.0")
 
 -- TODO: DEBUG
 if true or Addon.DEBUG then

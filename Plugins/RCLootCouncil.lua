@@ -327,13 +327,19 @@ end)
 --                    Events/Hooks                   --
 -------------------------------------------------------
 
+function Self:ShouldBeEnabled()
+    return not IsAddOnLoaded(Self.NAME)
+        and Addon:IsActive()
+        and false -- TODO
+end
+
 function Self:OnInitialize()
-    Self:SetEnabledState(false and not IsAddOnLoaded(Self.NAME)) -- TODO
+    Self:CheckState()
+    Self:RegisterMessage(Addon.EVENT_ACTIVE_CHANGE, Self.CheckState)
 end
 
 function Self:OnEnable()
     -- Register events
-    Self:RegisterEvent("GROUP_JOINED")
     Self:RegisterEvent("PARTY_LEADER_CHANGED")
     Self:RegisterMessage(Roll.EVENT_ADD, "ROLL_ADD")
     Self:RegisterMessage(Roll.EVENT_BID, "ROLL_BID")
@@ -342,22 +348,20 @@ function Self:OnEnable()
     Self:RegisterMessage(Session.EVENT_REQUEST, "SESSION_REQUEST")
     
     -- Send version check
-    if IsInGroup() then
-        Self.timers.version = Self:ScheduleTimer(Self.Send, 5, Self.CMD_VERSION_CHECK, Comm.TYPE_GROUP, Self.VERSION)
-        Self.timers.sync = Self:ScheduleTimer(Self.Send, 5, Self.CMD_SYNC_REQ)
-    end
+    Self.timers.version = Self:ScheduleTimer(Self.Send, 5, Self.CMD_VERSION_CHECK, Comm.TYPE_GROUP, Self.VERSION)
+    Self.timers.sync = Self:ScheduleTimer(Self.Send, 5, Self.CMD_SYNC_REQ)
 end
 
 function Self:OnDisable()
     Self:UnregisterAllEvents()
-    Self:UnregisterAllMessages()
+    Self:UnregisterMessage(Roll.EVENT_ADD)
+    Self:UnregisterMessage(Roll.EVENT_BID)
+    Self:UnregisterMessage(Roll.EVENT_VOTE)
+    Self:UnregisterMessage(Roll.EVENT_TRADE)
+    Self:UnregisterMessage(Session.EVENT_REQUEST)
 end
 
-function Self.GROUP_JOINED()
-    Self.Send(Self.CMD_VERSION_CHECK, Comm.TYPE_GROUP, Self.VERSION)
-end
-
-function Self.PARTY_LEADER_CHANGED()
+function Self:PARTY_LEADER_CHANGED()
     Self.mldb, Self.council, Self.offerShown = nil
     wipe(Self.session)
 
@@ -367,26 +371,26 @@ function Self.PARTY_LEADER_CHANGED()
     end
 end
 
-function Self.ROLL_ADD(_, _, roll)
+function Self:ROLL_ADD(_, roll)
     -- TODO
 end
 
-function Self.ROLL_BID(_, _, roll, bid, fromUnit, rollResult, isImport)
+function Self:ROLL_BID(_, roll, bid, fromUnit, rollResult, isImport)
     local sId = Util.TblFind(Self.session, roll)
     if sId and Unit.IsSelf(fromUnit) and not isImport then
         Self.Send(Self.CMD_ROLL_BID, Comm.TYPE_GROUP, sId, Unit.FullName("player"), {response = Self.BidToResponse(roll.bid)})
     end
 end
 
-function Self.ROLL_VOTE(_, _, roll, vote, fromUnit, isImport)
+function Self:ROLL_VOTE(_, roll, vote, fromUnit, isImport)
     -- TODO
 end
 
-function Self.ROLL_TRADE(_, _, roll, target)
+function Self:ROLL_TRADE(_, roll, target)
     -- TODO
 end
 
-function Self.SESSION_REQUEST(_, _, target)
+function Self:SESSION_REQUEST(_, target)
     if not target or UnitIsGroupLeader(target) then
         Self.offerShown = nil
         Self.Send(Self.CMD_RULES_REQ)

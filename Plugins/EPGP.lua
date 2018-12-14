@@ -6,6 +6,8 @@ local GS = LibStub("LibGuildStorage-1.2", true)
 local GUI, Options, Roll, Session, Unit, Util = Addon.GUI, Addon.Options, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
 local Self = Addon.EPGP
 
+Self.NAME = "EPGP"
+
 -- How often GP credit operations should be retried by default
 Self.CREDIT_MAX_TRYS = 5
 
@@ -165,7 +167,7 @@ function Self.RegisterOptions()
                     order = it(),
                     set = function (_, val)
                         Self.db.profile.enabled = val
-                        Self.CheckState()
+                        Self:CheckState()
                     end,
                     get = function (_) return Self.db.profile.enabled end,
                     width = Options.WIDTH_THIRD_SCROLL
@@ -177,7 +179,7 @@ function Self.RegisterOptions()
                     order = it(),
                     set = function (_, val)
                         Self.db.profile.onlyGuildRaid = val
-                        Self.CheckState()
+                        Self:CheckState()
                     end,
                     get = function (_, key) return Self.db.profile.onlyGuildRaid end,
                     width = Options.WIDTH_THIRD_SCROLL
@@ -235,27 +237,15 @@ function Self.RegisterOptions()
 end
 
 -------------------------------------------------------
---                       Helper                      --
--------------------------------------------------------
-
--- Check if the module should be enabled
-function Self.ShouldBeEnabled()
-    return IsAddOnLoaded("EPGP")
-        and Self.db.profile.enabled
-        and (not Self.db.profile.onlyGuildRaid or IsInGuild() and Util.IsGuildGroup((GetGuildInfo("player"))))
-        and true or false
-end
-
--- Check and toggle enabled state if necessary
-function Self.CheckState()
-    if Self.enabledState ~= Self.ShouldBeEnabled() then
-        Self[Self.enabledState and "Disable" or "Enable"](Self)
-    end
-end
-
--------------------------------------------------------
 --                    Events/Hooks                   --
 -------------------------------------------------------
+
+function Self:ShouldBeEnabled()
+    return IsAddOnLoaded(Self.NAME)
+        and Self.db.profile.enabled
+        and Addon:IsTracking()
+        and (not Self.db.profile.onlyGuildRaid or IsInGuild() and Util.IsGuildGroup((GetGuildInfo("player"))))
+end
 
 function Self:OnInitialize()
     -- DB and options
@@ -263,10 +253,9 @@ function Self:OnInitialize()
     Self.RegisterOptions()
 
     -- State
-    Self:SetEnabledState(Self.ShouldBeEnabled())
-    Self:RegisterEvent("GROUP_JOINED", Self.CheckState)
-    Self:RegisterEvent("GROUP_LEFT", Self.CheckState)
+    Self:CheckState()
     Self:RegisterEvent("RAID_ROSTER_UPDATE", Self.CheckState)
+    Self:RegisterMessage(Addon.EVENT_TRACKING_CHANGE, Self.CheckState)
 end
 
 function Self:OnEnable()
@@ -287,16 +276,20 @@ function Self:OnEnable()
 end
 
 function Self:OnDisable()
-    -- Remove custom player colums and award method
+    -- Remove custom player colums
     GUI.PlayerColumns:Remove("epgpEP", "epgpGP", "epgpPR", "epgpMinEP")
+
+    -- Remove custom award method
     Roll.AwardMethods:Remove("epgp")
 
     -- Unregister events
-    Self:UnregisterAllMessages()
+    Self:UnregisterMessage(Roll.EVENT_AWARD)
+    Self:UnregisterMessage(Roll.EVENT_RESTART)
+    Self:UnregisterMessage(Roll.EVENT_CLEAR)
     EPGP.UnregisterCallback(Self, "StandingsChanged")
 end
 
-function Self.ROLL_AWARD(_, _, roll, winner, prevWinner)
+function Self:ROLL_AWARD(_, roll, winner, prevWinner)
     if Session.IsMasterlooter() and roll.isOwner and not roll.isTest then
         Self.UndoGPCredit(roll)
 
@@ -309,14 +302,14 @@ function Self.ROLL_AWARD(_, _, roll, winner, prevWinner)
     end
 end
 
-function Self.ROLL_RESTART(_, _, roll)
+function Self:ROLL_RESTART(_, roll)
     Self.UndoGPCredit(roll)
 end
 
-function Self.ROLL_CLEAR(_, _, roll)
+function Self:ROLL_CLEAR(_, roll)
     Self.credited[roll.id] = nil
 end
 
-function Self.EPGP_STANDINGS_CHANGED()
+function Self:EPGP_STANDINGS_CHANGED()
     GUI.Rolls.Update()
 end
