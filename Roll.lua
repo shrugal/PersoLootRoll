@@ -41,7 +41,9 @@ Self.ACTION_ASK = "ASK"
 Self.ANSWER_NEED = "NEED"
 Self.ANSWER_GREED = "GREED"
 
--- Events
+-------------------------------------------------------
+--                      Events                       --
+-------------------------------------------------------
 
 --- Fires when a new roll is added
 -- @table roll The roll
@@ -122,14 +124,53 @@ Self.EVENTS = {Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_RE
 local changeFn = function (...) Addon:SendMessage(Self.EVENT_CHANGE, ...) end
 for _,e in pairs(Self.EVENTS) do Addon:RegisterMessage(e, changeFn) end
 
--- Custom award methods
+-------------------------------------------------------
+--                   Award methods                   --
+-------------------------------------------------------
+
 Self.AWARD_VOTES = "VOTES"
 Self.AWARD_BIDS = "BIDS"
 Self.AWARD_ROLLS = "ROLLS"
 Self.AWARD_RANDOM = "RANDOM"
 Self.AWARD_METHODS = {Self.AWARD_VOTES, Self.AWARD_BIDS, Self.AWARD_ROLLS, Self.AWARD_RANDOM}
 
-Self.customAwardMethods = {}
+--- Add a custom method for picking a roll winner
+-- @param    key    A unique identifier
+-- @function fn     A callback that removes everyone but the possible winners from the candidates list, with parameters: roll, candidates
+-- @param    before The custom method will be applied before this method (optional: defaults to Self.AWARD_RANDOM)
+Self.AwardMethods = Util.Registrar.New("ROLL_AWARD_METHOD", "key", function (key, fn, before)
+    return Util.TblHash("key", key, "fn", fn), select(2, Self.AwardMethods:Get(before or Self.AWARD_RANDOM))
+end)
+
+-- VOTES
+Self.AwardMethods:Add(Self.AWARD_VOTES, function (roll, candidates)
+    Util.TblMap(candidates, Util.FnZero)
+    for _,to in pairs(roll.votes) do candidates[to] = (candidates[to] or 0) + 1 end
+    Util.TblOnly(candidates, Util.TblMax(candidates))
+end)
+
+-- BIDS
+Self.AwardMethods:Add(Self.AWARD_BIDS, function (roll, candidates)
+    Util(candidates)
+        .Map(function (_, i) return roll.bids[i] end, true)
+        .Only(candidates, Util.TblMin(candidates))
+end)
+
+-- ROLLS
+Self.AwardMethods:Add(Self.AWARD_ROLLS, function (roll, candidates)
+    Util(candidates)
+        .Map(function (_, i) return roll.rolls[i] or random(100) end, true)
+        .Only(candidates, Util.TblMax(candidates))
+end)
+
+-- RANDOM
+Self.AwardMethods:Add(Self.AWARD_RANDOM, function (_, candidates)
+    Util(candidates).Select(Util.TblRandomKey(candidates))
+end)
+
+-------------------------------------------------------
+--                       CRUD                        --
+-------------------------------------------------------
 
 -- Get a roll by id or prefixed id
 function Self.Get(id)
@@ -222,7 +263,7 @@ function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
         roll.itemOwnerId = roll.id
     end
 
-    Self.events:Fire(Self.EVENT_ADD, roll)
+    Addon:SendMessage(Self.EVENT_ADD, roll)
 
     return roll
 end
@@ -351,7 +392,7 @@ local clearFn = function (roll)
 
     Addon.rolls[roll.id] = nil
 
-    Self.events:Fire(Self.EVENT_CLEAR, roll)
+    Addon:SendMessage(Self.EVENT_CLEAR, roll)
 end
 function Self.Clear(self)
     if self then
@@ -424,7 +465,7 @@ function Self:Start(started)
                 self.started = started or time()
                 self.status = Self.STATUS_RUNNING
                 
-                Self.events:Fire(Self.EVENT_START, self, self.started)
+                Addon:SendMessage(Self.EVENT_START, self, self.started)
 
                 if self.isTest or not (self:ShouldEnd() and self:End()) then
                     -- Schedule timer to end the roll and/or hide the frame
@@ -516,7 +557,7 @@ function Self:Restart(started, pending)
         self.timers[i] = nil
     end
 
-    Self.events:Fire(Self.EVENT_RESTART, self)
+    Addon:SendMessage(Self.EVENT_RESTART, self)
     
     return pending and self or self:Start(started)
 end
@@ -550,7 +591,7 @@ function Self:Bid(bid, fromUnit, roll, isImport)
             self.bid = bid
         end        
 
-        Self.events:Fire(Self.EVENT_BID, self, bid, fromUnit, roll, isImport)
+        Addon:SendMessage(Self.EVENT_BID, self, bid, fromUnit, roll, isImport)
 
         -- Let everyone know
         Comm.RollBid(self, bid, fromUnit, roll, isImport)
@@ -587,7 +628,7 @@ function Self:Vote(vote, fromUnit, isImport)
             self.vote = vote
         end
 
-        Self.events:Fire(Self.EVENT_VOTE, self, vote, fromUnit, isImport)
+        Addon:SendMessage(Self.EVENT_VOTE, self, vote, fromUnit, isImport)
 
         -- Let everyone know
         Comm.RollVote(self, vote, fromUnit, isImport)
@@ -660,7 +701,7 @@ function Self:End(winner, cleanup, force)
         self.ended = time()
         self.started = self.started or time()
 
-        Self.events:Fire(Self.EVENT_END, self, self.ended)
+        Addon:SendMessage(Self.EVENT_END, self, self.ended)
         sendStatus = true
     end
 
@@ -706,7 +747,7 @@ function Self:End(winner, cleanup, force)
                 Comm.RollEnd(self)
             end
             
-            Self.events:Fire(Self.EVENT_AWARD, self, self.winner, prevWinner)
+            Addon:SendMessage(Self.EVENT_AWARD, self, self.winner, prevWinner)
             sendStatus = true
         end
     end
@@ -735,7 +776,7 @@ function Self:Cancel()
     self:HideRollFrame()
 
     -- Let everyone know
-    Self.events:Fire(Self.EVENT_CANCEL, self)
+    Addon:SendMessage(Self.EVENT_CANCEL, self)
     self:SendStatus()
     
     return self
@@ -768,7 +809,7 @@ function Self:OnTraded(target)
         end
     end
 
-    Self.events:Fire(Self.EVENT_TRADE, self, target)
+    Addon:SendMessage(Self.EVENT_TRADE, self, target)
     self:SendStatus(self.item.isOwner or self.isWinner)
 end
 
@@ -780,31 +821,8 @@ end
 function Self:DetermineWinner()
     local candidates = Util.TblCopyExcept(self.bids, Self.BID_PASS, true)
 
-    for _,v in ipairs(Self.AWARD_METHODS) do
-        self:ApplyCustomAwardMethod(v, candidates)
-
-        if Util.TblCount(candidates) > 1 then
-            -- Narrow down by votes
-            if v == Self.AWARD_VOTES then
-                Util.TblMap(candidates, Util.FnZero)
-                for _,to in pairs(self.votes) do candidates[to] = (candidates[to] or 0) + 1 end
-                Util.TblOnly(candidates, Util.TblMax(candidates))
-            -- Narrow down by bids
-            elseif v == Self.AWARD_BIDS then
-                Util(candidates)
-                    .Map(function (_, i) return self.bids[i] end, true)
-                    .Only(candidates, Util.TblMin(candidates))
-            -- Narrow down by roll result
-            elseif v == Self.AWARD_ROLLS then
-                Util(candidates)
-                    .Map(function (_, i) return self.rolls[i] or random(100) end, true)
-                    .Only(candidates, Util.TblMax(candidates))
-            -- Pick one at random
-            elseif v == Self.AWARD_RANDOM then
-                Util(candidates)
-                    .Select(Util.TblRandomKey(candidates))
-            end
-        end
+    for i,method in Self.AwardMethods:Iter() do
+        method.fn(self, candidates)
 
         if Util.TblCount(candidates) == 1 then
             return next(candidates), Util.TblRelease(candidates)
@@ -819,38 +837,6 @@ function Self:DetermineWinner()
         if next(dis) then
             for unit in pairs(dis) do self:Bid(Self.BID_DISENCHANT, unit, nil, true) end
             return self:DetermineWinner()
-        end
-    end
-end
-
---- Add a custom method for picking a roll winner
--- @param    key    A unique identifier
--- @function fn     A callback that removes everyone but the possible winners from the candidates list, with parameters: roll, candidates, key, before
--- @param    before The custom method will be applied before this method (optional: defaults to Self.AWARD_RANDOM)
-function Self.AddCustomAwardMethod(key, fn, before)
-    Self.customAwardMethods[key] = Util.TblHash("fn", fn, "before", before or Self.AWARD_RANDOM)
-end
-
---- Update a custom award method
--- @param    key    The unique identifier
-function Self.UpdateCustomAwardMethod(key, ...)
-    if Self.customAwardMethods[key] then
-        for i=1, select("#", ...), 2 do
-            Self.customAwardMethods[key][select(i, ...)] = select(i+1, ...)
-        end
-    end
-end
-
---- Remove a custom award method
--- @param    key    The unique identifier
-function Self.RemoveCustomAwardMethod(key) Self.customAwardMethods[key] = nil end
-
--- Apply a custom award method
-function Self:ApplyCustomAwardMethod(before, candidates)
-    for key,v in pairs(Self.customAwardMethods) do
-        if v.before == before then
-            self:ApplyCustomAwardMethod(key, candidates)
-            v.fn(self, candidates, key, before)
         end
     end
 end
@@ -995,7 +981,7 @@ end
 -- Toggle the rolls visiblity in GUIs
 function Self:ToggleVisibility(show)
     if show == nil then self.hidden = not self.hidden else self.hidden = not show end
-    Self.events:Fire(Self.EVENT_TOGGLE, self, self.hidden)
+    Addon:SendMessage(Self.EVENT_TOGGLE, self, self.hidden)
 
     return self
 end
@@ -1010,7 +996,7 @@ function Self:AddChat(msg, unit)
     self.chat = self.chat or Util.Tbl()
     tinsert(self.chat, msg)
     
-    Self.events:Fire(Self.EVENT_CHAT, self, msg, unit)
+    Addon:SendMessage(Self.EVENT_CHAT, self, msg, unit)
 
     return self
 end
@@ -1060,7 +1046,7 @@ function Self:Advertise(manually, silent)
             self:SendStatus()
         end
 
-        Self.events:Fire(Self.EVENT_ADVERTISE, self, manually, silent)
+        Addon:SendMessage(Self.EVENT_ADVERTISE, self, manually, silent)
 
         return true
     else

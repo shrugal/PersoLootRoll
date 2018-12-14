@@ -80,9 +80,9 @@ function Self.SetMasterlooter(unit, rules, silent)
 
     -- Fire event
     if unit then
-        Self.events:Fire(Self.EVENT_START, unit, rules, silent)
+        Self:SendMessage(Self.EVENT_START, unit, rules, silent)
     else
-        Self.events:Fire(Self.EVENT_CLEAR, silent)
+        Self:SendMessage(Self.EVENT_CLEAR, silent)
     end
 end
 
@@ -232,7 +232,7 @@ function Self.SetRules(rules, silent)
         wipe(Self.rules)
     end
 
-    Self.events:Fire(Self.EVENT_RULES, Self.rules, silent)
+    Self:SendMessage(Self.EVENT_RULES, Self.rules, silent)
 
     return Self.rules
 end
@@ -296,7 +296,7 @@ end
 -- Ask someone to be your masterlooter
 function Self.SendRequest(target)
     Comm.Send(Comm.EVENT_MASTERLOOT_ASK, nil, target)
-    Self.events:Fire(Self.EVENT_REQUEST, target)
+    Self:SendMessage(Self.EVENT_REQUEST, target)
 end
 
 -- Send masterlooter offer to unit

@@ -4,5 +4,6 @@
     <Script file="Comm.lua"/>
     <Script file="Item.lua"/>
     <Script file="Locale.lua"/>
+    <Script file="Registrar.lua"/>
     <Script file="Unit.lua"/>
 </Ui>

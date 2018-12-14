@@ -2,6 +2,8 @@ local Name, Addon = ...
 local Unit = Addon.Unit
 local Self = Addon.Util
 
+Self.Registrar = {}
+
 -------------------------------------------------------
 --                        WoW                        --
 -------------------------------------------------------
@@ -943,8 +945,8 @@ end
 
 -- CHANGE
 
-function Self.TblInsert(t, i, v, k) if k or type(i) ~= "number" then t[i] = v else tinsert(t, v) end end
-function Self.TblRemove(t, i, k) if k or type(i) ~= "number" then t[i] = nil else tremove(t, i) end end
+function Self.TblInsert(t, i, v, k) if k then t[i] = v elseif i then tinsert(t, i, v) else tinsert(t, v) end end
+function Self.TblRemove(t, i, k) if k then t[i] = nil elseif i then tremove(t, i) else tremove(t) end end
 function Self.TblPush(t, v) tinsert(t, v) return t end
 function Self.TblPop(t) return tremove(t) end
 function Self.TblDrop(t) tremove(t) return t end

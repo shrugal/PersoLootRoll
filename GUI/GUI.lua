@@ -5,34 +5,19 @@ local CB = LibStub("CallbackHandler-1.0")
 local Comm, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon.GUI
 
--- Events
-
---- Fires when a custom player column was added
--- @table entry The entry that was added/removed
-Self.EVENT_PLAYER_COLUMN_ADD = "PLR_GUI_PLAYER_COLUMN_ADD"
-
---- Fires when a custom player column was changed
--- @table entry The entry that was changed
--- @param ...   The changed properties as key-value pairs
-Self.EVENT_PLAYER_COLUMN_UPDATE = "PLR_GUI_PLAYER_COLUMN_UPDATE"
-
---- Fires when a custom player column was removed
--- @table entry The entry that was removed
--- @int   i     The position it was at
-Self.EVENT_PLAYER_COLUMN_REMOVE = "PLR_GUI_PLAYER_COLUMN_REMOVE"
-
---- Catchall event that fires for all of the above
--- @string event The original event
--- @param  ...   The original event parameters
-Self.EVENT_PLAYER_COLUMN_CHANGE = "PLR_GUI_PLAYER_COLUMN_CHANGE"
-
-Self.EVENTS = {Self.EVENT_PLAYER_COLUMN_ADD, Self.EVENT_PLAYER_COLUMN_UPDATE, Self.EVENT_PLAYER_COLUMN_REMOVE}
-
-local changeFn = function (...) Self:SendMessage(Self.EVENT_PLAYER_COLUMN_CHANGE, ...) end
-for i,e in pairs(Self.EVENTS) do Self:RegisterMessage(e, changeFn) end
-
--- Custom player columns
-Self.customPlayerColumns = {}
+--- Add a player column entry
+-- @param  name        A unique identifier
+-- @param  value       Value for sorting etc., either a primitive or callback with parameters: unit, roll, listEntry
+-- @string header      Localized title, e.g. for table headers (optional: Column won't be shown)
+-- @param  desc        Localized value shown to the user, either a string/int or callback with parameters: unit, roll, listEntry (optional: Value will be used)
+-- @param  width       Column width, @see table layout for details (optional: Default will be used)
+-- @string sortBefore  Other column name with lower sorting priority, one of "bid", "votes", "roll", "ilvl" or "unit" (optional: Column won't be used for sorting)
+-- @param  sortDefault Sorting default value (optional)
+-- @bool   sortDesc    Sort in descending order (optional)
+-- @return table       The column entry
+Self.PlayerColumns = Util.Registrar.New("GUI_PLAYER_COLUMN", "name", function (name, value, header, desc, width, sortBefore, sortDefault, sortDesc)
+    return Util.TblHash("name", name, "value", value, "header", header, "desc", desc, "width", width, "sortBefore", sortBefore, "sortDefault", sortDefault, "sortDesc", sortDesc)
+end)
 
 -- Windows
 Self.Rolls = Self:NewModule("Rolls", nil, "AceEvent-3.0")
@@ -268,49 +253,6 @@ end
 --                 Roll player list                  --
 -------------------------------------------------------
 
---- Add a player column entry
--- @param  name        A unique identifier
--- @param  value       Value for sorting etc., either a primitive or callback with parameters: unit, roll, listEntry
--- @string header      Localized title, e.g. for table headers (optional: Column won't be shown)
--- @param  desc        Localized value shown to the user, either a string/int or callback with parameters: unit, roll, listEntry (optional: Value will be used)
--- @param  width       Column width, @see table layout for details (optional: Default will be used)
--- @string sortBefore  Other column name with lower sorting priority, one of "bid", "votes", "roll", "ilvl" or "unit" (optional: Column won't be used for sorting)
--- @param  sortDefault Sorting default value (optional)
--- @bool   sortDesc    Sort in descending order (optional)
--- @return table       The column entry
-function Self.AddCustomPlayerColumn(name, value, header, desc, width, sortBefore, sortDefault, sortDesc)
-    local entry = Util.TblHash("name", name, "value", value, "header", header, "desc", desc, "width", width, "sortBefore", sortBefore, "sortDefault", sortDefault, "sortDesc", sortDesc)
-    tinsert(Self.customPlayerColumns, entry)
-
-    Self.events:Fire(Self.EVENT_PLAYER_COLUMN_ADD, entry)
-    return entry
-end
-
---- Update a player column entry
--- @param name The unique identifier
--- @param ...  Key-value pairs of properties to update (@see Self.AddCustomPlayerColumn)
-function Self.UpdateCustomPlayerColumn(name, ...)
-    local entry = select(2, Util.TblFindWhere(Self.customPlayerColumns, "name", name))
-    if entry then
-        for i=1, select("#", ...), 2 do
-            entry[select(i, ...)] = select(i+1, ...)
-        end
-        Self.events:Fire(Self.EVENT_PLAYER_COLUMN_UPDATE, entry, ...)
-    end
-end
-
---- Remove a player column entry
--- @param ... The unique identifiers
-function Self.RemoveCustomPlayerColumns(...)
-    for _,name in Util.Each(...) do
-        local i = Util.TblFindWhere(Self.customPlayerColumns, "name", name)
-        if i then
-            local entry = tremove(Self.customPlayerColumns, i)
-            Self.events:Fire(Self.EVENT_PLAYER_COLUMN_REMOVE, entry, i)
-        end
-    end
-end
-
 --- Get list of eligible players for a roll
 -- @table  roll  The roll in question
 -- @return table A sorted list of eligible players
@@ -334,7 +276,7 @@ function Self.GetPlayerList(roll)
     )
 
     -- Add custom columns
-    for i,col in ipairs(Self.customPlayerColumns) do
+    for i,col in Self.PlayerColumns:Iter() do
         for j,entry in pairs(list) do
             entry[col.name] = Util.FnVal(col.value, entry.unit, roll, entry)
         end

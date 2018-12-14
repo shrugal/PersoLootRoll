@@ -149,7 +149,7 @@ end
 
 -- Register module options
 function Self.RegisterOptions()
-    Options.AddCustomOptions(Options.CUSTOM_MASTERLOOT, "epgp", function ()
+    Options.CustomOptions:Add("epgp", Options.CAT_MASTERLOOT, "epgp", function ()
         local it = Util.Iter()
 
         return {
@@ -193,8 +193,8 @@ function Self.RegisterOptions()
                         val = Roll.AWARD_METHODS[val] or Roll.AWARD_BIDS
 
                         Self.db.profile.awardBefore = val
-                        Roll.UpdateCustomAwardMethod("epgp", "before", val)
-                        GUI.UpdateCustomPlayerColumn("epgp", "sortBefore", Util.Select(val, Roll.AWARD_VOTES, "votes", Roll.AWARD_BIDS, "bid", Roll.AWARD_ROLLS, "roll", "ilvl"))
+                        Roll.AwardMethods:Add("epgp", Self.DetermineWinner, val)
+                        GUI.PlayerColumns:Update("epgp", "sortBefore", Util.Select(val, Roll.AWARD_VOTES, "votes", Roll.AWARD_BIDS, "bid", Roll.AWARD_ROLLS, "roll", "ilvl"))
                     end,
                     width = Options.WIDTH_THIRD_SCROLL
                 },
@@ -207,14 +207,14 @@ function Self.RegisterOptions()
             },
             hidden = function () return not IsAddOnLoaded("EPGP") end
         }
-    end, function (s, isImport)
+    end, function (data, isImport)
         if isImport then
             -- Import
-            Self.db.profile.awardBefore = Util.Default(s.epgpAwardBefore, Self.db.defaults.awardBefore)
+            Self.db.profile.awardBefore = Util.Default(data.epgpAwardBefore, Self.db.defaults.awardBefore)
 
             Self.db.profile.bidWeights = Util.TblCopy(Self.db.defaults.bidWeights)
-            if s.epgpBidWeights then
-                for i,v in s.epgpBidWeights:gmatch("(-?%d*%.?%d*) ?= ?(-?%d*%.?%d*)") do
+            if data.epgpBidWeights then
+                for i,v in data.epgpBidWeights:gmatch("(-?%d*%.?%d*) ?= ?(-?%d*%.?%d*)") do
                     i, v = tonumber(i), tonumber(v)
                     if i and v then Self.db.profile.bidWeights[i] = v end
                 end
@@ -222,11 +222,11 @@ function Self.RegisterOptions()
         else
             -- Export
             if Self.db.profile.awardBefore ~= Self.db.defaults.awardBefore then
-                s.epgpAwardBefore = Self.db.profile.awardBefore
+                data.epgpAwardBefore = Self.db.profile.awardBefore
             end
 
             if not Util.TblEquals(Self.db.profile.bidWeights, Self.db.defaults.bidWeights) then
-                s.epgpBidWeights = Util(Self.db.profile.bidWeights)
+                data.epgpBidWeights = Util(Self.db.profile.bidWeights)
                     .Copy(function (v, i) return v ~= Self.db.defaults.bidWeights[i] and ("%s=%s"):format(i, v) or nil end, true)
                     .Concat(", ")()
             end
@@ -271,13 +271,13 @@ end
 
 function Self:OnEnable()
     -- Add custom player columns
-    GUI.AddCustomPlayerColumn("epgpEP", Self.UnitEP, L["EPGP_EP"])
-    GUI.AddCustomPlayerColumn("epgpGP", Self.UnitGP, L["EPGP_GP"])
-    GUI.AddCustomPlayerColumn("epgpPR", Self.UnitPR, L["EPGP_PR"], nil, nil, "bid", 0, true)
-    GUI.AddCustomPlayerColumn("epgpMinEP", Self.UnitHasMinEP, nil, nil, nil, "epgpPR", nil, true)
+    GUI.PlayerColumns:Add("epgpEP", Self.UnitEP, L["EPGP_EP"])
+    GUI.PlayerColumns:Add("epgpGP", Self.UnitGP, L["EPGP_GP"])
+    GUI.PlayerColumns:Add("epgpPR", Self.UnitPR, L["EPGP_PR"], nil, nil, "bid", 0, true)
+    GUI.PlayerColumns:Add("epgpMinEP", Self.UnitHasMinEP, nil, nil, nil, "epgpPR", nil, true)
 
     -- Add custom award method
-    Roll.AddCustomAwardMethod("epgp", Self.DetermineWinner, Self.db.profile.awardBefore)
+    Roll.AwardMethods:Add("epgp", Self.DetermineWinner, Self.db.profile.awardBefore)
 
     -- Register events
     Self:RegisterMessage(Roll.EVENT_AWARD, "ROLL_AWARD")
@@ -288,8 +288,8 @@ end
 
 function Self:OnDisable()
     -- Remove custom player colums and award method
-    GUI.RemoveCustomPlayerColumns("epgpEP", "epgpGP", "epgpPR", "epgpMinEP")
-    Roll.RemoveCustomAwardMethod("epgp")
+    GUI.PlayerColumns:Remove("epgpEP", "epgpGP", "epgpPR", "epgpMinEP")
+    Roll.AwardMethods:Remove("epgp")
 
     -- Unregister events
     Self:UnregisterAllMessages()

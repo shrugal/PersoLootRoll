@@ -133,11 +133,19 @@ Self.councilKeys = {"raidleader", "raidassistant"}
 Self.councilValues = {L["RAID_LEADER"], L["RAID_ASSISTANT"]}
 
 -- Custom options
-Self.CUSTOM_GENERAL = "GENERAL"
-Self.CUSTOM_MASTERLOOT = "MASTERLOOT"
-Self.CUSTOM_MESSAGES = "MESSAGES"
+Self.CAT_GENERAL = "GENERAL"
+Self.CAT_MASTERLOOT = "MASTERLOOT"
+Self.CAT_MESSAGES = "MESSAGES"
 
-Self.customOptions = {}
+--- Add custom options for the given key
+-- @string         key     Unique indentifier
+-- @string         cat     The options category that should be extended
+-- @string         path    Dot-separated path inside the options data, ending with a new namespace for these custom options
+-- @table|function options Options data, either a table or a callback with parameters: cat, path
+-- @function       sync    Callback handling import/export operations with parameters: data, isImport, cat, path (optional)
+Self.CustomOptions = Util.Registrar.New("OPTION", nil, function (key, cat, path, options, sync)
+    return Util.TblHash("key", key, "cat", cat, "path", path, "options", options, "sync", sync)
+end)
 
 -- Other
 Self.it = Util.Iter()
@@ -182,33 +190,22 @@ end
 --                  Custom options                   --
 -------------------------------------------------------
 
---- Add custom options for the given key
--- @string         key     The options category that should be extended
--- @string         path    Dot-separated path inside the options data, ending with a new namespace for these custom options
--- @table|function options Options data, either a table or a callback with parameters: key, path
--- @function       sync    Callback handling import/export operations with parameters: data, isImport, key, path (optional)
-function Self.AddCustomOptions(key, path, options, sync)
-    Util.TblSet(Self.customOptions, key, path, Util.TblHash("options", options, "sync", sync))
-end
-
 -- Apply custom options to an options table
-function Self.ApplyCustomOptions(key, options)
-    if Self.customOptions[key] then
-        for path,entry in pairs(Self.customOptions[key]) do
-            local data = Util.FnVal(entry.options, key, path)
+function Self.ApplyCustomOptions(cat, options)
+    for _,entry in Self.CustomOptions:Iter() do
+        if entry.cat == cat then
+            local data = Util.FnVal(entry.options, cat, entry.path)
             data.order = data.order or Self.it()
-            Util.TblSet(options, path, data)
+            Util.TblSet(options, entry.path, data)
         end
     end
 end
 
 -- Call custom options for sync operation
-function Self.SyncCustomOptions(s, isImport)
-    for key,options in pairs(Self.customOptions) do
-        for path,entry in pairs(options) do
-            if entry.sync then
-                entry.sync(s, isImport or false, key, path)
-            end
+function Self.SyncCustomOptions(data, isImport)
+    for _,entry in Self.CustomOptions:Iter() do
+        if entry.sync then
+            entry.sync(data, isImport or false, entry.cat, entry.path)
         end
     end
 end
@@ -451,7 +448,7 @@ function Self.RegisterGeneral()
         }
     }
 
-    Self.ApplyCustomOptions(Self.CUSTOM_GENERAL, options.args)
+    Self.ApplyCustomOptions(Self.CAT_GENERAL, options.args)
 
     return options
 end
@@ -618,7 +615,7 @@ function Self.RegisterMessages()
         }
     }
 
-    Self.ApplyCustomOptions(Self.CUSTOM_MESSAGES, options.args)
+    Self.ApplyCustomOptions(Self.CAT_MESSAGES, options.args)
 
     return options
 end
@@ -1060,7 +1057,7 @@ function Self.RegisterMasterloot()
     }
 
     -- Add custom options
-    Self.ApplyCustomOptions(Self.CUSTOM_MASTERLOOT, options.args)
+    Self.ApplyCustomOptions(Self.CAT_MASTERLOOT, options.args)
 
     return options
 end

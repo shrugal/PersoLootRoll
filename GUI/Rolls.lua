@@ -639,7 +639,7 @@ function Self.UpdateDetails(details, roll)
     -- Header
 
     local header = Util.Tbl("PLAYER", "ITEM_LEVEL", "EQUIPPED", "CUSTOM", "BID", "ROLL", "VOTES", "")
-    local numCols = #header - 1 + Util.TblCountWhere(GUI.customPlayerColumns, "header")
+    local numCols = #header - 1 + GUI.PlayerColumns:CountWhere("header")
 
     if #children == 0 then
         local columns = {1, {25, 100}, {34, 100}, {25, 100}, {25, 100}, {25, 100}, 100}
@@ -647,7 +647,7 @@ function Self.UpdateDetails(details, roll)
         for i,v in pairs(header) do
             if v == "CUSTOM" then
                 local j = 0
-                for _,col in ipairs(GUI.customPlayerColumns) do
+                for _,col in GUI.PlayerColumns:Iter() do
                     if col.header then
                         details:AddChild(GUI("Label").SetFontObject(GameFontNormal).SetText(col.header).SetColor(1, 0.82, 0)())
                         tinsert(columns, i + j, col.width or {25, 100})
@@ -695,7 +695,7 @@ function Self.UpdateDetails(details, roll)
             end
 
             -- Custom columns
-            for i,col in ipairs(GUI.customPlayerColumns) do
+            for i,col in GUI.PlayerColumns:Iter() do
                 if col.header then
                     GUI("Label").SetFontObject(GameFontNormal).AddTo(details)
                 end
@@ -760,7 +760,7 @@ function Self.UpdateDetails(details, roll)
         if not roll.item.isRelic then Util.TblRelease(links) end
 
         -- Custom columns
-        for i,col in ipairs(GUI.customPlayerColumns) do
+        for i,col in GUI.PlayerColumns:Iter() do
             if col.header then
                 GUI(children[it()])
                     .SetText(Util.FnVal(col.desc, player.unit, roll, player) or player[col.name] or "-")
@@ -864,7 +864,7 @@ function Self:OnEnable()
     Self:RegisterMessage(Roll.EVENT_CHANGE, Self.ROLL_CHANGE)
     Self:RegisterMessage(Roll.EVENT_CLEAR, Self.ROLL_CLEAR)
     Self:RegisterMessage(Session.EVENT_CHANGE, Self.Update)
-    Self:RegisterMessage(GUI.EVENT_PLAYER_COLUMN_CHANGE, Self.GUI_PLAYER_COLUMN_CHANGE)
+    Self:RegisterMessage(GUI.PlayerColumns.EVENT_CHANGE, Self.GUI_PLAYER_COLUMN_CHANGE)
 end
 function Self:OnDisable() Self:UnregisterAllMessages() end
 

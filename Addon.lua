@@ -298,7 +298,7 @@ function Self:CheckState(refresh)
         end
 
         if self.state ~= state then
-            Self.events:Fire(Self.STATE_CHANGE, to, from)
+            Self:SendMessage(Self.STATE_CHANGE, to, from)
 
             local cmp = Util.Compare(self.state, state)
 
@@ -307,7 +307,7 @@ function Self:CheckState(refresh)
                 local fn = Self["On" .. Util.StrUcFirst(s:lower()) .. "Changed"]
 
                 if fn then fn(Self, self.state >= i) end
-                Self.events:Fire("STATE_" .. s .. "_CHANGE", self.state >= i)
+                Self:SendMessage("STATE_" .. s .. "_CHANGE", self.state >= i)
             end
         end
     end
