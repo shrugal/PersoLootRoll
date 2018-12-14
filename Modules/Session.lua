@@ -33,7 +33,7 @@ Self.EVENT_CHANGE = "PLR_SESSION_CHANGE"
 Self.EVENTS = {Self.EVENT_START, Self.EVENT_CLEAR, Self.EVENT_RULES}
 
 local changeFn = function (...) Self:SendMessage(Self.EVENT_CHANGE, ...) end
-for _,e in pairs(Self.EVENTS) do Self:SendMessage(e, changeFn) end
+for _,e in pairs(Self.EVENTS) do Self:RegisterMessage(e, changeFn) end
 
 Self.masterlooter = nil
 Self.rules = {}
