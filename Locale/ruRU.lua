@@ -157,6 +157,7 @@ L["TIP_MASTERLOOTING"] = "Группа ответственного за доб�
 L["TIP_MINIMAP_ICON"] = [=[|cffffff78Left-Click:|r Показать окно с бросками
 |cffffff78Right-Click:|r Открыть настройки]=]
 L["TIP_COMP_ADDON_USERS"] = "Compatible addon users:" -- Translation missing
+L["TIP_TEST"] = "Show a test roll" -- Translation missing
 L["TIP_VOTES"] = "Голоса от:"
 
 -- Options - Home

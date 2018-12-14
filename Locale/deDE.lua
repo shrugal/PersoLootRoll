@@ -157,6 +157,7 @@ L["TIP_MASTERLOOTING"] = "Plündermeister Gruppe (%d):"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff78Links-Klick:|r Verlosung-Übersicht umschalten
 |cffffff78Rechts-Klick:|r Optionen öffnen]=]
 L["TIP_COMP_ADDON_USERS"] = "Nutzer kompatibler Addons:"
+L["TIP_TEST"] = "Zeige eine Test-Verlosung"
 L["TIP_VOTES"] = "Stimmen von:"
 
 -- Options - Home

@@ -157,6 +157,7 @@ L["TIP_MASTERLOOTING"] = "Masterlooting group (%d):"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff78Left-Click:|r Toggle rolls window
 |cffffff78Right-Click:|r Show Options]=]
 L["TIP_COMP_ADDON_USERS"] = "Compatible addon users:"
+L["TIP_TEST"] = "Show a test roll"
 L["TIP_VOTES"] = "Votes from:"
 
 -- Options - Home

@@ -52,13 +52,31 @@ function Self.Show()
                 .SetUserData("text", OPTIONS)
                 .AddTo(window)()
             f.OnRelease = GUI.ResetIcon
-            f.image:SetPoint("TOP", 0, -2)
+            f.image:SetPoint("TOP", 0, -1)
             f.frame:SetParent(window.frame)
             f.frame:SetPoint("TOPRIGHT", window.closebutton, "TOPLEFT", -8, -8)
             f.frame:SetFrameStrata("HIGH")
             f.frame:Show()
             
             window.optionsBtn = f
+
+            -- Test button
+            f = GUI("Icon")
+                .SetImage("Interface\\Buttons\\AdventureGuideMicrobuttonAlert")
+                .SetImageSize(17, 17).SetHeight(16).SetWidth(16)
+                .SetCallback("OnClick", Roll.Test)
+                .SetCallback("OnEnter", GUI.TooltipText)
+                .SetCallback("OnLeave", GUI.TooltipHide)
+                .SetUserData("text", L["TIP_TEST"])
+                .AddTo(window)()
+            f.OnRelease = GUI.ResetIcon
+            f.image:SetPoint("TOP")
+            f.frame:SetParent(window.frame)
+            f.frame:SetPoint("RIGHT", window.optionsBtn.frame, "LEFT", -15, 0)
+            f.frame:SetFrameStrata("HIGH")
+            f.frame:Show()
+            
+            window.testBtn = f
 
             -- Version label
             f = GUI("InteractiveLabel")
@@ -107,7 +125,7 @@ function Self.Show()
                 .AddTo(window)()
             f.OnRelease = GUI.ResetLabel
             f.frame:SetParent(window.frame)
-            f.frame:SetPoint("RIGHT", window.optionsBtn.frame, "LEFT", -15, -1)
+            f.frame:SetPoint("RIGHT", window.testBtn.frame, "LEFT", -15, -1)
             f.frame:SetFrameStrata("HIGH")
             f.frame:Show()
 
@@ -582,7 +600,7 @@ function Self.Update()
                 .SetUserData("roll", roll)
                 .SetUserData("details", details)
 
-            GUI.ArrangeIconButtons(actions)
+            GUI.ArrangeIconButtons(actions, nil, nil, -2)
         end
 
         -- Details

@@ -375,7 +375,7 @@ function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
 end
 
 -- Arrange visible icon buttons
-function Self.ArrangeIconButtons(parent, margin)
+function Self.ArrangeIconButtons(parent, margin, xOff, yOff)
     margin = margin or 4
     local n, width, prev = 0, 0
 
@@ -383,7 +383,7 @@ function Self.ArrangeIconButtons(parent, margin)
         local child = parent.children[i]
         if child:IsShown() then
             if not prev then
-                child.frame:SetPoint("TOPRIGHT")
+                child.frame:SetPoint("TOPRIGHT", xOff or 0, yOff or 0)
             else
                 child.frame:SetPoint("TOPRIGHT", prev.frame, "TOPLEFT", -margin, 0)
             end
@@ -455,7 +455,7 @@ function Self.UnitClick(self, event, button)
     local unit = self:GetUserData("unit")
     if unit then
         if button == "LeftButton" then
-            ChatFrame_SendSmartTell(unit)
+            ChatFrame_SendTell(unit)
         elseif button == "RightButton" then
             -- local dropDown = Self.DROPDOWN_UNIT
             -- dropDown.which = Unit.IsSelf(unit) and "SELF" or UnitInRaid(unit) and "RAID_PLAYER" or UnitInParty(unit) and "PARTY" or "PLAYER"
