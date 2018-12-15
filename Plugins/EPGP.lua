@@ -76,16 +76,19 @@ function Self.DetermineWinner(roll, candidates)
 end
 
 -- Add EP to the unit's account
-function Self.UnitCreditGP(unit, link, amount, undo, trys)
+function Self.CreditGP(roll, unit, amount, undo, trys)
+    local link, gp = roll.item.link, undo and -amount or amount
+
     if trys == 0 then
-        Addon:Error(L["EPGP_ERROR_CREDIT_GP_FAILED"], amount, unit, link)
+        Addon:Error(L["EPGP_ERROR_CREDIT_GP_FAILED"], gp, unit, link)
     elseif not GS:IsCurrentState() then
-        Self:ScheduleTimer(Self.UnitCreditEP, 0.5, unit, link, amount, undo, (trys or Self.CREDIT_MAX_TRYS) - 1)
-    elseif not EPGP:CanIncGPBy(link, amount) then
-        Addon:Error(L["EPGP_ERROR_CREDIT_GP_FAILED"], amount, unit, link)
+        Self:ScheduleTimer(Self.UnitCreditEP, 0.5, roll, unit, amount, undo, (trys or Self.CREDIT_MAX_TRYS) - 1)
+    elseif not EPGP:CanIncGPBy(link, gp) then
+        Addon:Error(L["EPGP_ERROR_CREDIT_GP_FAILED"], gp, unit, link)
     else
-        Addon:Verbose(L["EPGP_CREDIT_GP"], amount, unit, link)
-        EPGP:IncGPBy(Unit.FullName(unit), link, amount, false, undo)
+        Addon:Verbose(L["EPGP_CREDIT_GP"], gp, unit, link)
+        EPGP:IncGPBy(Unit.FullName(unit), link, gp, false, undo)
+        Self.credited[roll.id] = not undo and unit .. ":" .. amount or nil
     end
 end
 
@@ -93,8 +96,7 @@ end
 function Self.UndoGPCredit(roll)
     if Self.credited[roll.id] then
         local prevWinner, gp = (":"):split(Self.credited[roll.id])
-        Self.UnitCreditGP(prevWinner, roll.item.link, -tonumber(gp), true)
-        Self.credited[roll.id] = nil
+        Self.CreditGP(roll, prevWinner, gp, true)
     end
 end
 
@@ -243,6 +245,7 @@ end
 function Self:ShouldBeEnabled()
     return IsAddOnLoaded(Self.NAME)
         and Self.db.profile.enabled
+        and IsInRaid()
         and Addon:IsTracking()
         and (not Self.db.profile.onlyGuildRaid or IsInGuild() and Util.IsGuildGroup((GetGuildInfo("player"))))
 end
@@ -296,8 +299,7 @@ function Self:ROLL_AWARD(_, roll, winner, prevWinner)
         -- Credit the winner
         local gp = Self.RollGP(roll)
         if gp > 0 and winner and IsGuildMember(winner) then
-            Self.UnitCreditGP(Unit.FullName(winner), roll.item.link, gp)
-            Self.credited[roll.id] = winner .. ":" .. gp
+            Self.CreditGP(roll, winner, gp)
         end
     end
 end

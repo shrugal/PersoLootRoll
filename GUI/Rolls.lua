@@ -883,25 +883,28 @@ end
 -------------------------------------------------------
 
 function Self:OnEnable()
-    Self:RegisterMessage(Roll.EVENT_START, Self.ROLL_START)
-    Self:RegisterMessage(Roll.EVENT_CHANGE, Self.ROLL_CHANGE)
-    Self:RegisterMessage(Roll.EVENT_CLEAR, Self.ROLL_CLEAR)
+    Self:RegisterMessage(Roll.EVENT_START, "ROLL_START")
+    Self:RegisterMessage(Roll.EVENT_CHANGE, Self.Update)
+    Self:RegisterMessage(Roll.EVENT_CLEAR, "ROLL_CLEAR")
     Self:RegisterMessage(Session.EVENT_CHANGE, Self.Update)
-    Self:RegisterMessage(GUI.PlayerColumns.EVENT_CHANGE, Self.GUI_PLAYER_COLUMN_CHANGE)
+    Self:RegisterMessage(GUI.PlayerColumns.EVENT_CHANGE, "GUI_PLAYER_COLUMN_CHANGE")
 end
-function Self:OnDisable() Self:UnregisterAllMessages() end
 
--- Register for roll changes
+function Self:OnDisable()
+    Self:UnregisterAllMessages()
+end
+
 function Self.ROLL_START(_, roll)
     if roll.isOwner and Session.IsMasterlooter() or Addon.db.profile.ui.showRollsWindow and (roll.item.isOwner or roll:ShouldBeBidOn()) then
         Self.Show()
     end
 end
-function Self.ROLL_CHANGE() Self.Update() end
-function Self.ROLL_CLEAR(_, roll) Self.open[roll.id] = nil end
 
--- Register for player column changes
-function Self.GUI_PLAYER_COLUMN_CHANGE()
+function Self:ROLL_CLEAR(_, roll)
+    Self.open[roll.id] = nil
+end
+
+function Self:GUI_PLAYER_COLUMN_CHANGE()
     if Self.frames.scroll then
         for i,child in pairs(Self.frames.scroll.children) do
             if child:GetUserData("isDetails") then

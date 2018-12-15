@@ -14,8 +14,8 @@ local Module = Addon.Module
 
 function Module:ShouldBeEnabled() return self.enableState end
 
-function Module:CheckState()
-    if Addon.Util.BoolXOR(self:ShouldBeEnabled(), self.enabledState) then
+function Module:CheckState(...)
+    if Addon.Util.BoolXOR(self:ShouldBeEnabled(...), self.enabledState) then
         if not self.initialized then
             self:SetEnabledState(not self.enabledState)
         else
