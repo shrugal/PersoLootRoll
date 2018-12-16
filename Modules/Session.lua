@@ -390,12 +390,12 @@ function Self:OnEnable()
     end
 end
 
-function Self.GROUP_LEFT()
+function Self:GROUP_LEFT()
     Self.SetMasterlooter(nil)
     wipe(Self.masterlooting)
 end
 
-function Self.CHAT_MSG_SYSTEM(_, _, msg)
+function Self:CHAT_MSG_SYSTEM(_, msg)
     -- Check if a player left the group/raid
     for _,pattern in pairs(Comm.PATTERNS_LEFT) do
         local unit = msg:match(pattern)

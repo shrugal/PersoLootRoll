@@ -894,7 +894,7 @@ function Self:OnDisable()
     Self:UnregisterAllMessages()
 end
 
-function Self.ROLL_START(_, roll)
+function Self:ROLL_START(_, roll)
     if roll.isOwner and Session.IsMasterlooter() or Addon.db.profile.ui.showRollsWindow and (roll.item.isOwner or roll:ShouldBeBidOn()) then
         Self.Show()
     end

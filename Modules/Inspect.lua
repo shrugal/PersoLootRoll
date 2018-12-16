@@ -235,8 +235,8 @@ function Self:OnEnable()
     Self:RegisterEvent("PARTY_MEMBER_ENABLE")
     Self:RegisterEvent("INSPECT_READY")
     Self:RegisterEvent("CHAT_MSG_SYSTEM")
-    Self:RegisterMessage(Addon.EVENT_ACTIVE_CHANGE, Self.ACTIVE_CHANGE)
-    Self:RegisterMessage(Addon.EVENT_TRACKING_CHANGE, Self.TRACKING_CHANGE)
+    Self:RegisterMessage(Addon.EVENT_ACTIVE_CHANGE, "ACTIVE_CHANGE")
+    Self:RegisterMessage(Addon.EVENT_TRACKING_CHANGE, "TRACKING_CHANGE")
 
     -- IsInGroup doesn't work correctly right after logging in, so check again a few seconds later
     if not Self.timer then
@@ -244,11 +244,11 @@ function Self:OnEnable()
     end
 end
 
-function Self.PARTY_MEMBER_ENABLE(_, _, unit)
+function Self:PARTY_MEMBER_ENABLE(_, unit)
     if Addon:IsTracking() then Self.Queue(unit) end
 end
 
-function Self.INSPECT_READY(_, _, guid)
+function Self:INSPECT_READY(_, guid)
     local _, _, _, _, _, name, realm = GetPlayerInfoByGUID(guid)
     local unit = realm and realm ~= "" and name .. "-" .. realm or name
 
@@ -268,7 +268,7 @@ function Self.INSPECT_READY(_, _, guid)
     end
 end
 
-function Self.CHAT_MSG_SYSTEM(_, _, msg)
+function Self:CHAT_MSG_SYSTEM(_, msg)
     if not Addon:IsTracking() then return end
 
     -- Check if a player joined the group/raid
@@ -291,13 +291,13 @@ function Self.CHAT_MSG_SYSTEM(_, _, msg)
     end
 end
 
-function Self.ACTIVE_CHANGE(active)
+function Self:ACTIVE_CHANGE(active)
     if not active then
         Self.Clear()
     end
 end
 
-function Self.TRACKING_CHANGE(tracking)
+function Self:TRACKING_CHANGE(tracking)
     if tracking then
         Self.Queue()
         Self.Start()

@@ -120,7 +120,7 @@ function Self:OnEnable()
     Self:RegisterEvent("TRADE_REQUEST_CANCEL", Self.Clear)
 end
 
-function Self.TRADE_SHOW()
+function Self:TRADE_SHOW()
     Self.Clear()
     Self.target = Unit.Name("NPC")
 
@@ -143,15 +143,15 @@ function Self.TRADE_SHOW()
     end
 end
 
-function Self.TRADE_PLAYER_ITEM_CHANGED(_, _, slot)
+function Self:TRADE_PLAYER_ITEM_CHANGED(_, slot)
     Self.items.player[slot] = GetTradePlayerItemLink(slot)
 end
 
-function Self.TRADE_TARGET_ITEM_CHANGED(_, _, slot)
+function Self:TRADE_TARGET_ITEM_CHANGED(_, slot)
     Self.items.target[slot] = GetTradeTargetItemLink(slot)
 end
 
-function Self.TRADE_CLOSED()
+function Self:TRADE_CLOSED()
     -- This usually get's called twice in a row
     if Self.timers.onClose then
         Addon:CancelTimer(Self.timers.onClose)

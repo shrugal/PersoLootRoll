@@ -366,7 +366,7 @@ function Self:UnitIsTracking(unit, inclCompAddons)
         return self:IsTracking()
     else
         unit = Unit.Name(unit)
-        return self.versions[unit] and not self.disabled[unit] or inclCompAddons and self.compAddonUsers[unit]
+        return self.versions[unit] and not self.disabled[unit] or inclCompAddons and self:GetCompAddonUser(unit)
     end
 end
 
