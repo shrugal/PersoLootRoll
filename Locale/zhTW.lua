@@ -144,6 +144,7 @@ L["MENU_MASTERLOOT_START"] = "成為分裝者"
 L["TIP_ADDON_MISSING"] = "插件缺少："
 L["TIP_ADDON_VERSIONS"] = "插件版本："
 L["TIP_CHAT_TO_TRADE"] = "交易前請先詢問提供者"
+L["TIP_COMP_ADDON_USERS"] = "相容的插件使用者："
 L["TIP_ENABLE_WHISPER_ASK"] = "提示：右鍵點擊啟用戰利品自動詢問"
 L["TIP_MASTERLOOT"] = "隊長分配是啟用的"
 L["TIP_MASTERLOOT_INFO"] = [=[|cffffff00分裝者:|r %s 
@@ -156,8 +157,7 @@ L["TIP_MASTERLOOT_STOP"] = "移除負責分裝者"
 L["TIP_MASTERLOOTING"] = "有分裝者的隊伍 (%d):"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff00左鍵:|r 開關骰裝視窗 
 |cffffff00右鍵:|r 設定選項]=]
-L["TIP_COMP_ADDON_USERS"] = "Compatible addon users:" -- Translation missing
-L["TIP_TEST"] = "Show a test roll" -- Translation missing
+L["TIP_TEST"] = "顯示測試的擲骰"
 L["TIP_VOTES"] = "表決來自:"
 
 -- Options - Home
@@ -191,6 +191,7 @@ L["OPT_DONT_SHARE"] = "不分享戰利品"
 L["OPT_DONT_SHARE_DESC"] = "不去骰別人的戰利品但也不分享自己的。此插件將會阻擋對你戰利品的請求(如果啟用的話)，但你仍可以成為分裝者以及戰利品議會成員。"
 L["OPT_ENABLE"] = "啟用"
 L["OPT_ENABLE_DESC"] = "啟用或停用此插件"
+L["OPT_ENABLE_MODULE_DESC"] = "啟用或停用此模組"
 L["OPT_ILVL_THRESHOLD"] = "物品等級門檻"
 L["OPT_ILVL_THRESHOLD_DESC"] = "物品等級低於你以下多少的物品將被忽略。"
 L["OPT_ILVL_THRESHOLD_RINGS"] = "戒指門檻為雙倍"
@@ -213,7 +214,7 @@ L["OPT_ROLLS_WINDOW"] = "顯示擲骰視窗"
 L["OPT_ROLLS_WINDOW_DESC"] = "當某人拾取你感興趣的戰利品時總是顯示擲骰視窗(所有的擲骰都在上面)。當你是分裝者時，始終啟用此功能。"
 L["OPT_SPECS"] = "專精"
 L["OPT_SPECS_DESC"] = "只建議這些職業專精的戰利品。"
-L["OPT_TRANSLATION"] = "|cffffff00翻譯:|r 三皈依 (TW-暗影之月)"
+L["OPT_TRANSLATION"] = "|cffffff00翻譯:|r 三皈依-暗影之月 (TW)"
 L["OPT_TRANSMOG"] = "檢查塑形外觀"
 L["OPT_TRANSMOG_DESC"] = "擲骰那些你還未擁有外觀的物品。"
 L["OPT_UI"] = "使用者介面"
@@ -386,6 +387,22 @@ L["OPT_WHISPER_SUPPRESS_DESC"] = "當你放棄戰利品時，阻擋來自符合�
 L["OPT_WHISPER_TARGET"] = "詢問目標"
 L["OPT_WHISPER_TARGET_DESC"] = "是否詢問戰利品取決於目標是否在你的公會或是魔獸社群或是好友名單上。"
 
+-- Plugins - EPGP
+L["EPGP"] = "EPGP（貢獻點/裝備點）制度"
+L["EPGP_CREDIT_GP"] = "將％d GP計入％s的<％s>。（裝備點）"
+L["EPGP_EP"] = "EP（貢獻點）"
+L["EPGP_ERROR_CREDIT_GP_FAILED"] = "將％d GP歸入<％s>的％s 失敗！"
+L["EPGP_GP"] = "GP（裝備點）"
+L["EPGP_OPT_AWARD_BEFORE"] = "賦予獎勵優先權"
+L["EPGP_OPT_AWARD_BEFORE_DESC"] = "選擇預設獎勵方法之前，在確定拾取者時，應該結合EPGP PR值。"
+L["EPGP_OPT_BID_WEIGHTS"] = "GP（裝備點）競標權重"
+L["EPGP_OPT_BID_WEIGHTS_DESC"] = "擲骰中競標時分配以不同的權重。物品獲取者得到的GP乘以該值，也可以是 零 或 負數。"
+L["EPGP_OPT_DESC"] = "當裝備分配模式處於活動狀態時，使用EPGP進行戰利品分發。 包括按玩家的PR值顯示和排序，以及在獲得戰利品時記入GP。"
+L["EPGP_OPT_ONLY_GUILD_RAID"] = "僅限於公會裡的團隊活動"
+L["EPGP_OPT_ONLY_GUILD_RAID_DESC"] = "僅在團隊活動中啟用且該隊伍中的人至少％d %%來自您的公會。"
+L["EPGP_OPT_WARNING"] = "|cffff0000警告:|r 在公會中您沒有（EPGP記錄）管理員的權限，因此當您是裝備分配者時，EPGP將無法將GP點值歸入裝備戰利品。"
+L["EPGP_PR"] = "拾取優先(PR)"
+
 -- Roll
 L["BID_CHAT"] = "正在詢問 %s 為了 %s -> %s。"
 L["BID_MAX_WHISPERS"] = "不會問 %s 於 %s，因為你隊伍中的玩家 %d 已經詢問過 -> %s。"
@@ -394,6 +411,10 @@ L["BID_PASS"] = "已放棄 %s 來自 %s。"
 L["BID_START"] = "正在競標 %q 為了 %s 來自 %s。"
 L["MASTERLOOTER_OTHER"] = "%s 現在負責分裝。"
 L["MASTERLOOTER_SELF"] = "你現在負責分裝。"
+L["ROLL_AWARD_BIDS"] = "競標"
+L["ROLL_AWARD_RANDOM"] = "隨機"
+L["ROLL_AWARD_ROLLS"] = "擲骰結果"
+L["ROLL_AWARD_VOTES"] = "表決結果"
 L["ROLL_AWARDED"] = "已給予"
 L["ROLL_AWARDING"] = "給予中"
 L["ROLL_CANCEL"] = "已取消擲骰由 %2$s 提供的 %1$s。"
@@ -416,7 +437,7 @@ L["TRADE_START"] = "與 %s 開始交易。"
 
 -- Globals
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "物品的提供者並沒有使用PersoLootRoll插件。"
-LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "The owner of this item has not allowed \"Disenchant\" bids." -- Translation missing
+LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "物品的提供者不允許\"分解\"的競標。"
 LOOT_ROLL_INELIGIBLE_REASONPLR_NOT_ENCHANTER = "您的角色並未學習\"附魔\"專業技能。"
 
 -- Other

@@ -2,6 +2,9 @@
 ## Title: PersoLootRoll
 ## Notes: A loot roll addon for personal loot.
 ## Notes-deDE: Ein Beute Vergabe Addon für Persönlichen Loot.
+## Notes-zhCN: 战利品的个人拾取分配插件。
+## Notes-esES: Un addon de tiradas de dados por objetos para el loot personal.
+## Notes-zhTW: 一個用於個人拾取的戰利品分配插件。
 ## Version: 16
 ## SavedVariables: PersoLootRollDB, PersoLootRollIconDB, PersoLootRollML, PersoLootRollDebug
 

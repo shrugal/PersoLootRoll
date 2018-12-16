@@ -144,6 +144,7 @@ L["MENU_MASTERLOOT_START"] = "Стать ответственным за доб�
 L["TIP_ADDON_MISSING"] = "Аддон отсутствует:"
 L["TIP_ADDON_VERSIONS"] = "Версии аддона:"
 L["TIP_CHAT_TO_TRADE"] = "Please ask the owner first before trading" -- Translation missing
+L["TIP_COMP_ADDON_USERS"] = "Compatible addon users:" -- Translation missing
 L["TIP_ENABLE_WHISPER_ASK"] = "Совет: щелкните правой кнопкой мыши, чтобы автоматически запрашивать добычу"
 L["TIP_MASTERLOOT"] = "Ответственный за добычу активен"
 L["TIP_MASTERLOOT_INFO"] = [=[|cffffff78Ответственный за добычу:|r %s
@@ -156,7 +157,6 @@ L["TIP_MASTERLOOT_STOP"] = "Убрать ответственного за до�
 L["TIP_MASTERLOOTING"] = "Группа ответственного за добычу:"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff78Left-Click:|r Показать окно с бросками
 |cffffff78Right-Click:|r Открыть настройки]=]
-L["TIP_COMP_ADDON_USERS"] = "Compatible addon users:" -- Translation missing
 L["TIP_TEST"] = "Show a test roll" -- Translation missing
 L["TIP_VOTES"] = "Голоса от:"
 
@@ -191,6 +191,7 @@ L["OPT_DONT_SHARE"] = "Не делиться добычей"
 L["OPT_DONT_SHARE_DESC"] = "Не участвовать в розыгрышах добычи от других и не делиться своей добычей. Аддон будет отклонять входящие запросы на вашу добычу (если включено), и вы все еще можете быть ответственным за добычу и членом совета."
 L["OPT_ENABLE"] = "Включить"
 L["OPT_ENABLE_DESC"] = "Включить или отключить аддон"
+L["OPT_ENABLE_MODULE_DESC"] = "Enable or disable this module" -- Translation missing
 L["OPT_ILVL_THRESHOLD"] = "Диапазон уровней предметов"
 L["OPT_ILVL_THRESHOLD_DESC"] = "Предметы, уровень которых ниже ваших, игнорируются."
 L["OPT_ILVL_THRESHOLD_RINGS"] = "Double threshold for rings" -- Translation missing
@@ -386,6 +387,22 @@ L["OPT_WHISPER_SUPPRESS_DESC"] = "Подавлять входящие личны
 L["OPT_WHISPER_TARGET"] = "Спросить у цели"
 L["OPT_WHISPER_TARGET_DESC"] = "Спросить про добычу в зависимости от того, находится ли цель в вашей гильдии или в списке друзей."
 
+-- Plugins - EPGP
+L["EPGP"] = "EPGP" -- Translation missing
+L["EPGP_CREDIT_GP"] = "Crediting %d GP to <%s> for %s." -- Translation missing
+L["EPGP_EP"] = "EP" -- Translation missing
+L["EPGP_ERROR_CREDIT_GP_FAILED"] = "Crediting %d GP to <%s> for %s failed!" -- Translation missing
+L["EPGP_GP"] = "GP" -- Translation missing
+L["EPGP_OPT_AWARD_BEFORE"] = "Awarding precedence" -- Translation missing
+L["EPGP_OPT_AWARD_BEFORE_DESC"] = "Pick before which default awarding method the EPGP PR value should be concidered when determining a winner." -- Translation missing
+L["EPGP_OPT_BID_WEIGHTS"] = "Bid GP weights" -- Translation missing
+L["EPGP_OPT_BID_WEIGHTS_DESC"] = "Assign different weights to roll bids. The GPs an item winner gets are multiplied by this value, and it can also be 0 or negative." -- Translation missing
+L["EPGP_OPT_DESC"] = "Use EPGP for your loot distribution when masterloot mode is active. This includes showing and sorting by the player's PR value, as well as crediting GP when loot is awarded." -- Translation missing
+L["EPGP_OPT_ONLY_GUILD_RAID"] = "Only in guild raids" -- Translation missing
+L["EPGP_OPT_ONLY_GUILD_RAID_DESC"] = "Only activate when in a raid and at least %d%% of the group are from your guild." -- Translation missing
+L["EPGP_OPT_WARNING"] = "|cffff0000WARNING:|r You don't have the permission to edit officer notes in your guild, so EPGP won't be able to credit GP for loot when you are the masterlooter." -- Translation missing
+L["EPGP_PR"] = "PR" -- Translation missing
+
 -- Roll
 L["BID_CHAT"] = "Спросить %s про %s -> %s."
 L["BID_MAX_WHISPERS"] = "Не буду спрашивать %s про %s, потому что %d игроков в вашей группе уже спросили - > %s."
@@ -394,6 +411,10 @@ L["BID_PASS"] = "Пропуск %s от %s."
 L["BID_START"] = "Bidding with %q for %s from %s." -- Translation missing
 L["MASTERLOOTER_OTHER"] = "Теперь %s ответственный за добычу."
 L["MASTERLOOTER_SELF"] = "Теперь Вы ответственный за добычу."
+L["ROLL_AWARD_BIDS"] = "Bids" -- Translation missing
+L["ROLL_AWARD_RANDOM"] = "Random" -- Translation missing
+L["ROLL_AWARD_ROLLS"] = "Roll results" -- Translation missing
+L["ROLL_AWARD_VOTES"] = "Votes" -- Translation missing
 L["ROLL_AWARDED"] = "Отдано"
 L["ROLL_AWARDING"] = "Awading" -- Translation missing
 L["ROLL_CANCEL"] = "Отмена розыгрыша на %s от %s."

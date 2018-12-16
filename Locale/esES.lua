@@ -144,6 +144,7 @@ L["MENU_MASTERLOOT_START"] = "Convertirte en maestro despojador"
 L["TIP_ADDON_MISSING"] = "Falta addon:"
 L["TIP_ADDON_VERSIONS"] = "Versiones del addon:"
 L["TIP_CHAT_TO_TRADE"] = "Por favor, antes de comerciar pregunta al dueño"
+L["TIP_COMP_ADDON_USERS"] = "Compatible addon users:" -- Translation missing
 L["TIP_ENABLE_WHISPER_ASK"] = "Consejo: clic-derecho para habilitar la petición automática de loot"
 L["TIP_MASTERLOOT"] = "Maestro despojador activo"
 L["TIP_MASTERLOOT_INFO"] = [=[|cffffff78Maestro despojador:|r %s
@@ -156,7 +157,6 @@ L["TIP_MASTERLOOT_STOP"] = "Quitar el maestro despojador"
 L["TIP_MASTERLOOTING"] = "Grupo con maestro despojador (%d): "
 L["TIP_MINIMAP_ICON"] = [=[|cffffff78Clic-izquierdo:|r Fija la ventana de repartos
 |cffffff78Clic-derecho:|r Muestra Opciones]=]
-L["TIP_COMP_ADDON_USERS"] = "Compatible addon users:" -- Translation missing
 L["TIP_TEST"] = "Show a test roll" -- Translation missing
 L["TIP_VOTES"] = "Votos de:"
 
@@ -191,6 +191,7 @@ L["OPT_DONT_SHARE"] = "No compartir objetos"
 L["OPT_DONT_SHARE_DESC"] = "No tirar por objetos de otros jugadores y no compartir mis objetos. El addon rechazará las peticiones de mis objetos (si está activado), y podrás seguir  siendo maestro despojador y miembro del 'loot council'."
 L["OPT_ENABLE"] = "Activar"
 L["OPT_ENABLE_DESC"] = "Activa o desactiva el addon"
+L["OPT_ENABLE_MODULE_DESC"] = "Enable or disable this module" -- Translation missing
 L["OPT_ILVL_THRESHOLD"] = "Límite de nivel de objeto"
 L["OPT_ILVL_THRESHOLD_DESC"] = "Los objetos cuyo nivel de objeto esté por debajo del tuyo en más de esta cantidad serán ignorados."
 L["OPT_ILVL_THRESHOLD_RINGS"] = "Duplicar el límite en los anillos"
@@ -386,6 +387,22 @@ L["OPT_WHISPER_SUPPRESS_DESC"] = "Eliminar susurros entrantes de jugadores elegi
 L["OPT_WHISPER_TARGET"] = "Pedir según objetivo"
 L["OPT_WHISPER_TARGET_DESC"] = "Pedir loot dependiendo de si el objetivo está en tu hermandad, en una de tus comunidades de WoW o en tu lista de amigos."
 
+-- Plugins - EPGP
+L["EPGP"] = "EPGP" -- Translation missing
+L["EPGP_CREDIT_GP"] = "Crediting %d GP to <%s> for %s." -- Translation missing
+L["EPGP_EP"] = "EP" -- Translation missing
+L["EPGP_ERROR_CREDIT_GP_FAILED"] = "Crediting %d GP to <%s> for %s failed!" -- Translation missing
+L["EPGP_GP"] = "GP" -- Translation missing
+L["EPGP_OPT_AWARD_BEFORE"] = "Awarding precedence" -- Translation missing
+L["EPGP_OPT_AWARD_BEFORE_DESC"] = "Pick before which default awarding method the EPGP PR value should be concidered when determining a winner." -- Translation missing
+L["EPGP_OPT_BID_WEIGHTS"] = "Bid GP weights" -- Translation missing
+L["EPGP_OPT_BID_WEIGHTS_DESC"] = "Assign different weights to roll bids. The GPs an item winner gets are multiplied by this value, and it can also be 0 or negative." -- Translation missing
+L["EPGP_OPT_DESC"] = "Use EPGP for your loot distribution when masterloot mode is active. This includes showing and sorting by the player's PR value, as well as crediting GP when loot is awarded." -- Translation missing
+L["EPGP_OPT_ONLY_GUILD_RAID"] = "Only in guild raids" -- Translation missing
+L["EPGP_OPT_ONLY_GUILD_RAID_DESC"] = "Only activate when in a raid and at least %d%% of the group are from your guild." -- Translation missing
+L["EPGP_OPT_WARNING"] = "|cffff0000WARNING:|r You don't have the permission to edit officer notes in your guild, so EPGP won't be able to credit GP for loot when you are the masterlooter." -- Translation missing
+L["EPGP_PR"] = "PR" -- Translation missing
+
 -- Roll
 L["BID_CHAT"] = "Solicitando a %s el objeto %s -> %s."
 L["BID_MAX_WHISPERS"] = "No voy a solicitar a %s el objeto %s, porque %d de los jugadores en tu grupo ya lo han solicitado -> %s."
@@ -394,6 +411,10 @@ L["BID_PASS"] = "Pasando de %s de %s."
 L["BID_START"] = "Pujando con %q por %s de %s."
 L["MASTERLOOTER_OTHER"] = "Ahora %s es tu maestro despojador."
 L["MASTERLOOTER_SELF"] = "Ahora eres el maestro despojador."
+L["ROLL_AWARD_BIDS"] = "Bids" -- Translation missing
+L["ROLL_AWARD_RANDOM"] = "Random" -- Translation missing
+L["ROLL_AWARD_ROLLS"] = "Roll results" -- Translation missing
+L["ROLL_AWARD_VOTES"] = "Votes" -- Translation missing
 L["ROLL_AWARDED"] = "Adjudicado"
 L["ROLL_AWARDING"] = "Adjudicando"
 L["ROLL_CANCEL"] = "Cancelando reparto del objeto %s de %s."
@@ -416,7 +437,7 @@ L["TRADE_START"] = "Empezando comercio con %s."
 
 -- Globals
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "El dueño de este objeto no usa el addon PersoLootRoll."
-LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "The owner of this item has not allowed \"Disenchant\" bids." -- Translation missing
+LOOT_ROLL_INELIGIBLE_REASONPLR_NO_DISENCHANT = "El dueño de este objeto no permite \"Desencantar\"."
 LOOT_ROLL_INELIGIBLE_REASONPLR_NOT_ENCHANTER = "Tu personaje no tiene la profesión \"Encantamiento\"."
 
 -- Other

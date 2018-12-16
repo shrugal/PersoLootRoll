@@ -22,16 +22,16 @@ L["MSG_ROLL_ANSWER_NO_SELF"] = "Tut mir Leid, Ich brauche es selber."
 L["MSG_ROLL_ANSWER_NOT_TRADABLE"] = "Tut mir Leid, ich kann das nicht handeln."
 L["MSG_ROLL_ANSWER_YES"] = "Du kannst es haben, handel mich einfach an."
 L["MSG_ROLL_ANSWER_YES_MASTERLOOT"] = "Du kannst es haben, handel %s einfach an."
+L["MSG_ROLL_DISENCHANT"] = "<%s> wird %s entzaubern -> Mich anhandeln!"
+L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> wird %s von <%s> entzaubern -> %s anhandeln!"
+L["MSG_ROLL_DISENCHANT_WHISPER"] = "Du wurdest ausgewählt %s zu entzaubern, bitte handel mich an."
+L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Du wurdest ausgewählt %s von <%s> zu entzaubern, bitte handel %s an."
 L["MSG_ROLL_START"] = "Vergebe %s -> /w me oder /roll %d!"
 L["MSG_ROLL_START_MASTERLOOT"] = "Vergebe %s von <%s> -> /w me oder /roll %d!"
 L["MSG_ROLL_WINNER"] = "<%s> hat %s gewonnen -> Mich anhandeln!"
 L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%s> hat %s von <%s> gewonnen -> %s anhandeln!"
 L["MSG_ROLL_WINNER_WHISPER"] = "Du hast %s gewonnen! Bitte handel mich an."
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Du hast %s von <%s> gewonnen! Bitte handel %s an."
-L["MSG_ROLL_DISENCHANT"] = "<%s> wird %s entzaubern -> Mich anhandeln!"
-L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> wird %s von <%s> entzaubern -> %s anhandeln!"
-L["MSG_ROLL_DISENCHANT_WHISPER"] = "Du wurdest ausgewählt %s zu entzaubern, bitte handel mich an."
-L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Du wurdest ausgewählt %s von <%s> zu entzaubern, bitte handel %s an."
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
@@ -108,6 +108,8 @@ L["USAGE_ROLL"] = "Benutzung: /plr roll [Item]* (<Zeit> <Spieler>)"
 L["ERROR_CMD_UNKNOWN"] = "Unbekannter Befehl '%s'"
 L["ERROR_ITEM_NOT_TRADABLE"] = "Du kannst dieses Item nicht handeln."
 L["ERROR_NOT_IN_GROUP"] = "Du bist nicht in einer Gruppe/Raid."
+L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"] = "Du musst Plündermeister werden, um Verlosungen für andere Spieler zu starten."
+L["ERROR_NOT_MASTERLOOTER_TIMEOUT"] = "Du kannst die Laufzeit nicht ändern während jemand anders dein Plündermeister ist."
 L["ERROR_OPT_MASTERLOOT_EXPORT_FAILED"] = "Export der Plündermeister-Einstellungen zu <%s> ist fehlgeschlagen!"
 L["ERROR_PLAYER_NOT_FOUND"] = "Kann Spieler %q nicht finden."
 L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"] = "%s hat ein Gebot für %s gesendet, aber hat dazu gerade keine Berechtigung."
@@ -119,8 +121,6 @@ L["ERROR_ROLL_STATUS_NOT_1"] = "Diese Verlosung läuft noch nicht."
 L["ERROR_ROLL_UNKNOWN"] = "Diese Verlosung existiert nicht."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"] = "%s hat eine Stimme für %s gesendet, aber hat dazu gerate keine Berechtigung."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"] = "Du kannst für dieses Item gerade nicht abstimmen."
-L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"] = "Du musst Plündermeister werden, um Verlosungen für andere Spieler zu starten."
-L["ERROR_NOT_MASTERLOOTER_TIMEOUT"] = "Du kannst die Laufzeit nicht ändern während jemand anders dein Plündermeister ist."
 
 -- GUI
 L["DIALOG_MASTERLOOT_ASK"] = "<%s> möchte dein Plündermeister werden."
@@ -143,8 +143,9 @@ L["MENU_MASTERLOOT_SEARCH"] = "Suche Plündermeister in Gruppe"
 L["MENU_MASTERLOOT_START"] = "Werde Plündermeister"
 L["TIP_ADDON_MISSING"] = "Addon fehlt:"
 L["TIP_ADDON_VERSIONS"] = "Addon Versionen:"
-L["TIP_ENABLE_WHISPER_ASK"] = "Tipp: Rechts-Klick um das automatische Fragen nach Loot zu aktivieren"
 L["TIP_CHAT_TO_TRADE"] = "Bitte frag das Ziel erst bevor zu handelst"
+L["TIP_COMP_ADDON_USERS"] = "Nutzer kompatibler Addons:"
+L["TIP_ENABLE_WHISPER_ASK"] = "Tipp: Rechts-Klick um das automatische Fragen nach Loot zu aktivieren"
 L["TIP_MASTERLOOT"] = "Plündermeister ist aktiv"
 L["TIP_MASTERLOOT_INFO"] = [=[|cffffff78Plündermeister:|r %s
 |cffffff78Roll Zeit:|r %ds (+ %ds pro Item)
@@ -156,7 +157,6 @@ L["TIP_MASTERLOOT_STOP"] = "Plündermeister entfernen"
 L["TIP_MASTERLOOTING"] = "Plündermeister Gruppe (%d):"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff78Links-Klick:|r Verlosung-Übersicht umschalten
 |cffffff78Rechts-Klick:|r Optionen öffnen]=]
-L["TIP_COMP_ADDON_USERS"] = "Nutzer kompatibler Addons:"
 L["TIP_TEST"] = "Zeige eine Test-Verlosung"
 L["TIP_VOTES"] = "Stimmen von:"
 
@@ -165,6 +165,11 @@ L["OPT_ACTIONS_WINDOW"] = "Zeige Aktions-Übersicht"
 L["OPT_ACTIONS_WINDOW_DESC"] = "Zeige die Aktions-Übersicht wenn eine Aktion ansteht, z.B. wenn du ein Item gewonnen hast und den Eigner anhandeln musst um es zu bekommen."
 L["OPT_ACTIONS_WINDOW_MOVE"] = "Verschieben"
 L["OPT_ACTIONS_WINDOW_MOVE_DESC"] = "Verschiebe die Aktions-Übersicht."
+L["OPT_ACTIVE_GROUPS"] = "Aktiviere nach Gruppentyp"
+L["OPT_ACTIVE_GROUPS_DESC"] = [=[Aktiviere das Addon nur, wenn du in einer dieser Gruppentypen bist.
+
+|cffffff78Gildengruppe:|r Die Mitglieder einer Gilde stellen %d%% oder mehr der Gruppe.
+|cffffff78Community Gruppe:|r Die Mitglieder einer deiner WoW-Communities stellen %d%% oder mehr der Gruppe.]=]
 L["OPT_ALLOW_DISENCHANT"] = "Erlaube \"Entzaubern\" Gebote"
 L["OPT_ALLOW_DISENCHANT_DESC"] = "Erlaube anderen \"Entzaubern\" auf deine Items zu bieten."
 L["OPT_AUTHOR"] = "|cffffd100Author:|r Shrugal (EU-Mal'Ganis)"
@@ -180,21 +185,19 @@ L["OPT_CHILL_MODE_DESC"] = [=[Die Idee vom "Chill-Modus" ist keinen Zeitdruck me
 |cffffff783.|r Verlosungen von Gruppenmitgliedern ohne Addon bleiben auch solange bestehen bis du dich entschieden hast.
 
 |cffff0000WICHTIG:|r Verlosungen von anderen Addon-Nutzern ohne aktivem "Chill-Mode" haben weiterhin die normale Laufzeit. Für einen entspannten Run solltest du sicherstellen, dass alle in deiner Gruppe "Chill-Mode" aktiviert haben.]=]
+L["OPT_DISENCHANT"] = "Entzaubern"
+L["OPT_DISENCHANT_DESC"] = "Biete \"Entzaubern\" auf Items die du nicht nutzen kannst, wenn du den Beruf hast und der Item-Besitzer es erlaubt hat."
 L["OPT_DONT_SHARE"] = "Keine Beute teilen"
 L["OPT_DONT_SHARE_DESC"] = "Rolle nicht auf die Beute anderer, und teile deine eigene Beute nicht. Das Addon wird Anfragen zu deiner eigenen Beute verneinen (wenn aktiviert), und du kannst weiterhin Plündermeister und Ratsmitglied sein."
 L["OPT_ENABLE"] = "Aktiviert"
 L["OPT_ENABLE_DESC"] = "Aktiviere oder deaktiviere das Addon"
-L["OPT_ACTIVE_GROUPS"] = "Aktiviere nach Gruppentyp"
-L["OPT_ACTIVE_GROUPS_DESC"] = [=[Aktiviere das Addon nur, wenn du in einer dieser Gruppentypen bist.
-
-|cffffff78Gildengruppe:|r Die Mitglieder einer Gilde stellen %d%% oder mehr der Gruppe.
-|cffffff78Community Gruppe:|r Die Mitglieder einer deiner WoW-Communities stellen %d%% oder mehr der Gruppe.]=]
+L["OPT_ENABLE_MODULE_DESC"] = "Aktiviere oder deaktiviere dieses Modul"
 L["OPT_ILVL_THRESHOLD"] = "Item-Level Schwelle"
 L["OPT_ILVL_THRESHOLD_DESC"] = "Items deren Item-Level mehr als diesen Wert unter deinen Items liegen werden ignoriert."
-L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Doppelte Schwelle für Trinkets"
-L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Trinkets sollten eine doppelt so hohe Schwelle haben, da ihr Wert durch Proc-Effekte stark schwanken kann."
 L["OPT_ILVL_THRESHOLD_RINGS"] = "Doppelte Schwelle für Ringe"
 L["OPT_ILVL_THRESHOLD_RINGS_DESC"] = "Ringe sollten eine doppelt so hohe Schwelle haben, da ihr Wert durch fehlende Primär-Attribute stark schwanken kann."
+L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Doppelte Schwelle für Trinkets"
+L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Trinkets sollten eine doppelt so hohe Schwelle haben, da ihr Wert durch Proc-Effekte stark schwanken kann."
 L["OPT_INFO"] = "Informationen"
 L["OPT_INFO_DESC"] = "Ein paar Informationen über das Addon."
 L["OPT_ITEM_FILTER"] = "Item Filter"
@@ -203,6 +206,8 @@ L["OPT_MINIMAP_ICON"] = "Minimap Icon anzeigen"
 L["OPT_MINIMAP_ICON_DESC"] = "Das Minimap Icon anzeigen oder ausblenden."
 L["OPT_ONLY_MASTERLOOT"] = "Nur Plündermeister"
 L["OPT_ONLY_MASTERLOOT_DESC"] = "Aktiviere das Addon nur, wenn der Plündermeister-Modus aktiv ist (z.B. mit deiner Gilde)"
+L["OPT_PAWN"] = "Überprüfe \"Pawn\""
+L["OPT_PAWN_DESC"] = "Rolle nur auf Items, die laut dem \"Pawn\" Addon ein Upgrade für dich sind."
 L["OPT_ROLL_FRAMES"] = "Zeige Roll-Fenster"
 L["OPT_ROLL_FRAMES_DESC"] = "Zeige Roll-Fenster wenn jemand etwas plündert dass dich interessieren könnten, sodass du darauf rollen kannst."
 L["OPT_ROLLS_WINDOW"] = "Zeige Verlosungs-Übersicht"
@@ -212,10 +217,6 @@ L["OPT_SPECS_DESC"] = "Schlage nur Beute für diese Klassen-Spezialisierungen vo
 L["OPT_TRANSLATION"] = "|cffffd100Übersetzung:|r Shrugal (EU-Mal'Ganis)"
 L["OPT_TRANSMOG"] = "Prüfe Transmog-Aussehen"
 L["OPT_TRANSMOG_DESC"] = "Rolle auf Items deren Aussehen du noch nicht hast."
-L["OPT_DISENCHANT"] = "Entzaubern"
-L["OPT_DISENCHANT_DESC"] = "Biete \"Entzaubern\" auf Items die du nicht nutzen kannst, wenn du den Beruf hast und der Item-Besitzer es erlaubt hat."
-L["OPT_PAWN"] = "Überprüfe \"Pawn\""
-L["OPT_PAWN_DESC"] = "Rolle nur auf Items, die laut dem \"Pawn\" Addon ein Upgrade für dich sind."
 L["OPT_UI"] = "Benutzerinterface"
 L["OPT_UI_DESC"] = "Passe das Aussehen von %s nach deinen Bedürfnissen an."
 L["OPT_VERSION"] = "|cffffd100Version:|r %s"
@@ -252,6 +253,7 @@ L["OPT_MASTERLOOT_EXPORT_WINDOW"] = "Plündermeister-Einstellungen exportieren"
 L["OPT_MASTERLOOT_LOAD"] = "Laden"
 L["OPT_MASTERLOOT_LOAD_DESC"] = "Lade Plündermeister-Einstellungen von der Gilden/Community-Beschreibung."
 L["OPT_MASTERLOOT_RULES"] = "Regeln"
+L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"] = "Erlaube Gruppenmitgliedern \"Entzaubern\" auf Items zu bieten."
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD"] = "Beute automatisch vergeben"
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_DESC"] = "Lass das Addon automatisch entscheiden wer die Beute bekommen soll, basierend auf Faktoren wie Rat Stimmen, Gebote, ausgerüstetes Itemlevel etc."
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT"] = "Automatsch vergeben Basis Laufzeit"
@@ -261,7 +263,6 @@ L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM_DESC"] = "Für jedes gedropp
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC"] = "Gebote öffentlich"
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC_DESC"] = "Du kannst Gebote öffentlich machen, sodass jeder sehen kann wer für was gestimmt hat."
 L["OPT_MASTERLOOT_RULES_DESC"] = "Diese Optionen betreffen jeden der dich als Plündermeister akzeptiert."
-L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"] = "Erlaube Gruppenmitgliedern \"Entzaubern\" auf Items zu bieten."
 L["OPT_MASTERLOOT_RULES_DISENCHANTER"] = "Entzauberer"
 L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "Gib Beute die niemand haben möchte an Spieler zum Entzaubern. Trenne mehrere Namen mit Leerzeichen oder Kommas."
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS"] = "Eigene 'Gier' Antworten"
@@ -329,6 +330,20 @@ L["OPT_MSG_ROLL_ANSWER_YES"] = "Antwort: Du kannst es haben"
 L["OPT_MSG_ROLL_ANSWER_YES_DESC"] = ""
 L["OPT_MSG_ROLL_ANSWER_YES_MASTERLOOT"] = "Antwort: Du kannst es haben (als Plündermeister)"
 L["OPT_MSG_ROLL_ANSWER_YES_MASTERLOOT_DESC"] = "1: Item Besitzer"
+L["OPT_MSG_ROLL_DISENCHANT"] = "Den Entzauberer einer Verlosung verkünden"
+L["OPT_MSG_ROLL_DISENCHANT_DESC"] = [=[1: Entzauberer
+2: Item Link]=]
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT"] = "Den Entzauberer einer Verlosung verkünden (als Plündermeister)"
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT_DESC"] = [=[1: Entzauberer
+2: Item Link
+3: Item Besitzer
+4: ihn/sie]=]
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER"] = "Den Entzauberer einer Verlosung anflüstern"
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_DESC"] = "1: Item Link"
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Den Entzauberer einer Verlosung anflüstern (als Plündermeister)"
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1: Item Link
+2: Item Besitzer
+3: ihn/sie]=]
 L["OPT_MSG_ROLL_START"] = "Eine neue Verlosung verkünden"
 L["OPT_MSG_ROLL_START_DESC"] = [=[1: Item Link
 2: Roll Nummer]=]
@@ -350,20 +365,6 @@ L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Den Gewinner einer Verlosung anfl
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1: Item Link
 2: Item Besitzer
 3: ihn/sie]=]
-L["OPT_MSG_ROLL_DISENCHANT"] = "Den Entzauberer einer Verlosung verkünden"
-L["OPT_MSG_ROLL_DISENCHANT_DESC"] = [=[1: Entzauberer
-2: Item Link]=]
-L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT"] = "Den Entzauberer einer Verlosung verkünden (als Plündermeister)"
-L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT_DESC"] = [=[1: Entzauberer
-2: Item Link
-3: Item Besitzer
-4: ihn/sie]=]
-L["OPT_MSG_ROLL_DISENCHANT_WHISPER"] = "Den Entzauberer einer Verlosung anflüstern"
-L["OPT_MSG_ROLL_DISENCHANT_WHISPER_DESC"] = "1: Item Link"
-L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Den Entzauberer einer Verlosung anflüstern (als Plündermeister)"
-L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1: Item Link
-2: Item Besitzer
-3: ihn/sie]=]
 L["OPT_SHOULD_CHAT"] = "An/abschalten"
 L["OPT_SHOULD_CHAT_DESC"] = "Ändere wann da Addon in den Gruppen/Raid-Chat postet und andere Spieler anschreibt."
 L["OPT_WHISPER"] = "Flüsternachrichten"
@@ -371,6 +372,8 @@ L["OPT_WHISPER_ANSWER"] = "Anfragen beantworten"
 L["OPT_WHISPER_ANSWER_DESC"] = "Lass das Addon auf Anfragen von Gruppenmitgliedern antworten, die sich auf Items von dir beziehen."
 L["OPT_WHISPER_ASK"] = "Frage nach Beute"
 L["OPT_WHISPER_ASK_DESC"] = "Flüstere andere an, wenn sie Beute bekommen haben die du haben möchtest."
+L["OPT_WHISPER_ASK_VARIANTS"] = "Aktiviere Frage-Varianten"
+L["OPT_WHISPER_ASK_VARIANTS_DESC"] = "Verwende unterschiedliche Sätze (s.u.) um nach Beute zu fragen, um es weniger repetitiv zu machen."
 L["OPT_WHISPER_DESC"] = "Hier kannst du ändern ob das Addon anderen Spielern Flüsternachrichten senden und auf sie antworten soll."
 L["OPT_WHISPER_GROUP"] = "Flüstern nach Gruppe"
 L["OPT_WHISPER_GROUP_DESC"] = "Flüstere andere an, abhängig von der Art von Gruppe in der du gerade bist."
@@ -383,8 +386,22 @@ L["OPT_WHISPER_SUPPRESS"] = "Anfragen unterdrücken"
 L["OPT_WHISPER_SUPPRESS_DESC"] = "Unterdrücke Anfragen von Gruppenmitgliedern während du deine Beute vergibst."
 L["OPT_WHISPER_TARGET"] = "Frage nach Ziel"
 L["OPT_WHISPER_TARGET_DESC"] = "Frage nach Beute, abhängig davon ob das Ziel in deiner Gilde, einer deiner WoW-Communities oder auf deiner Freundesliste ist."
-L["OPT_WHISPER_ASK_VARIANTS"] = "Aktiviere Frage-Varianten"
-L["OPT_WHISPER_ASK_VARIANTS_DESC"] = "Verwende unterschiedliche Sätze (s.u.) um nach Beute zu fragen, um es weniger repetitiv zu machen."
+
+-- Plugins - EPGP
+L["EPGP"] = "EPGP"
+L["EPGP_CREDIT_GP"] = "Vergebe %d GP an <%s> für %s."
+L["EPGP_EP"] = "EP"
+L["EPGP_ERROR_CREDIT_GP_FAILED"] = "Vergabe von %d GP an <%s> für %s ist fehlgeschlagen!"
+L["EPGP_GP"] = "GP"
+L["EPGP_OPT_AWARD_BEFORE"] = "Vergabe Priorität"
+L["EPGP_OPT_AWARD_BEFORE_DESC"] = "Wähle vor welcher Standard Vergabe-Methode der EPGP PR Wert beim Beute verteilen verwendet werden soll."
+L["EPGP_OPT_BID_WEIGHTS"] = "Gebot GP Gewichtung"
+L["EPGP_OPT_BID_WEIGHTS_DESC"] = "Vergebe unterschiedliche Gewichtungen für Gebote. Die GP, die einem Item-Gewinner zugeschrieben werden werden mit diesem Wert multipliziert, und er kann auch 0 oder negativ sein."
+L["EPGP_OPT_DESC"] = "Verwende EPGP für die Beute-Vergabe bei aktiviertem Plündermeister-Modus. Dies beinhaltet das Anzeigen von und Sortieren nach dem PR Wert der Mitspieler, ebenso wie die Vergabe von GP wenn Beute verteilt wird."
+L["EPGP_OPT_ONLY_GUILD_RAID"] = "Nur in Gildenraids"
+L["EPGP_OPT_ONLY_GUILD_RAID_DESC"] = "Aktiviere nur wenn du in einem Raid bist der zu mindestens %d%% aus Mitgliedern deiner Gilde besteht."
+L["EPGP_OPT_WARNING"] = "|cffff0000WARNUNG:|r Du hast nicht die Befugnis Offiziersnotizen von Gildenmitgliedern zu bearbeiten, d.h. dass EPGP keine GP für Beute zuschreiben kann während du Plündermeister bist."
+L["EPGP_PR"] = "PR"
 
 -- Roll
 L["BID_CHAT"] = "Frage %s nach %s -> %s."
@@ -394,6 +411,10 @@ L["BID_PASS"] = "Passe auf %s von %s."
 L["BID_START"] = "Biete auf %s von %s."
 L["MASTERLOOTER_OTHER"] = "%s ist jetzt dein Plündermeister."
 L["MASTERLOOTER_SELF"] = "Du bist jetzt der Plündermeister."
+L["ROLL_AWARD_BIDS"] = "Gebote"
+L["ROLL_AWARD_RANDOM"] = "Zufällig"
+L["ROLL_AWARD_ROLLS"] = "Würfelergebnisse"
+L["ROLL_AWARD_VOTES"] = "Stimmen"
 L["ROLL_AWARDED"] = "Zugewiesen"
 L["ROLL_AWARDING"] = "Zuweisen"
 L["ROLL_CANCEL"] = "Breche Verlosung für %s von %s ab."
