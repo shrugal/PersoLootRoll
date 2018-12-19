@@ -117,11 +117,11 @@ Self.WIDTH_FIFTH_SCROLL = Self.WIDTH_FIFTH - (0.2/5)
 Self.DIVIDER = "------ PersoLootRoll ------"
 
 -- Keys+values for multiselects/dropdowns
-Self.groupKeys = {"party", "lfd", "guild", "raid", "lfr", "community"}
-Self.groupValues = {PARTY, LOOKING_FOR_DUNGEON_PVEFRAME, GUILD_GROUP, RAID, RAID_FINDER_PVEFRAME, L["COMMUNITY_GROUP"]}
+Self.groupKeys = {"party", "raid", "lfd", "lfr", "guild", "community"}
+Self.groupValues = {PARTY, RAID, LOOKING_FOR_DUNGEON_PVEFRAME, RAID_FINDER_PVEFRAME, GUILD_GROUP, L["COMMUNITY_GROUP"]}
 
-Self.groupKeysList = {"party", "raid", "lfd", "lfr", "guild", "community"}
-Self.groupValuesList = {PARTY, RAID, LOOKING_FOR_DUNGEON_PVEFRAME, RAID_FINDER_PVEFRAME, GUILD_GROUP, L["COMMUNITY_GROUP"]}
+Self.targetKeys = {"friend", "guild", "community", "other"}
+Self.targetValues = {FRIEND, GUILD, L["COMMUNITY_MEMBER"], OTHER}
 
 Self.allowKeys = {"friend", "community", "guild", "raidleader", "raidassistant", "guildgroup"}
 Self.allowValues = {FRIEND, L["COMMUNITY_MEMBER"], LFG_LIST_GUILD_MEMBER, L["RAID_LEADER"], L["RAID_ASSISTANT"], GUILD_GROUP}
@@ -246,12 +246,12 @@ function Self.RegisterGeneral()
                 type = "multiselect",
                 control = "Dropdown",
                 order = it(),
-                values = Self.groupValuesList,
+                values = Self.groupValues,
                 set = function (_, key, val)
-                    Addon.db.profile.activeGroups[Self.groupKeysList[key]] = val
+                    Addon.db.profile.activeGroups[Self.groupKeys[key]] = val
                     Addon:CheckState(true)
                 end,
-                get = function (_, key) return Addon.db.profile.activeGroups[Self.groupKeysList[key]] end
+                get = function (_, key) return Addon.db.profile.activeGroups[Self.groupKeys[key]] end
             },
             onlyMasterloot = {
                 name = L["OPT_ONLY_MASTERLOOT"],
@@ -487,7 +487,7 @@ function Self.RegisterMessages()
                 type = "group",
                 order = it(),
                 args = {
-                    -- ShouldChatDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_SHOULD_CHAT_DESC"] .. "\n"},
+                    shouldChatDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_SHOULD_CHAT_DESC"] .. "\n"},
                     group = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
                     groupAnnounce = {
                         name = L["OPT_GROUPCHAT_ANNOUNCE"],
@@ -500,12 +500,13 @@ function Self.RegisterMessages()
                             local _ = not val or Util.TblFind(c.groupType, true) or Util.TblMap(c.groupType, Util.FnTrue)
                         end,
                         get = function () return Addon.db.profile.messages.group.announce end,
-                        width = Self.WIDTH_FULL
+                        width = Self.WIDTH_THIRD * 2
                     },
                     groupGroupType = {
                         name = L["OPT_GROUPCHAT_GROUP_TYPE"],
                         desc = L["OPT_GROUPCHAT_GROUP_TYPE_DESC"]:format(Util.GROUP_THRESHOLD*100, Util.GROUP_THRESHOLD*100),
                         type = "multiselect",
+                        control = "Dropdown",
                         order = it(),
                         values = Self.groupValues,
                         set = function (_, key, val)
@@ -514,6 +515,7 @@ function Self.RegisterMessages()
                             c.announce = Util.TblFind(c.groupType, true) and c.announce or false
                         end,
                         get = function (_, key) return Addon.db.profile.messages.group.groupType[Self.groupKeys[key]] end,
+                        width = Self.WIDTH_THIRD
                     },
                     groupRoll = {
                         name = L["OPT_GROUPCHAT_ROLL"],
@@ -539,6 +541,36 @@ function Self.RegisterMessages()
                         get = function () return Addon.db.profile.messages.whisper.ask end,
                         width = Self.WIDTH_THIRD
                     },
+                    whisperTarget = {
+                        name = L["OPT_WHISPER_TARGET"],
+                        desc = L["OPT_WHISPER_TARGET_DESC"],
+                        type = "multiselect",
+                        control = "Dropdown",
+                        order = it(),
+                        values = Self.targetValues,
+                        set = function (_, key, val)
+                            local c = Addon.db.profile.messages.whisper
+                            c.target[Self.targetKeys[key]] = val
+                            c.ask = Util.TblFind(c.target, true) and c.ask or false
+                        end,
+                        get = function (_, key) return Addon.db.profile.messages.whisper.target[Self.targetKeys[key]] end,
+                        width = Self.WIDTH_THIRD
+                    },
+                    whisperGroupType = {
+                        name = L["OPT_WHISPER_GROUP_TYPE"],
+                        desc = L["OPT_WHISPER_GROUP_TYPE_DESC"]:format(Util.GROUP_THRESHOLD*100, Util.GROUP_THRESHOLD*100),
+                        type = "multiselect",
+                        control = "Dropdown",
+                        order = it(),
+                        values = Self.groupValues,
+                        set = function (_, key, val)
+                            local c = Addon.db.profile.messages.whisper
+                            c.groupType[Self.groupKeys[key]] = val
+                            c.ask = Util.TblFind(c.groupType, true) and c.ask or false
+                        end,
+                        get = function (_, key) return Addon.db.profile.messages.whisper.groupType[Self.groupKeys[key]] end,
+                        width = Self.WIDTH_THIRD
+                    },
                     whisperAnswer = {
                         name = L["OPT_WHISPER_ANSWER"],
                         desc = L["OPT_WHISPER_ANSWER_DESC"],
@@ -546,7 +578,7 @@ function Self.RegisterMessages()
                         order = it(),
                         set = function (_, val) Addon.db.profile.messages.whisper.answer = val end,
                         get = function () return Addon.db.profile.messages.whisper.answer end,
-                        width = Self.WIDTH_THIRD
+                        width = Self.WIDTH_FULL
                     },
                     whisperSuppress = {
                         name = L["OPT_WHISPER_SUPPRESS"],
@@ -555,39 +587,8 @@ function Self.RegisterMessages()
                         order = it(),
                         set = function (_, val) Addon.db.profile.messages.whisper.suppress = val end,
                         get = function () return Addon.db.profile.messages.whisper.suppress end,
-                        width = Self.WIDTH_THIRD
+                        width = Self.WIDTH_FULL
                     },
-                    whisperGroupType = {
-                        name = L["OPT_WHISPER_GROUP_TYPE"],
-                        desc = L["OPT_WHISPER_GROUP_TYPE_DESC"]:format(Util.GROUP_THRESHOLD*100, Util.GROUP_THRESHOLD*100),
-                        type = "multiselect",
-                        order = it(),
-                        values = Self.groupValues,
-                        set = function (_, key, val)
-                            local c = Addon.db.profile.messages.whisper
-                            c.groupType[Self.groupKeys[key]] = val
-                            c.ask = Util.TblFind(c.groupType, true) and c.ask or false
-                        end,
-                        get = function (_, key) return Addon.db.profile.messages.whisper.groupType[Self.groupKeys[key]] end
-                    },
-                    whisperTarget = {
-                        name = L["OPT_WHISPER_TARGET"],
-                        desc = L["OPT_WHISPER_TARGET_DESC"],
-                        type = "multiselect",
-                        order = it(),
-                        values = {
-                            friend = FRIEND,
-                            guild = GUILD,
-                            community = COMMUNITIES,
-                            other = OTHER
-                        },
-                        set = function (_, key, val)
-                            local c = Addon.db.profile.messages.whisper
-                            c.target[key] = val
-                            c.ask = Util.TblFind(c.target, true) and c.ask or false
-                        end,
-                        get = function (_, key) return Addon.db.profile.messages.whisper.target[key] end
-                    }
                 }
             },
             customMessages = {

@@ -387,43 +387,51 @@ end
 
 -- Get a value from a table
 function Self.TblGet(t, ...)
-    local n = select("#", ...)
-
-    if n == 1 then
-        if type(...) == "table" then
-            return Self.TblGet(t, unpack(...))
-        elseif type(...) == "string" and (...):find("%.") then
-            return Self.TblGet(t, ("."):split(...))
-        end
+    local n, path = select("#", ...), ...
+   
+    if n == 1 and type(path) == "string" and path:find("%.") then
+        path = Self.TblTmp(("."):split((...)))
+    elseif type(path) ~= "table" then
+        path = Self.TblTmp(...)
     end
     
-    for i=1,n do if t ~= nil then t = t[select(i, ...)] end end
+    for i,k in Self.IEach(path) do
+        if k == nil then
+            break
+        elseif t ~= nil then
+            t = t[k]
+        end
+    end
 
     return t
 end
 
 -- Set a value on a table
 function Self.TblSet(t, ...)
-    local path = ...
+    local n, path = select("#", ...), ...
+    local val = select(n, ...)
    
-    if type(...) == "string" and (...):find("%.") then
+    if n == 2 and type(path) == "string" and path:find("%.") then
         path = Self.TblTmp(("."):split((...)))
-    elseif type(...) ~= "table" then
+    elseif type(path) ~= "table" then
         path = Self.TblTmp(...)
         tremove(path)
     end
    
-    local u = t
-    for i,k in ipairs(path) do
-        if i == #path then
-            u[k] = select(select("#", ...), ...)
-        else
-            if u[k] == nil then u[k] = {} end
-            u = u[k]
+    local u, j = t
+    for i,k in Self.IEach(path) do
+        if k == nil then
+            break
+        elseif j then
+            if u[j] == nil then u[j] = Self.Tbl() end
+            u = u[j]
         end
+        j = k
     end
+
+    u[j] = val
    
-    return t, val, Self.TblReleaseTmp(path)
+    return t, val
 end
 
 -- Get a random key from the table
