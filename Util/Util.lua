@@ -428,10 +428,11 @@ end
 
 -- Get a random key from the table
 function Self.TblRandomKey(t)
-    local keys = Self.TblKeys(t)
-    local r = #keys > 0 and keys[math.random(#keys)] or nil
-    Self.TblRelease(keys)
-    return r
+    local n = random(Self.TblCount(t))
+    for i,v in pairs(t) do
+        n = n - 1
+        if n == 0 then return i end
+    end
 end
 
 -- Get a random entry from the table
@@ -459,12 +460,15 @@ function Self.TblList(t)
     local n = Self.TblCount(t)
     for k=1, n do
         if not t[k] then
+            local l
             for i,v in pairs(t) do
-                if type(i) ~= "number" or i > n then
-                    t[k], t[i] = t[i], nil
-                    break
+                if type(i) == "number" then
+                    l = min(l or i, i)
+                else
+                    l = i break
                 end
             end
+            t[k], t[l] = t[l], nil
         end
     end
     return t
@@ -734,7 +738,7 @@ function Self.TblCopyFilter(t, fn, index, notVal, k, ...)
             Self.TblInsert(u, i, v, k)
         end
     end
-    return u
+    return k and u or Self.TblList(u)
 end
 
 -- Pick specific keys from a table
@@ -945,8 +949,8 @@ end
 
 -- CHANGE
 
-function Self.TblInsert(t, i, v, k) if k then t[i] = v elseif i then tinsert(t, i, v) else tinsert(t, v) end end
-function Self.TblRemove(t, i, k) if k then t[i] = nil elseif i then tremove(t, i) else tremove(t) end end
+function Self.TblInsert(t, i, v, k) if k or i and not tonumber(i) then t[i] = v elseif i then tinsert(t, i, v) else tinsert(t, v) end end
+function Self.TblRemove(t, i, k) if k or i and not tonumber(i) then t[i] = nil elseif i then tremove(t, i) else tremove(t) end end
 function Self.TblPush(t, v) tinsert(t, v) return t end
 function Self.TblPop(t) return tremove(t) end
 function Self.TblDrop(t) tremove(t) return t end

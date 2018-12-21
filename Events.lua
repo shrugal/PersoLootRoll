@@ -286,7 +286,7 @@ function Self.CHAT_MSG_WHISPER_FILTER(_, _, msg, sender, _, _, _, _, _, _, _, _,
 
     -- Find eligible rolls
     if link then
-        roll = Roll.Find(nil, nil, link)
+        roll = Roll.Find(nil, true, link)
     else
         -- Find running or recent rolls and determine firstStarted and lastEnded
         for i,roll in pairs(Self.rolls) do
@@ -536,7 +536,7 @@ Comm.ListenData(Comm.EVENT_BID, function (event, data, channel, sender, unit)
     if not Self:IsTracking() then return end
 
     local isImport = data.fromUnit ~= nil
-    local owner = isImport and unit or nil
+    local owner = isImport and unit or Unit.Name("player")
     local fromUnit = data.fromUnit or unit
 
     local roll = Roll.Find(data.ownerId, owner)
@@ -547,7 +547,7 @@ end)
 Comm.ListenData(Comm.EVENT_BID_WHISPER, function (event, item)
     if not Self:IsTracking() then return end
 
-    local roll = Roll.Find(nil, nil, item)
+    local roll = Roll.Find(nil, item.owner, item.link)
     if roll then
         roll.whispers = roll.whispers + 1
     end
