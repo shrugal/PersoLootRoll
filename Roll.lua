@@ -810,10 +810,8 @@ end
 function Self:DetermineWinner()
     local candidates = Util.TblCopyExcept(self.bids, Self.BID_PASS, true)
 
-    Util.Dump(candidates)
     for i,method in Self.AwardMethods:Iter() do
         method.fn(self, candidates)
-        Util.Dump(i, candidates)
 
         if Util.TblCount(candidates) == 1 then
             return next(candidates), Util.TblRelease(candidates)
