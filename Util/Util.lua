@@ -428,10 +428,14 @@ end
 
 -- Get a random key from the table
 function Self.TblRandomKey(t)
-    local n = random(Self.TblCount(t))
-    for i,v in pairs(t) do
-        n = n - 1
-        if n == 0 then return i end
+    if not next(t) then
+        return
+    else
+        local n = random(Self.TblCount(t))
+        for i,v in pairs(t) do
+            n = n - 1
+            if n == 0 then return i end
+        end
     end
 end
 
@@ -735,7 +739,7 @@ function Self.TblCopyFilter(t, fn, index, notVal, k, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if Self.FnCall(fn, v, i, index, notVal, ...) then
-            Self.TblInsert(u, i, v, k)
+            Self.TblInsert(u, k and i, v, k)
         end
     end
     return k and u or Self.TblList(u)
@@ -750,7 +754,7 @@ end
 
 -- Omit specific keys from a table
 function Self.TblCopyUnselect(t, ...)
-    local u, isTbl = Self.Tbl(), type(...) == "table"
+    local u = Self.Tbl()
     for i,v in pairs(t) do
         if not Util.In(i, ...) then
             u[i] = v
@@ -764,7 +768,7 @@ function Self.TblCopyOnly(t, val, k)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if v == val then
-            Self.TblInsert(u, i, v, k)
+            Self.TblInsert(u, k and i, v, k)
         end
     end
     return u
@@ -775,7 +779,7 @@ function Self.TblCopyExcept(t, val, k)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if v ~= val then
-            Self.TblInsert(u, i, v, k)
+            Self.TblInsert(u, k and i, v, k)
         end
     end
     return u
@@ -786,7 +790,7 @@ function Self.TblCopyWhere(t, k, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if Self.TblFindWhere(u, ...) then
-            Self.TblInsert(u, i, v, k)
+            Self.TblInsert(u, k and i, v, k)
         end
     end
     return u
@@ -797,7 +801,7 @@ function Self.TblCopyExceptWhere(t, k, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if not Self.TblFindWhere(u, ...) then
-            Self.TblInsert(u, i, v, k)
+            Self.TblInsert(u, k and i, v, k)
         end
     end
     return u
