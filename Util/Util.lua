@@ -436,10 +436,15 @@ end
 
 -- Get a random key from the table
 function Self.TblRandomKey(t)
-    local keys = Self.TblKeys(t)
-    local r = #keys > 0 and keys[math.random(#keys)] or nil
-    Self.TblRelease(keys)
-    return r
+    if not next(t) then
+        return
+    else
+        local n = random(Self.TblCount(t))
+        for i,v in pairs(t) do
+            n = n - 1
+            if n == 0 then return i end
+        end
+    end
 end
 
 -- Get a random entry from the table
@@ -467,12 +472,15 @@ function Self.TblList(t)
     local n = Self.TblCount(t)
     for k=1, n do
         if not t[k] then
+            local l
             for i,v in pairs(t) do
-                if type(i) ~= "number" or i > n then
-                    t[k], t[i] = t[i], nil
-                    break
+                if type(i) == "number" then
+                    l = min(l or i, i)
+                else
+                    l = i break
                 end
             end
+            t[k], t[l] = t[l], nil
         end
     end
     return t
@@ -739,10 +747,10 @@ function Self.TblCopyFilter(t, fn, index, notVal, k, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if Self.FnCall(fn, v, i, index, notVal, ...) then
-            Self.TblInsert(u, i, v, k)
+            Self.TblInsert(u, k and i, v, k)
         end
     end
-    return u
+    return k and u or Self.TblList(u)
 end
 
 -- Pick specific keys from a table
@@ -754,7 +762,7 @@ end
 
 -- Omit specific keys from a table
 function Self.TblCopyUnselect(t, ...)
-    local u, isTbl = Self.Tbl(), type(...) == "table"
+    local u = Self.Tbl()
     for i,v in pairs(t) do
         if not Util.In(i, ...) then
             u[i] = v
@@ -768,7 +776,7 @@ function Self.TblCopyOnly(t, val, k)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if v == val then
-            Self.TblInsert(u, i, v, k)
+            Self.TblInsert(u, k and i, v, k)
         end
     end
     return u
@@ -779,7 +787,7 @@ function Self.TblCopyExcept(t, val, k)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if v ~= val then
-            Self.TblInsert(u, i, v, k)
+            Self.TblInsert(u, k and i, v, k)
         end
     end
     return u
@@ -790,7 +798,7 @@ function Self.TblCopyWhere(t, k, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if Self.TblFindWhere(u, ...) then
-            Self.TblInsert(u, i, v, k)
+            Self.TblInsert(u, k and i, v, k)
         end
     end
     return u
@@ -801,7 +809,7 @@ function Self.TblCopyExceptWhere(t, k, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
         if not Self.TblFindWhere(u, ...) then
-            Self.TblInsert(u, i, v, k)
+            Self.TblInsert(u, k and i, v, k)
         end
     end
     return u
@@ -953,8 +961,8 @@ end
 
 -- CHANGE
 
-function Self.TblInsert(t, i, v, k) if k then t[i] = v elseif i then tinsert(t, i, v) else tinsert(t, v) end end
-function Self.TblRemove(t, i, k) if k then t[i] = nil elseif i then tremove(t, i) else tremove(t) end end
+function Self.TblInsert(t, i, v, k) if k or i and not tonumber(i) then t[i] = v elseif i then tinsert(t, i, v) else tinsert(t, v) end end
+function Self.TblRemove(t, i, k) if k or i and not tonumber(i) then t[i] = nil elseif i then tremove(t, i) else tremove(t) end end
 function Self.TblPush(t, v) tinsert(t, v) return t end
 function Self.TblPop(t) return tremove(t) end
 function Self.TblDrop(t) tremove(t) return t end

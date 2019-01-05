@@ -467,6 +467,7 @@ function Self.Update()
                         self:SetImage("Interface\\Buttons\\UI-MinusButton-Up")
                     end
                     self.parent.parent:DoLayout()
+                    Self:ScheduleTimer(self.parent.parent.DoLayout, 0, self.parent.parent)
                 end)
                 f.image:SetPoint("TOP", 0, 2)
             end

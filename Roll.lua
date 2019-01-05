@@ -151,21 +151,19 @@ end)
 
 -- BIDS
 Self.AwardMethods:Add(Self.AWARD_BIDS, function (roll, candidates)
-    Util(candidates)
-        .Map(function (_, i) return roll.bids[i] end, true)
-        .Only(candidates, Util.TblMin(candidates))
+    for unit in pairs(candidates) do candidates[unit] = roll.bids[unit] end
+    Util.TblOnly(candidates, Util.TblMin(candidates))
 end)
 
 -- ROLLS
 Self.AwardMethods:Add(Self.AWARD_ROLLS, function (roll, candidates)
-    Util(candidates)
-        .Map(function (_, i) return roll.rolls[i] or random(100) end, true)
-        .Only(candidates, Util.TblMax(candidates))
+    for unit in pairs(candidates) do candidates[unit] = roll.rolls[unit] or random(100) end
+    Util.TblOnly(candidates, Util.TblMax(candidates))
 end)
 
 -- RANDOM
 Self.AwardMethods:Add(Self.AWARD_RANDOM, function (_, candidates)
-    Util(candidates).Select(Util.TblRandomKey(candidates))
+    Util.TblSelect(candidates, Util.TblRandomKey(candidates))
 end)
 
 -------------------------------------------------------
@@ -177,51 +175,41 @@ function Self.Get(id)
     return id and Addon.rolls[Self.IsPlrId(id) and Self.FromPlrId(id) or id] or nil
 end
 
--- Get a roll by id and owner
+-- Find a roll
 function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner, status)
-    owner = Unit.Name(owner) or owner
-    itemOwner = Unit.Name(itemOwner) or itemOwner
-    local id
-    
-    -- It's our own item
-    if Unit.IsSelf(owner) then
-        id = ownerId
-    end
-    
-    -- Search by owner id and owner
-    if not id and ownerId and owner then
-        id = Util.TblFindWhere(Addon.rolls, "ownerId", ownerId, "owner", owner)
+    owner = Unit.Name(owner == true and "player" or owner) or owner
+    itemOwner = Unit.Name(itemOwner == true and "player" or itemOwner) or itemOwner
+
+    -- Shortcut for our own items
+    if ownerId and Unit.IsSelf(owner or "player") and not (item or itemOwnerId or itemOwner or status) then
+        return Addon.rolls[ownerId]
     end
 
-    -- Search by item owner id
-    if not id and itemOwnerId and itemOwner then
-        id = Util.TblFindWhere(Addon.rolls, {itemOwnerId = itemOwnerId, item = {owner = itemOwner}}, true)
-    end
-
-    -- Search by owner and link/id
-    if not id and owner and item then
-        local t = type(item)
-        if t == "table" and not item.infoLevel then
+    local t = type(item)
+    if t == "table" then
+        if not item.infoLevel then
             item = Item.FromLink(item.link, item.owner):GetBasicInfo()
-        elseif t == "string" then
-            item = select(2, GetItemInfo(item)) or item
         end
-
-        id = Util.TblSearch(Addon.rolls, function (roll)
-            return  (roll.owner == owner or not (roll.owner and owner))
-                and (roll.item.owner == (itemOwner or t == "table" and item.owner) or not (roll.item.owner and (itemOwner or t == "table" and item.owner)))
-                and (roll.ownerId == ownerId or not (roll.ownerId and ownerId))
-                and (roll.itemOwnerId == itemOwnerId or not (roll.itemOwnerId and itemOwnerId))
-                and (roll.status == status or not status)
-                and (
-                       t == "table" and roll.item.link == item.link
-                    or t == "number" and item == roll.item.id
-                    or t == "string" and item == roll.item.link
-                )
-        end)
+        itemOwner = itemOwner or item.owner
+    elseif t == "string" then
+        item = select(2, GetItemInfo(item)) or item
     end
 
-    return id and Addon.rolls[id]
+    for id,roll in pairs(Addon.rolls) do
+        if      (roll.owner == owner or not owner)
+            and (roll.item.owner == itemOwner or not itemOwner)
+            and (roll.ownerId == ownerId or not ownerId)
+            and (roll.itemOwnerId == itemOwnerId or not itemOwnerId)
+            and (roll.status == status or not status)
+            and (
+                not item
+                or t == "table" and roll.item.link == item.link
+                or t == "number" and item == roll.item.id
+                or t == "string" and item == roll.item.link
+            ) then
+            return roll
+        end
+    end
 end
 
 -- Create and add a roll to the list
@@ -259,8 +247,9 @@ function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
     if roll.isOwner then
         roll.ownerId = roll.id
     end
-    if roll.item.isOwner then
-        roll.itemOwnerId = roll.id
+    if roll.owner == roll.item.owner then
+        roll.itemOwnerId = roll.itemOwnerId or roll.ownerId
+        roll.ownerId = roll.ownerId or roll.itemOwnerId
     end
 
     Addon:SendMessage(Self.EVENT_ADD, roll)
