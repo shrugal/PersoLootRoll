@@ -13,8 +13,7 @@ Self.ILVL_THRESHOLD = 15
 -- Quality: LE_ITEM_QUALITY_POOR, LE_ITEM_QUALITY_COMMON, LE_ITEM_QUALITY_UNCOMMON, LE_ITEM_QUALITY_RARE, LE_ITEM_QUALITY_EPIC, LE_ITEM_QUALITY_LEGENDARY, LE_ITEM_QUALITY_ARTIFACT, LE_ITEM_QUALITY_HEIRLOOM, LE_ITEM_QUALITY_WOW_TOKEN
 -- Bind types: LE_ITEM_BIND_NONE, LE_ITEM_BIND_ON_ACQUIRE, LE_ITEM_BIND_ON_EQUIP, LE_ITEM_BIND_ON_USE, LE_ITEM_BIND_QUEST
 
--- Tooltip search patterns          1          2      3      4      5      6      7      8       9         10      11     12       13      14     15     16     17     18                  19
-Self.PATTERN_LINK_DATA = "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*):?(%d*):?(%-?%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*)[^|]*|?h?%[?([^%[%]]*)%]?|?h?|?r?"
+-- Tooltip search patterns
 Self.PATTERN_LINK = "(|?c?f?f?%x*|?H?item:[^|]*|?h?[^|]*|?h?|?r?)"
 Self.PATTERN_ILVL = ITEM_LEVEL:gsub("%%d", "(%%d+)")
 Self.PATTERN_ILVL_SCALED = ITEM_LEVEL_ALT:gsub("%(%%d%)", "%%%(%%%d%%%)"):gsub("%%d", "(%%d+)")
@@ -40,20 +39,23 @@ Self.INFO_FULL = 3
 -- Item info positions
 Self.INFO = {
     link = {
-        color = 1,
-        id = 3,
-        -- enchantId = 4,
-        -- gemIds = {5, 6, 7, 8},
-        -- suffixId = 9,
-        -- uniqueId = 10,
-        linkLevel = 11,
-        -- specId = 12,
-        -- reforgeId = 13,
-        -- difficultyId = 14,
-        -- numBonusIds = 15,
-        -- bonusIds = {16, 17},
-        -- upgradeValue = 18,
-        name = 19
+        color = "%|cff(%x+)",
+        name = "%|h%[([^%]]+)%]%|h",
+        id = 1,
+        -- enchantId = 2,
+        -- gemId1 = 3,
+        -- gemId2 = 4,
+        -- gemId3 = 5,
+        -- gemId4 = 6,
+        -- suffixId = 7,
+        -- uniqueId = 8,
+        linkLevel = 9,
+        -- specId = 10,
+        -- reforgeId = 11,
+        -- difficultyId = 12,
+        numBonusIds = 13,
+        -- bonusIds = 14,
+        -- upgradeValue = 15
     },
     basic = {
         name = 1,
@@ -181,14 +183,25 @@ function Self.GetInfo(item, attr, ...)
         if item.link then
             return item:GetLinkInfo()[attr]
         else
-            local v = select(Self.INFO.link[attr] + 2, link:find(Self.PATTERN_LINK_DATA))
-
-            if v == "" then
-                return attr == "expacId" and 0 or nil
-            elseif Util.StrIsNumber(v) then
-                return tonumber(v)
+            if type(Self.INFO.link[attr]) == "string" then
+                return select(3, link:find(Self.INFO.link[attr]))
             else
-                return v
+                local info, i, numBonusIds, bonusIds = Self.INFO.link, 0, 1
+                for v in link:gmatch(":(%-?%d*)") do
+                    i = i + 1
+                    if attr == "bonusIds" and i > info.numBonusIds then
+                        if i > info.numBonusIds + numBonusIds then
+                            return bonusIds
+                        else
+                            bonusIds = bonusIds or Util.Tbl()
+                            tinsert(bonusIds, tonumber(v))
+                        end
+                    elseif i == info[attr] - 1 + numBonusIds then
+                        return tonumber(v)
+                    elseif i == info.numBonusIds then
+                        numBonusIds = tonumber(v) or 0
+                    end
+                end
             end
         end
     -- From GetItemInfo()
@@ -273,30 +286,32 @@ end
 -- Get item info from a link
 function Self:GetLinkInfo()
     if self.infoLevel < Self.INFO_LINK then
-        -- Extract info from link
-        local info = {select(3, self.link:find(Self.PATTERN_LINK_DATA))}
-        
-        -- Clean up data
-        for i,v in pairs(info) do
-            if v == "" then
-                info[i] = i == 15 and 0 or nil
-            elseif Util.StrIsNumber(v) then
-                info[i] = tonumber(v)
+        local info = Self.INFO.link
+
+        -- Extract string data
+        for attr,p in pairs(info) do
+            if type(p) == "string" then
+                self[attr] = select(3, self.link:find(p))
             end
         end
 
-        -- Set info
-        for attr,pos in pairs(Self.INFO.link) do
-            self[attr] = info[pos]
-            if type(self[attr]) == "table" then
-                for i,pos in ipairs(self[attr]) do
-                    self[attr][i] = info[pos]
+        -- Extract int data
+        local i, attr = 0
+        for v in self.link:gmatch(":(%-?%d*)") do
+            i = i + 1
+   
+            if info.bonusIds and Util.NumIn(i - info.numBonusIds, 1, self.numBonusIds or 0) then
+                Util.TblSet(self, "bonusIds", i - info.numBonusIds, tonumber(v))
+            else
+                attr = Util.TblFind(info, i - 1 + (self.numBonusIds or 1))
+                if attr then
+                    self[attr] = tonumber(v)
                 end
             end
         end
         
         -- Some extra infos TODO: This is a workaround for epic item links having color "a335ee", but ITEM_QUALITY_COLORS has "a334ee"
-        self.quality = info[1] == "a335ee" and 4 or info[1] and Util.TblFindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. info[1]) or 1
+        self.quality = self.color == "a335ee" and 4 or self.color and Util.TblFindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. self.color) or 1
         self.infoLevel = Self.INFO_LINK
     end
 
