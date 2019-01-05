@@ -157,7 +157,7 @@ L["TIP_MASTERLOOT_STOP"] = "移除负责分装者"
 L["TIP_MASTERLOOTING"] = "有分装者的队伍:"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff00左鍵:|r 开关掷骰视窗 
 |cffffff00右键:|r 设定选项]=]
-L["TIP_TEST"] = "Show a test roll" -- Translation missing
+L["TIP_TEST"] = "显示测试掷骰"
 L["TIP_VOTES"] = "表決來自:"
 
 -- Options - Home
