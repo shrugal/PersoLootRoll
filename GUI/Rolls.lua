@@ -8,6 +8,7 @@ Self.frames = {}
 Self.filter = {all = false, hidden = false, done = true, awarded = true, traded = false}
 Self.status = {width = 700, height = 300}
 Self.open = {}
+Self.confirm = {roll = nil, unit = nil}
 
 -------------------------------------------------------
 --                     Show/Hide                     --
@@ -752,7 +753,7 @@ function Self.UpdateDetails(details, roll)
             -- Action
             local f = GUI("Button")
                 .SetWidth(100)
-                .SetCallback("OnClick", GUI.UnitAwardOrVote)()
+                .SetCallback("OnClick", Self.UnitconfirmOrVote)()
             f.text:SetFont(GameFontNormal:GetFont())
             details:AddChild(f)
         end
@@ -811,10 +812,11 @@ function Self.UpdateDetails(details, roll)
             .Show()
 
         -- Action
-        local txt = canBeAwarded and L["AWARD"]
+        f = children[it()]
+        local txt = canBeAwarded and (Self.confirm.roll == roll.id and Self.confirm.unit == player.unit and L["CONFIRM"] or L["AWARD"])
             or canVote and (roll.vote == player.unit and L["VOTE_WITHDRAW"] or L["VOTE"])
             or "-"
-        GUI(children[it()])
+        GUI(f)
             .SetText(txt)
             .SetDisabled(not (canBeAwarded or canVote))
             .SetUserData("unit", player.unit)
@@ -876,6 +878,17 @@ function Self.OnStatusUpdate(frame)
             .SetText(L["ROLL_AWARDING"] .. " (" .. L["SECONDS"]:format(ceil(roll.timers.award.ends - GetTime())) .. ")")
     else
         GUI(frame.obj).SetColor(1, 1, 1).SetText("-")
+    end
+end
+
+function Self.UnitconfirmOrVote(self, ...)
+    local roll, unit = self:GetUserData("roll"), self:GetUserData("unit")
+    if roll:CanBeAwardedTo(unit, true) and not (Self.confirm.roll == roll.id and Self.confirm.unit == unit) then
+        Self.confirm.roll, Self.confirm.unit = roll.id, unit
+        Self.Update()
+    else
+        wipe(Self.confirm)
+        GUI.UnitAwardOrVote(self, ...)
     end
 end
 

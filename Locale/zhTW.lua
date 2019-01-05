@@ -48,6 +48,7 @@ L["AWARD_RANDOMLY"] = "隨機分配"
 L["BID"] = "競標"
 L["COMMUNITY_GROUP"] = "社群隊伍"
 L["COMMUNITY_MEMBER"] = "社群成員"
+L["CONFIRM"] = "Confirm" -- Translation missing
 L["DISABLED"] = "停用"
 L["DOWN"] = "下"
 L["ENABLED"] = "啟用"

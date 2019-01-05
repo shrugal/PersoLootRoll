@@ -48,6 +48,7 @@ L["AWARD_RANDOMLY"] = "Entregar al azar"
 L["BID"] = "Solicitar"
 L["COMMUNITY_GROUP"] = "Grupo de Comunidad"
 L["COMMUNITY_MEMBER"] = "Miembro de Comunidad"
+L["CONFIRM"] = "Confirm" -- Translation missing
 L["DISABLED"] = "Desactivado"
 L["DOWN"] = "abajo"
 L["ENABLED"] = "Activado"
