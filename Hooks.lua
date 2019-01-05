@@ -121,7 +121,7 @@ function Self.EnableGroupLootRollHook()
             self.Player:Show()
 
             -- Buttons
-            if roll.isOwner and roll.item.isOwner and not Session.GetMasterlooter() then
+            if roll.item.isOwner and Util.Check(Session.GetMasterlooter(), Session.rules.allowKeep, roll.isOwner) then
                 self.NeedButton:SetNormalTexture("Interface\\AddOns\\PersoLootRoll\\Media\\Roll-Keep-Up")
                 self.NeedButton:SetHighlightTexture("Interface\\AddOns\\PersoLootRoll\\Media\\Roll-Keep-Highlight")
                 self.NeedButton:SetPushedTexture("Interface\\AddOns\\PersoLootRoll\\Media\\Roll-Keep-Down")

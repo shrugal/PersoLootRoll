@@ -73,6 +73,7 @@ Self.DEFAULTS = {
                 greedAnswers = {},
                 allowDisenchant = false,
                 disenchanter = {},
+                allowKeep = false,
                 autoAward = false,
                 autoAwardTimeout = Roll.TIMEOUT,
                 autoAwardTimeoutPerItem = Roll.TIMEOUT_PER_ITEM,
@@ -867,6 +868,7 @@ function Self.RegisterMasterloot()
                         width = Self.WIDTH_HALF_SCROLL
                     },
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+                    bidsAndVotes = {type = "header", order = it(), name = L["OPT_MASTERLOOT_BIDS_AND_VOTES"]},
                     bidPublic = {
                         name = L["OPT_MASTERLOOT_RULES_BID_PUBLIC"],
                         desc = L["OPT_MASTERLOOT_RULES_BID_PUBLIC_DESC"] .. "\n",
@@ -965,6 +967,18 @@ function Self.RegisterMasterloot()
                         width = Self.WIDTH_FULL
                     },
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+                    award = {type = "header", order = it(), name = L["OPT_MASTERLOOT_AWARD"]},
+                    allowKeep = {
+                        name = L["OPT_MASTERLOOT_RULES_ALLOW_KEEP"],
+                        desc = L["OPT_MASTERLOOT_RULES_ALLOW_KEEP_DESC"],
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val)
+                            Addon.db.profile.masterloot.rules.allowKeep = val
+                            Session.RefreshRules()
+                        end,
+                        get = function () return Addon.db.profile.masterloot.rules.allowKeep end
+                    },
                     autoAward = {
                         name = L["OPT_MASTERLOOT_RULES_AUTO_AWARD"],
                         desc = L["OPT_MASTERLOOT_RULES_AUTO_AWARD_DESC"],

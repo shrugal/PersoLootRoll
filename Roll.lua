@@ -449,7 +449,9 @@ function Self:Start(started)
                 self.item:GetEligible()
             end
 
-            if not (Addon.db.profile.chillMode and self.isOwner and not Session.GetMasterlooter() and not self.bid) then
+            if Util.Check(Session.GetMasterlooter(), Session.rules.allowKeep, Addon.db.profile.chillMode) and self.isOwner and not self.bids[self.item.owner] then
+                -- Keep in pending state until the item owner has bid
+            else
                 -- Start the roll
                 self.started = started or time()
                 self.status = Self.STATUS_RUNNING
@@ -472,11 +474,12 @@ function Self:Start(started)
             -- Let others know
             self:SendStatus()
 
-            -- Offer to bid or bid disenchant directly
-            if not self.bid and (self.item.isOwner or self:ShouldBeBidOn()) then
+            if not self.bid then
                 -- Show some UI
                 if self.item.isOwner or self.item:ShouldBeBidOn() then
-                    self:ShowRollFrame()
+                    if self.item.isOwner or self.status == Self.STATUS_RUNNING then
+                        self:ShowRollFrame()
+                    end
                 -- Bid disenchant
                 elseif self.disenchant and Addon.db.profile.filter.disenchant and Unit.IsEnchanter() then
                     self:Bid(Self.BID_DISENCHANT)
@@ -628,8 +631,8 @@ end
 
 -- Check if we should end the roll prematurely
 function Self:ShouldEnd()
-    -- We voted need on our own item
-    if Util.In(self.status, Self.STATUS_PENDING, Self.STATUS_RUNNING) and not self:HasMasterlooter() and self.item.isOwner and self.bid and floor(self.bid) == Self.BID_NEED then
+    -- The item owner voted need
+    if Util.In(self.status, Self.STATUS_PENDING, Self.STATUS_RUNNING) and self.isOwner and (not Session.GetMasterlooter() or Session.rules.allowKeep) and floor(self.bids[self.item.owner] or 0) == Self.BID_NEED then
         return true
     -- Not running or we haven't bid yet
     elseif self.status ~= Self.STATUS_RUNNING or not self.bid then
@@ -697,9 +700,9 @@ function Self:End(winner, cleanup, force)
     -- Determine a winner
     if not self.winner or force then
         if self.isOwner and (not winner or winner == true) then
-            if not Session.GetMasterlooter() and self.bid and floor(self.bid) == Self.BID_NEED then
-                -- Give it to ourselfs
-                winner = UnitName("player")
+            if (not Session.GetMasterlooter() or Session.rules.allowKeep) and floor(self.bids[self.item.owner] or 0) == Self.BID_NEED then
+                -- Give it to the item owner
+                winner = self.item.owner
             elseif winner == true or not (Addon.db.profile.awardSelf or Session.IsMasterlooter()) then
                 -- Pick a winner now
                 winner = self:DetermineWinner()
@@ -1244,6 +1247,11 @@ end
 -- Check if the roll is handled by a masterlooter
 function Self:HasMasterlooter()
     return self.owner ~= self.item.owner or self.owner == Session.GetMasterlooter(self.item.owner)
+end
+
+-- Check if we are the masterlooter for this roll
+function Self:IsMasterlooter()
+    return self.isOwner and self:HasMasterlooter()
 end
 
 -- Check if the roll is from an addon user

@@ -221,6 +221,7 @@ function Self.SetRules(rules, silent)
             answers2 = c.rules.greedAnswers,
             council = next(council) and council or nil,
             votePublic = c.council.votePublic,
+            allowKeep = c.rules.allowKeep
         }
 
         if not silent then
