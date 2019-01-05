@@ -196,14 +196,20 @@ function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner, status)
     end
 
     for id,roll in pairs(Addon.rolls) do
-        if      (roll.owner == owner or not owner)
-            and (roll.item.owner == itemOwner or not itemOwner)
-            and (roll.ownerId == ownerId or not ownerId)
-            and (roll.itemOwnerId == itemOwnerId or not itemOwnerId)
-            and (roll.status == status or not status)
+        if  (
+                owner and ownerId and owner == roll.owner and ownerId == roll.ownerId and (not itemOwner or not roll.item.owner or itemOwner == roll.item.owner)
+                or itemOwner and itemOwnerId and itemOwner == roll.item.owner and itemOwnerId == roll.itemOwnerId and (not owner or not roll.owner or owner == roll.owner)
+                or (
+                        (not owner or roll.owner == owner)
+                    and (not ownerId or roll.ownerId == ownerId)
+                    and (not itemOwner or roll.item.owner == itemOwner)
+                    and (not itemOwnerId or roll.itemOwnerId == itemOwnerId)
+                )
+            )
+            and (not status or roll.status == status)
             and (
                 not item
-                or t == "table" and roll.item.link == item.link
+                or t == "table" and item.link == roll.item.link
                 or t == "number" and item == roll.item.id
                 or t == "string" and item == roll.item.link
             ) then
@@ -243,13 +249,12 @@ function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
     -- Add it to the list
     roll.id = Addon.rolls.Add(roll)
 
-    -- Set owner id if we are the owner
+    -- Set ownerId/itemOwnerId
     if roll.isOwner then
         roll.ownerId = roll.id
     end
-    if roll.owner == roll.item.owner then
-        roll.itemOwnerId = roll.itemOwnerId or roll.ownerId
-        roll.ownerId = roll.ownerId or roll.itemOwnerId
+    if roll.item.isOwner then
+        roll.itemOwnerId = roll.id
     end
 
     Addon:SendMessage(Self.EVENT_ADD, roll)

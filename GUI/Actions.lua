@@ -363,7 +363,7 @@ end
 function Self:OnDisable() Self:UnregisterAllMessages() end
 
 function Self.ROLL_CHANGE(_, e, roll)
-    if Addon.db.profile.ui.showActionsWindow and Util.In(e, Roll.EVENT_END, Roll.EVENT_TOGGLE) and roll:GetActionRequired() then
+    if Addon.db.profile.ui.showActionsWindow and Util.In(e, Roll.EVENT_END, Roll.EVENT_AWARD, Roll.EVENT_TOGGLE) and roll:GetActionRequired() then
         Self.Show()
     end
     Self.Update()

@@ -347,7 +347,7 @@ end
 
 function Self.GetPlayerLink(unit)
     local color = Unit.Color(unit)
-    return ("|c%s|Hplayer:%s|h[%s]|h|r"):format(color.colorStr, unit, unit)
+    return ("|c%s|Hplayer:%s|h<%s>|h|r"):format(color.colorStr, unit, unit)
 end
 
 function Self.GetTradeLink(unit)
