@@ -31,9 +31,10 @@ Self.DEFAULTS = {
         
         -- Item filter
         filter = {
-            ilvlThreshold = 30,
+            lvlThreshold = Item.LVL_THRESHOLD,
+            ilvlThreshold = Item.ILVL_THRESHOLD,
             ilvlThresholdTrinkets = true,
-            ilvlThresholdRings = false,
+            ilvlThresholdRings = true,
             pawn = false,
             transmog = false,
             disenchant = false
@@ -369,6 +370,20 @@ function Self.RegisterGeneral()
             },
             itemFilter = {type = "header", order = it(), name = L["OPT_ITEM_FILTER"]},
             itemFilterDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_ITEM_FILTER_DESC"] .. "\n"},
+            lvlThreshold = {
+                name = L["OPT_LVL_THRESHOLD"],
+                desc = L["OPT_LVL_THRESHOLD_DESC"],
+                type = "range",
+                order = it(),
+                min = -1,
+                max = MAX_PLAYER_LEVEL,
+                softMin = -1,
+                softMax = 30,
+                step = 1,
+                set = function (_, val) Addon.db.profile.filter.lvlThreshold = val end,
+                get = function () return Addon.db.profile.filter.lvlThreshold end,
+                width = Self.WIDTH_THIRD
+            },
             ilvlThreshold = {
                 name = L["OPT_ILVL_THRESHOLD"],
                 desc = L["OPT_ILVL_THRESHOLD_DESC"],
@@ -377,26 +392,22 @@ function Self.RegisterGeneral()
                 min = -4 * Item.ILVL_THRESHOLD,
                 max = 4 * Item.ILVL_THRESHOLD,
                 step = 5,
-                set = function (_, val) Addon.db.profile.filter.ilvlThreshold = val end,
-                get = function () return Addon.db.profile.filter.ilvlThreshold end,
+                set = function (_, val) Addon.db.profile.filter.ilvlThreshold = -val end,
+                get = function () return -Addon.db.profile.filter.ilvlThreshold end,
                 width = Self.WIDTH_THIRD
             },
-            ilvlThresholdTrinkets = {
-                name = L["OPT_ILVL_THRESHOLD_TRINKETS"],
-                desc = L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"],
-                type = "toggle",
+            ilvlThresholdDouble = {
+                name = L["OPT_ILVL_THRESHOLD_DOUBLE"],
+                desc = L["OPT_ILVL_THRESHOLD_DOUBLE_DESC"],
+                type = "multiselect",
+                control = "Dropdown",
                 order = it(),
-                set = function (_, val) Addon.db.profile.filter.ilvlThresholdTrinkets = val end,
-                get = function () return Addon.db.profile.filter.ilvlThresholdTrinkets end,
-                width = Self.WIDTH_THIRD
-            },
-            ilvlThresholdRings = {
-                name = L["OPT_ILVL_THRESHOLD_RINGS"],
-                desc = L["OPT_ILVL_THRESHOLD_RINGS_DESC"],
-                type = "toggle",
-                order = it(),
-                set = function (_, val) Addon.db.profile.filter.ilvlThresholdRings = val end,
-                get = function () return Addon.db.profile.filter.ilvlThresholdRings end,
+                values = {
+                    trinkets = L["TRINKETS"],
+                    rings = L["RINGS"]
+                },
+                set = function (_, key, val) Addon.db.profile.filter["ilvlThreshold" .. Util.StrUcFirst(key)] = val end,
+                get = function (_, key) return Addon.db.profile.filter["ilvlThreshold" .. Util.StrUcFirst(key)] end,
                 width = Self.WIDTH_THIRD
             },
             ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},

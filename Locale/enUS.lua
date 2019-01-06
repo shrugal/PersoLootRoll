@@ -76,6 +76,7 @@ L["RAID_ASSISTANT"] = "Raid assistant"
 L["RAID_LEADER"] = "Raid leader"
 L["RESTART"] = "Restart"
 L["RIGHT"] = "right"
+L["RINGS"] = "Rings"
 L["ROLL"] = "Roll"
 L["ROLLS"] = "Rolls"
 L["SECONDS"] = "%ds"
@@ -83,6 +84,7 @@ L["SET_ANCHOR"] = "Set anchor: Grow %s and %s"
 L["SHOW"] = "Show"
 L["SHOW_HIDE"] = "Show/Hide"
 L["TRADE"] = "Trade"
+L["TRINKETS"] = "Trinkets"
 L["UP"] = "up"
 L["VERSION_NOTICE"] = "There's a new version of this addon available. Please update to stay compatible with everyone and not miss out on any loot!"
 L["VOTE"] = "Vote"
@@ -191,12 +193,15 @@ L["OPT_ACTIVE_GROUPS_DESC"] = [=[Activate only when you are in one of these grou
 
 |cffffff78Guild Group:|r The members of one guild make up %d%% or more of the group.
 |cffffff78Community Group:|r The members of one of your WoW-Communities make up %d%% or more of the group.]=]
+L["OPT_LVL_THRESHOLD"] = "Character-level threshold"
+L["OPT_LVL_THRESHOLD_DESC"] = "Ignore items that require your character's level to be more than this much higher than it currently is. Set to -1 to disable this filter."
 L["OPT_ILVL_THRESHOLD"] = "Item-level threshold"
-L["OPT_ILVL_THRESHOLD_DESC"] = "Items that are more than this many item levels below yours are ignored."
-L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Double threshold for trinkets"
-L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Trinkets should have double the normal threshold because proc effects can make their value vary by a large amount."
-L["OPT_ILVL_THRESHOLD_RINGS"] = "Double threshold for rings"
-L["OPT_ILVL_THRESHOLD_RINGS_DESC"] = "Rings should have double the normal threshold because their value may vary by a large amount due to missing primary stats."
+L["OPT_ILVL_THRESHOLD_DESC"] = [[Ignore items based on their item-level compared to what you have currently equipped or in your bags for the slot.
+
+|cffffff78Negative:|r An item's level can be at most this much lower than yours.
+|cffffff78Positive:|r An item's level must be at least this much higher than yours.]]
+L["OPT_ILVL_THRESHOLD_DOUBLE"] = "Double threshold for ..."
+L["OPT_ILVL_THRESHOLD_DOUBLE_DESC"] = "Some items should have double the normal item-level threshold value, because procs etc. can make their value vary by a large amount."
 L["OPT_INFO"] = "Information"
 L["OPT_INFO_DESC"] = "Some information about this addon."
 L["OPT_ITEM_FILTER"] = "Item Filter"

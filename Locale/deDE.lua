@@ -193,12 +193,16 @@ L["OPT_DONT_SHARE_DESC"] = "Rolle nicht auf die Beute anderer, und teile deine e
 L["OPT_ENABLE"] = "Aktiviert"
 L["OPT_ENABLE_DESC"] = "Aktiviere oder deaktiviere das Addon"
 L["OPT_ENABLE_MODULE_DESC"] = "Aktiviere oder deaktiviere dieses Modul"
+L["OPT_LVL_THRESHOLD"] = "Character-Level Schwelle"
+L["OPT_LVL_THRESHOLD_DESC"] = "Ignoriere Items deren benötigtes Charakter-Level mehr als diesen Wert über deinem aktuellen Level liegen. Setze den Wert auf -1 um diesen Filter zu deaktivieren."
 L["OPT_ILVL_THRESHOLD"] = "Item-Level Schwelle"
+L["OPT_ILVL_THESHOLD_DESC"] = [[Ignoriere Items basierend auf ihrem Item-Level im Vergleich zu den Items die du für den Slot angelegt oder in der Tasche hast.
+
+|cffffff78Negativ:|r Das Level eines Items kann max. um so viel niedriger sein als deins.
+|cffffff78Positiv:|r Das Level eines Items muss min. um so viel höher sein als deins.]]
 L["OPT_ILVL_THRESHOLD_DESC"] = "Items deren Item-Level mehr als diesen Wert unter deinen Items liegen werden ignoriert."
-L["OPT_ILVL_THRESHOLD_RINGS"] = "Doppelte Schwelle für Ringe"
-L["OPT_ILVL_THRESHOLD_RINGS_DESC"] = "Ringe sollten eine doppelt so hohe Schwelle haben, da ihr Wert durch fehlende Primär-Attribute stark schwanken kann."
-L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Doppelte Schwelle für Trinkets"
-L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Trinkets sollten eine doppelt so hohe Schwelle haben, da ihr Wert durch Proc-Effekte stark schwanken kann."
+L["OPT_ILVL_THRESHOLD_DOUBLE"] = "Doppelte Schwelle für ..."
+L["OPT_ILVL_THRESHOLD_DOUBLE_DESC"] = "Einige Items sollten eine doppelt so hohe Itel-Level Schwelle haben, da ihr Wert durch Proc-Effekte etc. stark schwanken kann."
 L["OPT_INFO"] = "Informationen"
 L["OPT_INFO_DESC"] = "Ein paar Informationen über das Addon."
 L["OPT_ITEM_FILTER"] = "Item Filter"

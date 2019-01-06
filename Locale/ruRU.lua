@@ -193,12 +193,15 @@ L["OPT_DONT_SHARE_DESC"] = "Не участвовать в розыгрышах 
 L["OPT_ENABLE"] = "Включить"
 L["OPT_ENABLE_DESC"] = "Включить или отключить аддон"
 L["OPT_ENABLE_MODULE_DESC"] = "Enable or disable this module" -- Translation missing
+L["OPT_LVL_THRESHOLD"] = "Character-level threshold" -- Translation missing
+L["OPT_LVL_THRESOPT_LVL_THRESHOLD_DESCHOLD"] = "Ignore items that require your character's level to be more than this much higher than it currently is. Set to -1 to disable this filter." -- Translation missing
 L["OPT_ILVL_THRESHOLD"] = "Диапазон уровней предметов"
-L["OPT_ILVL_THRESHOLD_DESC"] = "Предметы, уровень которых ниже ваших, игнорируются."
-L["OPT_ILVL_THRESHOLD_RINGS"] = "Double threshold for rings" -- Translation missing
-L["OPT_ILVL_THRESHOLD_RINGS_DESC"] = "Rings should have double the normal threshold because their value may vary by a large amount due to missing primary stats." -- Translation missing
-L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Удвоить диапазон для аксессуаров"
-L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Аксессуары должны иметь двойной диапазон, потому что эффекты на них могут сделать их ценность больше."
+L["OPT_ILVL_THRESHOLD_DESC"] = [[Ignore items based on their item-level compared to what you have currently equipped or in your bags for the slot.
+
+|cffffff78Negative:|r An item's level can be at most this much lower than yours.
+|cffffff78Positive:|r An item's level must be at least this much higher than yours.]] -- Translation missing
+L["OPT_ILVL_THRESHOLD_DOUBLE"] = "Double threshold for ..." -- Translation missing
+L["OPT_ILVL_THRESHOLD_DOUBLE_DESC"] = "Some items should have double the normal item-level threshold value, because procs etc. can make their value vary by a large amount." -- Translation missing
 L["OPT_INFO"] = "Информация"
 L["OPT_INFO_DESC"] = "Немного информации об этом аддоне."
 L["OPT_ITEM_FILTER"] = "Фильтр предметов"

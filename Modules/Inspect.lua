@@ -101,7 +101,7 @@ function Self.Update(unit)
                 if link then
                     tinsert(links, link)
                     if isUnique and slotMin ~= false then
-                        local lvl = Item.GetInfo(link, "effectiveLevel", unit)
+                        local lvl = Item.GetInfo(link, "realLevel", unit)
                         slotMin = lvl and min(slotMin or lvl, lvl) or false
                     end
                 elseif isUnique then

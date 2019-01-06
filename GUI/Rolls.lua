@@ -513,7 +513,7 @@ function Self.Update()
             .Show()
 
         -- Ilvl
-        GUI(children[it()]).SetText(roll.item:GetFullInfo().effectiveLevel or "-").Show()
+        GUI(children[it()]).SetText(roll.item:GetFullInfo().realLevel or "-").Show()
 
         -- Owner
         GUI(children[it()])

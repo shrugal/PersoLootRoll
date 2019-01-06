@@ -193,12 +193,15 @@ L["OPT_DONT_SHARE_DESC"] = "不去骰別人的戰利品但也不分享自己的�
 L["OPT_ENABLE"] = "啟用"
 L["OPT_ENABLE_DESC"] = "啟用或停用此插件"
 L["OPT_ENABLE_MODULE_DESC"] = "啟用或停用此模組"
+L["OPT_LVL_THRESHOLD"] = "Character-level threshold" -- Translation missing
+L["OPT_LVL_THRESHOLD_DESC"] = "Ignore items that require your character's level to be more than this much higher than it currently is. Set to -1 to disable this filter." -- Translation missing
 L["OPT_ILVL_THRESHOLD"] = "物品等級門檻"
-L["OPT_ILVL_THRESHOLD_DESC"] = "物品等級低於你以下多少的物品將被忽略。"
-L["OPT_ILVL_THRESHOLD_RINGS"] = "戒指門檻為雙倍"
-L["OPT_ILVL_THRESHOLD_RINGS_DESC"] = "戒指的門檻應該是正常值的兩倍，因為缺乏主屬性它們的價值可能會有很大差異。"
-L["OPT_ILVL_THRESHOLD_TRINKETS"] = "飾品門檻為雙倍"
-L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "飾品的門檻應該是正常值的兩倍，因為觸發特效會讓收益變化很大。"
+L["OPT_ILVL_THRESHOLD_DESC"] = [[Ignore items based on their item-level compared to what you have currently equipped or in your bags for the slot.
+
+|cffffff78Negative:|r An item's level can be at most this much lower than yours.
+|cffffff78Positive:|r An item's level must be at least this much higher than yours.]] -- Translation missing
+L["OPT_ILVL_THRESHOLD_DOUBLE"] = "Double threshold for ..." -- Translation missing
+L["OPT_ILVL_THRESHOLD_DOUBLE_DESC"] = "Some items should have double the normal item-level threshold value, because procs etc. can make their value vary by a large amount." -- Translation missing
 L["OPT_INFO"] = "資訊"
 L["OPT_INFO_DESC"] = "關於此插件的一些資訊。"
 L["OPT_ITEM_FILTER"] = "物品過濾"

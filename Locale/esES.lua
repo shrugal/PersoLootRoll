@@ -193,12 +193,15 @@ L["OPT_DONT_SHARE_DESC"] = "No tirar por objetos de otros jugadores y no compart
 L["OPT_ENABLE"] = "Activar"
 L["OPT_ENABLE_DESC"] = "Activa o desactiva el addon"
 L["OPT_ENABLE_MODULE_DESC"] = "Habilitar o deshabilitar este módulo"
+L["OPT_LVL_THRESHOLD"] = "Character-level threshold" -- Translation missing
+L["OPT_LVL_THRESHOLD_DESC"] = "Ignore items that require your character's level to be more than this much higher than it currently is. Set to -1 to disable this filter." -- Translation missing
 L["OPT_ILVL_THRESHOLD"] = "Límite de nivel de objeto"
-L["OPT_ILVL_THRESHOLD_DESC"] = "Los objetos cuyo nivel de objeto esté por debajo del tuyo en más de esta cantidad serán ignorados."
-L["OPT_ILVL_THRESHOLD_RINGS"] = "Duplicar el límite en los anillos"
-L["OPT_ILVL_THRESHOLD_RINGS_DESC"] = "Los anillos tienen que tener el doble del límite porque su valor puede variar mucho al no tener la estadística principal."
-L["OPT_ILVL_THRESHOLD_TRINKETS"] = "Duplicar el límite en los abalorios"
-L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "Los abalorios tienen que tener el doble del límite de nivel de objeto porque sus efectos pueden en gran medida modificar su valor."
+L["OPT_ILVL_THRESHOLD_DESC"] = [[Ignore items based on their item-level compared to what you have currently equipped or in your bags for the slot.
+
+|cffffff78Negative:|r An item's level can be at most this much lower than yours.
+|cffffff78Positive:|r An item's level must be at least this much higher than yours.]] -- Translation missing
+L["OPT_ILVL_THRESHOLD_DOUBLE"] = "Double threshold for ..." -- Translation missing
+L["OPT_ILVL_THRESHOLD_DOUBLE_DESC"] = "Some items should have double the normal item-level threshold value, because procs etc. can make their value vary by a large amount." -- Translation missing
 L["OPT_INFO"] = "Información"
 L["OPT_INFO_DESC"] = "Algo de información sobre este addon."
 L["OPT_ITEM_FILTER"] = "Filtro de Objetos"
