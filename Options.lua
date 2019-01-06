@@ -46,6 +46,7 @@ Self.DEFAULTS = {
             group = {
                 announce = true,
                 groupType = {lfd = true, party = true, lfr = true, raid = true, guild = true, community = true},
+                concise = true,
                 roll = true
             },
             whisper = {
@@ -528,6 +529,15 @@ function Self.RegisterMessages()
                         end,
                         get = function (_, key) return Addon.db.profile.messages.group.groupType[Self.groupKeys[key]] end,
                         width = Self.WIDTH_THIRD
+                    },
+                    groupConcise = {
+                        name = L["OPT_GROUPCHAT_CONCISE"],
+                        desc = L["OPT_GROUPCHAT_CONCISE_DESC"]:format(NEED, YES),
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) Addon.db.profile.messages.group.concise = val end,
+                        get = function () return Addon.db.profile.messages.group.concise end,
+                        width = Self.WIDTH_FULL
                     },
                     groupRoll = {
                         name = L["OPT_GROUPCHAT_ROLL"],

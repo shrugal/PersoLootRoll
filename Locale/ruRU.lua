@@ -32,6 +32,8 @@ L["MSG_ROLL_WINNER"] = "<%s> выиграл %s -> Предложи мне обм
 L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%s> выиграл %s от <%s> -> Предложи %s обмен!"
 L["MSG_ROLL_WINNER_WHISPER"] = "Ты выиграл %s! Предложи мне обмен."
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Ты выиграл %s от <%s>! Предложи %s обмен."
+L["MSG_NEED"] = "need,yes" -- Translation missing
+L["MSG_PASS"] = "pass,no" -- Translation missing
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)

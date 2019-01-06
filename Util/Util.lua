@@ -130,8 +130,10 @@ function Self.GetNumDroppedItems()
     else
         -- Normally we get about 1 item per 5 players in the group
         local players = GetNumGroupMembers()
-        if Self.IsLegacyLoot() then
-            players = Self.In(difficulty, DIFFICULTY_RAID_LFR, DIFFICULTY_PRIMARYRAID_LFR, DIFFICULTY_PRIMARYRAID_NORMAL, DIFFICULTY_PRIMARYRAID_HEROIC) and 20 or maxPlayers
+        if difficulty == DIFFICULTY_PRIMARYRAID_MYTHIC then
+            players = 20
+        elseif Self.IsLegacyLoot() then
+            players = Self.In(difficulty, DIFFICULTY_RAID_LFR, DIFFICULTY_PRIMARYRAID_LFR, DIFFICULTY_PRIMARYRAID_NORMAL, DIFFICULTY_PRIMARYRAID_HEROIC) and max(players, 20) or maxPlayers
         end
         return math.ceil(players / 5)
     end
@@ -1116,13 +1118,23 @@ function Self.StrJoin(del, ...)
     return s
 end
 
+-- Uppercase only if language supports letter casing
+function Self.StrUcLang(str, locale)
+    return Self.In(locale or GetLocale(), "koKR", "zhCN", "zhTW") and str or str:upper()
+end
+
+-- Lowercase only if language supports letter casing
+function Self.StrLcLang(str, locale)
+    return Self.In(locale or GetLocale(), "koKR", "zhCN", "zhTW") and str or str:lower()
+end
+
 -- Uppercase first char
-function Self.StrUcFirst(str)
+function Self.StrUcFirst(str, locale)
     return str:sub(1, 1):upper() .. str:sub(2)
 end
 
 -- Lowercase first char
-function Self.StrLcFirst(str)
+function Self.StrLcFirst(str, locale)
     return str:sub(1, 1):lower() .. str:sub(2)
 end
 

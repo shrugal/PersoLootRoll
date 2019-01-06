@@ -1031,11 +1031,7 @@ function Self:Advertise(manually, silent)
     end
 
     if i < 50 then
-        if self.item.isOwner then
-            Comm.ChatLine("MSG_ROLL_START", Comm.TYPE_GROUP, self.item.link, 100 + i)
-        else
-            Comm.ChatLine("MSG_ROLL_START_MASTERLOOT", Comm.TYPE_GROUP, self.item.link, self.item.owner, 100 + i)
-        end
+        Comm.RollAdvertise(self, i)
 
         self.posted = i
 

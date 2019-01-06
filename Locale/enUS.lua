@@ -23,6 +23,7 @@ L["MSG_ROLL_ANSWER_NOT_TRADABLE"] = "Sorry, I can't trade it."
 L["MSG_ROLL_ANSWER_YES"] = "You can have it, just trade me."
 L["MSG_ROLL_ANSWER_YES_MASTERLOOT"] = "You can have it, just trade <%s>."
 L["MSG_ROLL_START"] = "Giving away %s -> /w me or /roll %d!"
+L["MSG_ROLL_START_CONCISE"] = "%s someone need?"
 L["MSG_ROLL_START_MASTERLOOT"] = "Giving away %s from <%s> -> /w me or /roll %d!"
 L["MSG_ROLL_WINNER"] = "<%s> has won %s -> Trade me!"
 L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%s> has won %s from <%s> -> Trade %s!"
@@ -32,6 +33,8 @@ L["MSG_ROLL_DISENCHANT"] = "<%s> will disenchant %s -> Trade me!"
 L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> will disenchant %s from <%s> -> Trade %s!"
 L["MSG_ROLL_DISENCHANT_WHISPER"] = "You were picked to disenchant %s, please trade me."
 L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "You were picked to disenchant %s from <%s>, please trade %s."
+L["MSG_NEED"] = "need,yes"
+L["MSG_PASS"] = "pass,no,nope"
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
@@ -315,6 +318,10 @@ L["OPT_ECHO_VERBOSE"] = "Verbose"
 L["OPT_GROUPCHAT"] = "Group Chat"
 L["OPT_GROUPCHAT_ANNOUNCE"] = "Announce rolls and winners"
 L["OPT_GROUPCHAT_ANNOUNCE_DESC"] = "Announce your rolls and winners of your rolls in group chat."
+L["OPT_GROUPCHAT_CONCISE"] = "Concise announcements if possible"
+L["OPT_GROUPCHAT_CONCISE_DESC"] = [[Use more concise announcements when bosses only drop one item at a time (e.g. in 5-man dungeons).
+
+The addon will post item links in chat, and group members can just answer something like "%s", "%s" or "+" to roll on them.]]
 L["OPT_GROUPCHAT_DESC"] = "Change whether or not the addon will post things to the group chat."
 L["OPT_GROUPCHAT_GROUP_TYPE"] = "Announce by group type"
 L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[Post to group chat only if you are in one of these group types.

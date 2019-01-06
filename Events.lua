@@ -259,6 +259,25 @@ function Self.CHAT_MSG_GROUP(_, _, msg, sender)
                 roll.posted = roll.posted or true
             end
         end
+    elseif Addon.db.profile.messages.group.concise and Util.GetNumDroppedItems() <= 1 then
+        local roll = Roll.Find(nil, true, nil, nil, true, Roll.STATUS_RUNNING)
+        if roll and roll:UnitCanBid(unit, Roll.BID_NEED) then
+            local L, D = Locale.GetCommLocale(unit), Locale.GetCommLocale()
+
+            msg = strtrim(msg)
+            msg = Util.In(msg, "+", "-") and msg or msg:gsub("[%c%p]+", ""):gsub("%s%s+", " ")
+            local msgLc = msg:lower()
+
+            for i,bid in Util.Each("NEED", "PASS") do
+                local words = Util(",").Join(_G[bid], bid == "NEED" and YES .. ",+" or NO .. ",-", L["MSG_" .. bid], L ~= D and D["MSG_" .. bid] or "").LcLang()()
+                for v in words:gmatch("[^,]+") do
+                    if Util.In(v, msg, msgLc) then
+                        roll:Bid(Roll["BID_" .. bid], unit)
+                        return
+                    end
+                end
+            end
+        end
     end
 end
 

@@ -32,6 +32,8 @@ L["MSG_ROLL_WINNER"] = "<%s> 已贏得 %s -> 請跟我交易！"
 L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%1$s> 已贏得由<%3$s>提供的 %2$s -> 請交易 %4$s！"
 L["MSG_ROLL_WINNER_WHISPER"] = "你已經贏得 %s！請跟我交易。"
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "你已贏得由<%2$s>提供的 %1$s！請交易 %3$s。"
+L["MSG_NEED"] = "need,yes" -- Translation missing
+L["MSG_PASS"] = "pass,no" -- Translation missing
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)

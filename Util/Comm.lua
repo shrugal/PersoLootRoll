@@ -193,6 +193,16 @@ end
 --                   Chat messages                   --
 -------------------------------------------------------
 
+function Self.RollAdvertise(roll, i)
+    if not roll.item.isOwner then
+        Self.ChatLine("MSG_ROLL_START_MASTERLOOT", Self.TYPE_GROUP, roll.item.link, roll.item.owner, 100 + i)
+    elseif Addon.db.profile.messages.group.concise and Util.GetNumDroppedItems() <= 1 then
+        Self.ChatLine("MSG_ROLL_START_CONCISE", Self.TYPE_GROUP, roll.item.link)
+    else
+        Self.ChatLine("MSG_ROLL_START", Self.TYPE_GROUP, roll.item.link, 100 + i)
+    end
+end
+
 -- BID
 
 -- Messages when bidding on a roll
