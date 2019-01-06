@@ -1,0 +1,3 @@
+[submodule "Libs/LibRealmInfo"]
+	path = Libs/LibRealmInfo
+	url = https://github.com/phanx-wow/LibRealmInfo
