@@ -37,6 +37,7 @@ L["MSG_ROLL_WINNER_WHISPER_CONCISE"] = "Please trade me." -- Translation missing
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Ты выиграл %s от <%s>! Предложи %s обмен."
 L["MSG_NEED"] = "need,yes" -- Translation missing
 L["MSG_PASS"] = "pass,no" -- Translation missing
+L["MSG_ROLL"] = "roll,share,give away" -- Translation missing
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
@@ -288,6 +289,10 @@ L["OPT_MASTERLOOT_RULES_NEED_ANSWERS"] = "Настраиваемые ответ�
 L["OPT_MASTERLOOT_RULES_NEED_ANSWERS_DESC"] = [=[Specify up to 9 custom answers when rolling 'Need', with decreasing priority. You can also insert '%s' itself to lower its priority below the prior answers. Separate multiple entries with Commas.
 
 They can be accessed by right-clicking on the 'Need' button when rolling on loot.]=] -- Translation missing
+L["OPT_MASTERLOOT_RULES_START_WHISPER"] = "Start rolls by whisper" -- Translation missing
+L["OPT_MASTERLOOT_RULES_START_WHISPER_DESC"] = "Allow group members without the addon to whisper you an item-link and the word \"%s\" to make you start a roll for their items." -- Translation missing
+L["OPT_MASTERLOOT_RULES_START_ALL"] = "Start rolls for everyone" -- Translation missing
+L["OPT_MASTERLOOT_RULES_START_ALL_DESC"] = "Start rolls for all suitable items that group members without the addon loot." -- Translation missing
 L["OPT_MASTERLOOT_RULES_TIMEOUT_BASE"] = "Roll time (base)" -- Translation missing
 L["OPT_MASTERLOOT_RULES_TIMEOUT_BASE_DESC"] = "The base running time for rolls, regardless of how many items have dropped." -- Translation missing
 L["OPT_MASTERLOOT_RULES_TIMEOUT_PER_ITEM"] = "Roll time (per item)" -- Translation missing

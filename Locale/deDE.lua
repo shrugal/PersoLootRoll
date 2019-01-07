@@ -15,6 +15,7 @@ L["MSG_BID_5"] = "Brauchst du %s, oder könnte ich das haben?"
 L["MSG_HER"] = "sie"
 L["MSG_HIM"] = "ihn"
 L["MSG_ITEM"] = "Item"
+L["MSG_ROLL"] = "roll,vergeben"
 L["MSG_ROLL_ANSWER_AMBIGUOUS"] = "Ich vergebe gerade mehrere Items, bitte schick mir den Link von dem Item das du haben möchtest."
 L["MSG_ROLL_ANSWER_BID"] = "Ok, ich hab dein Gebot für %s registriert."
 L["MSG_ROLL_ANSWER_NO_OTHER"] = "Tut mir Leid, ich habs schon jemand anderes gegeben."
@@ -288,6 +289,10 @@ L["OPT_MASTERLOOT_RULES_NEED_ANSWERS"] = "Eigene 'Bedarf' Antworten"
 L["OPT_MASTERLOOT_RULES_NEED_ANSWERS_DESC"] = [=[Lege bis zu 9 eigene Antworten für das 'Bedarf' Gebot fest, in absteigender Priorität. Du kannst auch '%s' selbst hinzufügen, um dessen Priorität unter die der vorherigen Antworten zu senken. Trenne mehrer Einträge mit Kommas.
 
 Beim Rollen erreichst du sie per Rechtsklick auf den 'Bedarf' Button.]=]
+L["OPT_MASTERLOOT_RULES_START_WHISPER"] = "Starte Verlosungen per Flüsternachricht"
+L["OPT_MASTERLOOT_RULES_START_WHISPER_DESC"] = "Erlaube Gruppenmitgliedern ohne Addon dir einen Item-Link und das Wort \"%s\" zu flüster, um eine Verlosung für ihre Beute zu starten."
+L["OPT_MASTERLOOT_RULES_START_ALL"] = "Starte Verlosungen für jeden"
+L["OPT_MASTERLOOT_RULES_START_ALL_DESC"] = "Starte Verlosungen für alle erbeuteten Items von Gruppenmitgliedern ohne Addon."
 L["OPT_MASTERLOOT_RULES_TIMEOUT_BASE"] = "Verlosung Basis Laufzeit"
 L["OPT_MASTERLOOT_RULES_TIMEOUT_BASE_DESC"] = "Die Basis Laufzeit von Verlosungen, unabhängig davon wieviele Items gedropped sind."
 L["OPT_MASTERLOOT_RULES_TIMEOUT_PER_ITEM"] = "Zusätzliche Laufzeit pro Item"

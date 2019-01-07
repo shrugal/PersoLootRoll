@@ -37,6 +37,7 @@ L["MSG_ROLL_WINNER_WHISPER_CONCISE"] = "Please trade me." -- Translation missing
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "¡Has ganado %s de %s! Por favor comercia con %s."
 L["MSG_NEED"] = "need,yes" -- Translation missing
 L["MSG_PASS"] = "pass,no" -- Translation missing
+L["MSG_ROLL"] = "roll,share,give away" -- Translation missing
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
@@ -288,6 +289,10 @@ L["OPT_MASTERLOOT_RULES_NEED_ANSWERS"] = "Respuestas tipo 'Necesidad' personaliz
 L["OPT_MASTERLOOT_RULES_NEED_ANSWERS_DESC"] = [=[Especifica un máximo de 9 respuestas personalizadas cuando se opte por 'Necesidad', con prioridad decreciente. También puedes insertar '%s' a la misma para bajar su prioridad por debajo de las respuestas previas. Para introducir entradas múltiples, sepáralas por comas.
 
 Se puede acceder a ellas haciendo clic con el botón derecho en el botón de 'Necesidad' cuando se reparte el loot.]=]
+L["OPT_MASTERLOOT_RULES_START_WHISPER"] = "Start rolls by whisper" -- Translation missing
+L["OPT_MASTERLOOT_RULES_START_WHISPER_DESC"] = "Allow group members without the addon to whisper you an item-link and the word \"%s\" to make you start a roll for their items." -- Translation missing
+L["OPT_MASTERLOOT_RULES_START_ALL"] = "Start rolls for everyone" -- Translation missing
+L["OPT_MASTERLOOT_RULES_START_ALL_DESC"] = "Start rolls for all suitable items that group members without the addon loot." -- Translation missing
 L["OPT_MASTERLOOT_RULES_TIMEOUT_BASE"] = "Tiempo (base) para optar a algo"
 L["OPT_MASTERLOOT_RULES_TIMEOUT_BASE_DESC"] = "Tiempo base durante el que se puede optar a ítems, independientemente de cuántos hayan caído."
 L["OPT_MASTERLOOT_RULES_TIMEOUT_PER_ITEM"] = "Tiempo para optar (por ítem)"

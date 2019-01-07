@@ -28,7 +28,7 @@ end
 
 -- Get locale
 function Self.GetLocale(lang)
-    return Self[lang or Self.GetRealmLanguage()] or Self[Self.FALLBACK]
+    return Self[lang == true and GetLocale() or lang or Self.GetRealmLanguage()] or Self[Self.FALLBACK]
 end
 
 -- Get a single line

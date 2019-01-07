@@ -17,6 +17,7 @@ L["MSG_HIM"] = "him"
 L["MSG_ITEM"] = "item"
 L["MSG_NEED"] = "need,yes"
 L["MSG_PASS"] = "pass,no,nope"
+L["MSG_ROLL"] = "roll,share,give away"
 L["MSG_ROLL_ANSWER_AMBIGUOUS"] = "I am giving away multiple items right now, please send me the link of the item you want."
 L["MSG_ROLL_ANSWER_BID"] = "Ok, I registered your bid for %s."
 L["MSG_ROLL_ANSWER_NO_OTHER"] = "Sorry, I already gave it to someone else."
@@ -288,6 +289,10 @@ L["OPT_MASTERLOOT_RULES_NEED_ANSWERS"] = "Custom 'Need' answers"
 L["OPT_MASTERLOOT_RULES_NEED_ANSWERS_DESC"] = [=[Specify up to 9 custom answers when rolling 'Need', with decreasing priority. You can also insert '%s' itself to lower its priority below the prior answers. Separate multiple entries with Commas.
 
 They can be accessed by right-clicking on the 'Need' button when rolling on loot.]=]
+L["OPT_MASTERLOOT_RULES_START_WHISPER"] = "Start rolls by whisper"
+L["OPT_MASTERLOOT_RULES_START_WHISPER_DESC"] = "Allow group members without the addon to whisper you an item-link and the word \"%s\" to make you start a roll for their items."
+L["OPT_MASTERLOOT_RULES_START_ALL"] = "Start rolls for everyone"
+L["OPT_MASTERLOOT_RULES_START_ALL_DESC"] = "Start rolls for all suitable items that group members without the addon loot."
 L["OPT_MASTERLOOT_RULES_TIMEOUT_BASE"] = "Roll time (base)"
 L["OPT_MASTERLOOT_RULES_TIMEOUT_BASE_DESC"] = "The base running time for rolls, regardless of how many items have dropped."
 L["OPT_MASTERLOOT_RULES_TIMEOUT_PER_ITEM"] = "Roll time (per item)"

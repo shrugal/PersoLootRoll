@@ -37,6 +37,7 @@ L["MSG_ROLL_WINNER_WHISPER_CONCISE"] = "Please trade me." -- Translation missing
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "你已贏得由<%2$s>提供的 %1$s！请交易 %3$s。"
 L["MSG_NEED"] = "need,yes" -- Translation missing
 L["MSG_PASS"] = "pass,no" -- Translation missing
+L["MSG_ROLL"] = "roll,share,give away" -- Translation missing
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
@@ -288,6 +289,10 @@ L["OPT_MASTERLOOT_RULES_NEED_ANSWERS"] = "自订 '需求' 的应答"
 L["OPT_MASTERLOOT_RULES_NEED_ANSWERS_DESC"] = [=[当掷骰'需求'时最多可依据优先等级指定9个自订回答。你还可以插入'%s'本身让优先级降低到先前回答之下。使用逗号分隔多个条目。
 
 当掷骰战利品时，可以透由右键点击'需求'按钮来查阅。]=]
+L["OPT_MASTERLOOT_RULES_START_WHISPER"] = "Start rolls by whisper" -- Translation missing
+L["OPT_MASTERLOOT_RULES_START_WHISPER_DESC"] = "Allow group members without the addon to whisper you an item-link and the word \"%s\" to make you start a roll for their items." -- Translation missing
+L["OPT_MASTERLOOT_RULES_START_ALL"] = "Start rolls for everyone" -- Translation missing
+L["OPT_MASTERLOOT_RULES_START_ALL_DESC"] = "Start rolls for all suitable items that group members without the addon loot." -- Translation missing
 L["OPT_MASTERLOOT_RULES_TIMEOUT_BASE"] = "ROLL装时间(基本)"
 L["OPT_MASTERLOOT_RULES_TIMEOUT_BASE_DESC"] = "无论掉落多少物品，ROLL装的基本运行时间。"
 L["OPT_MASTERLOOT_RULES_TIMEOUT_PER_ITEM"] = "ROLL装时间(每项物品)"

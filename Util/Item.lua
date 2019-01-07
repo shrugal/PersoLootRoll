@@ -300,7 +300,7 @@ function Self.FromLink(item, owner, bagOrEquip, slot, isTradable)
         item = {
             link = item,
             owner = owner,
-            isOwner = owner and UnitIsUnit(owner, "player"),
+            isOwner = Unit.IsSelf(owner),
             infoLevel = Self.INFO_NONE,
             isTradable = Util.Default(isTradable, not owner or nil)
         }

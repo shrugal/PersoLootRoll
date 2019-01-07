@@ -69,6 +69,8 @@ Self.DEFAULTS = {
             rules = {
                 timeoutBase = Roll.TIMEOUT,
                 timeoutPerItem = Roll.TIMEOUT_PER_ITEM,
+                startWhisper = false,
+                startAll = false,
                 bidPublic = false,
                 votePublic = false,
                 needAnswers = {},
@@ -889,6 +891,24 @@ function Self.RegisterMasterloot()
                             Session.RefreshRules()
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.timeoutPerItem end,
+                        width = Self.WIDTH_HALF_SCROLL
+                    },
+                    startWhisper = {
+                        name = L["OPT_MASTERLOOT_RULES_START_WHISPER"],
+                        desc = L["OPT_MASTERLOOT_RULES_START_WHISPER_DESC"]:format(Locale.GetCommLine("MSG_ROLL"):match("[^,]*")) .. "\n",
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) Addon.db.profile.masterloot.rules.startWhisper = val end,
+                        get = function () return Addon.db.profile.masterloot.rules.startWhisper end,
+                        width = Self.WIDTH_HALF_SCROLL
+                    },
+                    startAll = {
+                        name = L["OPT_MASTERLOOT_RULES_START_ALL"],
+                        desc = L["OPT_MASTERLOOT_RULES_START_ALL_DESC"] .. "\n",
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) Addon.db.profile.masterloot.rules.startAll = val end,
+                        get = function () return Addon.db.profile.masterloot.rules.startAll end,
                         width = Self.WIDTH_HALF_SCROLL
                     },
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
