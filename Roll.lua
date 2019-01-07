@@ -218,6 +218,11 @@ function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner, status)
     end
 end
 
+-- Shortcut to search rolls by key-value pairs
+function Self.FindWhere(...)
+    return Util.TblFirstWhere(Addon.rolls, ...)
+end
+
 -- Create and add a roll to the list
 function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
     owner = Unit.Name(owner or "player")
@@ -1019,22 +1024,16 @@ function Self:Advertise(manually, silent)
     self:ExtendTimeLeft()
 
     -- Get the next free roll slot
-    local posted, i = {}
-    for _,roll in pairs(Addon.rolls) do
-        if roll.status == Self.STATUS_RUNNING and type(roll.posted) == "number" then
-            posted[roll.posted] = true
-        end
-    end
-    for j=1,50 do
-        if not posted[j] then
-            i = j break
+    local concise, slot = Comm.ShouldBeConcise() and Util.TblCountFn(Addon.rolls, Self.IsActive) <= 1
+    for i=concise and 0 or 1,49 do
+        if not Self.FindWhere("status", Self.STATUS_RUNNING, "posted", i) then
+            slot = i break
         end
     end
 
-    if i < 50 then
-        Comm.RollAdvertise(self, i)
-
-        self.posted = i
+    if slot then
+        self.posted = slot
+        Comm.RollAdvertise(self)
 
         if not silent then
             self:SendStatus()
@@ -1257,8 +1256,8 @@ function Self:IsMasterlooter()
 end
 
 -- Check if the roll is from an addon user
-function Self:GetOwnerAddon()
-    return Util.Bool(self.ownerId or self.itemOwnerId) or Addon:GetCompAddonUser(self.owner)
+function Self:GetOwnerAddon(exclCompAddons)
+    return Util.Bool(self.ownerId or self.itemOwnerId) or Addon:UnitIsTracking(self.owner, not exclCompAddons)
 end
 
 -- Check if the player has to take an action to complete the roll (e.g. trade)
@@ -1281,6 +1280,11 @@ function Self:GetActionTarget()
     if Util.In(self:GetActionRequired(), Self.ACTION_TRADE, Self.ACTION_ASK) then
         return self.item.isOwner and self.winner or not self.item.isOwner and self.item.owner
     end
+end
+
+-- Check if the roll is pending or running
+function Self:IsActive()
+    return Util.In(self.status, Self.STATUS_PENDING, Self.STATUS_RUNNING)
 end
 
 -- Check if the roll is running or recently ended

@@ -260,7 +260,7 @@ function Self.CHAT_MSG_GROUP(_, _, msg, sender)
             end
         end
     elseif Addon.db.profile.messages.group.concise and Util.GetNumDroppedItems() <= 1 then
-        local roll = Roll.Find(nil, true, nil, nil, true, Roll.STATUS_RUNNING)
+        local roll = Roll.FindWhere("isOwner", true, "item.isOwner", true, "status", Roll.STATUS_RUNNING, "posted", 0)
         if roll and roll:UnitCanBid(unit, Roll.BID_NEED) then
             local L, D = Locale.GetCommLocale(unit), Locale.GetCommLocale()
 

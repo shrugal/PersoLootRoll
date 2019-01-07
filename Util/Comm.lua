@@ -128,7 +128,7 @@ end
 
 -- Check if we should use concise messages
 function Self.ShouldBeConcise()
-    return Addon.db.profile.messages.group.concise and Util.GetNumDroppedItems() <= 1
+    return Addon.db.profile.messages.group.concise and not Session.GetMasterlooter() and Util.GetNumDroppedItems() <= 1
 end
 
 -- Send a chat line
@@ -200,13 +200,13 @@ end
 --                   Chat messages                   --
 -------------------------------------------------------
 
-function Self.RollAdvertise(roll, i)
+function Self.RollAdvertise(roll)
     if not roll.item.isOwner then
-        Self.ChatLine("MSG_ROLL_START_MASTERLOOT", Self.TYPE_GROUP, roll.item.link, roll.item.owner, 100 + i)
-    elseif Self.ShouldBeConcise() then
+        Self.ChatLine("MSG_ROLL_START_MASTERLOOT", Self.TYPE_GROUP, roll.item.link, roll.item.owner, 100 + roll.posted)
+    elseif roll.posted == 0 then
         Self.ChatLine("MSG_ROLL_START_CONCISE", Self.TYPE_GROUP, roll.item.link)
     else
-        Self.ChatLine("MSG_ROLL_START", Self.TYPE_GROUP, roll.item.link, 100 + i)
+        Self.ChatLine("MSG_ROLL_START", Self.TYPE_GROUP, roll.item.link, 100 + roll.posted)
     end
 end
 
@@ -328,7 +328,7 @@ function Self.RollEnd(roll)
 
         if roll.isOwner and not roll.isTest then
             local line = roll.bids[roll.winner] == Roll.BID_DISENCHANT and "DISENCHANT" or "WINNER"
-            local concise = line == "WINNER" and Self.ShouldBeConcise()
+            local concise = line == "WINNER" and roll.posted == 0
 
             -- Announce to chat
             local toGroup = roll.posted and Self.ShouldInitChat()

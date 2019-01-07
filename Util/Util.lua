@@ -567,10 +567,11 @@ function Self.TblCountWhere(t, ...)
 end
 
 -- Count using a function
-function Self.TblCountFn(t, fn, index, ...)
+function Self.TblCountFn(t, fn, index, notVal, ...)
     local n, fn = 0, Self.Fn(fn)
     for i,v in pairs(t) do
-        n = n + index and fn(v, i, ...) or fn(v, ...)
+        local val = Self.FnCall(fn, v, i, index, notVal, ...)
+        n = n + (tonumber(val) or val and 1 or 0)
     end
     return n
 end
