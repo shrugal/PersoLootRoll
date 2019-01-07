@@ -818,7 +818,7 @@ end
 -- Check against current character level
 function Self:HasSufficientCharacterLevel(unit)
     unit = unit or "player"
-    local threshold = Unit.IsSelf(unit) and Addon.db.profile.filter.lvlThreshold or Self.LVL_THRESHOLD
+    local threshold = Unit.IsSelf(unit) and Addon.db.profile.filter.lvlThreshold or -1
     return threshold == -1 or UnitLevel(unit) + threshold >= self:GetInfo("realMinLevel")
 end
 

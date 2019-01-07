@@ -27,10 +27,13 @@ L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> will disenchant %s from <%s> -> Trad
 L["MSG_ROLL_DISENCHANT_WHISPER"] = "You were picked to disenchant %s, please trade me." -- Translation missing
 L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "You were picked to disenchant %s from <%s>, please trade %s." -- Translation missing
 L["MSG_ROLL_START"] = "Отдаю %s -> /w мне или /roll %d!"
+L["MSG_ROLL_START_CONCISE"] = "%s someone need?" -- Translation missing
 L["MSG_ROLL_START_MASTERLOOT"] = "Отдаю %s от <%s> -> /w мне или /roll %d!"
 L["MSG_ROLL_WINNER"] = "<%s> выиграл %s -> Предложи мне обмен!"
+L["MSG_ROLL_WINNER_CONCISE"] = "%s trade me!" -- Translation missing
 L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%s> выиграл %s от <%s> -> Предложи %s обмен!"
 L["MSG_ROLL_WINNER_WHISPER"] = "Ты выиграл %s! Предложи мне обмен."
+L["MSG_ROLL_WINNER_WHISPER_CONCISE"] = "Please trade me." -- Translation missing
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Ты выиграл %s от <%s>! Предложи %s обмен."
 L["MSG_NEED"] = "need,yes" -- Translation missing
 L["MSG_PASS"] = "pass,no" -- Translation missing
@@ -78,6 +81,7 @@ L["RAID_ASSISTANT"] = "Помощник  рейда"
 L["RAID_LEADER"] = "Лидер рейда"
 L["RESTART"] = "Перезапуск"
 L["RIGHT"] = "вправо"
+L["RINGS"] = "Rings" -- Translation missing
 L["ROLL"] = "Розыгрыш"
 L["ROLLS"] = "Розыгрыши"
 L["SECONDS"] = "%d с."
@@ -85,6 +89,7 @@ L["SET_ANCHOR"] = "Установить привязку: Увеличивать
 L["SHOW"] = "Показать"
 L["SHOW_HIDE"] = "Показать/Скрыть"
 L["TRADE"] = "Обмен"
+L["TRINKETS"] = "Trinkets" -- Translation missing
 L["UP"] = "вверх"
 L["VERSION_NOTICE"] = "Доступна новая версия этого аддона. Пожалуйста, обновите, чтобы оставаться совместимым со всеми и не пропустить ни одной добычи!"
 L["VOTE"] = "Голос"
@@ -315,6 +320,10 @@ L["OPT_ECHO_VERBOSE"] = "Подробно"
 L["OPT_GROUPCHAT"] = "Чат группы"
 L["OPT_GROUPCHAT_ANNOUNCE"] = "Анонсировать розыгрыши и победителей"
 L["OPT_GROUPCHAT_ANNOUNCE_DESC"] = "Объявлять ваши розыгрыши и победителей в чате группы."
+L["OPT_GROUPCHAT_CONCISE"] = "Concise announcements if possible" -- Translation missing
+L["OPT_GROUPCHAT_CONCISE_DESC"] = [=[Use more concise announcements when bosses only drop one item at a time (e.g. in 5-man dungeons).
+
+The addon will post item links in chat, and group members can just answer something like "%s", "%s" or "+" to roll on them.]=] -- Translation missing
 L["OPT_GROUPCHAT_DESC"] = "Будет ли аддон публиковать сообщения в чате группы."
 L["OPT_GROUPCHAT_GROUP_TYPE"] = "Объявлять по типу группы"
 L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[Отправлять сообщения в чат группы, только если вы находитесь в группе одного из этих типов.
@@ -357,6 +366,8 @@ L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1: Item link -- Transl
 L["OPT_MSG_ROLL_START"] = "Объявление нового розыгрыша"
 L["OPT_MSG_ROLL_START_DESC"] = [=[1: Ссылка на предмет
 2: Номер розыгрыша]=]
+L["OPT_MSG_ROLL_START_CONCISE"] = "Объявление нового розыгрыша (concise)" -- Translation missing
+L["OPT_MSG_ROLL_START_CONCISE_DESC"] = "1: Ссылка на предмет"
 L["OPT_MSG_ROLL_START_MASTERLOOT"] = "Announcing a new roll (as masterlooter)" -- Translation missing
 L["OPT_MSG_ROLL_START_MASTERLOOT_DESC"] = [=[1: Ссылка на предмет
 2: Владелец предмета
@@ -364,6 +375,8 @@ L["OPT_MSG_ROLL_START_MASTERLOOT_DESC"] = [=[1: Ссылка на предмет
 L["OPT_MSG_ROLL_WINNER"] = "Объявление победителя розыгрыша"
 L["OPT_MSG_ROLL_WINNER_DESC"] = [=[1: Победитель
 2: Ссылка на предмет]=]
+L["OPT_MSG_ROLL_WINNER_CONCISE"] = "Объявление победителя розыгрыша (concise)" -- Translation missing
+L["OPT_MSG_ROLL_WINNER_CONCISE_DESC"] = "1: Победитель"
 L["OPT_MSG_ROLL_WINNER_MASTERLOOT"] = "Announcing a roll winner (as masterlooter)" -- Translation missing
 L["OPT_MSG_ROLL_WINNER_MASTERLOOT_DESC"] = [=[1: Победитель
 2: Ссылка на предмет
@@ -371,6 +384,8 @@ L["OPT_MSG_ROLL_WINNER_MASTERLOOT_DESC"] = [=[1: Победитель
 4: его/её]=]
 L["OPT_MSG_ROLL_WINNER_WHISPER"] = "Whispering the roll winner" -- Translation missing
 L["OPT_MSG_ROLL_WINNER_WHISPER_DESC"] = "1: Ссылка на предмет"
+L["OPT_MSG_ROLL_WINNER_WHISPER_CONCISE"] = "Whispering the roll winner (concise)" -- Translation missing
+L["OPT_MSG_ROLL_WINNER_WHISPER_CONCISE_DESC"] = ""
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Whispering the roll winner (as masterlooter)" -- Translation missing
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1: Ссылка на предмет
 2: Владелец предмета

@@ -27,10 +27,13 @@ L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> va a desencantar %s de <%s> -> Comer
 L["MSG_ROLL_DISENCHANT_WHISPER"] = "Has sido elegido para desencantar %s, por favor, comercia conmigo."
 L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Has sido escogido para desencantar %s de <%s>, por favor comercia %s."
 L["MSG_ROLL_START"] = "Ofrezco %s -> susúrrame o haz /roll %d!"
+L["MSG_ROLL_START_CONCISE"] = "%s someone need?" -- Translation missing
 L["MSG_ROLL_START_MASTERLOOT"] = "Ofrezco %s de <%s> -> susúrrame o haz /roll %d!"
 L["MSG_ROLL_WINNER"] = "<%s> ha ganado %s -> ¡Comercia conmigo!"
+L["MSG_ROLL_WINNER_CONCISE"] = "%s trade me!" -- Translation missing
 L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%s> ha ganado %s de <%s> -> ¡Comercia con %s!"
 L["MSG_ROLL_WINNER_WHISPER"] = "¡Has ganado %s! Por favor comercia conmigo."
+L["MSG_ROLL_WINNER_WHISPER_CONCISE"] = "Please trade me." -- Translation missing
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "¡Has ganado %s de %s! Por favor comercia con %s."
 L["MSG_NEED"] = "need,yes" -- Translation missing
 L["MSG_PASS"] = "pass,no" -- Translation missing
@@ -78,6 +81,7 @@ L["RAID_ASSISTANT"] = "Asistente de raid"
 L["RAID_LEADER"] = "Líder de raid"
 L["RESTART"] = "Reinicio"
 L["RIGHT"] = "correcto"
+L["RINGS"] = "Rings" -- Translation missing
 L["ROLL"] = "Tirar dados"
 L["ROLLS"] = "Tiradas de dado"
 L["SECONDS"] = "%ds"
@@ -85,6 +89,7 @@ L["SET_ANCHOR"] = "Selección de anclaje: Crecimiento %s y %s"
 L["SHOW"] = "Mostrar"
 L["SHOW_HIDE"] = "Mostrar/Ocultar"
 L["TRADE"] = "Comercia"
+L["TRINKETS"] = "Trinkets" -- Translation missing
 L["UP"] = "Arriba"
 L["VERSION_NOTICE"] = "Hay una versión nueva de este addon disponible. Por favor, actualízalo para mantenerte compatible con todo el mundo y no perderte nada de loot!"
 L["VOTE"] = "Votar"
@@ -315,6 +320,10 @@ L["OPT_ECHO_VERBOSE"] = "Detallar"
 L["OPT_GROUPCHAT"] = "Chat de grupo"
 L["OPT_GROUPCHAT_ANNOUNCE"] = "Anunciar tiradas y ganadores"
 L["OPT_GROUPCHAT_ANNOUNCE_DESC"] = "Anunciar tus tiradas y los ganadores de tus tiradas en el chat de grupo."
+L["OPT_GROUPCHAT_CONCISE"] = "Concise announcements if possible" -- Translation missing
+L["OPT_GROUPCHAT_CONCISE_DESC"] = [=[Use more concise announcements when bosses only drop one item at a time (e.g. in 5-man dungeons).
+
+The addon will post item links in chat, and group members can just answer something like "%s", "%s" or "+" to roll on them.]=] -- Translation missing
 L["OPT_GROUPCHAT_DESC"] = "Selecciona si el addon mostrará o no información por el chat de grupo."
 L["OPT_GROUPCHAT_GROUP_TYPE"] = "Anunciar por tipo de grupo"
 L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[Escribe en el chat de grupo sólo si estás en uno de estos tipos de grupo.
@@ -357,6 +366,8 @@ L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1: Enlace del objeto
 L["OPT_MSG_ROLL_START"] = "Anunciando un nuevo reparto"
 L["OPT_MSG_ROLL_START_DESC"] = [=[1: Enlace del ítem
 2: Número de la tirada de dados]=]
+L["OPT_MSG_ROLL_START_CONCISE"] = "Anunciando un nuevo reparto (concise)" -- Translation missing
+L["OPT_MSG_ROLL_START_CONCISE_DESC"] = "1: Enlace del ítem"
 L["OPT_MSG_ROLL_START_MASTERLOOT"] = "Anunciando un nuevo reparto (como maestro despojador)"
 L["OPT_MSG_ROLL_START_MASTERLOOT_DESC"] = [=[1: Enlace del objeto
 2: Dueño del objeto
@@ -364,6 +375,8 @@ L["OPT_MSG_ROLL_START_MASTERLOOT_DESC"] = [=[1: Enlace del objeto
 L["OPT_MSG_ROLL_WINNER"] = "Anunciando el ganador de un reparto"
 L["OPT_MSG_ROLL_WINNER_DESC"] = [=[1: Ganador
 2: Enlace del objeto]=]
+L["OPT_MSG_ROLL_WINNER_CONCISE"] = "Anunciando el ganador de un reparto (concise)" -- Translation missing
+L["OPT_MSG_ROLL_WINNER_CONCISE_DESC"] = "1: Ganador"
 L["OPT_MSG_ROLL_WINNER_MASTERLOOT"] = "Anunciando el ganador de un reparto (como maestro despojador)"
 L["OPT_MSG_ROLL_WINNER_MASTERLOOT_DESC"] = [=[1: Ganador
 2: Enlace del objeto
@@ -371,6 +384,8 @@ L["OPT_MSG_ROLL_WINNER_MASTERLOOT_DESC"] = [=[1: Ganador
 4: Él/ella]=]
 L["OPT_MSG_ROLL_WINNER_WHISPER"] = "Susurrando el ganador del reparto"
 L["OPT_MSG_ROLL_WINNER_WHISPER_DESC"] = "1: Enlace del objeto"
+L["OPT_MSG_ROLL_WINNER_WHISPER_CONCISE"] = "Susurrando el ganador del reparto (concise)" -- Translation missing
+L["OPT_MSG_ROLL_WINNER_WHISPER_CONCISE_DESC"] = ""
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Susurrando el ganador del reparto (como maestro despojador)"
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1: Enlace del objeto
 2: Dueño del objeto

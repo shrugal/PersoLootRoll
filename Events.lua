@@ -269,9 +269,9 @@ function Self.CHAT_MSG_GROUP(_, _, msg, sender)
             local msgLc = msg:lower()
 
             for i,bid in Util.Each("NEED", "PASS") do
-                local words = Util(",").Join(_G[bid], bid == "NEED" and YES .. ",+" or NO .. ",-", L["MSG_" .. bid], L ~= D and D["MSG_" .. bid] or "").LcLang()()
-                for v in words:gmatch("[^,]+") do
-                    if Util.In(v, msg, msgLc) then
+                local patterns = Util(",").Join(_G[bid], bid == "NEED" and YES .. ",+" or NO .. ",-", L["MSG_" .. bid], L ~= D and D["MSG_" .. bid] or "").LcLang()()
+                for p in patterns:gmatch("[^,]+") do
+                    if msg:match("^" .. p .. "$") or msgLc:match("^" .. p .. "$") then
                         roll:Bid(Roll["BID_" .. bid], unit)
                         return
                     end

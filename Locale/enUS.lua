@@ -15,6 +15,8 @@ L["MSG_BID_5"] = "Do you need %s, or may I have it?"
 L["MSG_HER"] = "her"
 L["MSG_HIM"] = "him"
 L["MSG_ITEM"] = "item"
+L["MSG_NEED"] = "need,yes"
+L["MSG_PASS"] = "pass,no,nope"
 L["MSG_ROLL_ANSWER_AMBIGUOUS"] = "I am giving away multiple items right now, please send me the link of the item you want."
 L["MSG_ROLL_ANSWER_BID"] = "Ok, I registered your bid for %s."
 L["MSG_ROLL_ANSWER_NO_OTHER"] = "Sorry, I already gave it to someone else."
@@ -22,19 +24,19 @@ L["MSG_ROLL_ANSWER_NO_SELF"] = "Sorry, I need that myself."
 L["MSG_ROLL_ANSWER_NOT_TRADABLE"] = "Sorry, I can't trade it."
 L["MSG_ROLL_ANSWER_YES"] = "You can have it, just trade me."
 L["MSG_ROLL_ANSWER_YES_MASTERLOOT"] = "You can have it, just trade <%s>."
-L["MSG_ROLL_START"] = "Giving away %s -> /w me or /roll %d!"
-L["MSG_ROLL_START_CONCISE"] = "%s someone need?"
-L["MSG_ROLL_START_MASTERLOOT"] = "Giving away %s from <%s> -> /w me or /roll %d!"
-L["MSG_ROLL_WINNER"] = "<%s> has won %s -> Trade me!"
-L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%s> has won %s from <%s> -> Trade %s!"
-L["MSG_ROLL_WINNER_WHISPER"] = "You have won %s! Please trade me."
-L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "You have won %s from <%s>! Please trade %s."
 L["MSG_ROLL_DISENCHANT"] = "<%s> will disenchant %s -> Trade me!"
 L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> will disenchant %s from <%s> -> Trade %s!"
 L["MSG_ROLL_DISENCHANT_WHISPER"] = "You were picked to disenchant %s, please trade me."
 L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "You were picked to disenchant %s from <%s>, please trade %s."
-L["MSG_NEED"] = "need,yes"
-L["MSG_PASS"] = "pass,no,nope"
+L["MSG_ROLL_START"] = "Giving away %s -> /w me or /roll %d!"
+L["MSG_ROLL_START_CONCISE"] = "%s someone need?"
+L["MSG_ROLL_START_MASTERLOOT"] = "Giving away %s from <%s> -> /w me or /roll %d!"
+L["MSG_ROLL_WINNER"] = "<%s> has won %s -> Trade me!"
+L["MSG_ROLL_WINNER_CONCISE"] = "%s trade me!"
+L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%s> has won %s from <%s> -> Trade %s!"
+L["MSG_ROLL_WINNER_WHISPER"] = "You have won %s! Please trade me."
+L["MSG_ROLL_WINNER_WHISPER_CONCISE"] = "Please trade me."
+L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "You have won %s from <%s>! Please trade %s."
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
@@ -114,6 +116,8 @@ L["USAGE_ROLL"] = "Usage: /plr roll [item]* (<timeout> <owner>)"
 L["ERROR_CMD_UNKNOWN"] = "Unknown command '%s'"
 L["ERROR_ITEM_NOT_TRADABLE"] = "You cannot trade that item."
 L["ERROR_NOT_IN_GROUP"] = "You are not in a group or raid."
+L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"] = "You need to become masterlooter to create rolls for other player's items."
+L["ERROR_NOT_MASTERLOOTER_TIMEOUT"] = "You cannot change the timeout while having a masterlooter other than yourself."
 L["ERROR_OPT_MASTERLOOT_EXPORT_FAILED"] = "Exporting masterloot settings to <%s> failed!"
 L["ERROR_PLAYER_NOT_FOUND"] = "Cannot find player %q."
 L["ERROR_ROLL_BID_IMPOSSIBLE_OTHER"] = "%s has send a bid for %s but is not allowed to do so right now."
@@ -125,8 +129,6 @@ L["ERROR_ROLL_STATUS_NOT_1"] = "The roll is not running."
 L["ERROR_ROLL_UNKNOWN"] = "That roll doesn't exist."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"] = "%s has send a vote for %s but is not allowed to do so right now."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"] = "You cannot vote on that item right now."
-L["ERROR_NOT_MASTERLOOTER_OTHER_OWNER"] = "You need to become masterlooter to create rolls for other player's items."
-L["ERROR_NOT_MASTERLOOTER_TIMEOUT"] = "You cannot change the timeout while having a masterlooter other than yourself."
 
 -- GUI
 L["DIALOG_MASTERLOOT_ASK"] = "<%s> wants to become your masterlooter."
@@ -149,8 +151,9 @@ L["MENU_MASTERLOOT_SEARCH"] = "Search group for a masterlooter"
 L["MENU_MASTERLOOT_START"] = "Become masterlooter"
 L["TIP_ADDON_MISSING"] = "Addon missing:"
 L["TIP_ADDON_VERSIONS"] = "Addon versions:"
-L["TIP_ENABLE_WHISPER_ASK"] = "Tip: Right-Click to enable asking for loot automatically"
 L["TIP_CHAT_TO_TRADE"] = "Please ask the owner first before trading"
+L["TIP_COMP_ADDON_USERS"] = "Compatible addon users:"
+L["TIP_ENABLE_WHISPER_ASK"] = "Tip: Right-Click to enable asking for loot automatically"
 L["TIP_MASTERLOOT"] = "Masterloot is active"
 L["TIP_MASTERLOOT_INFO"] = [=[|cffffff78Masterlooter:|r %s
 |cffffff78Roll time:|r %ds (+ %ds per item)
@@ -162,7 +165,6 @@ L["TIP_MASTERLOOT_STOP"] = "Remove masterlooter"
 L["TIP_MASTERLOOTING"] = "Masterlooting group (%d):"
 L["TIP_MINIMAP_ICON"] = [=[|cffffff78Left-Click:|r Toggle rolls window
 |cffffff78Right-Click:|r Show Options]=]
-L["TIP_COMP_ADDON_USERS"] = "Compatible addon users:"
 L["TIP_TEST"] = "Show a test roll"
 L["TIP_VOTES"] = "Votes from:"
 
@@ -171,6 +173,11 @@ L["OPT_ACTIONS_WINDOW"] = "Show actions window"
 L["OPT_ACTIONS_WINDOW_DESC"] = "Show the actions window when there are pending actions, e.g. when you won an item and need to trade someone to get it."
 L["OPT_ACTIONS_WINDOW_MOVE"] = "Move"
 L["OPT_ACTIONS_WINDOW_MOVE_DESC"] = "Move the actions window around."
+L["OPT_ACTIVE_GROUPS"] = "Activate by group type"
+L["OPT_ACTIVE_GROUPS_DESC"] = [=[Activate only when you are in one of these group types.
+
+|cffffff78Guild Group:|r The members of one guild make up %d%% or more of the group.
+|cffffff78Community Group:|r The members of one of your WoW-Communities make up %d%% or more of the group.]=]
 L["OPT_ALLOW_DISENCHANT"] = "Allow \"Disenchant\" bids"
 L["OPT_ALLOW_DISENCHANT_DESC"] = "Allow others to bid \"Disenchant\" on your own items."
 L["OPT_AUTHOR"] = "|cffffd100Author:|r Shrugal (EU-Mal'Ganis)"
@@ -186,18 +193,13 @@ L["OPT_CHILL_MODE_DESC"] = [=[The intent of chill mode is to take the pressure o
 |cffffff783.|r Rolls from non-addon users in your group also stay open until you decided if you want them or not.
 
 |cffff0000IMPORTANT:|r Rolls from other addon users without chill mode active will still have a normal timeout. Make sure that everyone in your group enables this option if you want a chill run.]=]
+L["OPT_DISENCHANT"] = "Disenchant"
+L["OPT_DISENCHANT_DESC"] = "Bid \"Disenchant\" on items you can't use if you have the profession and the item owner has allowed it."
 L["OPT_DONT_SHARE"] = "Don't share loot"
 L["OPT_DONT_SHARE_DESC"] = "Don't roll on loot from others and don't share your own loot. The addon will deny incoming requests for your loot (if enabled), and you can still be masterlooter and loot council member."
 L["OPT_ENABLE"] = "Enable"
 L["OPT_ENABLE_DESC"] = "Enable or disable the addon"
 L["OPT_ENABLE_MODULE_DESC"] = "Enable or disable this module"
-L["OPT_ACTIVE_GROUPS"] = "Activate by group type"
-L["OPT_ACTIVE_GROUPS_DESC"] = [=[Activate only when you are in one of these group types.
-
-|cffffff78Guild Group:|r The members of one guild make up %d%% or more of the group.
-|cffffff78Community Group:|r The members of one of your WoW-Communities make up %d%% or more of the group.]=]
-L["OPT_LVL_THRESHOLD"] = "Character-level threshold"
-L["OPT_LVL_THRESHOLD_DESC"] = "Ignore items that require your character's level to be more than this much higher than it currently is. Set to -1 to disable this filter."
 L["OPT_ILVL_THRESHOLD"] = "Item-level threshold"
 L["OPT_ILVL_THRESHOLD_DESC"] = [[Ignore items based on their item-level compared to what you have currently equipped or in your bags for the slot.
 
@@ -209,10 +211,14 @@ L["OPT_INFO"] = "Information"
 L["OPT_INFO_DESC"] = "Some information about this addon."
 L["OPT_ITEM_FILTER"] = "Item Filter"
 L["OPT_ITEM_FILTER_DESC"] = "Change which items you are asked to roll on."
+L["OPT_LVL_THRESHOLD"] = "Character-level threshold"
+L["OPT_LVL_THRESHOLD_DESC"] = "Ignore items that require your character's level to be more than this much higher than it currently is. Set to -1 to disable this filter."
 L["OPT_MINIMAP_ICON"] = "Show minimap icon"
 L["OPT_MINIMAP_ICON_DESC"] = "Show or hide the minimap icon."
 L["OPT_ONLY_MASTERLOOT"] = "Only masterloot"
 L["OPT_ONLY_MASTERLOOT_DESC"] = "Only activate the addon when using masterloot (e.g. with your guild)"
+L["OPT_PAWN"] = "Check \"Pawn\""
+L["OPT_PAWN_DESC"] = "Only roll on items that are an upgrade according to the \"Pawn\" addon."
 L["OPT_ROLL_FRAMES"] = "Show roll frames"
 L["OPT_ROLL_FRAMES_DESC"] = "Show the roll frames when someone loots something you might be interested in, so you can roll for it."
 L["OPT_ROLLS_WINDOW"] = "Show rolls window"
@@ -222,10 +228,6 @@ L["OPT_SPECS_DESC"] = "Only suggest loot for these class specializations."
 L["OPT_TRANSLATION"] = "|cffffd100Translation:|r Shrugal (EU-Mal'Ganis)"
 L["OPT_TRANSMOG"] = "Check transmog appearance"
 L["OPT_TRANSMOG_DESC"] = "Roll on items that you don't have the appearance of yet."
-L["OPT_DISENCHANT"] = "Disenchant"
-L["OPT_DISENCHANT_DESC"] = "Bid \"Disenchant\" on items you can't use if you have the profession and the item owner has allowed it."
-L["OPT_PAWN"] = "Check \"Pawn\""
-L["OPT_PAWN_DESC"] = "Only roll on items that are an upgrade according to the \"Pawn\" addon."
 L["OPT_UI"] = "User interface"
 L["OPT_UI_DESC"] = "Customize %s's look and feel to your liking."
 L["OPT_VERSION"] = "|cffffd100Version:|r %s"
@@ -244,6 +246,8 @@ L["OPT_MASTERLOOT_APPROVAL_ALLOW_DESC"] = [=[Choose who can request to become yo
 L["OPT_MASTERLOOT_APPROVAL_DESC"] = "Here you can define who can become your masterlooter."
 L["OPT_MASTERLOOT_APPROVAL_WHITELIST"] = "Masterlooter Whitelist"
 L["OPT_MASTERLOOT_APPROVAL_WHITELIST_DESC"] = "You can also name specific players who should be able to become your masterlooter. Separate multiple names with spaces or commas."
+L["OPT_MASTERLOOT_AWARD"] = "Awarding"
+L["OPT_MASTERLOOT_BIDS_AND_VOTES"] = "Bids and votes"
 L["OPT_MASTERLOOT_CLUB"] = "Guild/Community"
 L["OPT_MASTERLOOT_CLUB_DESC"] = "Select the Guild/Community to import/export settings from."
 L["OPT_MASTERLOOT_COUNCIL"] = "Council"
@@ -262,7 +266,7 @@ L["OPT_MASTERLOOT_EXPORT_WINDOW"] = "Export masterloot settings"
 L["OPT_MASTERLOOT_LOAD"] = "Load"
 L["OPT_MASTERLOOT_LOAD_DESC"] = "Load masterloot settings from your guild/community's description."
 L["OPT_MASTERLOOT_RULES"] = "Rules"
-L["OPT_MASTERLOOT_AWARD"] = "Awarding"
+L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"] = "Allow group members to roll \"Disenchant\" on items."
 L["OPT_MASTERLOOT_RULES_ALLOW_KEEP"] = "Allow keeping loot"
 L["OPT_MASTERLOOT_RULES_ALLOW_KEEP_DESC"] = "Allow item owners to keep their loot, and only give it away if they choose not to keep it."
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD"] = "Award loot automatically"
@@ -271,11 +275,9 @@ L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT"] = "Auto award time (base)"
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_DESC"] = "The base time to wait before auto-awarding loot, so you have time to collect votes and maybe decide for yourself."
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM"] = "Auto award time (per item)"
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM_DESC"] = "Will be added to the base auto award time for each item that dropped."
-L["OPT_MASTERLOOT_BIDS_AND_VOTES"] = "Bids and votes"
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC"] = "Bids public"
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC_DESC"] = "You can make bids public, so everybody can see who bid on what."
 L["OPT_MASTERLOOT_RULES_DESC"] = "These rules apply to everybody when you are the masterlooter"
-L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"] = "Allow group members to roll \"Disenchant\" on items."
 L["OPT_MASTERLOOT_RULES_DISENCHANTER"] = "Disenchanter"
 L["OPT_MASTERLOOT_RULES_DISENCHANTER_DESC"] = "Give loot nobody wants to these players for disenchanting. Separate multiple names with spaces or commas."
 L["OPT_MASTERLOOT_RULES_GREED_ANSWERS"] = "Custom 'Greed' answers"
@@ -319,9 +321,9 @@ L["OPT_GROUPCHAT"] = "Group Chat"
 L["OPT_GROUPCHAT_ANNOUNCE"] = "Announce rolls and winners"
 L["OPT_GROUPCHAT_ANNOUNCE_DESC"] = "Announce your rolls and winners of your rolls in group chat."
 L["OPT_GROUPCHAT_CONCISE"] = "Concise announcements if possible"
-L["OPT_GROUPCHAT_CONCISE_DESC"] = [[Use more concise announcements when bosses only drop one item at a time (e.g. in 5-man dungeons).
+L["OPT_GROUPCHAT_CONCISE_DESC"] = [=[Use more concise announcements when bosses only drop one item at a time (e.g. in 5-man dungeons).
 
-The addon will post item links in chat, and group members can just answer something like "%s", "%s" or "+" to roll on them.]]
+The addon will post item links in chat, and group members can just answer something like "%s", "%s" or "+" to roll on them.]=]
 L["OPT_GROUPCHAT_DESC"] = "Change whether or not the addon will post things to the group chat."
 L["OPT_GROUPCHAT_GROUP_TYPE"] = "Announce by group type"
 L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[Post to group chat only if you are in one of these group types.
@@ -347,27 +349,6 @@ L["OPT_MSG_ROLL_ANSWER_YES"] = "Answer: You can have it"
 L["OPT_MSG_ROLL_ANSWER_YES_DESC"] = ""
 L["OPT_MSG_ROLL_ANSWER_YES_MASTERLOOT"] = "Answer: You can have it (as masterlooter)"
 L["OPT_MSG_ROLL_ANSWER_YES_MASTERLOOT_DESC"] = "1: Item owner"
-L["OPT_MSG_ROLL_START"] = "Announcing a new roll"
-L["OPT_MSG_ROLL_START_DESC"] = [=[1: Item link
-2: Roll number]=]
-L["OPT_MSG_ROLL_START_MASTERLOOT"] = "Announcing a new roll (as masterlooter)"
-L["OPT_MSG_ROLL_START_MASTERLOOT_DESC"] = [=[1: Item link
-2: Item owner
-3: Roll number]=]
-L["OPT_MSG_ROLL_WINNER"] = "Announcing a roll winner"
-L["OPT_MSG_ROLL_WINNER_DESC"] = [=[1: Winner
-2: Item link]=]
-L["OPT_MSG_ROLL_WINNER_MASTERLOOT"] = "Announcing a roll winner (as masterlooter)"
-L["OPT_MSG_ROLL_WINNER_MASTERLOOT_DESC"] = [=[1: Winner
-2: Item link
-3: Item owner
-4: him/her]=]
-L["OPT_MSG_ROLL_WINNER_WHISPER"] = "Whispering the roll winner"
-L["OPT_MSG_ROLL_WINNER_WHISPER_DESC"] = "1: Item link"
-L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Whispering the roll winner (as masterlooter)"
-L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1: Item link
-2: Item owner
-3: him/her]=]
 L["OPT_MSG_ROLL_DISENCHANT"] = "Announcing a disenchanter"
 L["OPT_MSG_ROLL_DISENCHANT_DESC"] = [=[1: Disenchanter
 2: Item link]=]
@@ -382,6 +363,33 @@ L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Whispering the disenchanter (
 L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1: Item link
 2: Item owner
 3: him/her]=]
+L["OPT_MSG_ROLL_START"] = "Announcing a new roll"
+L["OPT_MSG_ROLL_START_CONCISE"] = "Announcing a new roll (concise)"
+L["OPT_MSG_ROLL_START_CONCISE_DESC"] = "1: Item link"
+L["OPT_MSG_ROLL_START_DESC"] = [=[1: Item link
+2: Roll number]=]
+L["OPT_MSG_ROLL_START_MASTERLOOT"] = "Announcing a new roll (as masterlooter)"
+L["OPT_MSG_ROLL_START_MASTERLOOT_DESC"] = [=[1: Item link
+2: Item owner
+3: Roll number]=]
+L["OPT_MSG_ROLL_WINNER"] = "Announcing a roll winner"
+L["OPT_MSG_ROLL_WINNER_CONCISE"] = "Announcing a roll winner (concise)"
+L["OPT_MSG_ROLL_WINNER_CONCISE_DESC"] = "1: Winner"
+L["OPT_MSG_ROLL_WINNER_DESC"] = [=[1: Winner
+2: Item link]=]
+L["OPT_MSG_ROLL_WINNER_MASTERLOOT"] = "Announcing a roll winner (as masterlooter)"
+L["OPT_MSG_ROLL_WINNER_MASTERLOOT_DESC"] = [=[1: Winner
+2: Item link
+3: Item owner
+4: him/her]=]
+L["OPT_MSG_ROLL_WINNER_WHISPER"] = "Whispering the roll winner"
+L["OPT_MSG_ROLL_WINNER_WHISPER_CONCISE"] = "Whispering the roll winner (concise)"
+L["OPT_MSG_ROLL_WINNER_WHISPER_CONCISE_DESC"] = ""
+L["OPT_MSG_ROLL_WINNER_WHISPER_DESC"] = "1: Item link"
+L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Whispering the roll winner (as masterlooter)"
+L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1: Item link
+2: Item owner
+3: him/her]=]
 L["OPT_SHOULD_CHAT"] = "Enable/Disable"
 L["OPT_SHOULD_CHAT_DESC"] = "Define when the addon will post to party/raid chat and whisper other players."
 L["OPT_WHISPER"] = "Whisper Chat"
@@ -389,6 +397,8 @@ L["OPT_WHISPER_ANSWER"] = "Answer requests"
 L["OPT_WHISPER_ANSWER_DESC"] = "Let the addon answer whispers from group members about items you looted."
 L["OPT_WHISPER_ASK"] = "Ask for loot"
 L["OPT_WHISPER_ASK_DESC"] = "Whisper others if they got loot you want."
+L["OPT_WHISPER_ASK_VARIANTS"] = "Enable ask variants"
+L["OPT_WHISPER_ASK_VARIANTS_DESC"] = "Use different lines (see below) when asking for loot, to make it less repetitive."
 L["OPT_WHISPER_DESC"] = "Change whether or not the addon will whisper other players and/or answer incoming messages."
 L["OPT_WHISPER_GROUP"] = "Whisper by group type"
 L["OPT_WHISPER_GROUP_DESC"] = "Whisper others if they got loot you want, depending on the type of group you are currently in."
@@ -401,8 +411,22 @@ L["OPT_WHISPER_SUPPRESS"] = "Suppress requests"
 L["OPT_WHISPER_SUPPRESS_DESC"] = "Suppress incoming whisper messages from eligible players when giving away your loot."
 L["OPT_WHISPER_TARGET"] = "Ask by target"
 L["OPT_WHISPER_TARGET_DESC"] = "Ask for loot depending on whether the target is in your guild, in one of your WoW-Communities or on your friend list."
-L["OPT_WHISPER_ASK_VARIANTS"] = "Enable ask variants"
-L["OPT_WHISPER_ASK_VARIANTS_DESC"] = "Use different lines (see below) when asking for loot, to make it less repetitive."
+
+-- Plugins - EPGP
+L["EPGP"] = "EPGP"
+L["EPGP_CREDIT_GP"] = "Crediting %d GP to <%s> for %s."
+L["EPGP_EP"] = "EP"
+L["EPGP_ERROR_CREDIT_GP_FAILED"] = "Crediting %d GP to <%s> for %s failed!"
+L["EPGP_GP"] = "GP"
+L["EPGP_OPT_AWARD_BEFORE"] = "Awarding precedence"
+L["EPGP_OPT_AWARD_BEFORE_DESC"] = "Pick before which default awarding method the EPGP PR value should be concidered when determining a winner."
+L["EPGP_OPT_BID_WEIGHTS"] = "Bid GP weights"
+L["EPGP_OPT_BID_WEIGHTS_DESC"] = "Assign different weights to roll bids. The GPs an item winner gets are multiplied by this value, and it can also be 0 or negative."
+L["EPGP_OPT_DESC"] = "Use EPGP for your loot distribution when masterloot mode is active. This includes showing and sorting by the player's PR value, as well as crediting GP when loot is awarded."
+L["EPGP_OPT_ONLY_GUILD_RAID"] = "Only in guild raids"
+L["EPGP_OPT_ONLY_GUILD_RAID_DESC"] = "Only activate when in a raid and at least %d%% of the group are from your guild."
+L["EPGP_OPT_WARNING"] = "|cffff0000WARNING:|r You don't have the permission to edit officer notes in your guild, so EPGP won't be able to credit GP for loot when you are the masterlooter."
+L["EPGP_PR"] = "PR"
 
 -- Roll
 L["BID_CHAT"] = "Asking %s for %s -> %s."
@@ -412,12 +436,12 @@ L["BID_PASS"] = "Passing on %s from %s."
 L["BID_START"] = "Bidding with %q for %s from %s."
 L["MASTERLOOTER_OTHER"] = "%s is now your masterlooter."
 L["MASTERLOOTER_SELF"] = "You are now the masterlooter."
+L["ROLL_AWARD_BIDS"] = "Bids"
+L["ROLL_AWARD_RANDOM"] = "Random"
+L["ROLL_AWARD_ROLLS"] = "Roll results"
+L["ROLL_AWARD_VOTES"] = "Votes"
 L["ROLL_AWARDED"] = "Awarded"
 L["ROLL_AWARDING"] = "Awading"
-L["ROLL_AWARD_VOTES"] = "Votes"
-L["ROLL_AWARD_BIDS"] = "Bids"
-L["ROLL_AWARD_ROLLS"] = "Roll results"
-L["ROLL_AWARD_RANDOM"] = "Random"
 L["ROLL_CANCEL"] = "Canceling roll for %s from %s."
 L["ROLL_END"] = "Ending roll for %s from %s."
 L["ROLL_IGNORING_BID"] = "Ignoring bid from %s for %s, because you chatted before -> Bid: %s or %s."
@@ -435,22 +459,6 @@ L["ROLL_WINNER_OWN"] = "You have won your own %s."
 L["ROLL_WINNER_SELF"] = "You have won %s from %s -> %s."
 L["TRADE_CANCEL"] = "Canceling trade with %s."
 L["TRADE_START"] = "Starting trade with %s."
-
--- Plugins - EPGP
-L["EPGP"] = "EPGP"
-L["EPGP_EP"] = "EP"
-L["EPGP_GP"] = "GP"
-L["EPGP_PR"] = "PR"
-L["EPGP_OPT_DESC"] = "Use EPGP for your loot distribution when masterloot mode is active. This includes showing and sorting by the player's PR value, as well as crediting GP when loot is awarded."
-L["EPGP_OPT_WARNING"] = "|cffff0000WARNING:|r You don't have the permission to edit officer notes in your guild, so EPGP won't be able to credit GP for loot when you are the masterlooter."
-L["EPGP_OPT_ONLY_GUILD_RAID"] = "Only in guild raids"
-L["EPGP_OPT_ONLY_GUILD_RAID_DESC"] = "Only activate when in a raid and at least %d%% of the group are from your guild."
-L["EPGP_OPT_AWARD_BEFORE"] = "Awarding precedence"
-L["EPGP_OPT_AWARD_BEFORE_DESC"] = "Pick before which default awarding method the EPGP PR value should be concidered when determining a winner."
-L["EPGP_OPT_BID_WEIGHTS"] = "Bid GP weights"
-L["EPGP_OPT_BID_WEIGHTS_DESC"] = "Assign different weights to roll bids. The GPs an item winner gets are multiplied by this value, and it can also be 0 or negative."
-L["EPGP_CREDIT_GP"] = "Crediting %d GP to <%s> for %s."
-L["EPGP_ERROR_CREDIT_GP_FAILED"] = "Crediting %d GP to <%s> for %s failed!"
 
 -- Globals
 LOOT_ROLL_INELIGIBLE_REASONPLR_NO_ADDON = "The owner of this item doesn't use the PersoLootRoll addon."

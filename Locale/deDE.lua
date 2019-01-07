@@ -27,12 +27,15 @@ L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> wird %s von <%s> entzaubern -> %s an
 L["MSG_ROLL_DISENCHANT_WHISPER"] = "Du wurdest ausgewählt %s zu entzaubern, bitte handel mich an."
 L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Du wurdest ausgewählt %s von <%s> zu entzaubern, bitte handel %s an."
 L["MSG_ROLL_START"] = "Vergebe %s -> /w me oder /roll %d!"
+L["MSG_ROLL_START_CONCISE"] = "%s jemand Bedarf?"
 L["MSG_ROLL_START_MASTERLOOT"] = "Vergebe %s von <%s> -> /w me oder /roll %d!"
 L["MSG_ROLL_WINNER"] = "<%s> hat %s gewonnen -> Mich anhandeln!"
+L["MSG_ROLL_WINNER_CONCISE"] = "<%s> bitte mich anhandeln!"
 L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%s> hat %s von <%s> gewonnen -> %s anhandeln!"
 L["MSG_ROLL_WINNER_WHISPER"] = "Du hast %s gewonnen! Bitte handel mich an."
+L["MSG_ROLL_WINNER_WHISPER_CONCISE"] = "Handel mich bitte an."
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Du hast %s von <%s> gewonnen! Bitte handel %s an."
-L["MSG_NEED"] = "bedarf,ja,yep,jau,jo,jawohl,nehm ich"
+L["MSG_NEED"] = "bedarf,ja,yep,jap,jau,jo,joa,jawohl,nehm ich,würde? ich nehmen"
 L["MSG_PASS"] = "passe,nein,nö,nope"
 
 -- Addon
@@ -78,12 +81,14 @@ L["RAID_ASSISTANT"] = "Raidassistent"
 L["RAID_LEADER"] = "Raidleiter"
 L["RESTART"] = "Neu starten"
 L["RIGHT"] = "rechts"
+L["RINGS"] = "Ringe"
 L["ROLL"] = "Gerollt"
 L["ROLLS"] = "Verlosungen"
 L["SECONDS"] = "%ds"
 L["SET_ANCHOR"] = "Verankerung setzen: Nach %s und %s wachsen"
 L["SHOW"] = "Einblenden"
 L["SHOW_HIDE"] = "Ein-/Ausblenden"
+L["TRINKETS"] = "Schmuckstücke"
 L["TRADE"] = "Handeln"
 L["UP"] = "oben"
 L["VERSION_NOTICE"] = "Es gibt eine neue Version dieses Addons. Bitte mache ein Update um kompatibel zu allen anderen zu bleiben und keine Beute zu verpassen!"
@@ -195,20 +200,19 @@ L["OPT_DONT_SHARE_DESC"] = "Rolle nicht auf die Beute anderer, und teile deine e
 L["OPT_ENABLE"] = "Aktiviert"
 L["OPT_ENABLE_DESC"] = "Aktiviere oder deaktiviere das Addon"
 L["OPT_ENABLE_MODULE_DESC"] = "Aktiviere oder deaktiviere dieses Modul"
-L["OPT_LVL_THRESHOLD"] = "Character-Level Schwelle"
-L["OPT_LVL_THRESHOLD_DESC"] = "Ignoriere Items deren benötigtes Charakter-Level mehr als diesen Wert über deinem aktuellen Level liegen. Setze den Wert auf -1 um diesen Filter zu deaktivieren."
 L["OPT_ILVL_THRESHOLD"] = "Item-Level Schwelle"
-L["OPT_ILVL_THESHOLD_DESC"] = [[Ignoriere Items basierend auf ihrem Item-Level im Vergleich zu den Items die du für den Slot angelegt oder in der Tasche hast.
+L["OPT_ILVL_THRESHOLD_DESC"] = [[Ignoriere Items basierend auf ihrem Item-Level im Vergleich zu den Items die du für den Slot angelegt oder in der Tasche hast.
 
 |cffffff78Negativ:|r Das Level eines Items kann max. um so viel niedriger sein als deins.
 |cffffff78Positiv:|r Das Level eines Items muss min. um so viel höher sein als deins.]]
-L["OPT_ILVL_THRESHOLD_DESC"] = "Items deren Item-Level mehr als diesen Wert unter deinen Items liegen werden ignoriert."
 L["OPT_ILVL_THRESHOLD_DOUBLE"] = "Doppelte Schwelle für ..."
 L["OPT_ILVL_THRESHOLD_DOUBLE_DESC"] = "Einige Items sollten eine doppelt so hohe Itel-Level Schwelle haben, da ihr Wert durch Proc-Effekte etc. stark schwanken kann."
 L["OPT_INFO"] = "Informationen"
 L["OPT_INFO_DESC"] = "Ein paar Informationen über das Addon."
 L["OPT_ITEM_FILTER"] = "Item Filter"
 L["OPT_ITEM_FILTER_DESC"] = "Ändere welche Items dir vorgeschlagen werden."
+L["OPT_LVL_THRESHOLD"] = "Character-Level Schwelle"
+L["OPT_LVL_THRESHOLD_DESC"] = "Ignoriere Items deren benötigtes Charakter-Level mehr als diesen Wert über deinem aktuellen Level liegen. Setze den Wert auf -1 um diesen Filter zu deaktivieren."
 L["OPT_MINIMAP_ICON"] = "Minimap Icon anzeigen"
 L["OPT_MINIMAP_ICON_DESC"] = "Das Minimap Icon anzeigen oder ausblenden."
 L["OPT_ONLY_MASTERLOOT"] = "Nur Plündermeister"
@@ -316,6 +320,10 @@ L["OPT_ECHO_VERBOSE"] = "Ausführlich"
 L["OPT_GROUPCHAT"] = "Gruppenchat"
 L["OPT_GROUPCHAT_ANNOUNCE"] = "Verkünde Verlosungen und Gewinner"
 L["OPT_GROUPCHAT_ANNOUNCE_DESC"] = "Verkünde deine Verlosungen und Gewinner deiner Verlosungen im Gruppen-Chat."
+L["OPT_GROUPCHAT_CONCISE"] = "Knappe Ankündigungen wenn möglich"
+L["OPT_GROUPCHAT_CONCISE_DESC"] = [[Verwende knappere Ankündigungen, wenn Bosse nur ein Item droppen (z.B. in 5-Mann Dungeons).
+
+Das Addon wird nur Item-Links in den Chat posten, und Gruppenmitglieder können einfach "%s", "%s" or "+" anworten, um auf sie zu bieten.]]
 L["OPT_GROUPCHAT_DESC"] = "Hier kannst du ändern wann das Addon Nachrichten im Gruppen-Chat posten soll."
 L["OPT_GROUPCHAT_GROUP_TYPE"] = "Verkünde nach Gruppentyp"
 L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[Schreibe im Gruppen-Chat nur, wenn du in einer dieser Gruppentypen bist.
@@ -359,12 +367,16 @@ L["OPT_MSG_ROLL_START"] = "Eine neue Verlosung verkünden"
 L["OPT_MSG_ROLL_START_DESC"] = [=[1: Item Link
 2: Roll Nummer]=]
 L["OPT_MSG_ROLL_START_MASTERLOOT"] = "Eine neue Verlosung verkünden (als Plündermeister)"
+L["OPT_MSG_ROLL_START_CONCISE"] = "Eine neue Verlosung verkünden (knapp)"
+L["OPT_MSG_ROLL_START_CONCISE_DESC"] = "1: Item Link"
 L["OPT_MSG_ROLL_START_MASTERLOOT_DESC"] = [=[1: Item Link
 2: Item Besitzer
 3: Roll Nummer]=]
 L["OPT_MSG_ROLL_WINNER"] = "Den Gewinner einer Verlosung verkünden"
 L["OPT_MSG_ROLL_WINNER_DESC"] = [=[1: Gewinner
 2: Item Link]=]
+L["OPT_MSG_ROLL_WINNER_CONCISE"] = "Den Gewinner einer Verlosung verkünden (knapp)"
+L["OPT_MSG_ROLL_WINNER_CONCISE_DESC"] = "1: Gewinner"
 L["OPT_MSG_ROLL_WINNER_MASTERLOOT"] = "Den Gewinner einer Verlosung verkünden (als Plündermeister)"
 L["OPT_MSG_ROLL_WINNER_MASTERLOOT_DESC"] = [=[1: Gewinner
 2: Item Link
@@ -372,6 +384,8 @@ L["OPT_MSG_ROLL_WINNER_MASTERLOOT_DESC"] = [=[1: Gewinner
 4: ihn/sie]=]
 L["OPT_MSG_ROLL_WINNER_WHISPER"] = "Den Gewinner einer Verlosung anflüstern"
 L["OPT_MSG_ROLL_WINNER_WHISPER_DESC"] = "1: Item Link"
+L["OPT_MSG_ROLL_WINNER_WHISPER_CONCISE"] = "Den Gewinner einer Verlosung anflüstern (knapp)"
+L["OPT_MSG_ROLL_WINNER_WHISPER_CONCISE_DESC"] = ""
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Den Gewinner einer Verlosung anflüstern (als Plündermeister)"
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1: Item Link
 2: Item Besitzer

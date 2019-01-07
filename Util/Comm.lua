@@ -126,6 +126,11 @@ function Self.ShouldInitChat(target)
     end
 end
 
+-- Check if we should use concise messages
+function Self.ShouldBeConcise()
+    return Addon.db.profile.messages.group.concise and Util.GetNumDroppedItems() <= 1
+end
+
 -- Send a chat line
 function Self.Chat(msg, target)
     local channel, player = Self.GetDestination(target)
@@ -165,6 +170,7 @@ end
 
 -- Send structured addon data
 function Self.SendData(event, data, target, prio, callbackFn, callbackArg)
+    -- print("OUT", event, data, target)
     Self.Send(event, Addon:Serialize(data), target, prio, callbackFn, callbackArg)
 end
 
@@ -184,6 +190,7 @@ function Self.ListenData(event, method, fromSelf, fromAll)
     Self.Listen(event, function (event, data, ...)
         local success, data = Addon:Deserialize(data)
         if success then
+            -- print("IN", event, data)
             method(event, data, ...)
         end
     end, fromSelf, fromAll)
@@ -196,7 +203,7 @@ end
 function Self.RollAdvertise(roll, i)
     if not roll.item.isOwner then
         Self.ChatLine("MSG_ROLL_START_MASTERLOOT", Self.TYPE_GROUP, roll.item.link, roll.item.owner, 100 + i)
-    elseif Addon.db.profile.messages.group.concise and Util.GetNumDroppedItems() <= 1 then
+    elseif Self.ShouldBeConcise() then
         Self.ChatLine("MSG_ROLL_START_CONCISE", Self.TYPE_GROUP, roll.item.link)
     else
         Self.ChatLine("MSG_ROLL_START", Self.TYPE_GROUP, roll.item.link, 100 + i)
@@ -321,18 +328,22 @@ function Self.RollEnd(roll)
 
         if roll.isOwner and not roll.isTest then
             local line = roll.bids[roll.winner] == Roll.BID_DISENCHANT and "DISENCHANT" or "WINNER"
+            local concise = line == "WINNER" and Self.ShouldBeConcise()
 
             -- Announce to chat
-            if roll.posted and Self.ShouldInitChat() then
-                if roll.item.isOwner then
-                    Self.ChatLine("MSG_ROLL_" .. line, Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link)
-                else
+            local toGroup = roll.posted and Self.ShouldInitChat()
+            if toGroup then
+                if not roll.item.isOwner then
                     Self.ChatLine("MSG_ROLL_" .. line .. "_MASTERLOOT", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
+                elseif concise then
+                    Self.ChatLine("MSG_ROLL_WINNER_CONCISE", Self.TYPE_GROUP, Unit.ShortName(roll.winner))
+                else
+                    Self.ChatLine("MSG_ROLL_" .. line, Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link)
                 end
             end
             
             -- Announce to target
-            if Addon.db.profile.messages.whisper.answer and not Addon:UnitIsTracking(roll.winner, true) then
+            if Addon.db.profile.messages.whisper.answer and not Addon:UnitIsTracking(roll.winner, true) and not (toGroup and concise) then
                 if roll.item:GetNumEligible(true) == 1 then
                     if roll.item.isOwner then
                         Self.ChatLine("MSG_ROLL_ANSWER_YES", roll.winner)
@@ -340,10 +351,12 @@ function Self.RollEnd(roll)
                         Self.ChatLine("MSG_ROLL_ANSWER_YES_MASTERLOOT", roll.winner, roll.item.owner)
                     end
                 else
-                    if roll.item.isOwner then
-                        Self.ChatLine("MSG_ROLL_" .. line .. "_WHISPER", roll.winner, roll.item.link)
-                    else
+                    if not roll.item.isOwner then
                         Self.ChatLine("MSG_ROLL_" .. line .. "_WHISPER_MASTERLOOT", roll.winner, roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
+                    elseif concise then
+                        Self.ChatLine("MSG_ROLL_WINNER_WHISPER_CONCISE", roll.winner)
+                    else
+                        Self.ChatLine("MSG_ROLL_" .. line .. "_WHISPER", roll.winner, roll.item.link)
                     end
                 end
             end

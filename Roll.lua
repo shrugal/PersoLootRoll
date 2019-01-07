@@ -319,7 +319,7 @@ function Self.Update(data, unit)
             roll:Cancel()
         else roll.item:OnLoaded(function ()
             -- Declare our interest if the roll is pending without any eligible players
-            if data.status == Self.STATUS_PENDING and (data.item.eligible or 0) == 0 and roll:ShouldBeBidOn() then
+            if Util.In(data.status, Self.STATUS_PENDING, Self.STATUS_RUNNING) and (data.item.eligible or 0) == 0 and roll:ShouldBeBidOn() then
                 roll.item:SetEligible("player")
                 Comm.SendData(Comm.EVENT_INTEREST, {ownerId = roll.ownerId}, roll.owner)
             end
@@ -638,6 +638,7 @@ end
 function Self:ShouldEnd()
     -- The item owner voted need
     if Util.In(self.status, Self.STATUS_PENDING, Self.STATUS_RUNNING) and self.isOwner and (not Session.GetMasterlooter() or Session.rules.allowKeep) and floor(self.bids[self.item.owner] or 0) == Self.BID_NEED then
+        print("ENDING")
         return true
     -- Not running or we haven't bid yet
     elseif self.status ~= Self.STATUS_RUNNING or not self.bid then

@@ -27,10 +27,13 @@ L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> 將分解%s 由<%s>提供 -> 交易%
 L["MSG_ROLL_DISENCHANT_WHISPER"] = "您被選中來分解%s，請交易我。"
 L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "您被選中來分解%s 由<%s>提供，請交易%s。"
 L["MSG_ROLL_START"] = "送出裝備 %s -> 要的密我，或 /roll %d！"
+L["MSG_ROLL_START_CONCISE"] = "%s someone need?" -- Translation missing
 L["MSG_ROLL_START_MASTERLOOT"] = "送出由<%2$s>提供的 %1$s -> /w 我，或 /roll %3$s！"
-L["MSG_ROLL_WINNER"] = "<%s> 已贏得 %s -> 請跟我交易！"
+L["MSG_ROLL_WINNER"] = "<%s> 已贏得 %s -> 請跟我交易！" -- Translation missing
+L["MSG_ROLL_WINNER_CONCISE"] = "%s trade me!"
 L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%1$s> 已贏得由<%3$s>提供的 %2$s -> 請交易 %4$s！"
 L["MSG_ROLL_WINNER_WHISPER"] = "你已經贏得 %s！請跟我交易。"
+L["MSG_ROLL_WINNER_WHISPER_CONCISE"] = "Please trade me." -- Translation missing
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "你已贏得由<%2$s>提供的 %1$s！請交易 %3$s。"
 L["MSG_NEED"] = "need,yes" -- Translation missing
 L["MSG_PASS"] = "pass,no" -- Translation missing
@@ -78,6 +81,7 @@ L["RAID_ASSISTANT"] = "團隊助理"
 L["RAID_LEADER"] = "團隊領隊"
 L["RESTART"] = "重新開始"
 L["RIGHT"] = "右"
+L["RINGS"] = "Rings" -- Translation missing
 L["ROLL"] = "擲骰"
 L["ROLLS"] = "骰裝"
 L["SECONDS"] = "%d秒"
@@ -85,6 +89,7 @@ L["SET_ANCHOR"] = "設置定位點：往%s以及%s延展"
 L["SHOW"] = "顯示"
 L["SHOW_HIDE"] = "顯示/隱藏"
 L["TRADE"] = "交易"
+L["TRINKETS"] = "Trinkets" -- Translation missing
 L["UP"] = "上"
 L["VERSION_NOTICE"] = "插件已經有新的版本，請更新以保持跟所有人的相容性，才不會錯過任何戰利品！"
 L["VOTE"] = "表決"
@@ -315,6 +320,10 @@ L["OPT_ECHO_VERBOSE"] = "詳細"
 L["OPT_GROUPCHAT"] = "團體聊天頻道"
 L["OPT_GROUPCHAT_ANNOUNCE"] = "公告骰裝以及贏家"
 L["OPT_GROUPCHAT_ANNOUNCE_DESC"] = "在隊伍/團隊/副本聊天中公告你的擲骰以及擲骰的獲得者。"
+L["OPT_GROUPCHAT_CONCISE"] = "Concise announcements if possible" -- Translation missing
+L["OPT_GROUPCHAT_CONCISE_DESC"] = [=[Use more concise announcements when bosses only drop one item at a time (e.g. in 5-man dungeons).
+
+The addon will post item links in chat, and group members can just answer something like "%s", "%s" or "+" to roll on them.]=] -- Translation missing
 L["OPT_GROUPCHAT_DESC"] = "更改插件是否要將骰裝公告到團體聊天中。"
 L["OPT_GROUPCHAT_GROUP_TYPE"] = "公告依據團體類型"
 L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[只有當你是處於以下團體類型時發送到團體聊天。
@@ -357,6 +366,8 @@ L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1：物品連結
 L["OPT_MSG_ROLL_START"] = "通告新的骰裝"
 L["OPT_MSG_ROLL_START_DESC"] = [=[1：物品連結
 2：擲骰數字]=]
+L["OPT_MSG_ROLL_START_CONCISE"] = "通告新的骰裝 (concise)" -- Translation missing
+L["OPT_MSG_ROLL_START_CONCISE_DESC"] = "1: 1：物品連結"
 L["OPT_MSG_ROLL_START_MASTERLOOT"] = "通告新的骰裝 (作為分裝者)"
 L["OPT_MSG_ROLL_START_MASTERLOOT_DESC"] = [=[1：物品連結
 2：物品提供者
@@ -364,6 +375,8 @@ L["OPT_MSG_ROLL_START_MASTERLOOT_DESC"] = [=[1：物品連結
 L["OPT_MSG_ROLL_WINNER"] = "通告骰裝獲勝者"
 L["OPT_MSG_ROLL_WINNER_DESC"] = [=[1：獲勝者
 2：物品連結]=]
+L["OPT_MSG_ROLL_WINNER_CONCISE"] = "通告骰裝獲勝者 (concise)" -- Translation missing
+L["OPT_MSG_ROLL_WINNER_CONCISE_DESC"] = "1：獲勝者"
 L["OPT_MSG_ROLL_WINNER_MASTERLOOT"] = "通告骰裝的獲勝者 (如同隊長分配)"
 L["OPT_MSG_ROLL_WINNER_MASTERLOOT_DESC"] = [=[1：獲勝者
 2：物品連結
@@ -371,6 +384,8 @@ L["OPT_MSG_ROLL_WINNER_MASTERLOOT_DESC"] = [=[1：獲勝者
 4：他/她]=]
 L["OPT_MSG_ROLL_WINNER_WHISPER"] = "密語骰裝獲勝者"
 L["OPT_MSG_ROLL_WINNER_WHISPER_DESC"] = "1：物品連結"
+L["OPT_MSG_ROLL_WINNER_WHISPER_CONCISE"] = "密語骰裝獲勝者 (concise)" -- Translation missing
+L["OPT_MSG_ROLL_WINNER_WHISPER_CONCISE_DESC"] = ""
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "密語骰裝獲勝者 (作為分裝者)"
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1：物品連結
 2：物品提供者
