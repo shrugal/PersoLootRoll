@@ -501,8 +501,9 @@ end
 
 -- Export the debug log
 function Self:LogExport()
-    local _, name, _, _, lang, _, region = RI:GetRealmInfo(realm or GetRealmName())    
-    local txt = ("~ PersoLootRoll ~ Version: %s ~ Date: %s ~ Locale: %s ~ Realm: %s-%s (%s) ~"):format(self.VERSION, date(), GetLocale(), region, name, lang)
+    local realm = GetRealmName()
+    local _, name, _, _, lang, _, region = RI:GetRealmInfo(realm)    
+    local txt = ("~ PersoLootRoll ~ Version: %s ~ Date: %s ~ Locale: %s ~ Realm: %s-%s (%s) ~"):format(self.VERSION or "?", date() or "?", GetLocale() or "?", region or "?", name or realm or "?", lang or "?")
     txt = txt .. "\n" .. Util.TblConcat(self.log, "\n")
 
     GUI.ShowExportWindow("Export log", txt)
