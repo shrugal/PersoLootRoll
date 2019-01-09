@@ -15,6 +15,9 @@ L["MSG_BID_5"] = "請問您有需要 %s 嗎？或是我有榮幸可以得到它�
 L["MSG_HER"] = "她"
 L["MSG_HIM"] = "他"
 L["MSG_ITEM"] = "物品"
+L["MSG_NEED"] = "需要,是"
+L["MSG_PASS"] = "放棄,不,不用"
+L["MSG_ROLL"] = "骰,分享,送人"
 L["MSG_ROLL_ANSWER_AMBIGUOUS"] = "我現正要送出多件物品，請將你想要的物品連結傳送給我。"
 L["MSG_ROLL_ANSWER_BID"] = "好的，我已經登記了你在 %s 的競標。"
 L["MSG_ROLL_ANSWER_NO_OTHER"] = "抱歉！我已經給別人了。"
@@ -22,22 +25,19 @@ L["MSG_ROLL_ANSWER_NO_SELF"] = "抱歉，我自己也有需求。"
 L["MSG_ROLL_ANSWER_NOT_TRADABLE"] = "抱歉，這件無法交易。"
 L["MSG_ROLL_ANSWER_YES"] = "可以給你，請來跟我交易。"
 L["MSG_ROLL_ANSWER_YES_MASTERLOOT"] = "可以給你，請交易 <%s>。"
-L["MSG_ROLL_DISENCHANT"] = "<%s> 將分解 %s -> 交易我1"
+L["MSG_ROLL_DISENCHANT"] = "<%s> 將分解 %s -> 交易我！"
 L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> 將分解%s 由<%s>提供 -> 交易%s！"
 L["MSG_ROLL_DISENCHANT_WHISPER"] = "您被選中來分解%s，請交易我。"
 L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "您被選中來分解%s 由<%s>提供，請交易%s。"
 L["MSG_ROLL_START"] = "送出裝備 %s -> 要的密我，或 /roll %d！"
-L["MSG_ROLL_START_CONCISE"] = "%s someone need?" -- Translation missing
+L["MSG_ROLL_START_CONCISE"] = "%s 有人需要嗎？"
 L["MSG_ROLL_START_MASTERLOOT"] = "送出由<%2$s>提供的 %1$s -> /w 我，或 /roll %3$s！"
-L["MSG_ROLL_WINNER"] = "<%s> 已贏得 %s -> 請跟我交易！" -- Translation missing
-L["MSG_ROLL_WINNER_CONCISE"] = "%s trade me!"
+L["MSG_ROLL_WINNER"] = "<%s> 已贏得 %s -> 請跟我交易！"
+L["MSG_ROLL_WINNER_CONCISE"] = "%s 來交易我！"
 L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%1$s> 已贏得由<%3$s>提供的 %2$s -> 請交易 %4$s！"
 L["MSG_ROLL_WINNER_WHISPER"] = "你已經贏得 %s！請跟我交易。"
-L["MSG_ROLL_WINNER_WHISPER_CONCISE"] = "Please trade me." -- Translation missing
+L["MSG_ROLL_WINNER_WHISPER_CONCISE"] = "請交易我。"
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "你已贏得由<%2$s>提供的 %1$s！請交易 %3$s。"
-L["MSG_NEED"] = "need,yes" -- Translation missing
-L["MSG_PASS"] = "pass,no" -- Translation missing
-L["MSG_ROLL"] = "roll,share,give away" -- Translation missing
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
@@ -54,7 +54,7 @@ L["AWARD_RANDOMLY"] = "隨機分配"
 L["BID"] = "競標"
 L["COMMUNITY_GROUP"] = "社群隊伍"
 L["COMMUNITY_MEMBER"] = "社群成員"
-L["CONFIRM"] = "Confirm" -- Translation missing
+L["CONFIRM"] = "確認"
 L["DISABLED"] = "停用"
 L["DOWN"] = "下"
 L["ENABLED"] = "啟用"
@@ -82,7 +82,7 @@ L["RAID_ASSISTANT"] = "團隊助理"
 L["RAID_LEADER"] = "團隊領隊"
 L["RESTART"] = "重新開始"
 L["RIGHT"] = "右"
-L["RINGS"] = "Rings" -- Translation missing
+L["RINGS"] = "戒指"
 L["ROLL"] = "擲骰"
 L["ROLLS"] = "骰裝"
 L["SECONDS"] = "%d秒"
@@ -90,7 +90,7 @@ L["SET_ANCHOR"] = "設置定位點：往%s以及%s延展"
 L["SHOW"] = "顯示"
 L["SHOW_HIDE"] = "顯示/隱藏"
 L["TRADE"] = "交易"
-L["TRINKETS"] = "Trinkets" -- Translation missing
+L["TRINKETS"] = "飾品"
 L["UP"] = "上"
 L["VERSION_NOTICE"] = "插件已經有新的版本，請更新以保持跟所有人的相容性，才不會錯過任何戰利品！"
 L["VOTE"] = "表決"
@@ -149,7 +149,8 @@ L["FILTER_HIDDEN_DESC"] = "包含已取消、處理中、已放棄以及隱藏�
 L["FILTER_TRADED"] = "已交易"
 L["FILTER_TRADED_DESC"] = "包含物品已經交易的擲骰。"
 L["MENU_MASTERLOOT_SEARCH"] = "搜尋有人負責分裝的團體"
-L["MENU_MASTERLOOT_SETTINGS"] = "Masterloot settings" -- Translation missing
+--[[Translation missing --]]
+L["MENU_MASTERLOOT_SETTINGS"] = "Masterloot settings"
 L["MENU_MASTERLOOT_START"] = "成為分裝者"
 L["TIP_ADDON_MISSING"] = "插件缺少："
 L["TIP_ADDON_VERSIONS"] = "插件版本："
@@ -202,19 +203,23 @@ L["OPT_DONT_SHARE_DESC"] = "不去骰別人的戰利品但也不分享自己的�
 L["OPT_ENABLE"] = "啟用"
 L["OPT_ENABLE_DESC"] = "啟用或停用此插件"
 L["OPT_ENABLE_MODULE_DESC"] = "啟用或停用此模組"
-L["OPT_LVL_THRESHOLD"] = "Character-level threshold" -- Translation missing
-L["OPT_LVL_THRESHOLD_DESC"] = "Ignore items that require your character's level to be more than this much higher than it currently is. Set to -1 to disable this filter." -- Translation missing
 L["OPT_ILVL_THRESHOLD"] = "物品等級門檻"
 L["OPT_ILVL_THRESHOLD_DESC"] = [[Ignore items based on their item-level compared to what you have currently equipped or in your bags for the slot.
 
 |cffffff78Negative:|r An item's level can be at most this much lower than yours.
 |cffffff78Positive:|r An item's level must be at least this much higher than yours.]] -- Translation missing
-L["OPT_ILVL_THRESHOLD_DOUBLE"] = "Double threshold for ..." -- Translation missing
-L["OPT_ILVL_THRESHOLD_DOUBLE_DESC"] = "Some items should have double the normal item-level threshold value, because procs etc. can make their value vary by a large amount." -- Translation missing
+L["OPT_ILVL_THRESHOLD_DOUBLE"] = "雙倍門檻在..."
+L["OPT_ILVL_THRESHOLD_DOUBLE_DESC"] = "某些物品應該具有兩倍的物品等級門檻，因為觸發等理由，可以使數值變化很大。"
+L["OPT_ILVL_THRESHOLD_RINGS"] = "戒指門檻為雙倍"
+L["OPT_ILVL_THRESHOLD_RINGS_DESC"] = "戒指的門檻應該是正常值的兩倍，因為缺乏主屬性它們的價值可能會有很大差異。"
+L["OPT_ILVL_THRESHOLD_TRINKETS"] = "飾品門檻為雙倍"
+L["OPT_ILVL_THRESHOLD_TRINKETS_DESC"] = "飾品的門檻應該是正常值的兩倍，因為觸發特效會讓收益變化很大。"
 L["OPT_INFO"] = "資訊"
 L["OPT_INFO_DESC"] = "關於此插件的一些資訊。"
 L["OPT_ITEM_FILTER"] = "物品過濾"
 L["OPT_ITEM_FILTER_DESC"] = "更改你想要擲骰的物品。"
+L["OPT_LVL_THRESHOLD"] = "角色等級門檻"
+L["OPT_LVL_THRESHOLD_DESC"] = "忽略哪些要求角色等級高於目前的物品。設置為 -1停用此過濾。"
 L["OPT_MINIMAP_ICON"] = "顯示小地圖圖示"
 L["OPT_MINIMAP_ICON_DESC"] = "顯示或隱藏小地圖圖示"
 L["OPT_ONLY_MASTERLOOT"] = "只有拾取分配"
@@ -248,6 +253,8 @@ L["OPT_MASTERLOOT_APPROVAL_ALLOW_DESC"] = [=[選擇誰可以請求成為你的�
 L["OPT_MASTERLOOT_APPROVAL_DESC"] = "在此你可以決定誰可以成為你的分裝者。"
 L["OPT_MASTERLOOT_APPROVAL_WHITELIST"] = "分裝者白名單"
 L["OPT_MASTERLOOT_APPROVAL_WHITELIST_DESC"] = "如果上述選項某人並非真正適宜，但你仍希望該玩家能成為你的分裝者，那麼請在此輸入名稱，用空格或逗號在名稱中分隔。"
+L["OPT_MASTERLOOT_AWARD"] = "給予中"
+L["OPT_MASTERLOOT_BIDS_AND_VOTES"] = "競標與投票"
 L["OPT_MASTERLOOT_CLUB"] = "公會/社群"
 L["OPT_MASTERLOOT_CLUB_DESC"] = "選擇要從何公會/社群來匯入/匯出設置。"
 L["OPT_MASTERLOOT_COUNCIL"] = "議會"
@@ -266,17 +273,15 @@ L["OPT_MASTERLOOT_EXPORT_WINDOW"] = "匯出分裝設置"
 L["OPT_MASTERLOOT_LOAD"] = "載入"
 L["OPT_MASTERLOOT_LOAD_DESC"] = "從公會/社群的說明訊息中載入分裝設置。"
 L["OPT_MASTERLOOT_RULES"] = "規則"
-L["OPT_MASTERLOOT_AWARD"] = "Awarding" -- Translation missing
-L["OPT_MASTERLOOT_RULES_ALLOW_KEEP"] = "Allow keeping loot" -- Translation missing
-L["OPT_MASTERLOOT_RULES_ALLOW_KEEP_DESC"] = "Allow item owners to keep their loot, and only give it away if they choose not to keep it." -- Translation missing
 L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"] = "允許團體成員在物品上擲骰\"分解\"。"
+L["OPT_MASTERLOOT_RULES_ALLOW_KEEP"] = "允許保留戰利品"
+L["OPT_MASTERLOOT_RULES_ALLOW_KEEP_DESC"] = "允許物品擁有者保留他們的戰利品，只有當選擇不保留的時候才可以送人。"
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD"] = "自動給予戰利品"
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_DESC"] = "讓插件決定誰應該獲得戰利品，基於議會投票，競標和裝等等因素。"
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT"] = "自動給予時間(基本)"
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_DESC"] = "在自動給予戰利品之前等待的基準時間，所以你有時間投票表決並可能自己決定。"
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM"] = "自動給予時間(每項物品)"
 L["OPT_MASTERLOOT_RULES_AUTO_AWARD_TIMEOUT_PER_ITEM_DESC"] = "將每個掉落的物品都加入到基本自動給予時間。"
-L["OPT_MASTERLOOT_BIDS_AND_VOTES"] = "Bids and votes" -- Translation missing
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC"] = "公開競標"
 L["OPT_MASTERLOOT_RULES_BID_PUBLIC_DESC"] = "你可以公開競標，這樣每個人都可以看到誰出價。"
 L["OPT_MASTERLOOT_RULES_DESC"] = "當你是分裝者時，這些選項適用於每個人。"
@@ -290,10 +295,10 @@ L["OPT_MASTERLOOT_RULES_NEED_ANSWERS"] = "自訂 '需求' 的應答"
 L["OPT_MASTERLOOT_RULES_NEED_ANSWERS_DESC"] = [=[當擲骰'需求'時最多可依據優先等級指定9個自訂回答。你還可以插入'%s'本身讓優先級降低到先前回答之下。使用逗號分隔多個條目。
 
 當擲骰戰利品時，可以透由右鍵點擊'需求'按鈕來查閱。]=]
-L["OPT_MASTERLOOT_RULES_START_WHISPER"] = "Start rolls by whisper" -- Translation missing
-L["OPT_MASTERLOOT_RULES_START_WHISPER_DESC"] = "Allow group members without the addon to whisper you an item-link and the word \"%s\" to make you start a roll for their items." -- Translation missing
-L["OPT_MASTERLOOT_RULES_START_ALL"] = "Start rolls for everyone" -- Translation missing
-L["OPT_MASTERLOOT_RULES_START_ALL_DESC"] = "Start rolls for all suitable items that group members without the addon loot." -- Translation missing
+L["OPT_MASTERLOOT_RULES_START_ALL"] = "開始所有人的擲骰"
+L["OPT_MASTERLOOT_RULES_START_ALL_DESC"] = "為沒有附加戰利品的隊伍成員開始所有合適物品的擲骰。"
+L["OPT_MASTERLOOT_RULES_START_WHISPER"] = "根據密語開始擲骰"
+L["OPT_MASTERLOOT_RULES_START_WHISPER_DESC"] = "允許沒有插件的隊伍成員密語你物品連結以及關鍵字\"%s\"來開始他們物品的擲骰。"
 L["OPT_MASTERLOOT_RULES_TIMEOUT_BASE"] = "骰裝時間(基本)"
 L["OPT_MASTERLOOT_RULES_TIMEOUT_BASE_DESC"] = "無論掉落多少物品，骰裝的基本運行時間。"
 L["OPT_MASTERLOOT_RULES_TIMEOUT_PER_ITEM"] = "骰裝時間(每項物品)"
@@ -326,10 +331,10 @@ L["OPT_ECHO_VERBOSE"] = "詳細"
 L["OPT_GROUPCHAT"] = "團體聊天頻道"
 L["OPT_GROUPCHAT_ANNOUNCE"] = "公告骰裝以及贏家"
 L["OPT_GROUPCHAT_ANNOUNCE_DESC"] = "在隊伍/團隊/副本聊天中公告你的擲骰以及擲骰的獲得者。"
-L["OPT_GROUPCHAT_CONCISE"] = "Concise announcements if possible" -- Translation missing
-L["OPT_GROUPCHAT_CONCISE_DESC"] = [=[Use more concise announcements when bosses only drop one item at a time (e.g. in 5-man dungeons).
+L["OPT_GROUPCHAT_CONCISE"] = "可能的話讓公告簡單扼要"
+L["OPT_GROUPCHAT_CONCISE_DESC"] = [=[當首領只掉落一件物品時使用更簡要的公告(例如5人副本)。
 
-The addon will post item links in chat, and group members can just answer something like "%s", "%s" or "+" to roll on them.]=] -- Translation missing
+插件會在聊天中貼上物品連結，而隊伍成員可以應答某些像是"%s"、"%s"或"+"來擲骰它們。]=]
 L["OPT_GROUPCHAT_DESC"] = "更改插件是否要將骰裝公告到團體聊天中。"
 L["OPT_GROUPCHAT_GROUP_TYPE"] = "公告依據團體類型"
 L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[只有當你是處於以下團體類型時發送到團體聊天。
@@ -339,7 +344,7 @@ L["OPT_GROUPCHAT_GROUP_TYPE_DESC"] = [=[只有當你是處於以下團體類型�
 L["OPT_GROUPCHAT_ROLL"] = "在聊天中擲骰戰利品"
 L["OPT_GROUPCHAT_ROLL_DESC"] = "如果其他人在團體聊天中貼出連結，請擲骰你要的戰利品(/roll)。"
 L["OPT_MESSAGES"] = "訊息"
-L["OPT_MSG_BID"] = "詢問戰利品: 異色版 %d"
+L["OPT_MSG_BID"] = "詢問戰利品: 版本 %d"
 L["OPT_MSG_BID_DESC"] = "1：物品連結"
 L["OPT_MSG_ROLL_ANSWER_AMBIGUOUS"] = "回答：發給我物品連結"
 L["OPT_MSG_ROLL_ANSWER_AMBIGUOUS_DESC"] = ""
@@ -370,28 +375,28 @@ L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1：物品連結
 2：物品提供者
 3：他/她]=]
 L["OPT_MSG_ROLL_START"] = "通告新的骰裝"
+L["OPT_MSG_ROLL_START_CONCISE"] = "公告新的擲骰(簡要)"
+L["OPT_MSG_ROLL_START_CONCISE_DESC"] = "1：物品連結"
 L["OPT_MSG_ROLL_START_DESC"] = [=[1：物品連結
 2：擲骰數字]=]
-L["OPT_MSG_ROLL_START_CONCISE"] = "通告新的骰裝 (concise)" -- Translation missing
-L["OPT_MSG_ROLL_START_CONCISE_DESC"] = "1: 1：物品連結"
 L["OPT_MSG_ROLL_START_MASTERLOOT"] = "通告新的骰裝 (作為分裝者)"
 L["OPT_MSG_ROLL_START_MASTERLOOT_DESC"] = [=[1：物品連結
 2：物品提供者
 3：擲骰數字]=]
 L["OPT_MSG_ROLL_WINNER"] = "通告骰裝獲勝者"
+L["OPT_MSG_ROLL_WINNER_CONCISE"] = "公告擲骰獲勝者(簡要)"
+L["OPT_MSG_ROLL_WINNER_CONCISE_DESC"] = "1：獲勝者"
 L["OPT_MSG_ROLL_WINNER_DESC"] = [=[1：獲勝者
 2：物品連結]=]
-L["OPT_MSG_ROLL_WINNER_CONCISE"] = "通告骰裝獲勝者 (concise)" -- Translation missing
-L["OPT_MSG_ROLL_WINNER_CONCISE_DESC"] = "1：獲勝者"
 L["OPT_MSG_ROLL_WINNER_MASTERLOOT"] = "通告骰裝的獲勝者 (如同隊長分配)"
 L["OPT_MSG_ROLL_WINNER_MASTERLOOT_DESC"] = [=[1：獲勝者
 2：物品連結
 3：物品提供者
 4：他/她]=]
 L["OPT_MSG_ROLL_WINNER_WHISPER"] = "密語骰裝獲勝者"
-L["OPT_MSG_ROLL_WINNER_WHISPER_DESC"] = "1：物品連結"
-L["OPT_MSG_ROLL_WINNER_WHISPER_CONCISE"] = "密語骰裝獲勝者 (concise)" -- Translation missing
+L["OPT_MSG_ROLL_WINNER_WHISPER_CONCISE"] = "密語擲骰獲勝者(簡要)"
 L["OPT_MSG_ROLL_WINNER_WHISPER_CONCISE_DESC"] = ""
+L["OPT_MSG_ROLL_WINNER_WHISPER_DESC"] = "1：物品連結"
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "密語骰裝獲勝者 (作為分裝者)"
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1：物品連結
 2：物品提供者
