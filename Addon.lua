@@ -394,38 +394,42 @@ function Self:SetVersion(unit, version)
 end
 
 -- Get major, channel and minor versions for the given version string or unit
+-- TODO: Automatically set TOC version to tag or revision starting with in v19
 function Self:GetVersion(versionOrUnit)
-    local t = type(versionOrUnit)
-    local version = (not versionOrUnit or UnitIsUnit(versionOrUnit, "player")) and self.VERSION
-                 or (t == "number" or t == "string" and tonumber(versionOrUnit:sub(1, 1))) and versionOrUnit
-                 or self.versions[Unit.Name(versionOrUnit)]
+    local version = (not versionOrUnit or Unit.IsSelf(versionOrUnit)) and self.VERSION
+        or type(versionOrUnit) == "string" and self.versions[Unit.Name(versionOrUnit)]
+        or versionOrUnit
 
-    t = type(version)
-    if t == "number" then
-        return version, Self.CHANNEL_STABLE, 0
-    elseif t == "string" then
-        local version, channel, revision = version:match("([%d.]+)-(%a+)(%d+)")
-        return tonumber(version), channel, tonumber(revision)
-    end
-end
-
--- Get 1 if the version is higher, -1 if the version is lower or 0 if they are the same or on non-comparable channels
-function Self:CompareVersion(versionOrUnit)
-    local version, channel, revision = self:GetVersion(versionOrUnit)
-    if version then
-        local myVersion, myChannel, myRevision = self:GetVersion()
-        local channelNum, myChannelNum = Self.CHANNELS[channel], Self.CHANNELS[myChannel]
-
-        if channel == myChannel then
-            return version == myVersion and Util.Compare(revision, myRevision) or Util.Compare(version, myVersion)
-        elseif channelNum and myChannelNum then
-            return version >= myVersion and channelNum > myChannelNum and 1
-                or version <= myVersion and channelNum < myChannelNum and -1
-                or 0
-        else
-            return 0
+    local n = tonumber(version)
+    if n then
+        return floor(n), Self.CHANNEL_STABLE, Util.NumRound((n - floor(n)) * 100)
+    elseif type(version) == "string" then
+        local major, channel, minor = version:match("([%d%.]+)-(%a+)(%d+)")
+        if major and channel and minor then
+            return tonumber(major), channel, tonumber(minor)
         end
     end
+
+    return version, Self.CHANNEL_ALPHA
+end
+
+-- Get 1 if the version is higher, -1 if the version is lower or 0 if they are the same or not comparable
+function Self:CompareVersion(versionOrUnit)
+    local major, channel, minor = self:GetVersion(versionOrUnit)
+    local majorSelf, channelSelf, minorSelf = self:GetVersion()
+    local channelNum, channelNumSelf = Self.CHANNELS[channel], Self.CHANNELS[channelSelf]
+
+    if minor and minorSelf then
+        if channel == channelSelf then
+            return major == majorSelf and Util.Compare(minor, minorSelf) or Util.Compare(major, majorSelf)
+        elseif channelNum and channelNumSelf then
+            return major >= majorSelf and channelNum > channelNumSelf and 1
+                or major <= majorSelf and channelNum < channelNumSelf and -1
+                or 0
+        end
+    end
+
+    return 0
 end
 
 function Self:SetCompAddonUser(unit, addon, version)

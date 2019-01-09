@@ -1,0 +1,3 @@
+package-as: PersoLootRoll-@project-version@
+manual-changelog: CHANGELOG.md
+license-output: LICENSE
