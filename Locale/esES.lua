@@ -149,6 +149,7 @@ L["FILTER_HIDDEN_DESC"] = "Incluir tiradas canceladas, pendientes, realizadas y 
 L["FILTER_TRADED"] = "Comerciado"
 L["FILTER_TRADED_DESC"] = "Incluir tiradas cuyos objetos han sido comerciados."
 L["MENU_MASTERLOOT_SEARCH"] = "Buscar un maestro despojador en el grupo"
+L["MENU_MASTERLOOT_SETTINGS"] = "Masterloot settings" -- Translation missing
 L["MENU_MASTERLOOT_START"] = "Convertirte en maestro despojador"
 L["TIP_ADDON_MISSING"] = "Falta addon:"
 L["TIP_ADDON_VERSIONS"] = "Versiones del addon:"

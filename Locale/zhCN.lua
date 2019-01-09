@@ -149,6 +149,7 @@ L["FILTER_HIDDEN_DESC"] = "包含已取消、处理中、已放弃以及隐藏�
 L["FILTER_TRADED"] = "已交易"
 L["FILTER_TRADED_DESC"] = "包含物品已经交易的掷骰。"
 L["MENU_MASTERLOOT_SEARCH"] = "搜寻有人负责分装的团体"
+L["MENU_MASTERLOOT_SETTINGS"] = "Masterloot settings" -- Translation missing
 L["MENU_MASTERLOOT_START"] = "成为分装者"
 L["TIP_ADDON_MISSING"] = "插件缺少："
 L["TIP_ADDON_VERSIONS"] = "插件版本："

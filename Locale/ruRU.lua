@@ -149,6 +149,7 @@ L["FILTER_HIDDEN_DESC"] = "Показать отмененные, ожидающ
 L["FILTER_TRADED"] = "Отданы"
 L["FILTER_TRADED_DESC"] = "Показать розыгрыши предметов, которые были отданы.  "
 L["MENU_MASTERLOOT_SEARCH"] = "Поиск ответственного за добычу"
+L["MENU_MASTERLOOT_SETTINGS"] = "Masterloot settings" -- Translation missing
 L["MENU_MASTERLOOT_START"] = "Стать ответственным за добычу"
 L["TIP_ADDON_MISSING"] = "Аддон отсутствует:"
 L["TIP_ADDON_VERSIONS"] = "Версии аддона:"

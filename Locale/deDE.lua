@@ -149,6 +149,7 @@ L["FILTER_HIDDEN_DESC"] = "Zeige abgebrochene, wartende, gepasste und versteckte
 L["FILTER_TRADED"] = "Gehandelt"
 L["FILTER_TRADED_DESC"] = "Zeige Verlosungen an, deren Items bereits gehandelt wurden."
 L["MENU_MASTERLOOT_SEARCH"] = "Suche Plündermeister in Gruppe"
+L["MENU_MASTERLOOT_SETTINGS"] = "Plündermeister Einstellungen"
 L["MENU_MASTERLOOT_START"] = "Werde Plündermeister"
 L["TIP_ADDON_MISSING"] = "Addon fehlt:"
 L["TIP_ADDON_VERSIONS"] = "Addon Versionen:"
