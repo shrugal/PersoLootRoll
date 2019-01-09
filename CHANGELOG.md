@@ -79,8 +79,8 @@ Version 15.04
 - Item owners can now always roll on their own items (without ML)
 
 Version 15.03
-- Fixed bug in Util.TblList ([URL="https://wow.curseforge.com/projects/persolootroll/issues/8"]#8[/URL])
-- Prefer running rolls when matching links posted in grp chat to rolls ([URL="https://wow.curseforge.com/projects/persolootroll/issues/8"]#8[/URL])
+- Fixed bug in Util.TblList ([CurseForge#8](https://wow.curseforge.com/projects/persolootroll/issues/8))
+- Prefer running rolls when matching links posted in grp chat to rolls ([CurseForge#8](https://wow.curseforge.com/projects/persolootroll/issues/8))
 - Added some debug messages to roll methods
 
 Version 15.02
@@ -129,16 +129,16 @@ Version 15
 - Fixed pending rolls showing for non-owners
 - Fixed chat button right click to open message options
 - Fixed toggle-all button not working
-- Fixed bug in custom answers dropdown ([URL="https://wow.curseforge.com/projects/persolootroll/issues/7"]#7[/URL])
+- Fixed bug in custom answers dropdown ([CurseForge#7](https://wow.curseforge.com/projects/persolootroll/issues/7))
 - Minor fixes
 
 Version 14.07
-- Fixed misspelling in Item causing error ([URL="https://wow.curseforge.com/projects/persolootroll/issues/6"]#6[/URL])
+- Fixed misspelling in Item causing error ([CurseForge#6](https://wow.curseforge.com/projects/persolootroll/issues/6))
 
 Version 14.06
 - Fixed heading disappearing in general options
-- Fixed rolls from players on realms with spaces in the name being rejected ([URL="https://wow.curseforge.com/projects/persolootroll/issues/4"]#4[/URL])
-- Fixed tradability detection for rolls shared by others ([URL="https://wow.curseforge.com/projects/persolootroll/issues/4"]#4[/URL])
+- Fixed rolls from players on realms with spaces in the name being rejected ([CurseForge#4](https://wow.curseforge.com/projects/persolootroll/issues/4))
+- Fixed tradability detection for rolls shared by others ([CurseForge#4](https://wow.curseforge.com/projects/persolootroll/issues/4))
 - Fixed only-masterloot option to cause rolls from non masterlooters being rejected while having a masterlooter
 
 Version 14.05
@@ -146,7 +146,7 @@ Version 14.05
 
 Version 14.04
 - Fixed PLH item mismatch for rolls that just started
-- Fixed duplicate roll frames in groups with other PLR users ([URL="https://wow.curseforge.com/projects/persolootroll/issues/2"]#2[/URL])
+- Fixed duplicate roll frames in groups with other PLR users ([CurseForge#2](https://wow.curseforge.com/projects/persolootroll/issues/2))
 - Fixed Unit.GuildName for nil unit parameter
 - Added additional info when exporting logs
 - Moved common export window code into a method in GUI
@@ -156,15 +156,15 @@ Version 14.03
 - Fixed rolls not being send to the winner on sync
 - Fixed whisper chat coloring in tooltip
 - Added logging system and some debug outputs
-- Added # of players in masterlooting group to the tooltip ([URL="https://wow.curseforge.com/projects/persolootroll/issues/3"]#3[/URL])
+- Added # of players in masterlooting group to the tooltip ([CurseForge#3](https://wow.curseforge.com/projects/persolootroll/issues/3))
 
 Version 14.02
-- Hopefully fixed duplicate roll frames ([URL="https://wow.curseforge.com/projects/persolootroll/issues/2"]#2[/URL])
+- Hopefully fixed duplicate roll frames ([CurseForge#2](https://wow.curseforge.com/projects/persolootroll/issues/2))
 
 Version 14.01
 - Fixed Util.Each for nil values
 - Fixed constant session updates due to Session.IsOnCouncil return value
-- Fixed rolls jumping around in the rolls window ([URL="https://wow.curseforge.com/projects/persolootroll/issues/1"]#1[/URL])
+- Fixed rolls jumping around in the rolls window ([CurseForge#1](https://wow.curseforge.com/projects/persolootroll/issues/1))
 
 Version 14
 - Added visible random roll results to every non-pass bid
@@ -203,10 +203,10 @@ Version 13
 - As always: Updated translations, bugfixes and minor tweaks
 
 Version 12.04
-- Fixed missing function param in SetLootRollItem hook ([URL="https://github.com/shrugal/PersoLootRoll/issues/5"]#5[/URL])
+- Fixed missing function param in SetLootRollItem hook ([GitHub#5](https://github.com/shrugal/PersoLootRoll/issues/5))
 
 Version 12.03
-- Fixed taint when clicking chat links while in combat ([URL="https://github.com/shrugal/PersoLootRoll/issues/4"]#4[/URL])
+- Fixed taint when clicking chat links while in combat ([GitHub#4](https://github.com/shrugal/PersoLootRoll/issues/4))
 
 Version 12.02
 - Fixed roll message matching for some locales
@@ -274,7 +274,7 @@ Version 9
 - Added support for item level scaling in low-level content and while timewalking
 - Added ilvl threshold scaling for low-level chars
 - Added support for argument reordering in translation lines
-- Added zhTW translation (big thanks to [URL="https://wow.curseforge.com/members/BNSSNB"]BNSSNB[/URL]!)
+- Added zhTW translation (big thanks to [BNSSNB](https://wow.curseforge.com/members/BNSSNB)!)
 - Update other translations and made importing from CurseForge easier in the future
 - Updated whisper reaction, answer and suppression logic
 - Whispers from other addon users are now ignored
