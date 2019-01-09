@@ -1,7 +1,7 @@
 Version 17-beta2
 - Added masterloot settings option to ML dropdown in roles window
 - Updated enUS and zhTW translations
-- Exporting logs should now work eveb if LibRealmInfo doesn't give us any realm data
+- Exporting logs should now work even if LibRealmInfo doesn't give us any realm data
 - Added metadata files and updated version parsing for automatic packaging
 
 Version 17-beta1
