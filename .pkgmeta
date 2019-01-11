@@ -3,6 +3,10 @@ manual-changelog:
     filename: CHANGELOG.md
     markup-type: markdown
 license-output: LICENSE
+enable-nolib-creation: no
+
+ignore:
+    - release.sh
 
 externals:
     Libs/LibDataBroker-1.1:

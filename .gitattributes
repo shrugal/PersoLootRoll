@@ -18,3 +18,4 @@
 
 # Ignore in releases
 .* export-ignore
+release.sh export-ignore
