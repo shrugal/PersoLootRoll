@@ -204,7 +204,7 @@ function Self.ToggleAwardOrVoteDropdown(roll, ...)
         end
 
         Self("Dropdown-Item-Execute")
-            .SetText(CLOSE)
+            .SetText("- " .. CLOSE .. " -")
             .SetCallback("OnClick", function () dropdown:Close() end)
             .AddTo(dropdown)
 
@@ -245,7 +245,7 @@ function Self.ToggleAwardUnitDropdown(unit, ...)
         end
 
         Self("Dropdown-Item-Execute")
-            .SetText(CLOSE)
+            .SetText("- " .. CLOSE .. " -")
             .SetCallback("OnClick", function () dropdown:Close() end)
             .AddTo(dropdown)
     end

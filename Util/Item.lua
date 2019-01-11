@@ -900,7 +900,7 @@ function Self:GetEligible(unit)
                 local specs = isSelf and Util(Addon.db.char.specs).CopyOnly(true, true).Keys()() or nil
                 local isUseful = self:IsUseful(unit, specs)
 
-                if isUseful and isSelf and Addon.db.profile.filter.pawn and IsAddOnLoaded("Pawn") then
+                if isUseful and isSelf and Addon.db.profile.filter.pawn and IsAddOnLoaded("Pawn") and self.equipLoc ~= Self.TYPE_TRINKET then
                     isUseful = self:IsPawnUpgrade(unit, specs)
                 end
 
