@@ -1,9 +1,13 @@
 package-as: PersoLootRoll
-manual-changelog: CHANGELOG.md
+manual-changelog:
+    filename: CHANGELOG.md
+    markup-type: markdown
 license-output: LICENSE
 
 externals:
     Libs/LibDataBroker-1.1:
         url: https://github.com/tekkub/libdatabroker-1-1
+        tag: v1.1.4
     Libs/LibRealmInfo:
         url: https://github.com/phanx-wow/LibRealmInfo
+        tag: 14
