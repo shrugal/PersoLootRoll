@@ -962,7 +962,7 @@ end
 
 -- Check if the addon should start a roll for an item
 function Self:ShouldBeRolledFor()
-    return not (self.isOwner and Addon.db.profile.dontShare) and self:ShouldBeConsidered() and self:GetNumEligible(true, true) > 0
+    return not (self.isOwner and Addon.db.profile.dontShare) and self:ShouldBeConsidered() and self:GetNumEligible(not Util.IsLegacyLoot(), true) > 0
 end
 
 -------------------------------------------------------

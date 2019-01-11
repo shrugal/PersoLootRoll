@@ -777,7 +777,7 @@ function Self:End(winner, cleanup, force)
 end
 
 -- Cancel a roll
-function Self:Cancel()
+function Self:Cancel(silent)
     if self.status == Self.STATUS_CANCELED then return end
     Addon:Verbose(L["ROLL_CANCEL"], self.item.link, Comm.GetPlayerLink(self.item.owner))
 
@@ -795,7 +795,9 @@ function Self:Cancel()
 
     -- Let everyone know
     Addon:SendMessage(Self.EVENT_CANCEL, self)
-    self:SendStatus()
+    if not silent then
+        self:SendStatus()
+    end
     
     return self
 end
@@ -812,22 +814,16 @@ end
 
 -- Called when the roll's item is traded
 function Self:OnTraded(target)
-    if not target or target == self.traded then
-        return
-    end
+    if not target or target == self.traded then return end
 
     self.traded = target
+    Addon:SendMessage(Self.EVENT_TRADE, self, target)
     
     -- Update the status
-    if self.isOwner and self.item.isOwner then
-        if self.status == Self.STATUS_PENDING then
-            self:Cancel()
-        elseif self.status == Self.STATUS_RUNNING then
-            self:End(target)
-        end
+    if self.isOwner and not self:HasMasterlooter() and self:IsActive() then
+        self:Cancel(true)
     end
 
-    Addon:SendMessage(Self.EVENT_TRADE, self, target)
     self:SendStatus(self.item.isOwner or self.isWinner)
 end
 
