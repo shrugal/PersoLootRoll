@@ -891,10 +891,10 @@ function Self:GetEligible(unit)
                 return true
             elseif not self:CanBeEquipped(unit) then
                 return nil
-            elseif not self:HasSufficientLevel(unit) then
-                return false
             elseif Addon.db.profile.filter.transmog and self:IsTransmogMissing(unit) then
                 return true
+            elseif not self:HasSufficientLevel(unit) then
+                return false
             else
                 local isSelf = Unit.IsSelf(unit)
                 local specs = isSelf and Util(Addon.db.char.specs).CopyOnly(true, true).Keys()() or nil

@@ -8,7 +8,7 @@ setmetatable(L, Locale.MT)
 Locale[lang] = L
 
 --@localization(locale="deDE", format="lua_additive_table", handle-unlocalized="english", namespace="Messages")@
---@do-no-package@
+--@do-not-package@
 L["MSG_BID_1"] = "Brauchst du das %s?"
 L["MSG_BID_2"] = "Könnte ich %s haben, wenn du es nicht brauchst?"
 L["MSG_BID_3"] = "Ich könnte %s gebrauchen, wenn du es nicht willst."
@@ -40,7 +40,7 @@ L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%s> hat %s von <%s> gewonnen -> %s anhandeln
 L["MSG_ROLL_WINNER_WHISPER"] = "Du hast %s gewonnen! Bitte handel mich an."
 L["MSG_ROLL_WINNER_WHISPER_CONCISE"] = "Handel mich bitte an."
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Du hast %s von <%s> gewonnen! Bitte handel %s an."
---@end-do-no-package@
+--@end-do-not-package@
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)

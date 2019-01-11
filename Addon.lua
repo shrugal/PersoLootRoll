@@ -402,11 +402,11 @@ function Self:GetVersion(versionOrUnit)
 
     local n = tonumber(version)
     if n then
-        return floor(n), Self.CHANNEL_STABLE, Util.NumRound((n - floor(n)) * 100)
+        return floor(n), Self.CHANNEL_STABLE, Util.NumRound((n - floor(n)) * 100), 0
     elseif type(version) == "string" then
-        local major, channel, minor = version:match("([%d%.]+)-(%a+)(%d+)")
+        local major, channel, minor, revision = version:match("([%d%.]+)-(%a+)(%d+)-?(%d*)")
         if major and channel and minor then
-            return tonumber(major), channel, tonumber(minor)
+            return tonumber(major), channel, tonumber(minor), tonumber(revision) or 0
         end
     end
 
@@ -415,13 +415,18 @@ end
 
 -- Get 1 if the version is higher, -1 if the version is lower or 0 if they are the same or not comparable
 function Self:CompareVersion(versionOrUnit)
-    local major, channel, minor = self:GetVersion(versionOrUnit)
-    local majorSelf, channelSelf, minorSelf = self:GetVersion()
+    local major, channel, minor, revision = self:GetVersion(versionOrUnit)
+    local majorSelf, channelSelf, minorSelf, myRevision = self:GetVersion()
     local channelNum, channelNumSelf = Self.CHANNELS[channel], Self.CHANNELS[channelSelf]
 
     if minor and minorSelf then
         if channel == channelSelf then
-            return major == majorSelf and Util.Compare(minor, minorSelf) or Util.Compare(major, majorSelf)
+            return Util.Compare(
+                4 * Util.Compare(major, myMajor) +
+                2 * Util.Compare(minor, myMinor) +
+                1 * Util.Compare(revision, myRevision),
+                0
+            )
         elseif channelNum and channelNumSelf then
             return major >= majorSelf and channelNum > channelNumSelf and 1
                 or major <= majorSelf and channelNum < channelNumSelf and -1
