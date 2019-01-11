@@ -103,11 +103,11 @@ L["YOUR_BID"] = "Your bid"
 -- Commands
 L["HELP"] = [=[Start rolls and bid for items (/PersoLootRoll or /plr).
 Usage:
-/plr: Open options window
+/plr: Open rolls window
 /plr help: Print this help message
 /plr roll [item]* (<owner> <timeout>): Start a roll for one or more item(s)
 /plr bid [item] (<owner> <bid>): Bid for an item from another player
-/plr trade: Trade with the given player or your current target
+/plr trade (<player>): Trade with the given player or your current target
 /plr test: Start a test roll (only you will see it)
 /plr options: Open options window
 /plr config: Change settings through the command line
