@@ -1,3 +1,13 @@
+Version 17-beta3
+- Updated changelog and externals info in .pkgmeta
+- Added BigWigsMods release script
+- Added revision to addon version parsing
+- Addon version in TOC is now filled when packaging
+- Localizations are now downloaded when when packaging
+- Surrounded "Close" entries in dropdowns with dashes
+- Never check Pawn when determining the usefulness of trinkets
+- Fixed missing transmog not being considered on lower level items
+
 Version 17-beta2
 - Added masterloot settings option to ML dropdown in roles window
 - Updated enUS and zhTW translations
