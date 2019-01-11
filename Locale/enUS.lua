@@ -104,14 +104,18 @@ L["YOUR_BID"] = "Your bid"
 L["HELP"] = [=[Start rolls and bid for items (/PersoLootRoll or /plr).
 Usage:
 /plr: Open options window
-/plr roll [item]* (<timeout> <owner>): Start a roll for one or more item(s)
+/plr help: Print this help message
+/plr roll [item]* (<owner> <timeout>): Start a roll for one or more item(s)
 /plr bid [item] (<owner> <bid>): Bid for an item from another player
+/plr trade: Trade with the given player or your current target
+/plr test: Start a test roll (only you will see it)
 /plr options: Open options window
 /plr config: Change settings through the command line
-/plr help: Print this help message
+/plr debug: Toggle debug mode
+
 Legend: [..] = item link, * = one or more times, (..) = optional]=]
 L["USAGE_BID"] = "Usage: /plr bid [item] (<owner> <bid>)"
-L["USAGE_ROLL"] = "Usage: /plr roll [item]* (<timeout> <owner>)"
+L["USAGE_ROLL"] = "Usage: /plr roll [item]* (<owner> <timeout>)"
 
 -- Errors
 L["ERROR_CMD_UNKNOWN"] = "Unknown command '%s'"

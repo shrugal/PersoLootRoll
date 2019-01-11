@@ -263,7 +263,13 @@ function Self:HandleChatCommand(msg)
 end
 
 function Self:Help()
-    self:Print(L["HELP"])
+    for i,v in Util.Each(("\n"):split(L["HELP"])) do
+        if i == 1 then
+            self:Print(v)
+        else
+            DEFAULT_CHAT_FRAME:AddMessage((v:gsub("(/[^:]+):", "|cffbbbbbb%1|r:")))
+        end
+    end
 end
 
 -------------------------------------------------------
