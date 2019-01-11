@@ -1,7 +1,5 @@
 package-as: PersoLootRoll
-manual-changelog:
-    filename: CHANGELOG.md
-    markup-type: markdown
+manual-changelog: CHANGELOG.md
 license-output: LICENSE
 enable-nolib-creation: no
 
