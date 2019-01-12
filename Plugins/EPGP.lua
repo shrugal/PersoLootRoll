@@ -161,7 +161,8 @@ function Self.RegisterOptions()
             type = "group",
             args = {
                 desc = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_DESC"] .. "\n"},
-                warning = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_WARNING"] .. "\n", hidden = CanEditOfficerNote},
+                warningNoAddon = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_WARNING_NO_ADDON"] .. "\n", hidden = function () return IsAddOnLoaded("EPGP") end},
+                warningNoOfficer = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_WARNING_NO_OFFICER"] .. "\n", hidden = CanEditOfficerNote},
                 enable = {
                     name = L["OPT_ENABLE"],
                     desc = L["OPT_ENABLE_MODULE_DESC"],
@@ -208,8 +209,7 @@ function Self.RegisterOptions()
                 bidWeightsNeed = Self.GetBidWeightOptions(Roll.BID_NEED, it),
                 bidWeightsGreed = Self.GetBidWeightOptions(Roll.BID_GREED, it),
                 bidWeightsDisenchant = Self.GetBidWeightOptions(Roll.BID_DISENCHANT, it)
-            },
-            hidden = function () return not IsAddOnLoaded("EPGP") end
+            }
         }
     end, function (data, isImport)
         if isImport then

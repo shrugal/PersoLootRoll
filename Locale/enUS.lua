@@ -356,6 +356,8 @@ L["OPT_MSG_ROLL_ANSWER_NO_SELF"] = "Answer: I need it myself"
 L["OPT_MSG_ROLL_ANSWER_NO_SELF_DESC"] = ""
 L["OPT_MSG_ROLL_ANSWER_NOT_TRADABLE"] = "Answer: It's not tradable"
 L["OPT_MSG_ROLL_ANSWER_NOT_TRADABLE_DESC"] = ""
+L["OPT_MSG_ROLL_ANSWER_STARTED"] = "Answer: I started a roll for you"
+L["OPT_MSG_ROLL_ANSWER_STARTED_DESC"] = "After someone without the addon whispered us to start a roll for them while being masterlooter."
 L["OPT_MSG_ROLL_ANSWER_YES"] = "Answer: You can have it"
 L["OPT_MSG_ROLL_ANSWER_YES_DESC"] = ""
 L["OPT_MSG_ROLL_ANSWER_YES_MASTERLOOT"] = "Answer: You can have it (as masterlooter)"
@@ -436,7 +438,8 @@ L["EPGP_OPT_BID_WEIGHTS_DESC"] = "Assign different weights to roll bids. The GPs
 L["EPGP_OPT_DESC"] = "Use EPGP for your loot distribution when masterloot mode is active. This includes showing and sorting by the player's PR value, as well as crediting GP when loot is awarded."
 L["EPGP_OPT_ONLY_GUILD_RAID"] = "Only in guild raids"
 L["EPGP_OPT_ONLY_GUILD_RAID_DESC"] = "Only activate when in a raid and at least %d%% of the group are from your guild."
-L["EPGP_OPT_WARNING"] = "|cffff0000WARNING:|r You don't have the permission to edit officer notes in your guild, so EPGP won't be able to credit GP for loot when you are the masterlooter."
+L["EPGP_OPT_WARNING_NO_ADDON"] = "|cffff0000WARNING:|r You need the \"EPGP Next\" addon installed and activated for this module to work."
+L["EPGP_OPT_WARNING_NO_OFFICER"] = "|cffff0000WARNING:|r You don't have the permission to edit officer notes in your guild, so EPGP won't be able to credit GP for loot when you are the masterlooter."
 L["EPGP_PR"] = "PR"
 
 -- Roll

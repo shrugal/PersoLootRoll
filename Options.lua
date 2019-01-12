@@ -715,7 +715,8 @@ function Self.GetCustomMessageOptions(isDefault)
         "MSG_ROLL_ANSWER_NO_SELF",
         "MSG_ROLL_ANSWER_NO_OTHER",
         "MSG_ROLL_ANSWER_NOT_TRADABLE",
-        "MSG_ROLL_ANSWER_AMBIGUOUS"
+        "MSG_ROLL_ANSWER_AMBIGUOUS",
+        "MSG_ROLL_ANSWER_STARTED"
     ) do
         if line:sub(1, 3) == "OPT" then
             t[line] = {type = "header", order = it(), name = L[line]}
@@ -1322,7 +1323,7 @@ end
 
 -- Decode a param from its string representation
 function Self.DecodeParam(name, str)
-    if Util.In(name, "bidPublic", "votePublic", "autoAward") then
+    if Util.In(name, "startWhisper", "startAll", "bidPublic", "votePublic", "allowDisenchant", "allowKeep", "autoAward") then
         return Util.In(str:lower(), "true", "1", "yes")
     elseif Util.In(name, "timeoutBase", "timeoutPerItem", "autoAwardTimeout", "autoAwardTimeoutPerItem") then
         return tonumber(str)
