@@ -1,3 +1,16 @@
+Version 17-beta4
+- Added an answer message (incl. custom message option) when starting a roll for someone whispering us
+- EPGP tab is now always shown, added a warning for when "EPGP Next" addon is missing
+- Start rolls in legacy loot mode even when eligible players have a higher ilvl
+- Cancel active rolls when they are traded
+- Updated help text formating and wording
+- Updated enUs and deDE translations
+- Removed extra changelog info from .pkgmeta because Curse apparently can't handle it
+- Moved the release script to .release folder
+- Added env file for release ids and keys
+- Added release script in root folder that reads env and then calls the real release script
+- Updated readme and changelog
+
 Version 17-beta3
 - Updated externals info in .pkgmeta
 - Added BigWigsMods release script
