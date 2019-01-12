@@ -365,17 +365,17 @@ function Self.CHAT_MSG_WHISPER_FILTER(_, _, msg, sender, _, _, _, _, _, _, _, _,
                 end
             end
         -- Check if it's a request to start a roll for another player
-        elseif Addon.db.profile.masterloot.rules.startWhisper and Session.IsMasterlooter() and link and roll.item.owner == unit and roll.status < Roll.STATUS_DONE then
+        elseif Addon.db.profile.masterloot.rules.startWhisper and link and roll.item.owner == unit and roll.status < Roll.STATUS_DONE and Session.IsMasterlooter() then
             local req = msg:gsub(Item.PATTERN_LINK, ""):trim():gsub("[%c%p]+", ""):gsub("%s%s+", " ")
             local reqLc = req:lower()
             
             local patterns = Util.StrJoin(",", "roll", Locale.GetCommLine("MSG_ROLL", unit), Locale.GetCommLine("MSG_ROLL"))
             for p in patterns:gmatch("[^,]+") do
                 if req:match(p) or reqLc:match(p) then
-                    local fn = Util.Select(roll.status, Roll.STATUS_CANCELED, Roll.Restart, Roll.STATUS_PENDING, Roll.Start)
-                    roll:Adopt(not not fn)
+                    roll:Adopt(true)
                     roll.item.isTradable = true
-                    if fn then fn(roll) end
+                    roll[roll.status == Roll.STATUS_CANCELED and "Restart" or "Start"](roll)
+                    answer = Comm.GetChatLine("MSG_ROLL_ANSWER_STARTED", unit)
                     break
                 end
             end

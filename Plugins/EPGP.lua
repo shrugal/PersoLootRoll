@@ -161,7 +161,7 @@ function Self.RegisterOptions()
             type = "group",
             args = {
                 desc = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_DESC"] .. "\n"},
-                desc = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_WARNING"] .. "\n", hidden = CanEditOfficerNote},
+                warning = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_WARNING"] .. "\n", hidden = CanEditOfficerNote},
                 enable = {
                     name = L["OPT_ENABLE"],
                     desc = L["OPT_ENABLE_MODULE_DESC"],
