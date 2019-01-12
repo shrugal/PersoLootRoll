@@ -1946,7 +1946,7 @@ if [ -z "$skip_zipfile" ]; then
 		if [ -n "$tag" ]; then
 			if [[ "$tag" =~ ^v?[0-9][0-9.]*$ || "${tag,,}" == *"release"* ]]; then
 				file_type=release
-			else
+			elif [[ "${tag,,}" == *"beta"* ]]
 				file_type=beta
 			fi
 		fi
@@ -2113,7 +2113,7 @@ if [ -z "$skip_zipfile" ]; then
 		  "name": "$tag",
 		  "body": $( cat "$pkgdir/$changelog" | jq --slurp --raw-input '.' ),
 		  "draft": false,
-		  "prerelease": $( [[ "${tag,,}" == *"beta"* ]] && echo true || echo false )
+		  "prerelease": $( [[ "${tag,,}" == *"beta"* || "${tag,,}" == *"alpha"* ]] && echo true || echo false )
 		}
 		EOF
 		)
