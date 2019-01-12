@@ -2015,14 +2015,16 @@ if [ -z "$skip_zipfile" ]; then
 
 	# Upload tags to WoWInterface.
 	if [ -n "$upload_wowinterface" ]; then
-		_wowi_args=()
+		_wowi_changelog=
 		if [ -f "$wowi_changelog" ]; then
-			_wowi_args+=("-F changelog=<$wowi_changelog")
+			_wowi_changelog="<$wowi_changelog"
 		elif [ -n "$manual_changelog" ]; then
-			_wowi_args+=("-F changelog=<$pkgdir/$changelog")
+			_wowi_changelog="<$pkgdir/$changelog"
 		fi
+
+		_wowi_archive="Yes"
 		if [ -z "$wowi_archive" ]; then
-			_wowi_args+=("-F archive=No")
+			_wowi_archive="No"
 		fi
 
 		echo "Uploading $archive_name ($game_version) to https://www.wowinterface.com/downloads/info$addonid"
@@ -2033,7 +2035,8 @@ if [ -z "$skip_zipfile" ]; then
 			  -F "id=$addonid" \
 			  -F "version=$archive_version" \
 			  -F "compatible=$game_version" \
-			  "${_wowi_args[@]}" \
+			  -F "changelog=$_wowi_changelog" \
+			  -F "archive=$_wowi_archive" \
 			  -F "updatefile=@$archive" \
 			  "https://api.wowinterface.com/addons/update" )
 		if [ $? -eq 0 ]; then
