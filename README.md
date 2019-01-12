@@ -155,6 +155,11 @@ These are the things I have planed currently:
 
 You can vote on feature request [here](http://feathub.com/shrugal/PersoLootRoll).
 
+### Build
+To build a package from source you need to copy `.release/.env-example` to `.release/.env`, fill in the relevant infos (projects IDs and API tokens) and then
+run `./release.sh` in the project root. The completed file(s) will be available in the `.release` folder. More information about possible arguments to the
+release script can be found [here](https://github.com/BigWigsMods/packager).
+
 ### Donate
 Click on the "Donate" button if you want to support the development of this addon or just buy me a beer. Always appreciated, never required!
 
