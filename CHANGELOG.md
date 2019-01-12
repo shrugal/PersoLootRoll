@@ -1,4 +1,5 @@
 Version 17-beta4
+
 - Added an answer message (incl. custom message option) when starting a roll for someone whispering us
 - EPGP tab is now always shown, added a warning for when "EPGP Next" addon is missing
 - Start rolls in legacy loot mode even when eligible players have a higher ilvl
@@ -12,6 +13,7 @@ Version 17-beta4
 - Updated readme and changelog
 
 Version 17-beta3
+
 - Updated externals info in .pkgmeta
 - Added BigWigsMods release script
 - Added revision to addon version parsing
@@ -22,12 +24,14 @@ Version 17-beta3
 - Fixed missing transmog not being considered on lower level items
 
 Version 17-beta2
+
 - Added masterloot settings option to ML dropdown in roles window
 - Updated enUS and zhTW translations
 - Exporting logs should now work even if LibRealmInfo doesn't give us any realm data
 - Added metadata files and updated version parsing for automatic packaging
 
 Version 17-beta1
+
 - Replaced multiselect message options with dropdowns to free up some space
 - When awarding loot in the rolls window the button text now turns to "Confirm" on the 1st click and then actually awards the item on the 2nd click
 - Added option to make group announcements concise when bosses only drop one item (e.g. in 5-mans)
@@ -45,6 +49,7 @@ Version 17-beta1
 - Updated Util TblGet and TblSet functions to support nil path segments
 
 Version 16.04
+
 - Fixed rolls window now updating when scroll bar is shown or hidden
 - Fixed actions window not showing when loot has been awarded
 - Fixed roll duplication in ML mode
@@ -53,22 +58,26 @@ Version 16.04
 - Updated esES and zhCN translations
 
 Version 16.03
+
 - Fixed Util.TblRandomKey for empty tables
 - Fixed Util.TblCopyXYZ methods not producing a continually indexed list when k is false
 
 Version 16.02
+
 - Fixed Roll.Find for when owner is nil
 - Fixed Roll awarding methods
 - Fixed rolls not showing up on the rolls window
 - Fixed updating status after trading when in ML mode
 
 Version 16.01
+
 - Updated translations
 - Fixed Addon.UnitIsTracking not using the new Addon.GetCompAddonUser function
 - Fixed Rolls.ROLL_START function parameters
 - Changed module event handlers to always implicitly accept the self parameter
 
 Version 16
+
 - Major internal refactoring:
 - Moved non-core functionality (Session, Inspect, Trade and GUI) into separate Ace3 modules with their own lifecyles and event-handling
 - Moved PLH integration into separate Ace3 plugin module
@@ -98,15 +107,18 @@ Version 16
 - Updated TOC version for 8.1
 
 Version 15.04
+
 - Fixed isTradable override in Item:GetBasicInfo
 - Item owners can now always roll on their own items (without ML)
 
 Version 15.03
+
 - Fixed bug in Util.TblList ([CurseForge#8](https://wow.curseforge.com/projects/persolootroll/issues/8))
 - Prefer running rolls when matching links posted in grp chat to rolls ([CurseForge#8](https://wow.curseforge.com/projects/persolootroll/issues/8))
 - Added some debug messages to roll methods
 
 Version 15.02
+
 - Fixed disabled state not being send on version check
 - Fixed roll status validation for chill-mode rolls
 - Updated debug log formatting
@@ -115,10 +127,12 @@ Version 15.02
 - Removed whisper message content in debug calls
 
 Version 15.01
+
 - Fixed chill-mode not working for loot from non-users
 - Fixed rolls popping up while addon is disabled
 
 Version 15
+
 - Added enabling/disabling based on group type
 - Added Spanish and Simplified Chinese translations
 - Added partial Russian translation (~80%)
@@ -145,6 +159,7 @@ Version 15
 - Fixed masterloot rules widgets widths problems caused by the scroll bar
 - Added connected realm indentifier generation, to be used for profile+realm configs
 - Version messages now contain the full version string, incl. channel and revision
+
 - Replaced deprecated VERSION_ASK event with the new CHECK event
 - Added eligible count to roll status and added check before declaring interest on pending rolls
 - Updated deDE and zhTW translations
@@ -156,18 +171,22 @@ Version 15
 - Minor fixes
 
 Version 14.07
+
 - Fixed misspelling in Item causing error ([CurseForge#6](https://wow.curseforge.com/projects/persolootroll/issues/6))
 
 Version 14.06
+
 - Fixed heading disappearing in general options
 - Fixed rolls from players on realms with spaces in the name being rejected ([CurseForge#4](https://wow.curseforge.com/projects/persolootroll/issues/4))
 - Fixed tradability detection for rolls shared by others ([CurseForge#4](https://wow.curseforge.com/projects/persolootroll/issues/4))
 - Fixed only-masterloot option to cause rolls from non masterlooters being rejected while having a masterlooter
 
 Version 14.05
+
 - Fixed error when passing nil values to Debug
 
 Version 14.04
+
 - Fixed PLH item mismatch for rolls that just started
 - Fixed duplicate roll frames in groups with other PLR users ([CurseForge#2](https://wow.curseforge.com/projects/persolootroll/issues/2))
 - Fixed Unit.GuildName for nil unit parameter
@@ -175,6 +194,7 @@ Version 14.04
 - Moved common export window code into a method in GUI
 
 Version 14.03
+
 - Fixed Chat link hook for links without type
 - Fixed rolls not being send to the winner on sync
 - Fixed whisper chat coloring in tooltip
@@ -182,14 +202,17 @@ Version 14.03
 - Added # of players in masterlooting group to the tooltip ([CurseForge#3](https://wow.curseforge.com/projects/persolootroll/issues/3))
 
 Version 14.02
+
 - Hopefully fixed duplicate roll frames ([CurseForge#2](https://wow.curseforge.com/projects/persolootroll/issues/2))
 
 Version 14.01
+
 - Fixed Util.Each for nil values
 - Fixed constant session updates due to Session.IsOnCouncil return value
 - Fixed rolls jumping around in the rolls window ([CurseForge#1](https://wow.curseforge.com/projects/persolootroll/issues/1))
 
 Version 14
+
 - Added visible random roll results to every non-pass bid
 - Session.RefreshRules is now debounced by 1 sec
 - Readded refreshing the session when changing relevant options
@@ -201,9 +224,11 @@ Version 14
 - Minor refactoring
 
 Version 13.01
+
 - Fixed error when opening rolls window
 
 Version 13
+
 - Announce and whisper settings can now be based on whether or not the player is in a WoW-Community group or the target is in one of the player's WoW-Communities
 - The need button is now changed into a keep button when rolling on our own loot without masterlooter
 - The pass button is now changed into a give-away button when rolling on our own loot without masterlooter
@@ -226,19 +251,24 @@ Version 13
 - As always: Updated translations, bugfixes and minor tweaks
 
 Version 12.04
+
 - Fixed missing function param in SetLootRollItem hook ([GitHub#5](https://github.com/shrugal/PersoLootRoll/issues/5))
 
 Version 12.03
+
 - Fixed taint when clicking chat links while in combat ([GitHub#4](https://github.com/shrugal/PersoLootRoll/issues/4))
 
 Version 12.02
+
 - Fixed roll message matching for some locales
 
 Version 12.01
+
 - Fixed debug state not being preserved through reload/logout
 - Fixed bug caused by string version number
 
 Version 12
+
 - Added separate options to en/disable asking for loot and announcing rolls
 - Asking for loot is enabled by default for now, but will be disabled in the next version, except when updating from a prior version
 - Added texture checking to inspection and fixed some bugs with it
@@ -259,6 +289,7 @@ Version 12
 - Bugfixes and translation updates
 
 Version 11
+
 - Updated Ace3 libs to latest stable version
 - Added "Apocalypse Drive" to trinket list
 - Added support for more complex version strings (e.g. "11-beta3"), but won't use them on the wire until everybody had time to update
@@ -270,6 +301,7 @@ Version 11
 - Minor bugfixes
 
 Version 10
+
 - Updated interface version to 80000
 - Updated Ace3 libs to r1175-alpha
 - Added workaroud for SendAddonMessage's diconnect bug
@@ -290,6 +322,7 @@ Version 10
 - Fixed timewalking detection and removed it from the item scaling check
 
 Version 9
+
 - Updated interface version to 70300
 - Added an actions window to show pending actions such as trade or whisper
 - Added recording of whisper chats with winner/owner of items
@@ -318,6 +351,7 @@ Version 9
 - Minor bugfixes
 
 Version 8
+
 - Added whisper message suppression while giving away loot
 - Added a group-wide whisper limit of 2 per item to prevent spamming players not using the addon
 - Added an empty message to the rolls window
@@ -332,6 +366,7 @@ Version 8
 - Minor bugfixes and translation updates
 
 Version 7
+
 - Add a hide/show button to hide specific rolls in the list
 - Changed "Canceled" to "Hidden" filter, filtering in/out canceled, pending and hidden rolls.
 - Embedded CallbackHandler into Roll and Masterloot
@@ -340,6 +375,7 @@ Version 7
 - Changed table layout slightly to be more in-line with the upcoming AceGUI version
 
 Version 6
+
 - Fixed bug where players could be added, but not removed from the masterlooter whitelist.
 - Updated the version tooltip to better distinguish between players with/without the addon
 - Fixed workaround for ElvUI bug causing group loot frames to appear on top of each other
@@ -353,16 +389,19 @@ Version 6
 - Some translation updates
 
 Version 5
+
 - Moved some options around, made more use of tabbed UI (for masterloot+masterlooter and messages options)
 - Added options to customize the messages the addon sends to other players
 - Added toggle to enable/disable the double ilvl threshold for trinkets
 - Bugfixes and translation updates
 
 Version 4
+
 - Fixed options migration bug causing the options page to throw an error once after updating
 - Added time remaining to rolls list and chat roll result to bids list in the overview window
 
 Version 3
+
 - Custom answers for 'need' and 'greed' can now be specified in the 'Masterlooter' options and accessed with a right-click on the corresponding roll button
 - Bids are now color-coded in the rolls overview window
 - Fixed rolls overview window frama strata, so it's no longer above everything else
@@ -372,6 +411,7 @@ Version 3
 - Bugfixes
 
 Version 2
+
 - Masterlooting is now tracked for all players with the addon
 - Added ilvl threshold option
 - Added custom timeout option when masterlooting
