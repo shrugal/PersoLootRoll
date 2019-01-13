@@ -1105,7 +1105,11 @@ end
 
 -- Split string on delimiter
 function Self.StrSplit(str, del)
-    return Self.Tbl(del:split(str))
+    local t = Self.Tbl()
+    for v in (str .. del):gmatch("(.-)" .. del:gsub(".", "%%%1")) do
+        tinsert(t, v)
+    end
+    return t
 end
 
 -- Join a bunch of strings with given delimiter
