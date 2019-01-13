@@ -45,6 +45,9 @@ Self.PATTERN_RAID_LEFT = ERR_RAID_MEMBER_REMOVED_S:gsub("%%s", "(.+)")
 Self.PATTERNS_JOINED = {Self.PATTERN_PARTY_JOINED, Self.PATTERN_INSTANCE_JOINED, Self.PATTERN_RAID_JOINED}
 Self.PATTERNS_LEFT = {Self.PATTERN_PARTY_LEFT, Self.PATTERN_INSTANCE_LEFT, Self.PATTERN_RAID_LEFT}
 
+-- Remember the last whipser we send
+Self.lastWhispered = nil
+
 -------------------------------------------------------
 --                      Chatting                     --
 -------------------------------------------------------
@@ -137,6 +140,10 @@ function Self.Chat(msg, target)
 
     if channel ~= Self.TYPE_WHISPER then
         msg = Util.StrPrefix(msg, Self.CHAT_PREFIX)
+    end
+
+    if player then
+        Self.lastWhispered = msg
     end
 
     Addon:Debug("Comm.Chat", channel, player, msg)
@@ -329,11 +336,13 @@ function Self.RollEnd(roll)
         if roll.isOwner and not roll.isTest then
             local line = roll.bids[roll.winner] == Roll.BID_DISENCHANT and "DISENCHANT" or "WINNER"
             local concise = line == "WINNER" and roll.posted == 0
+            local toGroup = roll.posted and Self.ShouldInitChat()
 
             -- Announce to chat
-            local toGroup = roll.posted and Self.ShouldInitChat()
             if toGroup then
-                if not roll.item.isOwner then
+                if roll.winner == roll.item.owner then
+                    Self.ChatLine("MSG_ROLL_" .. line .. "_MASTERLOOT_OWN", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link)
+                elseif not roll.item.isOwner then
                     Self.ChatLine("MSG_ROLL_" .. line .. "_MASTERLOOT", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
                 elseif concise then
                     Self.ChatLine("MSG_ROLL_WINNER_CONCISE", Self.TYPE_GROUP, Unit.ShortName(roll.winner))
@@ -344,20 +353,16 @@ function Self.RollEnd(roll)
             
             -- Announce to target
             if Addon.db.profile.messages.whisper.answer and not Addon:UnitIsTracking(roll.winner, true) and not (toGroup and concise) then
-                if roll.item:GetNumEligible(true) == 1 then
-                    if roll.item.isOwner then
-                        Self.ChatLine("MSG_ROLL_ANSWER_YES", roll.winner)
-                    else
-                        Self.ChatLine("MSG_ROLL_ANSWER_YES_MASTERLOOT", roll.winner, roll.item.owner)
-                    end
+                if not Session.IsMasterlooter() and roll.item:GetNumEligible(true) == 1 and line == "WINNER" then
+                    Self.ChatLine("MSG_ROLL_ANSWER_YES", roll.winner)
+                elseif roll.winner == roll.item.owner then
+                    Self.ChatLine("MSG_ROLL_" .. line .. "_WHISPER_MASTERLOOT_OWN", roll.winner, roll.item.link)
+                elseif not roll.item.isOwner then
+                    Self.ChatLine("MSG_ROLL_" .. line .. "_WHISPER_MASTERLOOT", roll.winner, roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
+                elseif concise then
+                    Self.ChatLine("MSG_ROLL_WINNER_WHISPER_CONCISE", roll.winner)
                 else
-                    if not roll.item.isOwner then
-                        Self.ChatLine("MSG_ROLL_" .. line .. "_WHISPER_MASTERLOOT", roll.winner, roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
-                    elseif concise then
-                        Self.ChatLine("MSG_ROLL_WINNER_WHISPER_CONCISE", roll.winner)
-                    else
-                        Self.ChatLine("MSG_ROLL_" .. line .. "_WHISPER", roll.winner, roll.item.link)
-                    end
+                    Self.ChatLine("MSG_ROLL_" .. line .. "_WHISPER", roll.winner, roll.item.link)
                 end
             end
         end

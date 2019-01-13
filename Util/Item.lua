@@ -441,6 +441,10 @@ function Self:GetFullInfo()
 
         -- Check if the item is tradable
         self.isTradable, self.isSoulbound, self.bindTimeout = self:IsTradable()
+
+        if Addon.DEBUG and self.isOwner then
+            self.isTradable, self.bindTimeout = true, self.isSoulbound
+        end
     end
 
     return self, self.infoLevel >= Self.INFO_FULL
@@ -872,9 +876,13 @@ function Self:IsPawnUpgrade(unit, ...)
     end
 end
 
--- Check if we need the transmog appearance
+-- Check if the unit might need the transmog appearance
 function Self:IsTransmogMissing(unit)
-    return (not unit or Unit.IsSelf(unit)) and self:GetFullInfo().isTransmogKnown == false
+    if Unit.IsSelf(unit or "player") then
+        return Addon.db.profile.filter.transmog and self:GetFullInfo().isTransmogKnown == false
+    else
+        return not Addon:UnitIsTracking(unit) and Util.IsLegacyLoot()
+    end
 end
 
 -- Register an eligible unit's interest
@@ -887,11 +895,9 @@ end
 function Self:GetEligible(unit)
     if not self.eligible then
         if unit then
-            if not self.isSoulbound and Addon.db.profile.filter.transmog and self:IsTransmogMissing(unit) then
-                return true
-            elseif not self:CanBeEquipped(unit) then
+            if self.isSoulbound and not self:CanBeEquipped(unit) then
                 return nil
-            elseif Addon.db.profile.filter.transmog and self:IsTransmogMissing(unit) then
+            elseif self:IsTransmogMissing(unit) then
                 return true
             elseif not self:HasSufficientLevel(unit) then
                 return false
@@ -962,7 +968,7 @@ end
 
 -- Check if the addon should start a roll for an item
 function Self:ShouldBeRolledFor()
-    return not (self.isOwner and Addon.db.profile.dontShare) and self:ShouldBeConsidered() and self:GetNumEligible(not Util.IsLegacyLoot(), true) > 0
+    return not (self.isOwner and Addon.db.profile.dontShare) and self:ShouldBeConsidered() and self:GetNumEligible(true, self.isOwner) > 0
 end
 
 -------------------------------------------------------

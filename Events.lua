@@ -18,8 +18,8 @@ Self.lastPostedRoll = nil
 -- Remember the last time a version check happened
 Self.lastVersionCheck = nil
 -- Remember the last time we chatted with someone and what roll (if any) we chatted about, so we know when to respond
-Self.lastChatted = {}
-Self.lastChattedRoll = {}
+Self.lastWhispered = {}
+Self.lastWhisperedRoll = {}
 -- Remember the last suppressed message
 Self.lastSuppressed = nil
 -- Remember the last locked item slot
@@ -301,86 +301,108 @@ function Self.CHAT_MSG_WHISPER_FILTER(_, _, msg, sender, _, _, _, _, _, _, _, _,
 
     local answer, suppress
     local lastEnded, firstStarted, running, recent, roll = 0
-    local link = select(2, GetItemInfo(Item.GetLink(msg) or ""))
+    local link = Item.GetLink(msg)
 
-    -- Find eligible rolls
-    if link then
-        roll = Roll.Find(nil, true, link) or Roll.Find(nil, nil, link, nil, unit)
-    else
-        -- Find running or recent rolls and determine firstStarted and lastEnded
-        for i,roll in pairs(Self.rolls) do
-            if roll:CanBeAwardedTo(unit, true) and (roll.status == Roll.STATUS_RUNNING or roll:IsRecent(Self.CHAT_MARGIN_AFTER)) then
-                firstStarted = min(firstStarted or roll.started, roll.started)
-
-                if roll.status == Roll.STATUS_RUNNING then
-                    if not running then running = roll else running = true end
+    -- Check if we should start a roll for the unit
+    if link and Session.IsMasterlooter() and Addon.db.profile.masterloot.rules.startWhisper then
+        local req = msg:gsub(Item.PATTERN_LINK, ""):trim():gsub("[%c%p]+", ""):gsub("%s%s+", " ")
+        local reqLc = req:lower()
+        
+        local patterns = Util.StrJoin(",", "roll", Locale.GetCommLine("MSG_ROLL", unit), Locale.GetCommLine("MSG_ROLL"))
+        print(patterns)
+        for p in patterns:gmatch("[^,]+") do
+            print(p, req:match(p))
+            if req:match(p) or reqLc:match(p) then
+                roll = Roll.Find(nil, nil, link, nil, unit)
+                if roll and roll.status < Roll.STATUS_DONE then
+                    local action = Util.Select(roll.status, Roll.STATUS_CANCELED, Roll.Restart, Roll.STATUS_PENDING, Roll.Start)
+                    roll:Adopt(not not action)
+                    roll.item.isTradable = true
+                    if action then action(roll) end
                 else
-                    if not recent then recent = roll else recent = true end
+                    roll = Roll.Add(Item.FromLink(link, unit, nil, nil, true)):Schedule()
                 end
-            end
-                
-            if roll.status == Roll.STATUS_DONE and (roll.isOwner and roll.item:GetEligible(unit) or roll.owner == unit) then
-                lastEnded = max(lastEnded, roll.ended + Self.CHAT_MARGIN_AFTER)
+
+                answer = Comm.GetChatLine("MSG_ROLL_ANSWER_STARTED", unit)
+                break
             end
         end
-
-        roll = running or recent
     end
 
-    -- Check if we should act on the whisper
-    if not roll or not link and Self.lastChatted[unit] and Self.lastChatted[unit] > min(firstStarted, max(lastEnded, firstStarted - Self.CHAT_MARGIN_BEFORE)) then
-        if roll and roll ~= true and Self.lastChattedRoll[unit] ~= roll.id and roll:CanBeAwardedTo(unit) and not roll.bids[unit] then
-            Self:Info(L["ROLL_IGNORING_BID"], Comm.GetPlayerLink(unit), roll.item.link, Comm.GetBidLink(roll, unit, Roll.BID_NEED), Comm.GetBidLink(roll, unit, Roll.BID_GREED))
-        end
+    -- Check if the unit wants to bid on one of our rolls
+    if answer == nil then
+        if link then
+            roll = Roll.Find(nil, true, link)
+        else
+            -- Find running or recent rolls and determine firstStarted and lastEnded
+            for i,roll in pairs(Self.rolls) do
+                if roll:CanBeGivenTo(unit) and roll:IsRecent(Self.CHAT_MARGIN_AFTER) then
+                    firstStarted = min(firstStarted or roll.started, roll.started)
 
-        Self.lastChatted[unit] = time()
-    else
-        -- Ask for the item link if there is more than one roll right now
-        if roll == true then
-            answer = Comm.GetChatLine("MSG_ROLL_ANSWER_AMBIGUOUS", unit)
-        elseif roll.isOwner then
-            -- The item is not tradable
-            if not roll.item.isTradable then
-                answer = Comm.GetChatLine("MSG_ROLL_ANSWER_NOT_TRADABLE", unit)
-            -- I need it for myself
-            elseif roll.status == Roll.STATUS_CANCELED or roll.isWinner then
-                answer = Comm.GetChatLine("MSG_ROLL_ANSWER_NO_SELF", unit)
-            -- Someone else won or got it
-            elseif roll.winner and roll.winner ~= unit or roll.traded and roll.traded ~= unit then
-                answer = Comm.GetChatLine("MSG_ROLL_ANSWER_NO_OTHER", unit)
-            else
-                -- The roll is scheduled or happening
-                if roll:CanBeAwarded() then
-                    -- He is eligible, so register the bid
-                    if roll:UnitIsEligible(unit) and not roll.bids[unit] or floor(roll.bids[unit]) ~= Roll.BID_NEED then
-                        roll:Bid(Roll.BID_NEED, unit)
-
-                        -- Answer only if his bid didn't end the roll
-                        answer = roll:CanBeAwarded() and Comm.GetChatLine("MSG_ROLL_ANSWER_BID", unit, roll.item.link) or false
+                    if roll.status == Roll.STATUS_RUNNING then
+                        if not running then running = roll else running = true end
+                    else
+                        if not recent then recent = roll else recent = true end
                     end
-                -- He can have it
-                elseif (not roll.winner or roll.winner == unit) and not roll.traded then
-                    roll.winner = unit
-                    answer = roll.item.isOwner and Comm.GetChatLine("MSG_ROLL_ANSWER_YES", unit) or Comm.GetChatLine("MSG_ROLL_ANSWER_YES_MASTERLOOT", unit, roll.item.owner)
+                end
+                    
+                if roll.status == Roll.STATUS_DONE and (roll.owner == unit or roll.isOwner and (roll.winner == unit or roll.item:GetEligible(unit))) then
+                    lastEnded = max(lastEnded, roll.ended + Self.CHAT_MARGIN_AFTER)
                 end
             end
-        -- Check if it's a request to start a roll for another player
-        elseif Addon.db.profile.masterloot.rules.startWhisper and link and roll.item.owner == unit and roll.status < Roll.STATUS_DONE and Session.IsMasterlooter() then
-            local req = msg:gsub(Item.PATTERN_LINK, ""):trim():gsub("[%c%p]+", ""):gsub("%s%s+", " ")
-            local reqLc = req:lower()
-            
-            local patterns = Util.StrJoin(",", "roll", Locale.GetCommLine("MSG_ROLL", unit), Locale.GetCommLine("MSG_ROLL"))
-            for p in patterns:gmatch("[^,]+") do
-                if req:match(p) or reqLc:match(p) then
-                    roll:Adopt(true)
-                    roll.item.isTradable = true
-                    roll[roll.status == Roll.STATUS_CANCELED and "Restart" or "Start"](roll)
-                    answer = Comm.GetChatLine("MSG_ROLL_ANSWER_STARTED", unit)
-                    break
+
+            roll = running or recent
+        end
+
+        -- Check if we should act on the whisper
+        if not roll or not link and Self.lastWhispered[unit] and Self.lastWhispered[unit] > min(firstStarted, max(lastEnded, firstStarted - Self.CHAT_MARGIN_BEFORE)) then
+            if roll and roll ~= true and Self.lastWhisperedRoll[unit] ~= roll.id and roll:CanBeAwardedTo(unit) and not roll.bids[unit] then
+                Self:Info(L["ROLL_IGNORING_BID"], Comm.GetPlayerLink(unit), roll.item.link, Comm.GetBidLink(roll, unit, Roll.BID_NEED), Comm.GetBidLink(roll, unit, Roll.BID_GREED))
+            end
+
+            Self.lastWhispered[unit] = time()
+        else
+            -- Ask for the item link if there is more than one roll right now
+            if roll == true then
+                answer = Comm.GetChatLine("MSG_ROLL_ANSWER_AMBIGUOUS", unit)
+            elseif roll.isOwner then
+                -- Unit has won the item
+                if roll.winner == unit and not roll.traded then
+                    answer = roll.item.isOwner
+                    and Comm.GetChatLine("MSG_ROLL_ANSWER_YES", unit)
+                        or Comm.GetChatLine("MSG_ROLL_ANSWER_YES_MASTERLOOT", unit, Unit.FullName(roll.item.owner))
+                -- The unit can bid
+                elseif roll:UnitCanBid(unit, Roll.BID_NEED) then
+                    roll:Bid(Roll.BID_NEED, unit)
+
+                    -- Answer only if his bid didn't end the roll
+                    answer = roll:CanBeAwarded(true)
+                        and Comm.GetChatLine("MSG_ROLL_ANSWER_BID", unit, roll.item.link)
+                        or false
+                -- The item is not tradable
+                elseif not roll.item.isTradable then
+                    answer = Comm.GetChatLine("MSG_ROLL_ANSWER_NOT_TRADABLE", unit)
+                -- I need it for myself
+                elseif roll.status == Roll.STATUS_CANCELED or roll.isWinner then
+                    answer = Comm.GetChatLine("MSG_ROLL_ANSWER_NO_SELF", unit)
+                -- Someone else won or got it
+                elseif roll.winner and roll.winner ~= unit or roll.traded and roll.traded ~= unit then
+                    answer = Comm.GetChatLine("MSG_ROLL_ANSWER_NO_OTHER", unit)
+                -- Unit isn't eligible
+                elseif roll.item:GetEligible(unit) == nil then
+                    answer = Comm.GetChatLine("MSG_ROLL_ANSWER_NOT_ELIGIBLE", unit)
+                -- Probably too late
+                else
+                    answer = Comm.GetChatLine("MSG_ROLL_ANSWER_NO", unit)
                 end
+
+                Self.lastWhisperedRoll[unit] = roll.id
             end
         end
-        
+    end
+       
+    -- Suppress the message and/or send an answer
+    if answer ~= nil then
         suppress = answer ~= nil and Self.db.profile.messages.whisper.suppress
         answer = Self.db.profile.messages.whisper.answer and answer
         
@@ -396,9 +418,9 @@ function Self.CHAT_MSG_WHISPER_FILTER(_, _, msg, sender, _, _, _, _, _, _, _, _,
         end
 
         -- Post the answer
-        if answer then Comm.Chat(answer, unit) end
-
-        Self.lastChattedRoll[unit] = roll.id
+        if answer then
+            Comm.Chat(answer, unit)
+        end
     end
 
     return suppress
@@ -416,7 +438,10 @@ function Self.CHAT_MSG_WHISPER_INFORM_FILTER(_, _, msg, receiver, _, _, _, _, _,
         end
     end
 
-    Self.lastChatted[Unit.Name(receiver)] = time()
+    -- Remember lastWhispered if the addon didn't send the line
+    if msg ~= Comm.lastWhispered then
+        Self.lastWhispered[Unit.Name(receiver)] = time()
+    end
 
     return Self.lastSuppressed and Self.lastSuppressed + 1 == lineId or nil
 end

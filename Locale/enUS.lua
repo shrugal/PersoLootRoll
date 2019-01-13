@@ -20,25 +20,31 @@ L["MSG_PASS"] = "pass,no,nope"
 L["MSG_ROLL"] = "roll,share,give away"
 L["MSG_ROLL_ANSWER_AMBIGUOUS"] = "I am giving away multiple items right now, please send me the link of the item you want."
 L["MSG_ROLL_ANSWER_BID"] = "Ok, I registered your bid for %s."
+L["MSG_ROLL_ANSWER_NO"] = "Sorry, you can't bid for that item anymore."
 L["MSG_ROLL_ANSWER_NO_OTHER"] = "Sorry, I already gave it to someone else."
 L["MSG_ROLL_ANSWER_NO_SELF"] = "Sorry, I need that myself."
+L["MSG_ROLL_ANSWER_NOT_ELIGIBLE"] = "Sorry, you aren't eligible for that item."
 L["MSG_ROLL_ANSWER_NOT_TRADABLE"] = "Sorry, I can't trade it."
 L["MSG_ROLL_ANSWER_STARTED"] = "Ok, I'll start a roll for it."
 L["MSG_ROLL_ANSWER_YES"] = "You can have it, just trade me."
 L["MSG_ROLL_ANSWER_YES_MASTERLOOT"] = "You can have it, just trade <%s>."
 L["MSG_ROLL_DISENCHANT"] = "<%s> will disenchant %s -> Trade me!"
-L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> will disenchant %s from <%s> -> Trade %s!"
+L["MSG_ROLL_DISENCHANT_MASTERLOOT"] = "<%s> will disenchant %s from <%s> -> Trade him/her!"
+L["MSG_ROLL_DISENCHANT_MASTERLOOT_OWN"] = "<%s> will disenchant his/her own %s!"
 L["MSG_ROLL_DISENCHANT_WHISPER"] = "You were picked to disenchant %s, please trade me."
-L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "You were picked to disenchant %s from <%s>, please trade %s."
+L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "You were picked to disenchant %s from <%s>, please trade him/her."
+L["MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_OWN"] = "You were picked to disenchant your own %s!"
 L["MSG_ROLL_START"] = "Giving away %s -> /w me or /roll %d!"
 L["MSG_ROLL_START_CONCISE"] = "%s someone need?"
 L["MSG_ROLL_START_MASTERLOOT"] = "Giving away %s from <%s> -> /w me or /roll %d!"
 L["MSG_ROLL_WINNER"] = "<%s> has won %s -> Trade me!"
 L["MSG_ROLL_WINNER_CONCISE"] = "%s trade me!"
-L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%s> has won %s from <%s> -> Trade %s!"
+L["MSG_ROLL_WINNER_MASTERLOOT"] = "<%s> has won %s from <%s> -> Trade him/her!"
+L["MSG_ROLL_WINNER_MASTERLOOT_OWN"] = "<%s> has won his/her own %s!"
 L["MSG_ROLL_WINNER_WHISPER"] = "You have won %s! Please trade me."
 L["MSG_ROLL_WINNER_WHISPER_CONCISE"] = "Please trade me."
-L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "You have won %s from <%s>! Please trade %s."
+L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "You have won %s from <%s>! Please trade him/her."
+L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT_OWN"] = "You have won your own %s!"
 
 -- Addon
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
@@ -350,10 +356,14 @@ L["OPT_MSG_ROLL_ANSWER_AMBIGUOUS"] = "Answer: Send me the item link"
 L["OPT_MSG_ROLL_ANSWER_AMBIGUOUS_DESC"] = ""
 L["OPT_MSG_ROLL_ANSWER_BID"] = "Answer: Bid registered"
 L["OPT_MSG_ROLL_ANSWER_BID_DESC"] = "1: Item link"
+L["OPT_MSG_ROLL_ANSWER_NO"] = "Answer: You can't bid on it right now"
+L["OPT_MSG_ROLL_ANSWER_NO_DESC"] = ""
 L["OPT_MSG_ROLL_ANSWER_NO_OTHER"] = "Answer: I gave it to someone else"
 L["OPT_MSG_ROLL_ANSWER_NO_OTHER_DESC"] = ""
 L["OPT_MSG_ROLL_ANSWER_NO_SELF"] = "Answer: I need it myself"
 L["OPT_MSG_ROLL_ANSWER_NO_SELF_DESC"] = ""
+L["OPT_MSG_ROLL_ANSWER_NOT_ELIGIBLE"] = "Answer: You are not eligible for that item"
+L["OPT_MSG_ROLL_ANSWER_NOT_ELIGIBLE_DESC"] = ""
 L["OPT_MSG_ROLL_ANSWER_NOT_TRADABLE"] = "Answer: It's not tradable"
 L["OPT_MSG_ROLL_ANSWER_NOT_TRADABLE_DESC"] = ""
 L["OPT_MSG_ROLL_ANSWER_STARTED"] = "Answer: I started a roll for you"
@@ -370,12 +380,17 @@ L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT_DESC"] = [=[1: Disenchanter
 2: Item link
 3: Item owner
 4: him/her]=]
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT_OWN"] = "Announcing an item owner disenchants his/her item (as masterlooter)"
+L["OPT_MSG_ROLL_DISENCHANT_MASTERLOOT_OWN_DESC"] = [=[1: Item owner
+2: Item link]=]
 L["OPT_MSG_ROLL_DISENCHANT_WHISPER"] = "Whispering the disenchanter"
 L["OPT_MSG_ROLL_DISENCHANT_WHISPER_DESC"] = "1: Item link"
 L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT"] = "Whispering the disenchanter (as masterlooter)"
 L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_DESC"] = [=[1: Item link
 2: Item owner
 3: him/her]=]
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_OWN"] = "Whispering an item owner to disenchant his/her item (as masterlooter)"
+L["OPT_MSG_ROLL_DISENCHANT_WHISPER_MASTERLOOT_OWN_DESC"] = "1: Item link"
 L["OPT_MSG_ROLL_START"] = "Announcing a new roll"
 L["OPT_MSG_ROLL_START_CONCISE"] = "Announcing a new roll (concise)"
 L["OPT_MSG_ROLL_START_CONCISE_DESC"] = "1: Item link"
@@ -395,6 +410,9 @@ L["OPT_MSG_ROLL_WINNER_MASTERLOOT_DESC"] = [=[1: Winner
 2: Item link
 3: Item owner
 4: him/her]=]
+L["OPT_MSG_ROLL_WINNER_MASTERLOOT_OWN"] = "Announcing an item owner keeps his/her item (as masterlooter)"
+L["OPT_MSG_ROLL_WINNER_MASTERLOOT_OWN_DESC"] = [=[1: Item owner
+2: Item link]=]
 L["OPT_MSG_ROLL_WINNER_WHISPER"] = "Whispering the roll winner"
 L["OPT_MSG_ROLL_WINNER_WHISPER_CONCISE"] = "Whispering the roll winner (concise)"
 L["OPT_MSG_ROLL_WINNER_WHISPER_CONCISE_DESC"] = ""
@@ -403,6 +421,8 @@ L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "Whispering the roll winner (as ma
 L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_DESC"] = [=[1: Item link
 2: Item owner
 3: him/her]=]
+L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_OWN"] = "Whispering an item owner to keep his/her item (as masterlooter)"
+L["OPT_MSG_ROLL_WINNER_WHISPER_MASTERLOOT_OWN_DESC"] = "1: Item link"
 L["OPT_SHOULD_CHAT"] = "Enable/Disable"
 L["OPT_SHOULD_CHAT_DESC"] = "Define when the addon will post to party/raid chat and whisper other players."
 L["OPT_WHISPER"] = "Whisper Chat"

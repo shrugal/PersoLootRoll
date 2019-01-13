@@ -368,7 +368,7 @@ Self.OnTrackingChanged = Util.FnDebounce(Self.OnTrackingChanged, 0.1)
 
 -- Check if the given unit is tracking
 function Self:UnitIsTracking(unit, inclCompAddons)
-    if not unit or Unit.IsSelf(unit) then
+    if Unit.IsSelf(unit or "player") then
         return self:IsTracking()
     else
         unit = Unit.Name(unit)
