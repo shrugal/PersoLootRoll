@@ -66,7 +66,7 @@ function Self.GetDestination(target)
             return Self.TYPE_INSTANCE
         elseif IsInRaid() then
             return Self.TYPE_RAID
-        else
+        elseif IsInGroup() then
             return Self.TYPE_PARTY
         end
     elseif Util.TblFind(Self.TYPES, target) then
@@ -78,11 +78,11 @@ end
 
 -- Check if initializing chat on given channel and to giver target is enabled
 function Self.ShouldInitChat(target)
-    local channel, unit = Self.GetDestination(target)
     local c = Addon.db.profile.messages
+    local channel, unit = Self.GetDestination(target)
 
     -- Check group
-    if not IsInGroup() or Addon:GetNumAddonUsers(true) + 1 == GetNumGroupMembers() then
+    if not channel or not IsInGroup() or Addon:GetNumAddonUsers(true) + 1 == GetNumGroupMembers() then
         return false
     end
 
@@ -138,7 +138,9 @@ end
 function Self.Chat(msg, target)
     local channel, player = Self.GetDestination(target)
 
-    if channel ~= Self.TYPE_WHISPER then
+    if not channel then
+        return
+    elseif channel ~= Self.TYPE_WHISPER then
         msg = Util.StrPrefix(msg, Self.CHAT_PREFIX)
     end
 
@@ -170,7 +172,7 @@ function Self.Send(event, msg, target, prio, callbackFn, callbackArg)
     msg = (not msg or msg == "") and " " or msg
 
     -- Send the message
-    if Addon:IsEnabled() then
+    if Addon:IsEnabled() and channel then
         Addon:SendCommMessage(event, msg, channel, player, prio, callbackFn, callbackArg)
     end
 end
