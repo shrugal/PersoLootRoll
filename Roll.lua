@@ -566,6 +566,8 @@ function Self:Restart(started, pending)
         self.timers[i] = nil
     end
 
+    Util.TblExcept(Addon.lastWhisperedRoll, self.id, true)
+
     Addon:SendMessage(Self.EVENT_RESTART, self)
     
     return pending and self or self:Start(started)

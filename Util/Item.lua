@@ -228,7 +228,7 @@ function Self.GetInfo(item, attr, ...)
         return (select(attr == "baseLevel" and 3 or 1, GetDetailedItemLevelInfo(link or id)))
     -- realMinLevel
     elseif attr == "realMinLevel" and not Self.IsScaled(item) then
-        return select(Self.INFO.basic.minLevel, GetItemInfo(link or id))
+        return (select(Self.INFO.basic.minLevel, GetItemInfo(link or id)))
     -- maxLevel
     elseif attr == "maxLevel" then
         if Self.GetInfo(item, "quality") == LE_ITEM_QUALITY_HEIRLOOM then
@@ -823,7 +823,7 @@ end
 function Self:HasSufficientCharacterLevel(unit)
     unit = unit or "player"
     local threshold = Unit.IsSelf(unit) and Addon.db.profile.filter.lvlThreshold or -1
-    return threshold == -1 or UnitLevel(unit) + threshold >= self:GetInfo("realMinLevel")
+    return threshold == -1 or (UnitLevel(unit) or 1) + threshold >= (self:GetInfo("realMinLevel") or 1)
 end
 
 -- Check if item is useful for the player
