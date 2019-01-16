@@ -1,0 +1,13 @@
+- Starting a roll for someone else is now checked before bids
+- Improved checking whether someone can actually bid
+- Added some more answer messages for bids via whisper
+- Added message lines for when someone wins his/her own item
+- Eligible is now true for non-addon-users when legacy loot is active
+- Addon users now always declare their interest when they need the tmog
+- Wait for all eligible players when ML or awardSelf is enabled before ending a roll prematurely
+- Fixed trying to send group msg when not in group (16.05)
+- Fixed item class restriction parsing
+- Fixed missed variable renaming in Addon:OnActiveChanged
+- Fixed lastWhisperedRoll noch updating when the roll is restarted
+- Fixed Item.GetInfo returning multiple value for "realMinLevel" when the item is not scaled
+- Fixed Item.HasSufficientCharacterLevel for when UnitLevel or realMinLevel are nil
