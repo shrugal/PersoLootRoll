@@ -1944,9 +1944,9 @@ if [ -z "$skip_zipfile" ]; then
 		# are considered alphas.
 		file_type=alpha
 		if [ -n "$tag" ]; then
-			if [[ "$tag" =~ ^v?[0-9][0-9.]*$ || "${tag,,}" == *"release"* ]]; then
+			if [[ "$tag" =~ ^v?[0-9][0-9.]*$ || "${tag,,}" == *"stable"* ]]; then
 				file_type=release
-			elif [[ "${tag,,}" == *"beta"* ]]
+			elif [[ "${tag,,}" == *"beta"* ]]; then
 				file_type=beta
 			fi
 		fi
@@ -2107,13 +2107,23 @@ if [ -z "$skip_zipfile" ]; then
 			release_id=
 		fi
 
+		# Create github changelog
+		changelog_github="$pkgdir/$changelog"
+		_changelog_github="$releasedir/CHANGELOG_GITHUB.md"
+		if [ -f "$changelog_github" ]; then
+			cp "$changelog_github" "$_changelog_github"
+			changelog_github="$_changelog_github"
+			echo $'\n' >> "$changelog_github"
+			echo "Get from [Curse](https://wow.curseforge.com/projects/persolootroll) or [WoWInterface](https://www.wowinterface.com/downloads/info$addonid.html)" >> "$changelog_github"
+		fi
+
 		_gh_payload=$( cat <<-EOF
 		{
 		  "tag_name": "$tag",
-		  "name": "$tag",
-		  "body": $( cat "$pkgdir/$changelog" | jq --slurp --raw-input '.' ),
+		  "name": "Version $tag",
+		  "body": $( cat "$changelog_github" | jq --slurp --raw-input '.' ),
 		  "draft": false,
-		  "prerelease": $( [[ "${tag,,}" == *"beta"* || "${tag,,}" == *"alpha"* ]] && echo true || echo false )
+		  "prerelease": $( [[ -z "$tag" || ! ( "$tag" =~ ^v?[0-9][0-9.]*$ || "${tag,,}" == *"stable"* ) ]] && echo true || echo false )
 		}
 		EOF
 		)
@@ -2145,6 +2155,10 @@ if [ -z "$skip_zipfile" ]; then
 		echo
 
 		rm -f "$resultfile" 2>/dev/null
+
+		if [ -f "$_changelog_github" ]; then
+			rm -f "$_changelog_github" 2>/dev/null
+		fi
 	fi
 fi
 

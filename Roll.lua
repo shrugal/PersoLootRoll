@@ -1033,6 +1033,16 @@ function Self:ShouldAdvertise(manually)
     )
 end
 
+-- Check if we should use concise messages
+function Self:ShouldBeConcise()
+    return Addon.db.profile.messages.group.concise and not self:HasMasterlooter()
+        and (
+               Util.GetNumDroppedItems() <= 1
+            or self.item:GetNumEligible(false, true) <= 1
+            or Util.IsLegacyLoot() and GetNumGroupMembers() <= 5
+        )
+end
+
 -- Advertise the roll to the group
 function Self:Advertise(manually, silent)
     if not self:ShouldAdvertise(manually) then
@@ -1042,7 +1052,7 @@ function Self:Advertise(manually, silent)
     self:ExtendTimeLeft()
 
     -- Get the next free roll slot
-    local concise, slot = Comm.ShouldBeConcise() and Util.TblCountFn(Addon.rolls, Self.IsActive) <= 1
+    local concise, slot = self:ShouldBeConcise() and Util.TblCountFn(Addon.rolls, Self.IsActive) <= 1
     for i=concise and 0 or 1,49 do
         if not Self.FindWhere("status", Self.STATUS_RUNNING, "posted", i) then
             slot = i break

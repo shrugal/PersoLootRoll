@@ -878,7 +878,9 @@ end
 
 -- Check if the unit might need the transmog appearance
 function Self:IsTransmogMissing(unit)
-    if Unit.IsSelf(unit or "player") then
+    if Util.In(self.equipLoc, Self.TYPES_NO_TRANSMOG) then
+        return false
+    elseif Unit.IsSelf(unit or "player") then
         return Addon.db.profile.filter.transmog and self:GetFullInfo().isTransmogKnown == false
     else
         return not Addon:UnitIsTracking(unit) and Util.IsLegacyLoot()

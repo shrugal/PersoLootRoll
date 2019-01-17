@@ -129,11 +129,6 @@ function Self.ShouldInitChat(target)
     end
 end
 
--- Check if we should use concise messages
-function Self.ShouldBeConcise()
-    return Addon.db.profile.messages.group.concise and not Session.GetMasterlooter() and Util.GetNumDroppedItems() <= 1
-end
-
 -- Send a chat line
 function Self.Chat(msg, target)
     local channel, player = Self.GetDestination(target)

@@ -5,7 +5,7 @@ if [ -f ".release/.env" ]; then
 fi
 
 tag=$(git describe --tags)
-if [[ -z "$tag" || ! ( "$tag" =~ ^v?[0-9][0-9.]*$ || "${tag,,}" == *"release"* ) ]]; then
+if [[ -z "$tag" || ! ( "$tag" =~ ^v?[0-9][0-9.]*$ || "${tag,,}" == *"stable"* ) ]]; then
 	WOWI_ID=$WOWI_ID_BETA
 fi
 
