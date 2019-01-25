@@ -692,9 +692,9 @@ function Self.UpdateDetails(details, roll)
 
     local canBeAwarded, canVote = roll:CanBeAwarded(true), roll:UnitCanVote()
 
+    local it = Util.Iter(numCols)
     local players = GUI.GetPlayerList(roll)
 
-    local it = Util.Iter(numCols)
     for _,player in ipairs(players) do
         -- Create the row
         if not children[it(0) + 1] then
@@ -812,12 +812,16 @@ function Self.UpdateDetails(details, roll)
             .Show()
 
         -- Action
-        f = children[it()]
-        local txt = canBeAwarded and (Self.confirm.roll == roll.id and Self.confirm.unit == player.unit and L["CONFIRM"] or L["AWARD"])
-            or canVote and (roll.vote == player.unit and L["VOTE_WITHDRAW"] or L["VOTE"])
-            or "-"
-        GUI(f)
-            .SetText(txt)
+        local isConfirming = canBeAwarded and Self.confirm.roll == roll.id and Self.confirm.unit == player.unit
+        local hasVoted = canVote and roll.vote == player.unit
+        GUI(children[it()])
+            .SetText(
+                isConfirming and L["CONFIRM"]
+                or canBeAwarded and L["AWARD"]
+                or hasVoted and L["VOTE_WITHDRAW"]
+                or canVote and L["VOTE"]
+                or "-"
+            )
             .SetDisabled(not (canBeAwarded or canVote))
             .SetUserData("unit", player.unit)
             .SetUserData("roll", roll)

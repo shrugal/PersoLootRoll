@@ -329,7 +329,7 @@ function Self.Update(data, unit)
         else
             roll.item:OnLoaded(function ()
                 -- Declare our interest if the roll is pending without any eligible players or if we need the transmog
-                if Roll.IsActive(data) and roll:ShouldBeBidOn() and ((data.item.eligible or 0) == 0 or (not roll.item.isSoulbound or roll.item:CanBeEquipped()) and roll.item:IsTransmogMissing()) then
+                if Self.IsActive(data) and roll:ShouldBeBidOn() and ((data.item.eligible or 0) == 0 or (not roll.item.isSoulbound or roll.item:CanBeEquipped()) and roll.item:IsTransmogMissing()) then
                     roll.item:SetEligible("player")
                     Comm.SendData(Comm.EVENT_INTEREST, {ownerId = roll.ownerId}, roll.owner)
                 end
@@ -1235,7 +1235,7 @@ function Self:UnitCanBid(unit, bid, checkIlvl)
     unit = Unit.Name(unit or "player")
 
     -- Obvious stuff
-    if self.traded or not Unit.InGroup(unit) then
+    if self.traded or self.status == Self.STATUS_CANCELED or not Unit.InGroup(unit) then
         return false
     -- Only need+pass for rolls from non-users
     elseif not (self:GetOwnerAddon() or Util.In(bid, nil, Self.BID_NEED, Self.BID_PASS)) then

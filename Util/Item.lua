@@ -215,6 +215,9 @@ function Self.GetInfo(item, attr, ...)
 
     if not item then
         return
+    -- Already known
+    elseif isInstance and item[attr] ~= nil then
+        return item[attr]
     -- id
     elseif attr == "id" and id then
         return id
@@ -1235,14 +1238,15 @@ end
 --                       Helper                      --
 -------------------------------------------------------
 
+-- Basically tells us whether GetRealItemLevelInfo doesn't give us the correct ilvl
 function Self:IsScaled()
     if Self.GetInfo(self, "quality") == LE_ITEM_QUALITY_HEIRLOOM then
         return true
-    else
-        local linkLevel = Self.GetInfo(self, "linkLevel")
-        local upgradeLevel = Self.GetInfo(self, "upgradeLevel")
-        return linkLevel and upgradeLevel and linkLevel ~= upgradeLevel
     end
+    
+    local linkLevel = Self.GetInfo(self, "linkLevel")
+    local upgradeLevel = Self.GetInfo(self, "upgradeLevel")
+    return linkLevel and upgradeLevel and (linkLevel ~= upgradeLevel or upgradeLevel > UnitLevel("player"))
 end
 
 -- Check if the item should get special treatment for being a weapon
