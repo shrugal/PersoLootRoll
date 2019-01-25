@@ -1,2 +1,5 @@
 - Also use concise announcement when there is only one eligible player or on tmog runs with not more than 5 players
 - Transmogs for rings, trinkets and necks are never considered missing
+- Prevent voting on canceled rolls
+- Fixed Self reference in Roll
+- Fixed wrong realLevel for items with link level above char level
