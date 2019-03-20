@@ -20,6 +20,7 @@ Self.lastVersionCheck = nil
 -- Remember the last time we chatted with someone and what roll (if any) we chatted about, so we know when to respond
 Self.lastWhispered = {}
 Self.lastWhisperedRoll = {}
+Self.lastWhisperedLineId = nil
 -- Remember the last suppressed message
 Self.lastSuppressed = nil
 -- Remember the last locked item slot
@@ -354,8 +355,14 @@ function Self.CHAT_MSG_WHISPER_FILTER(_, _, msg, sender, _, _, _, _, _, _, _, _,
             roll = running or recent
         end
 
+        local ignore = not roll -- No roll found
+            or not link and Self.lastWhispered[unit] and Self.lastWhispered[unit] > min(firstStarted, max(lastEnded, firstStarted - Self.CHAT_MARGIN_BEFORE)) -- We have talked recently
+            or Util.TblFindFn(Addon.rolls, function (roll)
+                return roll.owner == unit and roll.bid and roll.bid ~= Roll.BID_PASS and roll.status ~= Roll.STATUS_CANCELED and not roll.traded
+            end)   -- We currently want an item from the sender
+
         -- Check if we should act on the whisper
-        if not roll or not link and Self.lastWhispered[unit] and Self.lastWhispered[unit] > min(firstStarted, max(lastEnded, firstStarted - Self.CHAT_MARGIN_BEFORE)) then
+        if ignore then
             if roll and roll ~= true and Self.lastWhisperedRoll[unit] ~= roll.id and roll:CanBeAwardedTo(unit) and not roll.bids[unit] then
                 Self:Info(L["ROLL_IGNORING_BID"], Comm.GetPlayerLink(unit), roll.item.link, Comm.GetBidLink(roll, unit, Roll.BID_NEED), Comm.GetBidLink(roll, unit, Roll.BID_GREED))
             end
@@ -428,7 +435,7 @@ end
 
 function Self.CHAT_MSG_WHISPER_INFORM_FILTER(_, _, msg, receiver, _, _, _, _, _, _, _, _, lineId)
     local unit = Unit(receiver)
-    if not Self:IsTracking() or not Unit.InGroup(unit) then return end
+    if not Self:IsTracking() or not Unit.InGroup(unit) or lineId == Self.lastWhisperedLineId then return end
 
     -- Log the conversation
     for i,roll in pairs(Self.rolls) do
@@ -438,10 +445,11 @@ function Self.CHAT_MSG_WHISPER_INFORM_FILTER(_, _, msg, receiver, _, _, _, _, _,
         end
     end
 
-    -- Remember lastWhispered if the addon didn't send the line
+    -- Remember lastWhispered
     if msg ~= Comm.lastWhispered then
         Self.lastWhispered[Unit.Name(receiver)] = time()
     end
+    Self.lastWhisperedLineId = lineId
 
     return Self.lastSuppressed and Self.lastSuppressed + 1 == lineId or nil
 end
