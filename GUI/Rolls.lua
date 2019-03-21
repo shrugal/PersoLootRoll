@@ -558,13 +558,8 @@ function Self.Update()
             local children = actions.children
             local it = Util.Iter()
 
-            local canBeAwarded = roll:CanBeAwarded(true)
             local canTrade = Trade.ShouldInitTrade(roll)
             local actionTarget = roll:GetActionTarget()
-            local awardRandomly = roll.status == Roll.STATUS_DONE and canBeAwarded and (
-                Util.TblCountExcept(roll.bids, Roll.BID_PASS) > 0
-                or Session.GetMasterlooter() and Util.TblFindFn(Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()] or Util.TBL_EMPTY, Unit.InGroup, true, false)
-            )
 
             -- Need
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_NEED))
@@ -577,7 +572,7 @@ function Self.Update()
             -- Advertise
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:ShouldAdvertise(true))
             -- Award randomly
-            GUI(children[it()]).SetUserData("roll", roll).Toggle(awardRandomly)
+            GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeAwardedRandomly())
             -- Chat
             GUI(children[it()])
                 .SetImage("Interface\\GossipFrame\\" .. (roll.chat and "Petition" or "Gossip") .. "GossipIcon")
@@ -594,7 +589,7 @@ function Self.Update()
             -- Restart
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeRestarted())
             -- Cancel
-            GUI(children[it()]).SetUserData("roll", roll).Toggle(canBeAwarded)
+            GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeAwarded(true))
             -- Hide
             GUI(children[it()])
                 .SetImage("Interface\\Buttons\\UI-CheckBox-Check" .. (roll.hidden and "-Disabled" or ""), -.1, 1.1, -.1, 1.1)

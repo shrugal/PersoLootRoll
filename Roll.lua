@@ -1230,6 +1230,24 @@ function Self:CanBeGivenTo(unit)
     return self:CanBeAwardedTo(unit, true) or self.isOwner and self.winner == unit and not self.traded
 end
 
+-- Check if we can award the roll randomly
+function Self:CanBeAwardedRandomly()
+    if not (self.status == Self.STATUS_DONE and self:CanBeAwarded(true)) then
+        return false
+    elseif Util.TblCountExcept(self.bids, Self.BID_PASS) > 0 then
+        return true
+    elseif self:HasMasterlooter() then
+        local disenchanter = Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()]
+        for name in pairs(disenchanter or Util.TBL_EMPTY) do
+            if Unit.InGroup(disenchanter) then
+                return true
+            end
+        end
+    else
+        return false
+    end
+end
+
 -- Check if the given unit can bid on this roll
 function Self:UnitCanBid(unit, bid, checkIlvl)
     unit = Unit.Name(unit or "player")
