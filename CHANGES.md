@@ -1,5 +1,5 @@
 - Moved core addon logic into new Core folder
 - Moved model classes into new Models folder
 - Fixed missing Item import in PersonalLootHelper plugin
-- Added this CHANGES file to always contain the changes for a release
+- Added CHANGES file to always contain the changes for a release
 - The CHANGELOG file now always contains the full changelog again
