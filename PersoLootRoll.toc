@@ -14,17 +14,12 @@ Libs\libs.xml
 # Initialization
 Init.lua
 
-# Util, Locale, Data
+# Application
 Util\util.xml
 Locale\locale.xml
 Data\data.xml
-
-# Application
-Addon.lua
-Roll.lua
-Events.lua
-Hooks.lua
-Options.lua
+Core\core.xml
+Models\models.xml
 
 # Modules, Plugins
 Modules\modules.xml

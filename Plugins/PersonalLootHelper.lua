@@ -1,5 +1,5 @@
 local Name, Addon = ...
-local Comm, Roll, Session, Unit, Util = Addon.Comm, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
+local Comm, Item, Roll, Session, Unit, Util = Addon.Comm, Addon.Item, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
 local Self = Addon.PLH
 
 Self.NAME = "PersonalLootHelper"
@@ -27,9 +27,9 @@ Self.initialized = false
 function Self.Send(action, roll, param)
     if Self:IsEnabled() then
         local msg = not roll and ("%s~ ~%s"):format(action, param)
-                or type(roll) == "string" and ("%s~ ~%s~%s"):format(action, roll, param)
-                or param and ("%s~%d~%s~%s"):format(action, roll.item.id, Unit.FullName(roll.item.owner), param)
-                or ("%s~%d~%s"):format(action, roll.item.id, Unit.FullName(roll.item.owner))
+            or type(roll) == "string" and ("%s~ ~%s~%s"):format(action, roll, param)
+            or param and ("%s~%d~%s~%s"):format(action, roll.item.id, Unit.FullName(roll.item.owner), param)
+            or ("%s~%d~%s"):format(action, roll.item.id, Unit.FullName(roll.item.owner))
 
         Comm.Send(Self.PREFIX, msg)
     end
