@@ -195,8 +195,8 @@ end
 function Self.Restore()
     if Unit.InGroup(PersoLootRollML) then
         Self.SetMasterlooter(PersoLootRollML, {}, true)
+        Self.SendRequest(PersoLootRollML)
     end
-    Self.SendRequest(PersoLootRollML)
 end
 
 -- Set the session rules

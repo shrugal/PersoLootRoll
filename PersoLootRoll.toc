@@ -18,8 +18,8 @@ Init.lua
 Util\util.xml
 Locale\locale.xml
 Data\data.xml
-Core\core.xml
 Models\models.xml
+Core\core.xml
 
 # Modules, Plugins
 Modules\modules.xml

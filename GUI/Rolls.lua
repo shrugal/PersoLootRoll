@@ -217,7 +217,13 @@ function Self.Show()
                     end
                 end)
                 .SetCallback("OnLeave", GUI.TooltipHide)
-                .SetCallback("OnClick", GUI.UnitClick)
+                .SetCallback("OnClick", function (...)
+                    if Session.IsMasterlooter() then
+                        Options.Show("Masterloot")
+                    else
+                        GUI.UnitClick(...)
+                    end
+                end)
                 .SetHeight(12)
                 .SetPoint("TOP", 0, -6)
                 .SetPoint("RIGHT", f.frame, "LEFT")()
