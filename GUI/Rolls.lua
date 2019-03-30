@@ -754,7 +754,7 @@ function Self.UpdateDetails(details, roll)
             -- Action
             local f = GUI("Button")
                 .SetWidth(100)
-                .SetCallback("OnClick", Self.UnitconfirmOrVote)()
+                .SetCallback("OnClick", Self.UnitConfirmOrVote)()
             f.text:SetFont(GameFontNormal:GetFont())
             details:AddChild(f)
         end
@@ -886,7 +886,7 @@ function Self.OnStatusUpdate(frame)
     end
 end
 
-function Self.UnitconfirmOrVote(self, ...)
+function Self.UnitConfirmOrVote(self, ...)
     local roll, unit = self:GetUserData("roll"), self:GetUserData("unit")
     if roll:CanBeAwardedTo(unit, true) and not (Self.confirm.roll == roll.id and Self.confirm.unit == unit) then
         Self.confirm.roll, Self.confirm.unit = roll.id, unit
