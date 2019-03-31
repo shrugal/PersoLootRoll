@@ -14,8 +14,10 @@ Self.ECHO_DEBUG = 4
 Self.ECHO_LEVELS = {"ERROR", "INFO", "VERBOSE", "DEBUG"}
 
 Self.LOG_MAX_ENTRIES = 1000
+Self.LOG_MAX_ERRORS = 10
 
 Self.log = {}
+Self.errors = 0
 
 -- Versioning
 Self.CHANNEL_ALPHA = "alpha"
@@ -66,7 +68,9 @@ Self.timers = {}
 
 -- Called when the addon is loaded
 function Self:OnInitialize()
+    -- Debug info
     self:ToggleDebug(PersoLootRollDebug or self.DEBUG)
+    self:RegisterErrorHandler()
     
     -- Load DB
     self.db = LibStub("AceDB-3.0"):New(Name .. "DB", Self.Options.DEFAULTS, true)
@@ -522,6 +526,55 @@ function Self:LogExport()
     txt = txt .. "\n" .. Util.TblConcat(self.log, "\n")
 
     GUI.ShowExportWindow("Export log", txt)
+end
+
+-------------------------------------------------------
+--                   Error handling                  --
+-------------------------------------------------------
+
+-- Register our error handler
+function Self:RegisterErrorHandler()
+    local s = function (s) return strtrim(tostring(s), "\n") end
+
+    if BugGrabber and BugGrabber.RegisterCallback then
+        BugGrabber.RegisterCallback(self, "BugGrabber_BugGrabbed", function (_, err)
+            if Self.errors < Self.LOG_MAX_ERRORS then
+                self:HandleError(s(err.message), s(err.stack), s(err.locals ~= "InCombatSkipped" and err.locals or ""))
+            end
+        end)
+    else
+        local origHandler = geterrorhandler()
+        seterrorhandler(function (msg, simple, ...)
+            if Self.errors < Self.LOG_MAX_ERRORS then
+                local stack = not simple and debugstack(3) or ""
+                local locals = not (simple or InCombatLockdown() or UnitAffectingCombat("player")) and debuglocals(3) or ""
+
+                self:HandleError(s(msg), s(stack), s(locals))
+            end
+
+            return origHandler and origHandler(msg, simple, ...) or nil
+        end)
+    end
+end
+
+-- Check for PLR errors and log them
+function Self:HandleError(msg, stack, locals)
+    msg = "\"" .. msg:gsub("^Interface\\", ""):gsub("^AddOns\\", "") .. "\""
+    stack = stack and ("\n" .. stack):gsub("\nInterface\\", "\n"):gsub("\nAddOns\\", "\n") or ""
+    local txt = msg .. stack
+
+    for v in txt:gmatch(Name .. "\\([^\\]+)") do
+        if v ~= "Libs" then
+            Self.errors = Self.errors + 1
+
+            self:Log(Self.ECHO_ERROR, txt)
+
+            if Self.errors == 1 and (not self.db or self.db.profile.messages.echo >= Self.ECHO_ERROR) then
+                self:Print("|cffff0000[ERROR]|r " .. msg .. "\n\nPlease type in |cffbbbbbb/plr log|r, create a new ticket on Curse, WoWInterface or GitHub, copy & paste the log in there and add any additional info you might have. Thank you! =)")
+            end
+            break
+        end
+    end
 end
 
 -------------------------------------------------------
