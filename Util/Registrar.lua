@@ -131,5 +131,5 @@ function Self:SendMessage(msg, ...)
     local e = self.prefix .. "_" .. msg
 
     AceEvent.messages.Fire(self, e, ...)
-    AceEvent.messages.Fire(self, self.EVENT_CHANGE, e, ...)
+    AceEvent.messages.Fire(self, Self.EVENT_CHANGE, e, ...)
 end

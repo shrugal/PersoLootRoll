@@ -73,7 +73,7 @@ function Self:OnInitialize()
     self:RegisterErrorHandler()
     
     -- Load DB
-    self.db = LibStub("AceDB-3.0"):New(Name .. "DB", Self.Options.DEFAULTS, true)
+    self.db = LibStub("AceDB-3.0"):New(Name .. "DB", Options.DEFAULTS, true)
 
     -- Set enabled state
     self:SetEnabledState(self.db.profile.enabled)
@@ -138,7 +138,7 @@ end
 
 -- Chat command handling
 function Self:HandleChatCommand(msg)
-    local args = Util.Tbl(Self:GetArgs(msg, 10))
+    local args = Util.Tbl(self:GetArgs(msg, 10))
     args[11] = nil
     local cmd = tremove(args, 1)
 
@@ -158,7 +158,7 @@ function Self:HandleChatCommand(msg)
             name, pre, line = name .. " " .. Util.StrUcFirst(args[1]), pre .. " " .. args[1], line:sub(args[1]:len() + 2)
         end
 
-        LibStub("AceConfigCmd-3.0").HandleCommand(Self, pre, name, line)
+        LibStub("AceConfigCmd-3.0").HandleCommand(self, pre, name, line)
 
         -- Add submenus as additional options
         if Util.StrIsEmpty(args[1]) then
@@ -308,7 +308,7 @@ function Self:CheckState(refresh)
         end
 
         if self.state ~= state then
-            Self:SendMessage(Self.STATE_CHANGE, to, from)
+            self:SendMessage(Self.STATE_CHANGE, to, from)
 
             local cmp = Util.Compare(self.state, state)
 
@@ -316,7 +316,7 @@ function Self:CheckState(refresh)
                 local s = Self.STATES[i]
                 local fn = Self["On" .. Util.StrUcFirst(s:lower()) .. "Changed"]
 
-                if fn then fn(Self, self.state >= i) end
+                if fn then fn(self, self.state >= i) end
                 Self:SendMessage("STATE_" .. s .. "_CHANGE", self.state >= i)
             end
         end
@@ -327,36 +327,36 @@ end
 
 -- Check if the addon is currently active
 function Self:IsActive(refresh)
-    return Self:CheckState(refresh) >= Self.STATE_ACTIVE
+    return self:CheckState(refresh) >= Self.STATE_ACTIVE
 end
 
 -- Check if the addon is currently tracking loot etc.
 function Self:IsTracking(refresh)
-    return Self:CheckState(refresh) >= Self.STATE_TRACKING
+    return self:CheckState(refresh) >= Self.STATE_TRACKING
 end
 
 -- Active state changed
 function Self:OnActiveChanged(active)
     if active then
         -- Schedule version check
-        if not Self.timers.versionCheck then
-            Self.timers.versionCheck = Self:ScheduleTimer(Comm.SendData, Self.VERSION_CHECK_DELAY, Comm.EVENT_CHECK)
+        if not self.timers.versionCheck then
+            self.timers.versionCheck = self:ScheduleTimer(Comm.SendData, Self.VERSION_CHECK_DELAY, Comm.EVENT_CHECK)
         end
     else
         -- Clear roll data
         Util.TblIter(self.rolls, Roll.Clear)
 
         -- Clear versions and disabled
-        wipe(Self.versions)
-        wipe(Self.disabled)
-        wipe(Self.compAddonUsers)
+        wipe(self.versions)
+        wipe(self.disabled)
+        wipe(self.compAddonUsers)
     
         -- Clear lastXYZ stuff
-        Self.lastPostedRoll = nil
-        Self.lastVersionCheck = nil
-        Self.lastSuppressed = nil
-        wipe(Self.lastWhispered)
-        wipe(Self.lastWhisperedRoll)
+        self.lastPostedRoll = nil
+        self.lastVersionCheck = nil
+        self.lastSuppressed = nil
+        wipe(self.lastWhispered)
+        wipe(self.lastWhisperedRoll)
     end
 end
 
@@ -406,7 +406,7 @@ end
 -- Get major, channel and minor versions for the given version string or unit
 -- TODO: Automatically set TOC version to tag or revision starting with in v19
 function Self:GetVersion(versionOrUnit)
-    local version = (not versionOrUnit or Unit.IsSelf(versionOrUnit)) and self.VERSION
+    local version = (not versionOrUnit or Unit.IsSelf(versionOrUnit)) and Self.VERSION
         or type(versionOrUnit) == "string" and self.versions[Unit.Name(versionOrUnit)]
         or versionOrUnit
 
@@ -489,7 +489,7 @@ end
 
 -- Write to log and print if lvl is high enough
 function Addon:Echo(lvl, line, ...)
-    if lvl == self.ECHO_DEBUG then
+    if lvl == Self.ECHO_DEBUG then
         for i=1, select("#", ...) do
             line = line .. (i == 1 and " - " or ", ") .. Util.ToString((select(i, ...)))
         end
@@ -505,15 +505,15 @@ function Addon:Echo(lvl, line, ...)
 end
 
 -- Shortcuts for different log levels
-function Self:Error(...) self:Echo(self.ECHO_ERROR, ...) end
-function Self:Info(...) self:Echo(self.ECHO_INFO, ...) end
-function Self:Verbose(...) self:Echo(self.ECHO_VERBOSE, ...) end
-function Self:Debug(...) self:Echo(self.ECHO_DEBUG, ...) end
+function Self:Error(...) self:Echo(Self.ECHO_ERROR, ...) end
+function Self:Info(...) self:Echo(Self.ECHO_INFO, ...) end
+function Self:Verbose(...) self:Echo(Self.ECHO_VERBOSE, ...) end
+function Self:Debug(...) self:Echo(Self.ECHO_DEBUG, ...) end
 
 -- Add an entry to the debug log
 function Self:Log(lvl, line)
-    tinsert(self.log, ("[%.1f] %s: %s"):format(GetTime(), self.ECHO_LEVELS[lvl or self.ECHO_INFO], line or "-"))
-    while #self.log > self.LOG_MAX_ENTRIES do
+    tinsert(self.log, ("[%.1f] %s: %s"):format(GetTime(), Self.ECHO_LEVELS[lvl or Self.ECHO_INFO], line or "-"))
+    while #self.log > Self.LOG_MAX_ENTRIES do
         Util.TblShift(self.log)
     end
 end
@@ -522,57 +522,71 @@ end
 function Self:LogExport()
     local realm = GetRealmName()
     local _, name, _, _, lang, _, region = RI:GetRealmInfo(realm)    
-    local txt = ("~ PersoLootRoll ~ Version: %s ~ Date: %s ~ Locale: %s ~ Realm: %s-%s (%s) ~"):format(self.VERSION or "?", date() or "?", GetLocale() or "?", region or "?", name or realm or "?", lang or "?")
+    local txt = ("~ PersoLootRoll ~ Version: %s ~ Date: %s ~ Locale: %s ~ Realm: %s-%s (%s) ~"):format(Self.VERSION or "?", date() or "?", GetLocale() or "?", region or "?", name or realm or "?", lang or "?")
     txt = txt .. "\n" .. Util.TblConcat(self.log, "\n")
 
     GUI.ShowExportWindow("Export log", txt)
 end
 
--------------------------------------------------------
---                   Error handling                  --
--------------------------------------------------------
-
 -- Register our error handler
 function Self:RegisterErrorHandler()
-    local s = function (s) return strtrim(tostring(s), "\n") end
-
     if BugGrabber and BugGrabber.RegisterCallback then
         BugGrabber.RegisterCallback(self, "BugGrabber_BugGrabbed", function (_, err)
-            if Self.errors < Self.LOG_MAX_ERRORS then
-                self:HandleError(s(err.message), s(err.stack), s(err.locals ~= "InCombatSkipped" and err.locals or ""))
-            end
+            self:HandleError(err.message, err.stack, err.locals ~= "InCombatSkipped" and err.locals or "")
         end)
     else
         local origHandler = geterrorhandler()
-        seterrorhandler(function (msg, simple, ...)
-            if Self.errors < Self.LOG_MAX_ERRORS then
-                local stack = not simple and debugstack(3) or ""
-                local locals = not (simple or InCombatLockdown() or UnitAffectingCombat("player")) and debuglocals(3) or ""
+        seterrorhandler(function (msg, lvl)
+            local r = origHandler and origHandler(msg, lvl) or nil
+            lvl = lvl or 1
 
-                self:HandleError(s(msg), s(stack), s(locals))
+            if self:ShouldHandleErrors() then
+                local stack = debugstack(2 + lvl)
+                local locals = not (InCombatLockdown() or UnitAffectingCombat("player")) and debuglocals(2 + lvl) or ""
+
+                self:HandleError(msg, stack, locals)
             end
 
-            return origHandler and origHandler(msg, simple, ...) or nil
+            return r
         end)
     end
 end
 
+-- Check if we should still handle errors
+function Self:ShouldHandleErrors()
+    return self.errors < Self.LOG_MAX_ERRORS + 1
+end
+
 -- Check for PLR errors and log them
-function Self:HandleError(msg, stack, locals)
-    msg = "\"" .. msg:gsub("^Interface\\", ""):gsub("^AddOns\\", "") .. "\""
-    stack = stack and ("\n" .. stack):gsub("\nInterface\\", "\n"):gsub("\nAddOns\\", "\n") or ""
-    local txt = msg .. stack
+function Self:HandleError(msg, stack)
+    if self:ShouldHandleErrors() then
+        self.errors = self.errors + 1
 
-    for v in txt:gmatch(Name .. "\\([^\\]+)") do
-        if v ~= "Libs" then
-            Self.errors = Self.errors + 1
+        msg = "\"" .. strtrim(tostring(msg), "\n"):gsub("^Interface\\", ""):gsub("^AddOns\\", "") .. "\""
+        stack = ("\n" .. strtrim(tostring(stack), "\n")):gsub("\nInterface\\", "\n"):gsub("\nAddOns\\", "\n")
 
-            self:Log(Self.ECHO_ERROR, txt)
+        -- Just print the error message if HandleError or LogExport caused it
+        local file = Name .. "\\Core\\Addon.lua[^\n]*"
+        if stack:match(file .. "HandleError") or stack:match(file .. "LogExport") then
+            self.errors = math.huge
+            self:Print("|cffff0000[ERROR]|r " .. msg .. "\n\nThis is an error in the error-handling system itself. Please create a new ticket on Curse, WoWInterface or GitHub, copy & paste the error message in there and add any additional info you might have. Thank you! =)")
+        -- Log error message and stack as well as printing the error message
+        elseif self:ShouldHandleErrors() then
+            local txt = strtrim(msg .. stack, "\n")
+            
+            for v in txt:gmatch(Name .. "\\([^\\]+)") do
+                if v ~= "Libs" then
+                    self:Log(Self.ECHO_ERROR, txt)
 
-            if Self.errors == 1 and (not self.db or self.db.profile.messages.echo >= Self.ECHO_ERROR) then
-                self:Print("|cffff0000[ERROR]|r " .. msg .. "\n\nPlease type in |cffbbbbbb/plr log|r, create a new ticket on Curse, WoWInterface or GitHub, copy & paste the log in there and add any additional info you might have. Thank you! =)")
+                    if self.errors == 1 and (not self.db or self.db.profile.messages.echo >= Self.ECHO_ERROR) then
+                        self:Print("|cffff0000[ERROR]|r " .. msg .. "\n\nPlease type in |cffbbbbbb/plr log|r, create a new ticket on Curse, WoWInterface or GitHub, copy & paste the log in there and add any additional info you might have. Thank you! =)")
+                    end
+
+                    return
+                end
             end
-            break
+
+            self.errors = self.errors - 1
         end
     end
 end
@@ -583,13 +597,13 @@ end
 
 function Self:ExtendTimerTo(timer, to, ...)
     if not timer.canceled and (select("#", ...) > 0 or timer.ends - GetTime() < to) then
-        Self:CancelTimer(timer)
+        self:CancelTimer(timer)
         local fn = timer.looping and Self.ScheduleRepeatingTimer or Self.ScheduleTimer
 
         if select("#", ...) > 0 then
-            timer = fn(Self, timer.func, to, ...)
+            timer = fn(self, timer.func, to, ...)
         else
-            timer = fn(Self, timer.func, to, unpack(timer, 1, timer.argsCount))
+            timer = fn(self, timer.func, to, unpack(timer, 1, timer.argsCount))
         end
 
         return timer, true
