@@ -587,13 +587,14 @@ function Self.TableRowHighlight(parent, skip)
                 else
                     local cY = select(2, GetCursorPosition()) / UIParent:GetEffectiveScale()
                     local frameTop, frameBottom = parent.frame:GetTop(), parent.frame:GetBottom()
+                    local offset = parent.localstatus and parent.localstatus.offset or parent.status and parent.status.offset or 0
                     local top, bottom
 
                     for i=skip+1,#parent.children do
                         local childTop, childBottom = parent.children[i].frame:GetTop(), parent.children[i].frame:GetBottom()
                         if childTop and childBottom and childTop + spaceV/2 >= cY and childBottom - spaceV/2 <= cY then
-                            top =  min(frameTop, max(top or 0, childTop + spaceV/2))
-                            bottom = max(frameBottom, min(bottom or frameTop, childBottom - spaceV/2))
+                            top =  max(top or 0, childTop + spaceV/2)
+                            bottom = min(bottom or math.huge, childBottom - spaceV/2)
                         end
                     end
                     
@@ -601,7 +602,7 @@ function Self.TableRowHighlight(parent, skip)
                         Self(Self.HIGHLIGHT)
                             .SetParent(self)
                             .SetPoint("LEFT").SetPoint("RIGHT")
-                            .SetPoint("TOP", 0, top - frameTop)
+                            .SetPoint("TOP", 0, top - frameTop - offset)
                             .SetHeight(top - bottom)
                             .Show()
                     else
