@@ -42,6 +42,7 @@ StaticPopupDialogs[Self.DIALOG_ROLL_CANCEL] = {
     button1 = YES,
     button2 = NO,
     OnAccept = function(self, roll)
+        Addon:Debug("GUI.Click:RollCancelDialog", roll and roll.id)
         roll:Cancel()
     end,
     timeout = 0,
@@ -56,6 +57,7 @@ StaticPopupDialogs[Self.DIALOG_ROLL_RESTART] = {
     button1 = YES,
     button2 = NO,
     OnAccept = function(self, roll)
+        Addon:Debug("GUI.Click:RollRestartDialog", roll and roll.id)
         roll:Restart()
     end,
     timeout = 0,
@@ -80,7 +82,10 @@ StaticPopupDialogs[Self.DIALOG_OPT_MASTERLOOT_LOAD] = {
     text = L["DIALOG_OPT_MASTERLOOT_LOAD"],
     button1 = YES,
     button2 = NO,
-    OnAccept = function () Options.ImportRules() end,
+    OnAccept = function ()
+        Addon:Debug("GUI.Click:MasterlootLoadDialog")
+        Options.ImportRules()
+    end,
     whileDead = true,
     hideOnEscape = true,
     preferredIndex = 3
@@ -91,7 +96,10 @@ StaticPopupDialogs[Self.DIALOG_OPT_MASTERLOOT_SAVE] = {
     text = L["DIALOG_OPT_MASTERLOOT_SAVE"],
     button1 = YES,
     button2 = NO,
-    OnAccept = function () Options.ExportRules() end,
+    OnAccept = function ()
+        Addon:Debug("GUI.Click:MasterlootSaveDialog")
+        Options.ExportRules()
+    end,
     whileDead = true,
     hideOnEscape = true,
     preferredIndex = 3
@@ -109,11 +117,10 @@ local function PLR_LootWonAlertFrame_SetUp(self, itemLink, quantity, rollType, r
 end
 
 -- OnClick
-function PLR_LootWonAlertFrame_OnClick(self, button, down)
-    Addon:Debug("GUI.Click:LootWonAlert", button, down)
-
-    if not AlertFrame_OnClick(self, button, down) then
+function PLR_LootWonAlertFrame_OnClick(self, ...)
+    if not AlertFrame_OnClick(self, ...) then
         local roll = Roll.Get(self.rollId)
+        Addon:Debug("GUI.Click:LootWonAlert", roll and roll.id)
 
         if roll and not roll.traded then
             Trade.Initiate(roll.item.owner)
@@ -379,7 +386,7 @@ function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
         .SetImage(icon:sub(1, 9) == "Interface" and icon or "Interface\\Buttons\\" .. icon .. "-Up")
         .SetImageSize(width or 16, height or 16).SetHeight(16).SetWidth(16)
         .SetCallback("OnClick", function (...)
-            Addon:Debug("GUI.Click:IconButton", desc)
+            if desc then Addon:Debug("GUI.Click:IconButton", desc) end
             onClick(...)
             GameTooltip:Hide()
         end)

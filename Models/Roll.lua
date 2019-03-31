@@ -262,6 +262,8 @@ function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
         roll.itemOwnerId = roll.id
     end
 
+    Addon:Debug("Roll.Add", roll)
+
     Addon:SendMessage(Self.EVENT_ADD, roll)
 
     return roll
