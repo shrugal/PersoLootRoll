@@ -19,6 +19,7 @@ function Self.Show()
     if Self.frames.window then
         Self.frames.window.frame:Show()
     else
+        Addon:Debug("GUI.Rolls.Show")
 
         -- WINDOW
 
@@ -888,6 +889,8 @@ end
 
 function Self.UnitConfirmOrVote(self, ...)
     local roll, unit = self:GetUserData("roll"), self:GetUserData("unit")
+    Addon:Debug("GUI.Click:Rolls.ConfirmOrVote", roll and roll.id, unit, Self.confirm)
+
     if roll:CanBeAwardedTo(unit, true) and not (Self.confirm.roll == roll.id and Self.confirm.unit == unit) then
         Self.confirm.roll, Self.confirm.unit = roll.id, unit
         Self.Update()

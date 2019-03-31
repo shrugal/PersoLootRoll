@@ -83,6 +83,8 @@ function Self.EnableGroupLootRollHook()
                 if roll then
                     bid = bid == 0 and Roll.BID_PASS or bid
 
+                    Addon:Debug("GUI.Click:Hooks.RollOnLoot", roll.id, bid)
+
                     if roll:UnitCanBid("player", bid) then
                         roll:Bid(bid)
                     else
@@ -263,6 +265,8 @@ function Self.EnableChatLinksHook()
             local linkType, args = link:match("^([^:]+):(.*)$")
 
             if linkType and linkType:sub(1, 3) == "plr" then
+                Addon:Debug("GUI.Click:Hooks.Link", linkType, args)
+
                 if linkType == "plrtrade" then
                     Trade.Initiate(args)
                 elseif linkType == "plrbid" then
@@ -319,6 +323,7 @@ function Self.EnableUnitMenusHook()
     local button = GUI(CreateFrame("Button", "PLR_AwardLootButton", UIParent, "UIDropDownMenuButtonTemplate"))
         .SetText(L["AWARD_LOOT"])
         .SetScript("OnClick", function (self)
+            Addon:Debug("GUI.Click:Hooks.UnitMenu", self.unit)
             local s, x, y = UIParent:GetEffectiveScale(), GetCursorPosition()
             GUI.ToggleAwardUnitDropdown(self.unit, "TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
         end)

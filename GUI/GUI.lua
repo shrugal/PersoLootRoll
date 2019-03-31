@@ -110,6 +110,8 @@ end
 
 -- OnClick
 function PLR_LootWonAlertFrame_OnClick(self, button, down)
+    Addon:Debug("GUI.Click:LootWonAlert", button, down)
+
     if not AlertFrame_OnClick(self, button, down) then
         local roll = Roll.Get(self.rollId)
 
@@ -132,11 +134,17 @@ function Self.ToggleMasterlootDropdown(...)
         dropdown = Self("Dropdown-Pullout").Hide()()
         Self("Dropdown-Item-Execute")
             .SetText(L["MENU_MASTERLOOT_SEARCH"])
-            .SetCallback("OnClick", function () Session.SendRequest() end)
+            .SetCallback("OnClick", function ()
+                Addon:Debug("GUI.Click:MasterlootDropdown.RequestML")
+                Session.SendRequest()
+            end)
             .AddTo(dropdown)
         Self("Dropdown-Item-Execute")
             .SetText(L["MENU_MASTERLOOT_START"])
-            .SetCallback("OnClick", function () Session.SetMasterlooter("player") end)
+            .SetCallback("OnClick", function ()
+                Addon:Debug("GUI.Click:MasterlootDropdown.BecomeML")
+                Session.SetMasterlooter("player")
+            end)
             .AddTo(dropdown)
         Self("Dropdown-Item-Execute")
             .SetText(L["MENU_MASTERLOOT_SETTINGS"])
@@ -166,7 +174,10 @@ function Self.ToggleAnswersDropdown(roll, bid, answers, ...)
         for i,v in pairs(answers) do
             Self("Dropdown-Item-Execute")
                 .SetText(Util.In(v, Roll.ANSWER_NEED, Roll.ANSWER_GREED) and L["ROLL_BID_" .. bid] or v)
-                .SetCallback("OnClick", function () roll:Bid(bid + i/10) end)
+                .SetCallback("OnClick", function ()
+                    Addon:Debug("GUI.Click:AnswersDropdown.Bid", roll and roll.id, bid, i)
+                    roll:Bid(bid + i/10)
+                end)
                 .AddTo(dropdown)
         end
     end
@@ -233,6 +244,7 @@ function Self.ToggleAwardUnitDropdown(unit, ...)
                 Self("Dropdown-Item-Execute")
                     .SetText(roll.item.link)
                     .SetCallback("OnClick", function (...)
+                        Addon:Debug("GUI.Click:AwardUnitDropdown.Item", roll and roll.id, unit)
                         if not Self.ItemClick(...) then
                             roll:End(unit, true)
                         end
@@ -366,7 +378,11 @@ function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
     f = Self("Icon")
         .SetImage(icon:sub(1, 9) == "Interface" and icon or "Interface\\Buttons\\" .. icon .. "-Up")
         .SetImageSize(width or 16, height or 16).SetHeight(16).SetWidth(16)
-        .SetCallback("OnClick", function (...) onClick(...) GameTooltip:Hide() end)
+        .SetCallback("OnClick", function (...)
+            Addon:Debug("GUI.Click:IconButton", desc)
+            onClick(...)
+            GameTooltip:Hide()
+        end)
         .SetCallback("OnEnter", Self.TooltipText)
         .SetCallback("OnLeave", Self.TooltipHide)
         .SetUserData("text", desc)
@@ -457,6 +473,8 @@ end
 -- Handle clicks on unit labels
 function Self.UnitClick(self, event, button)
     local unit = self:GetUserData("unit")
+    Addon:Debug("GUI.Click:Unit", button, unit)
+
     if unit then
         if button == "LeftButton" then
             ChatFrame_SendTell(unit)
@@ -470,6 +488,8 @@ function Self.UnitClick(self, event, button)
 end
 
 function Self.ChatClick(self, event, button)
+    Addon:Debug("GUI.Click:Chat", button)
+
     if button == "RightButton" and not Addon.db.profile.messages.whisper.ask then
         Options.Show("Messages")
     else
@@ -480,6 +500,8 @@ end
 -- Award loot to or vote for unit
 function Self.UnitAwardOrVote(self)
     local roll, unit = self:GetUserData("roll"), self:GetUserData("unit")
+    Addon:Debug("GUI.Click:AwardOrVote", roll and roll.id, unit)
+
     if roll:CanBeAwardedTo(unit, true) then
         roll:End(unit, true)
     elseif roll:UnitCanVote() then
@@ -489,10 +511,13 @@ end
 
 -- Handle clicks on item labels/icons
 function Self.ItemClick(self)
+    local link = self:GetUserData("link")
+    Addon:Debug("GUI.Click:Item", link)
+
     if IsModifiedClick("DRESSUP") then
-        return DressUpItemLink(self:GetUserData("link"))
+        return DressUpItemLink(link)
     elseif IsModifiedClick("CHATLINK") then
-        return ChatEdit_InsertLink(self:GetUserData("link"))
+        return ChatEdit_InsertLink(link)
     end
 end
 
