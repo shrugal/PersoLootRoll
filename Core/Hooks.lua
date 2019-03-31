@@ -21,22 +21,22 @@ end
 
 function Self.EnableGroupLootRollHook()
     -- GetLootRollTimeLeft
-    if not Addon:IsHooked("GetLootRollTimeLeft") then
-        Addon:RawHook("GetLootRollTimeLeft", function (id)
+    if not Self:IsHooked("GetLootRollTimeLeft") then
+        Self:RawHook("GetLootRollTimeLeft", function (id)
             if Roll.IsPlrId(id) then
                 local roll = Roll.Get(id)
                 if roll then
                     return roll:GetTimeLeft()
                 end
             else
-                return Addon.hooks.GetLootRollTimeLeft(id)
+                return Self.hooks.GetLootRollTimeLeft(id)
             end
         end, true)
     end
 
     -- GetLootRollItemInfo
-    if not Addon:IsHooked("GetLootRollItemInfo") then
-        Addon:RawHook("GetLootRollItemInfo", function (id)
+    if not Self:IsHooked("GetLootRollItemInfo") then
+        Self:RawHook("GetLootRollItemInfo", function (id)
             if Roll.IsPlrId(id) then
                 local roll = Roll.Get(id)
                 if roll then
@@ -56,34 +56,34 @@ function Self.EnableGroupLootRollHook()
                         1                       -- Disenchant skill required
                 end
             else
-                return Addon.hooks.GetLootRollItemInfo(id)
+                return Self.hooks.GetLootRollItemInfo(id)
             end
         end, true)
     end
 
     -- GetLootRollItemLink
-    if not Addon:IsHooked("GetLootRollItemLink") then
-        Addon:RawHook("GetLootRollItemLink", function (id)
+    if not Self:IsHooked("GetLootRollItemLink") then
+        Self:RawHook("GetLootRollItemLink", function (id)
             if Roll.IsPlrId(id) then
                 local roll = Roll.Get(id)
                 if roll then
                     return Roll.Get(id).item.link
                 end
             else
-                return Addon.hooks.GetLootRollItemLink(id)
+                return Self.hooks.GetLootRollItemLink(id)
             end
         end, true)
     end
 
     -- RollOnLoot
-    if not Addon:IsHooked("RollOnLoot") then
-        Addon:RawHook("RollOnLoot", function (id, bid)
+    if not Self:IsHooked("RollOnLoot") then
+        Self:RawHook("RollOnLoot", function (id, bid)
             if Roll.IsPlrId(id) then
                 local roll = Roll.Get(id)
                 if roll then
                     bid = bid == 0 and Roll.BID_PASS or bid
 
-                    Addon:Debug("GUI.Click:Hooks.RollOnLoot", roll.id, bid)
+                    Self:Debug("GUI.Click:Hooks.RollOnLoot", roll.id, bid)
 
                     if roll:UnitCanBid("player", bid) then
                         roll:Bid(bid)
@@ -92,7 +92,7 @@ function Self.EnableGroupLootRollHook()
                     end
                 end
             else
-                return Addon.hooks.RollOnLoot(id, bid)
+                return Self.hooks.RollOnLoot(id, bid)
             end
         end, true)
     end
@@ -185,7 +185,7 @@ function Self.EnableGroupLootRollHook()
                 end
             end
         else
-            Addon.hooks[self].OnClick(self, button)
+            Self.hooks[self].OnClick(self, button)
         end
     end
 
@@ -193,29 +193,29 @@ function Self.EnableGroupLootRollHook()
         local frame = _G["GroupLootFrame" .. i]
 
         -- OnShow
-        if not Addon:IsHooked(frame, "OnShow") then
-            Addon:HookScript(frame, "OnShow", onShow)
+        if not Self:IsHooked(frame, "OnShow") then
+            Self:HookScript(frame, "OnShow", onShow)
         end
 
         -- OnHide
-        if not Addon:IsHooked(frame, "OnHide") then
-            Addon:HookScript(frame, "OnHide", onHide)
+        if not Self:IsHooked(frame, "OnHide") then
+            Self:HookScript(frame, "OnHide", onHide)
         end
 
         -- OnClick
-        if not Addon:IsHooked(frame.NeedButton, "OnClick") then
-            Addon:RawHookScript(frame.NeedButton, "OnClick", onButtonClick)
+        if not Self:IsHooked(frame.NeedButton, "OnClick") then
+            Self:RawHookScript(frame.NeedButton, "OnClick", onButtonClick)
             frame.NeedButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-            Addon:RawHookScript(frame.GreedButton, "OnClick", onButtonClick)
+            Self:RawHookScript(frame.GreedButton, "OnClick", onButtonClick)
             frame.GreedButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
         end
     end
 
     --GroupLootContainer:RemoveFrame
-    if not Addon:IsHooked("GroupLootContainer_RemoveFrame") then
-        Addon:SecureHook("GroupLootContainer_RemoveFrame", function (self, frame)
+    if not Self:IsHooked("GroupLootContainer_RemoveFrame") then
+        Self:SecureHook("GroupLootContainer_RemoveFrame", function (self, frame)
             -- Find a running roll that hasn't been shown yet
-            for i,roll in pairs(Addon.rolls) do
+            for i,roll in pairs(Self.rolls) do
                 if roll.shown == false and not roll.bid and roll:UnitCanBid() then
                     roll:ShowRollFrame() break
                 end
@@ -224,32 +224,32 @@ function Self.EnableGroupLootRollHook()
     end
 
     -- GameTooltip:SetLootRollItem
-    if not Addon:IsHooked(GameTooltip, "SetLootRollItem") then
-        Addon:RawHook(GameTooltip, "SetLootRollItem", function (self, id)
+    if not Self:IsHooked(GameTooltip, "SetLootRollItem") then
+        Self:RawHook(GameTooltip, "SetLootRollItem", function (self, id)
             if Roll.IsPlrId(id) then
                 local roll = Roll.Get(id)
                 if roll then
                     self:SetHyperlink(roll.item.link)
                 end
             else
-                return Addon.hooks[self].SetLootRollItem(self, id)
+                return Self.hooks[self].SetLootRollItem(self, id)
             end
         end, true)
     end
 end
 
 function Self.DisableGroupLootRoll()
-    Addon:Unhook("GetLootRollTimeLeft")
-    Addon:Unhook("GetLootRollItemInfo")
-    Addon:Unhook("GetLootRollItemLink")
-    Addon:Unhook("RollOnLoot")
+    Self:Unhook("GetLootRollTimeLeft")
+    Self:Unhook("GetLootRollItemInfo")
+    Self:Unhook("GetLootRollItemLink")
+    Self:Unhook("RollOnLoot")
     for i=1, NUM_GROUP_LOOT_FRAMES do
-        Addon:Unhook(_G["GroupLootFrame" .. i], "OnShow")
-        Addon:Unhook(_G["GroupLootFrame" .. i], "OnHide")
-        Addon:Unhook(_G["GroupLootFrame" .. i], "OnClick")
+        Self:Unhook(_G["GroupLootFrame" .. i], "OnShow")
+        Self:Unhook(_G["GroupLootFrame" .. i], "OnHide")
+        Self:Unhook(_G["GroupLootFrame" .. i], "OnClick")
     end
-    Addon:Unhook("GroupLootContainer_RemoveFrame")
-    Addon:Unhook(GameTooltip, "SetLootRollItem")
+    Self:Unhook("GroupLootContainer_RemoveFrame")
+    Self:Unhook(GameTooltip, "SetLootRollItem")
 end
 
 -------------------------------------------------------
@@ -260,12 +260,12 @@ function Self.EnableChatLinksHook()
 
     -- CLICK
 
-    if not Addon:IsHooked("SetItemRef") then
-        Addon:SecureHook("SetItemRef", function (link, text, button, frame)
+    if not Self:IsHooked("SetItemRef") then
+        Self:SecureHook("SetItemRef", function (link, text, button, frame)
             local linkType, args = link:match("^([^:]+):(.*)$")
 
             if linkType and linkType:sub(1, 3) == "plr" then
-                Addon:Debug("GUI.Click:Hooks.Link", linkType, args)
+                Self:Debug("GUI.Click:Hooks.Link", linkType, args)
 
                 if linkType == "plrtrade" then
                     Trade.Initiate(args)
@@ -302,15 +302,15 @@ function Self.EnableChatLinksHook()
 
     for i=1,NUM_CHAT_WINDOWS do
         local frame = _G["ChatFrame" .. i]
-        if frame and not Addon:IsHooked(frame, "OnHyperlinkEnter") then
-            Addon:SecureHookScript(frame, "OnHyperlinkEnter", onHyperlinkEnter)
-            Addon:SecureHookScript(frame, "OnHyperlinkLeave", onHyperlinkLeave)
+        if frame and not Self:IsHooked(frame, "OnHyperlinkEnter") then
+            Self:SecureHookScript(frame, "OnHyperlinkEnter", onHyperlinkEnter)
+            Self:SecureHookScript(frame, "OnHyperlinkLeave", onHyperlinkLeave)
         end
     end
 end
 
 function Self.DisableChatLinks()
-    Addon:Unhook("SetItemRef")
+    Self:Unhook("SetItemRef")
 end
 
 -------------------------------------------------------
@@ -323,7 +323,7 @@ function Self.EnableUnitMenusHook()
     local button = GUI(CreateFrame("Button", "PLR_AwardLootButton", UIParent, "UIDropDownMenuButtonTemplate"))
         .SetText(L["AWARD_LOOT"])
         .SetScript("OnClick", function (self)
-            Addon:Debug("GUI.Click:Hooks.UnitMenu", self.unit)
+            Self:Debug("GUI.Click:Hooks.UnitMenu", self.unit)
             local s, x, y = UIParent:GetEffectiveScale(), GetCursorPosition()
             GUI.ToggleAwardUnitDropdown(self.unit, "TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
         end)
@@ -331,14 +331,14 @@ function Self.EnableUnitMenusHook()
     
     PLR_AwardLootButtonNormalText:SetPoint("LEFT")
 
-    if not Addon:IsHooked("UnitPopup_ShowMenu") then
-        Addon:SecureHook("UnitPopup_ShowMenu", function (dropdown, menu, unit)
+    if not Self:IsHooked("UnitPopup_ShowMenu") then
+        Self:SecureHook("UnitPopup_ShowMenu", function (dropdown, menu, unit)
             unit = unit or dropdown.unit or dropdown.chatTarget
 
             if UIDROPDOWNMENU_MENU_LEVEL == 1 then
                 button:Hide()
 
-                if Util.In(menu, menus) and Util.TblFirst(Addon.rolls, "CanBeAwardedTo", nil, nil, unit, true) then
+                if Util.In(menu, menus) and Util.TblFirst(Self.rolls, "CanBeAwardedTo", nil, nil, unit, true) then
                     local parent = _G["DropDownList1"]
                     local placed = false
                     
@@ -367,5 +367,5 @@ function Self.EnableUnitMenusHook()
 end
 
 function Self.DisableUnitMenus()
-    Addon:Unhook("UnitPopup_ShowMenu")
+    Self:Unhook("UnitPopup_ShowMenu")
 end
