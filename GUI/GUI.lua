@@ -630,7 +630,6 @@ function Self.TableRowBackground(parent, colors, skip)
     local tblObj = parent:GetUserData("table")
     local spaceV = tblObj.spaceV or tblObj.space or 0
     local textures = {}
-    TEX = textures -- TODO
 
     local LayoutFinished = parent.LayoutFinished
     parent.LayoutFinished = function (self, ...)
@@ -639,6 +638,7 @@ function Self.TableRowBackground(parent, colors, skip)
         Util.TblCall(textures, "Hide")
 
         local frameTop, frameBottom = parent.frame:GetTop(), parent.frame:GetBottom()
+        local offset = parent.localstatus and parent.localstatus.offset or parent.status and parent.status.offset or 0
         local cols, tex, row, top, bottom, last, child, childTop, childBottom, color = 0, 1
 
         for i=skip + 1, #parent.children + 1 do
@@ -665,7 +665,7 @@ function Self.TableRowBackground(parent, colors, skip)
                         Self(textures[tex])
                             .SetPoint("LEFT")
                             .SetPoint("RIGHT")
-                            .SetPoint("TOP", 0, top - frameTop)
+                            .SetPoint("TOP", 0, top - frameTop - offset)
                             .SetHeight(top - bottom)
                             .SetColorTexture(unpack(color == true and default or color))
                             .Show()
@@ -678,8 +678,8 @@ function Self.TableRowBackground(parent, colors, skip)
                 if not last then
                     row = row or 1
                     cols = cols + 1
-                    top =  min(frameTop, max(top or 0, childTop + spaceV/2))
-                    bottom = max(frameBottom, min(bottom or frameTop, childBottom - spaceV/2))
+                    top =  max(top or 0, childTop + spaceV/2)
+                    bottom = min(bottom or math.huge, childBottom - spaceV/2)
                 end
             end
         end
