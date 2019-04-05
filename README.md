@@ -3,12 +3,6 @@ A World of Warcraft addon to share and roll on items when using personal loot.
 
 Get it from [Curse](https://www.curseforge.com/wow/addons/persolootroll) or [WoWInterface](http://www.wowinterface.com/downloads/info24667-PersoLootRoll.html)!
 
-<p align="center">
-  <a href="https://discord.gg/RGPmkAu">
-    <img style="width: 320px" src="https://i.imgur.com/awQcGv1m.png">
-  </a>
-</p>
-
 ## Features
 
 ### <span style="color: red">Roll on tradable personal loot from others</span>
@@ -146,7 +140,7 @@ This project is fully open-source and the source code can be found on GitHub. To
 bugs you find with these versions should you be brave enough to install them, so the stable releases will be as bug-free as possible.
 
 ### Bugs and Features
-Please create a new entry on the [issue tracker](https://github.com/shrugal/PersoLootRoll/issues) you encounter any bugs or want to suggest a feature, or join and post it on the Discord Server.
+Please create a new entry on the [issue tracker](https://github.com/shrugal/PersoLootRoll/issues) you encounter any bugs or want to suggest a feature.
 
 ### Roadmap
 These are the things I have planed currently:
