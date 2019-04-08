@@ -13,11 +13,17 @@ Self.ECHO_VERBOSE = 3
 Self.ECHO_DEBUG = 4
 Self.ECHO_LEVELS = {"ERROR", "INFO", "VERBOSE", "DEBUG"}
 
+-- Max # of log entries before starting to delete old ones
 Self.LOG_MAX_ENTRIES = 500
+-- Max # of logged addon error messages
 Self.LOG_MAX_ERRORS = 10
+-- Max # of handled errors per second
+Self.LOG_MAX_ERROR_RATE = 10
 
 Self.log = {}
 Self.errors = 0
+Self.errorPrev = 0
+Self.errorRate = 0
 
 -- Versioning
 Self.CHANNEL_ALPHA = "alpha"
@@ -528,6 +534,12 @@ function Self:LogExport()
     GUI.ShowExportWindow("Export log", txt)
 end
 
+-- Check if we should handle errors
+function Self:ShouldHandleError()
+    return self.errors <= Self.LOG_MAX_ERRORS
+        and self.errorRate - Self.LOG_MAX_ERROR_RATE * (GetTime() - self.errorPrev) < Self.LOG_MAX_ERROR_RATE
+end
+
 -- Register our error handler
 function Self:RegisterErrorHandler()
     if BugGrabber and BugGrabber.RegisterCallback then
@@ -540,7 +552,7 @@ function Self:RegisterErrorHandler()
             local r = origHandler and origHandler(msg, lvl) or nil
             lvl = lvl or 1
 
-            if self:ShouldHandleErrors() then
+            if self:ShouldHandleError() then
                 local stack = debugstack(2 + lvl)
                 local locals = not (InCombatLockdown() or UnitAffectingCombat("player")) and debuglocals(2 + lvl) or ""
 
@@ -552,16 +564,9 @@ function Self:RegisterErrorHandler()
     end
 end
 
--- Check if we should still handle errors
-function Self:ShouldHandleErrors()
-    return self.errors < Self.LOG_MAX_ERRORS + 1
-end
-
 -- Check for PLR errors and log them
 function Self:HandleError(msg, stack)
-    if self:ShouldHandleErrors() then
-        self.errors = self.errors + 1
-
+    if self:ShouldHandleError() then
         msg = "\"" .. strtrim(tostring(msg), "\n"):gsub("^Interface\\", ""):gsub("^AddOns\\", "") .. "\""
         stack = ("\n" .. strtrim(tostring(stack), "\n")):gsub("\nInterface\\", "\n"):gsub("\nAddOns\\", "\n")
 
@@ -571,22 +576,23 @@ function Self:HandleError(msg, stack)
             self.errors = math.huge
             self:Print("|cffff0000[ERROR]|r " .. msg .. "\n\nThis is an error in the error-handling system itself. Please create a new ticket on Curse, WoWInterface or GitHub, copy & paste the error message in there and add any additional info you might have. Thank you! =)")
         -- Log error message and stack as well as printing the error message
-        elseif self:ShouldHandleErrors() then
+        elseif self.errors < Self.LOG_MAX_ERRORS then
+            self.errorRate = max(0, self.errorRate - Self.LOG_MAX_ERROR_RATE * (GetTime() - self.errorPrev)) + 1
+            self.errorPrev = GetTime()
+
             local txt = strtrim(msg .. stack, "\n")
             
             for v in txt:gmatch(Name .. "\\([^\\]+)") do
                 if v ~= "Libs" then
+                    self.errors = self.errors + 1
+
                     self:Log(Self.ECHO_ERROR, txt)
 
                     if self.errors == 1 and (not self.db or self.db.profile.messages.echo >= Self.ECHO_ERROR) then
                         self:Print("|cffff0000[ERROR]|r " .. msg .. "\n\nPlease type in |cffbbbbbb/plr log|r, create a new ticket on Curse, WoWInterface or GitHub, copy & paste the log in there and add any additional info you might have. Thank you! =)")
                     end
-
-                    return
                 end
             end
-
-            self.errors = self.errors - 1
         end
     end
 end
