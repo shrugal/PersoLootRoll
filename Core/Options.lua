@@ -69,6 +69,8 @@ Self.DEFAULTS = {
             rules = {
                 timeoutBase = Roll.TIMEOUT,
                 timeoutPerItem = Roll.TIMEOUT_PER_ITEM,
+                startManually = false,
+                startInOrder = false,
                 startWhisper = false,
                 startAll = false,
                 bidPublic = false,
@@ -900,6 +902,24 @@ function Self.RegisterMasterloot()
                         get = function () return Addon.db.profile.masterloot.rules.timeoutPerItem end,
                         width = Self.WIDTH_HALF_SCROLL
                     },
+                    startManually = {
+                        name = L["OPT_MASTERLOOT_RULES_START_MANUALLY"],
+                        desc = L["OPT_MASTERLOOT_RULES_START_MANUALLY_DESC"] .. "\n",
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) Addon.db.profile.masterloot.rules.startManually = val end,
+                        get = function () return Addon.db.profile.masterloot.rules.startManually end,
+                        width = Self.WIDTH_HALF_SCROLL
+                    },
+                    startInOrder = {
+                        name = L["OPT_MASTERLOOT_RULES_START_IN_ORDER"],
+                        desc = L["OPT_MASTERLOOT_RULES_START_IN_ORDER_DESC"] .. "\n",
+                        type = "toggle",
+                        order = it(),
+                        set = function (_, val) Addon.db.profile.masterloot.rules.startInOrder = val end,
+                        get = function () return Addon.db.profile.masterloot.rules.startInOrder end,
+                        width = Self.WIDTH_HALF_SCROLL
+                    },
                     startWhisper = {
                         name = L["OPT_MASTERLOOT_RULES_START_WHISPER"],
                         desc = L["OPT_MASTERLOOT_RULES_START_WHISPER_DESC"]:format(Locale.GetCommLine("MSG_ROLL"):match("[^,]*")) .. "\n",
@@ -1329,11 +1349,12 @@ end
 
 -- Decode a param from its string representation
 function Self.DecodeParam(name, str)
-    if Util.In(name, "startWhisper", "startAll", "bidPublic", "votePublic", "allowDisenchant", "allowKeep", "autoAward") then
+    local t = Util.StrStartsWith(name, "council") and "table" or type(Addon.db.default.masterloot.rules[name])
+    if t == "boolean" then
         return Util.In(str:lower(), "true", "1", "yes")
-    elseif Util.In(name, "timeoutBase", "timeoutPerItem", "autoAwardTimeout", "autoAwardTimeoutPerItem") then
+    elseif t == "number" then
         return tonumber(str)
-    elseif Util.In(name, "needAnswers", "greedAnswers", "disenchanter", "councilRoles", "councilRanks", "councilWhitelist") then
+    elseif t == "table" then
         local val = Util.Tbl()
         for v in str:gmatch("[^,]+") do
             v = v:gsub("^%s*(.*)%s*$", "%1")
