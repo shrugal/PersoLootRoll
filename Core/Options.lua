@@ -1349,7 +1349,7 @@ end
 
 -- Decode a param from its string representation
 function Self.DecodeParam(name, str)
-    local t = Util.StrStartsWith(name, "council") and "table" or type(Addon.db.default.masterloot.rules[name])
+    local t = Util.StrStartsWith(name, "council") and "table" or type(Addon.db.defaults.profile.masterloot.rules[name])
     if t == "boolean" then
         return Util.In(str:lower(), "true", "1", "yes")
     elseif t == "number" then
