@@ -12,6 +12,9 @@ build:
     - web
   script:
     - ./release.sh -d
+  artifacts:
+    paths:
+      - .release/*.zip
 
 github:
   stage: deploy
