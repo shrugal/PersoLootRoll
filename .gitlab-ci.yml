@@ -3,7 +3,7 @@ stages:
   - deploy
 
 before_script:
-  - apt-get -q update && apt-get -q install -y zip jq curl
+  - apt-get -qq update && apt-get -qq install -y zip jq curl
 
 build:
   stage: build
@@ -14,7 +14,7 @@ build:
     - ./release.sh -d
   artifacts:
     paths:
-      - .release/*.zip
+      - .release/
 
 github:
   stage: deploy
