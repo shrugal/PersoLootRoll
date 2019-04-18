@@ -1,5 +1,3 @@
-- Added some more debug messages for UI interactions
-- Added handler to log LUA errors caused by the addon
-- Reduced LOG_MAX_ENTRIES from 1000 to 500, because showing the log takes a lot of time with many entries
-- Fixed missplaced table row backgrounds and highlights when the content is scrolled in the main window
-- Some cleanup
+- Added ignoring crafted loot
+- Fixed Unit.IsUnit for non-string parameters (CurseForge#11)
+- Fixed Locale.GetLanguageName for missing language code translations (CurseForge#12)
