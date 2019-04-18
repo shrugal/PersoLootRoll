@@ -6,6 +6,7 @@ local Self = Addon
 -- Message patterns
 Self.PATTERN_BONUS_LOOT = LOOT_ITEM_BONUS_ROLL:gsub("%%s", ".+")
 Self.PATTERN_CRAFTING = CREATED_ITEM:gsub("%%s", ".+")
+Self.PATTERN_CRAFTING_SELF = LOOT_ITEM_CREATED_SELF:gsub("%%s", ".+")
 Self.PATTERN_ROLL_RESULT = RANDOM_ROLL_RESULT:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%%d%$", "%%"):gsub("%%s", "(.+)"):gsub("%%d", "(%%d+)")
 
 -- Version check
@@ -198,7 +199,7 @@ function Self.CHAT_MSG_LOOT(_, _, msg, _, _, _, sender)
     if not Self:IsTracking() or not Unit.InGroup(unit) or not Unit.IsSelf(unit) and Self:UnitIsTracking(unit, true) then return end
 
     -- Check for bonus roll or crafting
-    if msg:match(Self.PATTERN_BONUS_LOOT) or msg:match(Self.PATTERN_CRAFTING) then
+    if msg:match(Self.PATTERN_BONUS_LOOT) or msg:match(Self.PATTERN_CRAFTING) or msg:match(Self.PATTERN_CRAFTING_SELF) then
         return
     end
 
