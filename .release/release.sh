@@ -75,20 +75,24 @@ skip_externals=
 skip_localization=
 skip_zipfile=
 skip_upload=
+skip_gh_upload=
 skip_cf_upload=
+skip_wi_upload=
 
 # Process command-line options
 usage() {
 	echo "Usage: release.sh [-cdelLosuz] [-t topdir] [-r releasedir] [-p curse-id] [-w wowi-id] [-g game-version]" >&2
 	echo "  -c               Skip copying files into the package directory." >&2
-	echo "  -d               Skip uploading." >&2
 	echo "  -e               Skip checkout of external repositories." >&2
 	echo "  -l               Skip @localization@ keyword replacement." >&2
-	echo "  -L               Only do @localization@ keyword replacement (skip upload to CurseForge)." >&2
+	echo "  -z               Skip zip file creation." >&2
+	echo "  -d               Skip uploading." >&2
+	echo "  -G               Skip upload to GitHub." >&2
+	echo "  -C               Skip upload to CurseForge." >&2
+	echo "  -W               Skip upload to WoWInterface." >&2
 	echo "  -o               Keep existing package directory, overwriting its contents." >&2
 	echo "  -s               Create a stripped-down \"nolib\" package." >&2
 	echo "  -u               Use Unix line-endings." >&2
-	echo "  -z               Skip zip file creation." >&2
 	echo "  -t topdir        Set top-level directory of checkout." >&2
 	echo "  -r releasedir    Set directory containing the package directory. Defaults to \"\$topdir/.release\"." >&2
 	echo "  -p curse-id      Set the project id used on CurseForge for localization and uploading." >&2
@@ -111,13 +115,21 @@ while getopts ":celLzusop:dw:r:t:g:" opt; do
 		# Skip @localization@ keyword replacement.
 		skip_localization=true
 		;;
-	L)
-		# Skip uploading to CurseForge.
-		skip_cf_upload=true
-		;;
 	d)
 		# Skip uploading.
 		skip_upload=true
+		;;
+	G)
+		# Skip uploading to GitHub.
+		skip_gh_upload=true
+		;;
+	C)
+		# Skip uploading to CurseForge.
+		skip_cf_upload=true
+		;;
+	W)
+		# Skip uploading to WoWInterface.
+		skip_wi_upload=true
 		;;
 	o)
 		# Skip deleting any previous package directory.
@@ -1833,13 +1845,12 @@ fi
 ### Create the final zipfile for the addon.
 ###
 
+archive_package_name="${package//[^A-Za-z0-9._-]/_}"
+archive_version="$project_version"
+archive_name="$archive_package_name-$project_version.zip"
+archive="$releasedir/$archive_name"
+
 if [ -z "$skip_zipfile" ]; then
-	archive_package_name="${package//[^A-Za-z0-9._-]/_}"
-
-	archive_version="$project_version"
-	archive_name="$archive_package_name-$project_version.zip"
-	archive="$releasedir/$archive_name"
-
 	nolib_archive_version="$project_version-nolib"
 	nolib_archive_name="$archive_package_name-$nolib_archive_version.zip"
 	nolib_archive="$releasedir/$nolib_archive_name"
@@ -1890,21 +1901,32 @@ if [ -z "$skip_zipfile" ]; then
 		fi
 		echo
 	fi
+fi
 
-	###
-	### Deploy the zipfile.
-	###
+###
+### Deploy the zipfile.
+###
 
-	upload_curseforge=$( [[ -z "$skip_upload" && -z "$skip_cf_upload" && -n "$slug" && -n "$cf_token" && -n "$project_site" ]] && echo true )
-	upload_wowinterface=$( [[ -z "$skip_upload" && -n "$tag" && -n "$addonid" && -n "$wowi_token" ]] && echo true )
-	upload_github=$( [[ -z "$skip_upload" && -n "$tag" && -n "$project_github_slug" && -n "$github_token" ]] && echo true )
+if [ -z "$skip_upload" ]; then
+	if [ ! -f "$archive" ]; then
+		echo "Skipping upload because archive file is missing."
+		skip_gh_upload=true
+		skip_cf_upload=true
+		skip_wi_upload=true
+		exit_code=1
+	fi
+
+
+	upload_github=$( [[ -z "$skip_gh_upload" && -n "$tag" && -n "$project_github_slug" && -n "$github_token" ]] && echo true )
+	upload_curseforge=$( [[ -z "$skip_cf_upload" && -n "$slug" && -n "$cf_token" && -n "$project_site" ]] && echo true )
+	upload_wowinterface=$( [[ -z "$skip_wi_upload" && -n "$tag" && -n "$addonid" && -n "$wowi_token" ]] && echo true )
 
 	if [ -n "$upload_curseforge" -o -n "$upload_wowinterface" -o -n "$upload_github" ] && ! which jq &>/dev/null; then
 		echo "Skipping upload because \"jq\" was not found."
 		echo
+		upload_github=
 		upload_curseforge=
 		upload_wowinterface=
-		upload_github=
 		exit_code=1
 	fi
 

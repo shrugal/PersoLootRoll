@@ -1,0 +1,47 @@
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  only:
+    - tags
+    - web
+  script:
+    - ./release.sh -d
+
+github:
+  stage: deploy
+  environment:
+    name: GitHub
+    url: https://github.com/shrugal/PersoLootRoll
+  only:
+    - tags
+    - web
+  script:
+    - ./release.sh -ocelzCW
+  
+curseforge:
+  stage: deploy
+  environment:
+    name: CurseForge
+    url: https://wow.curseforge.com/projects/persolootroll
+  only:
+    - tags
+    - web
+  script:
+    - ./release.sh -ocelzGW
+
+wowinterface:
+  stage: deploy
+  environment:
+    name: WoWInterface
+    url: https://www.wowinterface.com/downloads/info24667-PersoLootRoll.html
+  only:
+    - tags
+    - web
+  script:
+    - ./release.sh -ocelzGC
+
+
+
