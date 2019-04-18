@@ -81,7 +81,7 @@ skip_wi_upload=
 
 # Process command-line options
 usage() {
-	echo "Usage: release.sh [-cdelLosuz] [-t topdir] [-r releasedir] [-p curse-id] [-w wowi-id] [-g game-version]" >&2
+	echo "Usage: release.sh [-celzdGCWosu] [-t topdir] [-r releasedir] [-p curse-id] [-w wowi-id] [-g game-version]" >&2
 	echo "  -c               Skip copying files into the package directory." >&2
 	echo "  -e               Skip checkout of external repositories." >&2
 	echo "  -l               Skip @localization@ keyword replacement." >&2
@@ -101,7 +101,7 @@ usage() {
 }
 
 OPTIND=1
-while getopts ":celLzusop:dw:r:t:g:" opt; do
+while getopts ":celGCWzusop:dw:r:t:g:" opt; do
 	case $opt in
 	c)
 		# Skip copying files into the package directory.
