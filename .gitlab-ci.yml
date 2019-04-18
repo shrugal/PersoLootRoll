@@ -14,7 +14,8 @@ build:
     - ./release.sh -d
   artifacts:
     paths:
-      - .release/
+      - .release/PersoLootRoll/
+      - .release/*.zip
 
 github:
   stage: deploy

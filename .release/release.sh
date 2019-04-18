@@ -477,6 +477,8 @@ svn)	set_info_svn "$topdir" ;;
 hg) 	set_info_hg  "$topdir" ;;
 esac
 
+si_repo_url="https://github.com/shrugal/PersoLootRoll.git" # TODO
+
 tag=$si_tag
 project_version=$si_project_version
 previous_version=$si_previous_tag
