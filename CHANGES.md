@@ -1,1 +1,2 @@
 - Added missing language files for esMX, itIT, frFR and ptBR (though most of them don't have translations yet)
+- Includes updated zhCN and frFR translations
