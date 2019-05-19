@@ -4,8 +4,9 @@ stages:
   - build
   - deploy
 
-variables:
-  RELEASE_TAGS: /^\d[\d\.]*(-(alpha|beta)\d+)?$/
+.releases: &releases
+  only:
+    - /^\d[\d\.]*(-(alpha|beta)\d+)?$/
 
 build:
   stage: build
@@ -20,41 +21,37 @@ build:
       - .release/*.zip
   
 curseforge:
+  <<: *releases
   stage: deploy
   environment:
     name: CurseForge
     url: https://wow.curseforge.com/projects/persolootroll
-  only:
-    - $RELEASE_TAGS
   script:
     - release.sh -ocelzWHG
 
 wowinterface:
+  <<: *releases
   stage: deploy
   environment:
     name: WoWInterface
     url: https://www.wowinterface.com/downloads/info24667-PersoLootRoll.html
-  only:
-    - $RELEASE_TAGS
   script:
     - release.sh -ocelzLHG
 
 github:
+  <<: *releases
   stage: deploy
   environment:
     name: GitHub
     url: https://github.com/shrugal/PersoLootRoll/releases
-  only:
-    - $RELEASE_TAGS
   script:
     - release.sh -ocelzLWG
 
 gitlab:
+  <<: *releases
   stage: deploy
   environment:
     name: GitLab
     url: https://gitlab.com/shrugal/PersoLootRoll/releases
-  only:
-    - $RELEASE_TAGS
   script:
     - release.sh -ocelzLWH
