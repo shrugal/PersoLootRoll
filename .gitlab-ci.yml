@@ -1,4 +1,4 @@
-image: shrugal/wow-packager:latest
+image: registry.gitlab.com/shrugal/wow-packager:latest
 
 stages:
   - build
