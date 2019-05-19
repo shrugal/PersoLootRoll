@@ -1,9 +1,11 @@
+image: shrugal/wow-packager:latest
+
 stages:
   - build
   - deploy
 
-before_script:
-  - apt-get -qq update && apt-get -qq install -y zip jq curl
+variables:
+  RELEASE_TAGS: /^\d[\d\.]*(-(alpha|beta)\d+)?$/
 
 build:
   stage: build
@@ -11,22 +13,11 @@ build:
     - tags
     - web
   script:
-    - ./release.sh -d
+    - release.sh -d
   artifacts:
     paths:
       - .release/PersoLootRoll/
       - .release/*.zip
-
-github:
-  stage: deploy
-  environment:
-    name: GitHub
-    url: https://github.com/shrugal/PersoLootRoll
-  only:
-    - tags
-    - web
-  script:
-    - ./release.sh -ocelzCW
   
 curseforge:
   stage: deploy
@@ -34,10 +25,9 @@ curseforge:
     name: CurseForge
     url: https://wow.curseforge.com/projects/persolootroll
   only:
-    - tags
-    - web
+    - $RELEASE_TAGS
   script:
-    - ./release.sh -ocelzGW
+    - release.sh -ocelzWHG
 
 wowinterface:
   stage: deploy
@@ -45,10 +35,26 @@ wowinterface:
     name: WoWInterface
     url: https://www.wowinterface.com/downloads/info24667-PersoLootRoll.html
   only:
-    - tags
-    - web
+    - $RELEASE_TAGS
   script:
-    - ./release.sh -ocelzGC
+    - release.sh -ocelzLHG
 
+github:
+  stage: deploy
+  environment:
+    name: GitHub
+    url: https://github.com/shrugal/PersoLootRoll/releases
+  only:
+    - $RELEASE_TAGS
+  script:
+    - release.sh -ocelzLWG
 
-
+gitlab:
+  stage: deploy
+  environment:
+    name: GitLab
+    url: https://gitlab.com/shrugal/PersoLootRoll/releases
+  only:
+    - $RELEASE_TAGS
+  script:
+    - release.sh -ocelzLWH

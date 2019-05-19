@@ -1,3 +1,1 @@
-- Added ignoring crafted loot
-- Fixed Unit.IsUnit for non-string parameters (CurseForge#11)
-- Fixed Locale.GetLanguageName for missing language code translations (CurseForge#12)
+- Added missing language files for esMX, itIT, frFR and ptBR (though most of them don't have translations yet)

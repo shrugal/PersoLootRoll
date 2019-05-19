@@ -1,3 +1,6 @@
+Version 17.03
+- Added missing language files for esMX, itIT, frFR and ptBR (though most of them don't have translations yet)
+
 Version 17.02
 - Added ignoring crafted loot
 - Fixed Unit.IsUnit for non-string parameters (CurseForge#11)

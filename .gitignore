@@ -1,4 +1,4 @@
 .vscode
 .release/*
 !.release/release.sh
-!.release/.env-example
+!.release/.env.example
