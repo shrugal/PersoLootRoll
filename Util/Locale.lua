@@ -23,7 +23,7 @@ end
 
 -- Get a language's name (e.g. "enUS" -> "English")
 function Self.GetLanguageName(lang)
-    return lang:sub(1, 2) == "en" and LFG_LIST_LANGUAGE_ENUS or _G[lang:upper()]
+    return lang:sub(1, 2) == "en" and LFG_LIST_LANGUAGE_ENUS or _G[lang:upper()] or lang
 end
 
 -- Get locale

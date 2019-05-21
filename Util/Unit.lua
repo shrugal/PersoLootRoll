@@ -256,7 +256,7 @@ end
 
 -- Check if units are equal
 function Self.IsUnit(unit, otherUnit)
-    return unit and otherUnit and UnitIsUnit(unit, otherUnit)
+    return unit == otherUnit or Util.StrIsSet(unit) and Util.StrIsSet(otherUnit) and UnitIsUnit(unit, otherUnit)
 end
 
 -- Check if the unit is the current player

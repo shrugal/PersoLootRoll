@@ -1,18 +1,18 @@
 package-as: PersoLootRoll
 manual-changelog:
-    filename: CHANGES.md
-    markup-type: markdown
+  filename: CHANGES.md
+  markup-type: markdown
 license-output: LICENSE
 enable-nolib-creation: no
 
 ignore:
-    - release.sh
-    - _config.yml
+  - release.sh
+  - _config.yml
 
 externals:
-    Libs/LibDataBroker-1.1:
-        url: https://github.com/tekkub/libdatabroker-1-1
-        tag: v1.1.4
-    Libs/LibRealmInfo:
-        url: https://github.com/phanx-wow/LibRealmInfo
-        tag: 14
+  Libs/LibDataBroker-1.1:
+    url: https://github.com/tekkub/libdatabroker-1-1
+    tag: v1.1.4
+  Libs/LibRealmInfo:
+    url: https://github.com/phanx-wow/LibRealmInfo
+    tag: 14

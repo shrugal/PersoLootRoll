@@ -1,0 +1,57 @@
+image: registry.gitlab.com/shrugal/wow-packager:latest
+
+stages:
+  - build
+  - deploy
+
+.releases: &releases
+  only:
+    - /^\d[\d\.]*(-(alpha|beta)\d+)?$/
+
+build:
+  stage: build
+  only:
+    - tags
+    - web
+  script:
+    - release.sh -d
+  artifacts:
+    paths:
+      - .release/PersoLootRoll/
+      - .release/*.zip
+  
+curseforge:
+  <<: *releases
+  stage: deploy
+  environment:
+    name: CurseForge
+    url: https://wow.curseforge.com/projects/persolootroll
+  script:
+    - release.sh -ocelzWHG
+
+wowinterface:
+  <<: *releases
+  stage: deploy
+  environment:
+    name: WoWInterface
+    url: https://www.wowinterface.com/downloads/info24667-PersoLootRoll.html
+  script:
+    - release.sh -ocelzLHG
+
+github:
+  <<: *releases
+  stage: deploy
+  environment:
+    name: GitHub
+    url: https://github.com/shrugal/PersoLootRoll/releases
+  script:
+    - release.sh -ocelzLWG
+
+gitlab:
+  <<: *releases
+  stage: deploy
+  environment:
+    name: GitLab
+    url: https://gitlab.com/shrugal/PersoLootRoll/releases
+  script:
+    - release.sh -ocelzLWH

@@ -136,11 +136,11 @@ PLR is translated (incl. chat messages) to
  [this wiki page](https://wow.curseforge.com/projects/persolootroll/pages/translation) for some tips.
 
 ## Development
-This project is fully open-source and the source code can be found on GitHub. To test out new features there are also beta versions available. Please report any
+This project is fully open-source and the source code can be found on [GitLab](https://gitlab.com/shrugal/PersoLootRoll). To test out new features there are also beta versions available. Please report any
 bugs you find with these versions should you be brave enough to install them, so the stable releases will be as bug-free as possible.
 
 ### Bugs and Features
-Please create a new entry on the [issue tracker](https://github.com/shrugal/PersoLootRoll/issues) you encounter any bugs or want to suggest a feature.
+Please create a new entry on the [issue tracker](https://gitlab.com/shrugal/PersoLootRoll/issues) you encounter any bugs or want to suggest a feature.
 
 ### Roadmap
 These are the things I have planed currently:
@@ -150,9 +150,9 @@ These are the things I have planed currently:
 You can vote on feature request [here](http://feathub.com/shrugal/PersoLootRoll).
 
 ### Build
-To build a package from source you need to copy `.release/.env-example` to `.release/.env`, fill in the relevant infos (projects IDs and API tokens) and then
-run `./release.sh` in the project root. The completed file(s) will be available in the `.release` folder. More information about possible arguments to the
-release script can be found [here](https://github.com/BigWigsMods/packager).
+To build a package from source you need to copy `.release/.env.example` to `.release/.env`, fill in the relevant infos (projects IDs and API tokens) and then
+run `.release/release.sh`. The completed file(s) will be available in the `.release` folder. More information about possible arguments to the
+release script can be found [here](https://gitlab.com/shrugal/wow-packager).
 
 ### Donate
 Click on the "Donate" button if you want to support the development of this addon or just buy me a beer. Always appreciated, never required!

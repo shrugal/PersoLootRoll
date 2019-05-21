@@ -1,3 +1,13 @@
+Version 17.03
+- Fixed trying to import/export ML settings without guild/community selected
+- Added missing language files for esMX, itIT, frFR and ptBR (though most of them don't have translations yet)
+- Includes updated zhCN and frFR translations
+
+Version 17.02
+- Added ignoring crafted loot
+- Fixed Unit.IsUnit for non-string parameters (CurseForge#11)
+- Fixed Locale.GetLanguageName for missing language code translations (CurseForge#12)
+
 Version 17.01
 - Added some more debug messages for UI interactions
 - Added handler to log LUA errors caused by the addon

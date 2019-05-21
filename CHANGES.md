@@ -1,5 +1,3 @@
-- Added some more debug messages for UI interactions
-- Added handler to log LUA errors caused by the addon
-- Reduced LOG_MAX_ENTRIES from 1000 to 500, because showing the log takes a lot of time with many entries
-- Fixed missplaced table row backgrounds and highlights when the content is scrolled in the main window
-- Some cleanup
+- Fixed trying to import/export ML settings without guild/community selected
+- Added missing language files for esMX, itIT, frFR and ptBR (though most of them don't have translations yet)
+- Includes updated zhCN and frFR translations

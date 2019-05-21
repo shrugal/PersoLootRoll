@@ -1150,6 +1150,8 @@ end
 
 function Self.ImportRules()
     local clubId = Addon.db.char.masterloot.clubId
+    if not clubId then return end
+
     local c = Addon.db.profile.masterloot
     local s = Self.ReadFromClub(clubId)
 
@@ -1160,13 +1162,13 @@ function Self.ImportRules()
         end
     end
 
-    c.rules.disenchanter[GetRealmName()] = Util.TblIsFilled(s.disenchanter) and Util(s.disenchanter).Map(Unit.FullName).Flip(true)()
+    c.rules.disenchanter[GetRealmName()] = Util.TblIsSet(s.disenchanter) and Util(s.disenchanter).Map(Unit.FullName).Flip(true)()
 
     -- Council
     local ranks = Util.GetClubRanks(clubId)
     Util.TblSet(c.council.clubs, clubId, "ranks", s.councilRanks and Util(s.councilRanks).Map(function (v) return tonumber(v) or Util.TblFind(ranks, v) end).Flip(true)() or {})
     c.council.roles = s.councilRoles and Util.TblFlip(s.councilRoles, true) or {}
-    c.council.whitelists[GetRealmName()] = Util.TblIsFilled(s.councilWhitelist) and Util(s.councilWhitelist).Map(Unit.FullName).Flip(true)()
+    c.council.whitelists[GetRealmName()] = Util.TblIsSet(s.councilWhitelist) and Util(s.councilWhitelist).Map(Unit.FullName).Flip(true)()
 
     -- Custom
     Self.SyncCustomOptions(s, true)
@@ -1176,6 +1178,8 @@ end
 
 function Self.ExportRules()
     local clubId = Addon.db.char.masterloot.clubId
+    if not clubId then return end
+
     local info = C_Club.GetClubInfo(clubId)
     local c = Addon.db.profile.masterloot
     local s = Util.Tbl()

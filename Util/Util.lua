@@ -220,6 +220,21 @@ function Self.Check(cond, a, b)
     if cond then return a else return b end
 end
 
+-- Check if the value is truthy (true, ~=0, ~="", ~=[])
+function Self.IsSet(val)
+    local t = type(val)
+    return val
+        and val ~= 0
+        and not (t == "string" and val:trim() == "")
+        and not (t == "table" and not next(t))
+        and true or false
+end
+
+-- Check if the value is falsy (false, 0, "", [])
+function Self.IsEmpty(val)
+    return not Self.IsSet(val)
+end
+
 -- Iterate tables or parameter lists
 local Fn = function (t, i)
     i = (i or 0) + 1
@@ -630,8 +645,15 @@ function Self.TblMatches(t, ...)
     end
 end
 
--- Check a table's existence and content
-function Self.TblIsFilled(t) return t and next(t) and t or nil end
+-- Check if a value is a filled table
+function Self.TblIsSet(t)
+    return type(t) == "table" and next(t) and true or false
+end
+
+-- Check if a value is not a table or empty
+function Self.TblIsEmpty(t)
+    return not Self.TblIsSet(t)
+end
 
 -- Find a value in a table
 function Self.TblFind(t, val)
@@ -1071,20 +1093,20 @@ end
 --                       String                      --
 -------------------------------------------------------
 
-function Self.IsStr(str)
-    return type(str) == "string"
-end
-
-function Self.StrStartsWith(str, str2)
-    return Self.IsStr(str) and str:sub(1, str2:len()) == str2
-end
-
-function Self.StrEndsWith(str, str2)
-    return Self.IsStr(str) and str:sub(-str2:len()) == str2
+function Self.StrIsSet(str)
+    return type(str) == "string" and str:trim() ~= ""
 end
 
 function Self.StrIsEmpty(str)
-    return not Self.IsStr(str) or str == ""
+    return not Self.StrIsSet(str)
+end
+
+function Self.StrStartsWith(str, str2)
+    return type(str) == "string" and str:sub(1, str2:len()) == str2
+end
+
+function Self.StrEndsWith(str, str2)
+    return type(str) == "string" and str:sub(-str2:len()) == str2
 end
 
 function Self.StrWrap(str, before, after)
