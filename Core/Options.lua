@@ -1130,6 +1130,8 @@ end
 
 function Self.ImportRules()
     local clubId = Addon.db.char.masterloot.clubId
+    if not clubId then return end
+
     local c = Addon.db.profile.masterloot
     local s = Self.ReadFromClub(clubId)
 
@@ -1156,6 +1158,8 @@ end
 
 function Self.ExportRules()
     local clubId = Addon.db.char.masterloot.clubId
+    if not clubId then return end
+
     local info = C_Club.GetClubInfo(clubId)
     local c = Addon.db.profile.masterloot
     local s = Util.Tbl()
