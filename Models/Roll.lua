@@ -114,12 +114,18 @@ Self.EVENT_TOGGLE = "PLR_ROLL_TOGGLE"
 -- @string unit The sender
 Self.EVENT_CHAT = "PLR_ROLL_CHAT"
 
+--- Fires whenever a roll status changes
+-- @table  roll   The roll
+-- @number status The new status
+-- @number prev   The previous status
+Self.EVENT_STATUS = "PLR_ROLL_STATUS"
+
 --- Catchall event that fires for all events in Self.EVENTS
 -- @string event The original event
 -- @param  ...   The original event parameters
 Self.EVENT_CHANGE = "PLR_ROLL_CHANGE"
 
-Self.EVENTS = {Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_RESTART, Self.EVENT_CANCEL, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_AWARD, Self.EVENT_TRADE, Self.EVENT_TOGGLE, Self.EVENT_CHAT}
+Self.EVENTS = {Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_RESTART, Self.EVENT_CANCEL, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_AWARD, Self.EVENT_TRADE, Self.EVENT_TOGGLE, Self.EVENT_CHAT, Self.EVENT_STATUS}
 
 local changeFn = function (...) Addon:SendMessage(Self.EVENT_CHANGE, ...) end
 for _,e in pairs(Self.EVENTS) do Addon:RegisterMessage(e, changeFn) end
@@ -451,8 +457,11 @@ function Self.FromPlrId(id) return -id end
 -------------------------------------------------------
 
 -- Start a roll
-function Self:Start(started)
+function Self:Start(startedOrManually)
     Addon:Verbose(L["ROLL_START"], self.item.link, Comm.GetPlayerLink(self.item.owner))
+
+    local started, manually = type(startedOrManually) == "number" and started, type(startedOrManually) == "boolean" and startedOrManually
+    Self.startedManually = Self.startedManually or self.isOwner and Addon.db.profile.masterloot.rules.startManually and manually
 
     self.item:OnLoaded(function ()
         self.item:GetFullInfo()
@@ -467,26 +476,9 @@ function Self:Start(started)
                 self.item:GetEligible()
             end
 
-            if Util.Check(Session.GetMasterlooter(), Session.rules.allowKeep, Addon.db.profile.chillMode) and self.isOwner and self.itemOwnerId and not self.bids[self.item.owner] then
-                -- Keep in pending state until the item owner has bid
-            else
-                -- Start the roll
-                self.started = started or time()
-                self.status = Self.STATUS_RUNNING
-                
-                Addon:SendMessage(Self.EVENT_START, self, self.started)
-
-                if self.isTest or not (self:ShouldEnd() and self:End()) then
-                    -- Schedule timer to end the roll and/or hide the frame
-                    if self.timeout > 0 then
-                        self.timers.bid = Addon:ScheduleTimer(Self.End, self:GetTimeLeft(), self, nil, true)
-                    elseif not Addon.db.profile.chillMode then
-                        self.timers.bid = Addon:ScheduleTimer(Self.HideRollFrame, self:GetTimeLeft(), self)
-                    end
-
-                    -- Let everyone know
-                    self:Advertise(false, true)
-                end
+            -- Run the roll
+            if not self.isOwner or self:CanBeRun(manually) then
+                self:Run()
             end
 
             -- Let others know
@@ -555,7 +547,7 @@ function Self:Restart(started, pending)
     self.hidden = nil
     self.posted = nil
     self.traded = nil
-    self.status = Self.STATUS_PENDING
+    self:SetStatus(Self.STATUS_PENDING)
 
     wipe(self.bids)
     wipe(self.rolls)
@@ -573,6 +565,26 @@ function Self:Restart(started, pending)
     Addon:SendMessage(Self.EVENT_RESTART, self)
     
     return pending and self or self:Start(started)
+end
+
+-- Start the timer for the roll
+function Self:Run(started)
+    self.started = started or time()
+    self:SetStatus(Self.STATUS_RUNNING)
+    
+    Addon:SendMessage(Self.EVENT_START, self, self.started)
+
+    if self.isTest or not (self:ShouldEnd() and self:End()) then
+        -- Schedule timer to end the roll and/or hide the frame
+        if self.timeout > 0 then
+            self.timers.bid = Addon:ScheduleTimer(Self.End, self:GetTimeLeft(), self, nil, true)
+        elseif not Addon.db.profile.chillMode then
+            self.timers.bid = Addon:ScheduleTimer(Self.HideRollFrame, self:GetTimeLeft(), self)
+        end
+
+        -- Let everyone know
+        self:Advertise(false, true)
+    end
 end
 
 -- Adopt a roll
@@ -724,7 +736,7 @@ function Self:End(winner, cleanup, force)
         end
 
         -- Update status
-        self.status = Self.STATUS_DONE
+        self:SetStatus(Self.STATUS_DONE)
         self.ended = time()
         self.started = self.started or time()
 
@@ -797,7 +809,7 @@ function Self:Cancel(silent)
     end
 
     -- Update status
-    self.status = Self.STATUS_CANCELED
+    self:SetStatus(Self.STATUS_CANCELED)
 
     -- Hide the roll frame
     self:HideRollFrame()
@@ -835,6 +847,30 @@ function Self:OnTraded(target)
 
     self:SendStatus(self.item.isOwner or self.isWinner)
 end
+
+-- Change the roll status
+local fn = function (roll) return roll.isOwner and roll:IsActive(true) end
+function Self:SetStatus(status)
+    local prev = self.status
+    self.status = status
+
+    if self.status ~= prev then
+        Self.startedManually = Self.startedManually and Util.TblFindFn(Addon.rolls, fn) ~= nil
+
+        Addon:SendMessage(Self.EVENT_STATUS, self, self.status, prev)
+    end
+end
+
+-- Check if we can start other pending rolls after status updates
+Addon:RegisterMessage(Self.EVENT_STATUS, function (_, roll)
+    if roll.isOwner then
+        for i,roll in pairs(Addon.rolls) do
+            if roll.isOwner and roll:CanBeRun() and roll:Validate() then
+                roll:Start()
+            end
+        end
+    end
+end)
 
 -------------------------------------------------------
 --                     Awarding                      --
@@ -1293,6 +1329,35 @@ function Self:UnitIsInvolved(unit)
     return self.owner == unit or self.winner == unit or self:UnitCanBid(unit) or self:UnitCanVote(unit)
 end
 
+-- Check if the roll can be started
+function Self:CanBeStarted()
+    return self.isOwner and self.status == Self.STATUS_PENDING
+end
+
+-- Check if we can run a roll
+function Self:CanBeRun(manually)
+    if self.status ~= Self.STATUS_PENDING then
+        return false
+    elseif manually then
+        return true
+    end
+
+    local ml = Session.GetMasterlooter()
+    local waitForOwner = Util.Check(ml, Session.rules.allowKeep, Addon.db.profile.chillMode)
+    local startManually = ml and Addon.db.profile.masterloot.rules.startManually
+    local startInOrder = ml and Addon.db.profile.masterloot.rules.startInOrder
+    
+    if waitForOwner and self.itemOwnerId and not self.bids[self.item.owner] then
+        return false
+    elseif startManually and not (startInOrder and Self.startedManually) then
+        return false
+    elseif startInOrder and Util.TblFindWhere(Addon.rolls, "isOwner", true, "status", Self.STATUS_RUNNING) then
+        return false
+    else
+        return true
+    end
+end
+
 -- Check if we can restart a roll
 function Self:CanBeRestarted()
     return self.isOwner and Util.In(self.status, Self.STATUS_CANCELED, Self.STATUS_DONE) and (not self.traded or UnitIsUnit(self.traded, self.item.owner))
@@ -1336,8 +1401,8 @@ function Self:GetActionTarget()
 end
 
 -- Check if the roll is pending or running
-function Self:IsActive()
-    return Util.In(self.status, Self.STATUS_PENDING, Self.STATUS_RUNNING)
+function Self:IsActive(validate)
+    return self.status == Self.STATUS_RUNNING or self.status == Self.STATUS_PENDING and (not validate or self:Validate())
 end
 
 -- Check if the roll is running or recently ended

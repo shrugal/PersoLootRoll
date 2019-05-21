@@ -280,7 +280,11 @@ end
 -- Update the frame
 function Self.Update()
     if not Self.frames.window then return end
+    
     local f
+    local ml = Session.GetMasterlooter()
+    local startManually = ml and Addon.db.profile.masterloot.rules.startManually
+    local startInOrder = ml and Addon.db.profile.masterloot.rules.startInOrder
 
     -- SCROLL
 
@@ -328,11 +332,14 @@ function Self.Update()
     -- Rolls
 
     local rolls = Util(Addon.rolls).CopyFilter(function (roll)
-        return (Self.filter.all or roll.isOwner or roll.item.isOwner or roll.item:GetEligible("player"))
-           and (Self.filter.done or (roll.status ~= Roll.STATUS_DONE))
-           and (Self.filter.awarded or not roll.winner)
-           and (Self.filter.traded or not roll.traded)
-           and (Self.filter.hidden or roll.status >= Roll.STATUS_RUNNING and (roll.isWinner or roll.isOwner or roll.item.isOwner or roll.bid ~= Roll.BID_PASS) and not roll.hidden)
+        return  (Self.filter.all or roll.isOwner or roll.item.isOwner or roll.item:GetEligible("player"))
+            and (Self.filter.done or (roll.status ~= Roll.STATUS_DONE))
+            and (Self.filter.awarded or not roll.winner)
+            and (Self.filter.traded or not roll.traded)
+            and (Self.filter.hidden or not roll.hidden and (
+                roll.status >= Roll.STATUS_RUNNING and (roll.isWinner or roll.isOwner or roll.item.isOwner or roll.bid ~= Roll.BID_PASS)
+                or (startManually or startInOrder) and roll:CanBeStarted()
+            ))
     end).SortBy("id")()
 
     GUI(Self.frames.empty).Toggle(Util.TblCount(rolls) == 0)
@@ -413,6 +420,13 @@ function Self.Update()
                 GUI.CreateIconButton("UI-GroupLoot-Pass", actions, function (self)
                     self:GetUserData("roll"):Bid(Roll.BID_PASS)
                 end, PASS, 13, 13)
+
+                -- Start
+                f = GUI.CreateIconButton("UI-SpellbookIcon-NextPage", actions, function (self)
+                    self:GetUserData("roll"):Start(true)
+                end, START)
+                f.image:SetPoint("TOP", 0, 2)
+                f.image:SetTexCoord(0.05, 0.95, 0.05, 0.95)
         
                 -- Advertise
                 GUI.CreateIconButton("UI-GuildButton-MOTD", actions, function (self)
@@ -576,6 +590,8 @@ function Self.Update()
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_DISENCHANT) and Unit.IsEnchanter())
             -- Pass
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_PASS))
+            -- Start
+            GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeStarted())
             -- Advertise
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:ShouldAdvertise(true))
             -- Award randomly
@@ -643,7 +659,6 @@ function Self.Update()
     filter.children[it()]:SetValue(Self.filter.hidden)
 
     -- ML action
-    local ml = Session.GetMasterlooter()
     filter.children[it()]:SetImage(ml and "Interface\\Buttons\\UI-StopButton" or "Interface\\GossipFrame\\WorkOrderGossipIcon")
 
     -- ML

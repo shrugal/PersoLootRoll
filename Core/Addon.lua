@@ -206,7 +206,7 @@ function Self:HandleChatCommand(msg)
                 local roll = Roll.Add(item, ml or "player", nil, nil, timeout)
 
                 if roll.isOwner then
-                    roll:Start()
+                    roll:Start(true)
                 else
                     roll:SendStatus(true)
                 end
