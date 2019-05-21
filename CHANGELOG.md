@@ -1,5 +1,7 @@
 Version 17.03
+- Fixed trying to import/export ML settings without guild/community selected
 - Added missing language files for esMX, itIT, frFR and ptBR (though most of them don't have translations yet)
+- Includes updated zhCN and frFR translations
 
 Version 17.02
 - Added ignoring crafted loot
