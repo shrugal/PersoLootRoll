@@ -1,3 +1,12 @@
+Version 18
+- Added ML option to only start rolls manually
+- Added ML option to run rolls in-order (one by one)
+- Added roll start button to rolls window and moved some other buttons around
+- Added rate limit of 10 errors/sec to error handler
+- Debounced roll window updates after roll changes to prevent flickering
+- The roll hide/show button is now always shown, regardless of roll status
+- Fixed item column overflowing in rolls window
+
 Version 17.03
 - Fixed trying to import/export ML settings without guild/community selected
 - Added missing language files for esMX, itIT, frFR and ptBR (though most of them don't have translations yet)
