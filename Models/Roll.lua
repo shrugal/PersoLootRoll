@@ -478,7 +478,22 @@ function Self:Start(startedOrManually)
 
             -- Run the roll
             if not self.isOwner or self:CanBeRun(manually) then
-                self:Run()
+                self.started = started or time()
+                self:SetStatus(Self.STATUS_RUNNING)
+                
+                Addon:SendMessage(Self.EVENT_START, self, self.started)
+            
+                if self.isTest or not (self:ShouldEnd() and self:End()) then
+                    -- Schedule timer to end the roll and/or hide the frame
+                    if self.timeout > 0 then
+                        self.timers.bid = Addon:ScheduleTimer(Self.End, self:GetTimeLeft(), self, nil, true)
+                    elseif not Addon.db.profile.chillMode then
+                        self.timers.bid = Addon:ScheduleTimer(Self.HideRollFrame, self:GetTimeLeft(), self)
+                    end
+            
+                    -- Let everyone know
+                    self:Advertise(false, true)
+                end
             end
 
             -- Let others know
@@ -547,7 +562,6 @@ function Self:Restart(started, pending)
     self.hidden = nil
     self.posted = nil
     self.traded = nil
-    self:SetStatus(Self.STATUS_PENDING)
 
     wipe(self.bids)
     wipe(self.rolls)
@@ -562,29 +576,10 @@ function Self:Restart(started, pending)
 
     Util.TblExcept(Addon.lastWhisperedRoll, self.id, true)
 
+    self:SetStatus(Self.STATUS_PENDING)
     Addon:SendMessage(Self.EVENT_RESTART, self)
     
     return pending and self or self:Start(started)
-end
-
--- Start the timer for the roll
-function Self:Run(started)
-    self.started = started or time()
-    self:SetStatus(Self.STATUS_RUNNING)
-    
-    Addon:SendMessage(Self.EVENT_START, self, self.started)
-
-    if self.isTest or not (self:ShouldEnd() and self:End()) then
-        -- Schedule timer to end the roll and/or hide the frame
-        if self.timeout > 0 then
-            self.timers.bid = Addon:ScheduleTimer(Self.End, self:GetTimeLeft(), self, nil, true)
-        elseif not Addon.db.profile.chillMode then
-            self.timers.bid = Addon:ScheduleTimer(Self.HideRollFrame, self:GetTimeLeft(), self)
-        end
-
-        -- Let everyone know
-        self:Advertise(false, true)
-    end
 end
 
 -- Adopt a roll
@@ -862,7 +857,7 @@ function Self:SetStatus(status)
 end
 
 -- Check if we can start other pending rolls after status updates
-Addon:RegisterMessage(Self.EVENT_STATUS, function (_, roll)
+Addon:RegisterMessage(Self.EVENT_STATUS, Util.FnDebounce(function (_, roll)
     if roll.isOwner then
         for i,roll in pairs(Addon.rolls) do
             if roll.isOwner and roll:CanBeRun() and roll:Validate() then
@@ -870,7 +865,7 @@ Addon:RegisterMessage(Self.EVENT_STATUS, function (_, roll)
             end
         end
     end
-end)
+end, 0))
 
 -------------------------------------------------------
 --                     Awarding                      --
