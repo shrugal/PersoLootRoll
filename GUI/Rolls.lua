@@ -296,7 +296,7 @@ function Self.Update()
 
     local header = Util.Tbl("ID", "ITEM", "LEVEL", "OWNER", "ML", "STATUS", "YOUR_BID", "WINNER")
     if #children == 0 then
-        scroll.userdata.table.columns = {20, 1, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, 7 * 20 - 4}
+        scroll.userdata.table.columns = {20, 1, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, 8 * 20 - 4}
 
         for i,v in pairs(header) do
             GUI("Label").SetFontObject(GameFontNormal).SetText(L[v]).SetColor(1, 0.82, 0).AddTo(scroll)
@@ -420,13 +420,6 @@ function Self.Update()
                 GUI.CreateIconButton("UI-GroupLoot-Pass", actions, function (self)
                     self:GetUserData("roll"):Bid(Roll.BID_PASS)
                 end, PASS, 13, 13)
-
-                -- Start
-                f = GUI.CreateIconButton("UI-SpellbookIcon-NextPage", actions, function (self)
-                    self:GetUserData("roll"):Start(true)
-                end, START)
-                f.image:SetPoint("TOP", 0, 2)
-                f.image:SetTexCoord(0.05, 0.95, 0.05, 0.95)
         
                 -- Advertise
                 GUI.CreateIconButton("UI-GuildButton-MOTD", actions, function (self)
@@ -447,6 +440,13 @@ function Self.Update()
                 GUI.CreateIconButton("Interface\\GossipFrame\\VendorGossipIcon", actions, function (self)
                     self:GetUserData("roll"):Trade()
                 end, TRADE, 13, 13)
+
+                -- Start
+                f = GUI.CreateIconButton("UI-SpellbookIcon-NextPage", actions, function (self)
+                    self:GetUserData("roll"):Start(true)
+                end, START)
+                f.image:SetPoint("TOP", 0, 2)
+                f.image:SetTexCoord(0.05, 0.95, 0.05, 0.95)
         
                 -- Restart
                 f = GUI.CreateIconButton("UI-RotationLeft-Button", actions, function (self)
@@ -590,8 +590,6 @@ function Self.Update()
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_DISENCHANT) and Unit.IsEnchanter())
             -- Pass
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_PASS))
-            -- Start
-            GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeStarted())
             -- Advertise
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:ShouldAdvertise(true))
             -- Award randomly
@@ -609,6 +607,8 @@ function Self.Update()
                 .SetUserData("text", canTrade and TRADE or L["TIP_CHAT_TO_TRADE"])
                 .Toggle(actionTarget)
                 .SetDisabled(not canTrade)
+            -- Start
+            GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeStarted())
             -- Restart
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeRestarted())
             -- Cancel
@@ -618,7 +618,7 @@ function Self.Update()
                 .SetImage("Interface\\Buttons\\UI-CheckBox-Check" .. (roll.hidden and "-Disabled" or ""), -.1, 1.1, -.1, 1.1)
                 .SetUserData("roll", roll)
                 .SetUserData("text", L[roll.hidden and "SHOW" or "HIDE"])
-                .Toggle(roll.hidden or roll.status > Roll.STATUS_RUNNING)
+                .Show()
             -- Toggle
             GUI(children[it()])
                 .SetImage("Interface\\Buttons\\UI-" .. (Self.open[roll.id] and "Minus" or "Plus") .. "Button-Up")
@@ -919,11 +919,14 @@ end
 --                      Events                       --
 -------------------------------------------------------
 
+-- Debounce updates after roll changes to prevent flickering
+local updateDebounced = Util.FnDebounce(Self.Update, 0.02)
+
 function Self:OnEnable()
     Self:RegisterMessage(Roll.EVENT_START, "ROLL_START")
-    Self:RegisterMessage(Roll.EVENT_CHANGE, Self.Update)
+    Self:RegisterMessage(Roll.EVENT_CHANGE, updateDebounced)
     Self:RegisterMessage(Roll.EVENT_CLEAR, "ROLL_CLEAR")
-    Self:RegisterMessage(Session.EVENT_CHANGE, Self.Update)
+    Self:RegisterMessage(Session.EVENT_CHANGE, updateDebounced)
     Self:RegisterMessage(GUI.PlayerColumns.EVENT_CHANGE, "GUI_PLAYER_COLUMN_CHANGE")
 end
 
@@ -949,6 +952,6 @@ function Self:GUI_PLAYER_COLUMN_CHANGE()
             end
         end
 
-        Self.Update()
+        updateDebounced()
     end
 end
