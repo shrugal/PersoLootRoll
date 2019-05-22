@@ -360,12 +360,11 @@ function Self.CreateItemLabel(parent, anchor)
                 else
                     self.label:SetPoint("TOPLEFT", self.image, "TOPRIGHT", 4, 0)
                 end
-                self.label:SetWidth(width - imagewidth - 4)
+                self.label:SetPoint("RIGHT")
                 
                 local height = max(self.image:GetHeight(), self.label:GetHeight())
                 self.resizing = true
                 self.frame:SetHeight(height)
-                self.frame:SetWidth(Util.NumRound(self.frame:GetWidth()), 1)
                 self.frame.height = height
                 self.resizing = nil
             end
@@ -861,7 +860,6 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
             local child = t[(row - 1) * #cols + col]
             if child then
                 local colObj = cols[colStart[child]]
-                if not child.GetUserData then Util.Dump(row, col, (row - 1) * #cols + col, child) end
                 local cellObj = child:GetUserData("cell")
                 local offsetH = GetCellDimension("H", laneH, 1, colStart[child] - 1, spaceH) + (colStart[child] == 1 and 0 or spaceH)
                 local cellH = GetCellDimension("H", laneH, colStart[child], col, spaceH)
