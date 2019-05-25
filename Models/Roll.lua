@@ -465,7 +465,7 @@ function Self.FromPlrId(id) return -id end
 function Self:Start(startedOrManually)
     Addon:Verbose(L["ROLL_START"], self.item.link, Comm.GetPlayerLink(self.item.owner))
 
-    local started, manually = type(startedOrManually) == "number" and started, type(startedOrManually) == "boolean" and startedOrManually
+    local started, manually = type(startedOrManually) == "number" and startedOrManually, type(startedOrManually) == "boolean" and startedOrManually
     Self.startedManually = Self.startedManually or self.isOwner and Addon.db.profile.masterloot.rules.startManually and manually
 
     self.item:OnLoaded(function ()
@@ -972,7 +972,7 @@ function Self:ValidateVote(vote, fromUnit, isImport)
         return true
     -- Check if the unit can bid
     elseif not self:UnitCanVote(fromUnit) then
-        if fromSelf then
+        if Unit.IsSelf(fromUnit) then
             Addon:Error(L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"])
         else
             Addon:Verbose(L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"], fromUnit, self.item.link)

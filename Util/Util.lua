@@ -722,8 +722,8 @@ end
 
 -- Pick specific keys from a table
 function Self.TblSelect(t, ...)
-    for i,v in pairs(t) do
-        if not Util.In(i, ...) then t[i] = nil end
+    for i in pairs(t) do
+        if not Self.In(i, ...) then t[i] = nil end
     end
     return t
 end
@@ -794,7 +794,7 @@ end
 function Self.TblCopyUnselect(t, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
-        if not Util.In(i, ...) then
+        if not Self.In(i, ...) then
             u[i] = v
         end
     end

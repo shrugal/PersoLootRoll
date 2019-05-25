@@ -318,7 +318,7 @@ function Self:CheckState(refresh)
         end
 
         if self.state ~= state then
-            self:SendMessage(Self.STATE_CHANGE, to, from)
+            self:SendMessage(Self.STATE_CHANGE, self.state, state)
 
             local cmp = Util.Compare(self.state, state)
 
@@ -442,8 +442,8 @@ function Self:CompareVersion(versionOrUnit)
     if minor and minorSelf then
         if channel == channelSelf then
             return Util.Compare(
-                4 * Util.Compare(major, myMajor) +
-                2 * Util.Compare(minor, myMinor) +
+                4 * Util.Compare(major, majorSelf) +
+                2 * Util.Compare(minor, minorSelf) +
                 1 * Util.Compare(revision, myRevision),
                 0
             )

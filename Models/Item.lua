@@ -557,8 +557,6 @@ function Self.GetOwnedForLocation(loc, allWeapons)
         end
     end
 
-    Util.TblRelease(roles, attrs)
-
     return items
 end
 
@@ -1233,8 +1231,8 @@ function Self.UpdatePlayerCacheWeapons()
 end
 
 -- Check if a player cache entry is still valid
-function Self.IsPlayerCacheValid(cache)
-    local cache = Util.Check(type(cache) == "string", Self.playerCache[key], cache)
+function Self.IsPlayerCacheValid(cacheOrKey)
+    local cache = Util.Check(type(cacheOrKey) == "string", Self.playerCache[cacheOrKey], cacheOrKey)
     return cache and cache.ilvl and cache.time and cache.time + Inspect.REFRESH < GetTime()
 end
 
