@@ -1,4 +1,8 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
+---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Comm, GUI, Item, Locale, Session, Roll, Unit, Util = Addon.Comm, Addon.GUI, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
 local Self = Addon

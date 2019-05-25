@@ -1,4 +1,7 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
 local GUI = Addon.GUI
 local Self = Addon.Util
 

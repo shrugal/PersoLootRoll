@@ -1,4 +1,8 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
+---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local C = LibStub("AceConfig-3.0")
 local CD = LibStub("AceConfigDialog-3.0")
@@ -6,6 +10,7 @@ local CR = LibStub("AceConfigRegistry-3.0")
 local LDB = LibStub("LibDataBroker-1.1")
 local LDBIcon = LibStub("LibDBIcon-1.0")
 local Comm, GUI, Inspect, Item, Locale, Session, Roll, Unit, Util = Addon.Comm, Addon.GUI, Addon.Inspect, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
+---@class Options
 local Self = Addon.Options
 
 -- Config

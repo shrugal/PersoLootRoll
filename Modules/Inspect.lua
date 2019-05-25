@@ -1,5 +1,9 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
 local Comm, Item, Unit, Util = Addon.Comm, Addon.Item, Addon.Unit, Addon.Util
+---@class Inspect : Module
 local Self = Addon.Inspect
 
 -- How long before refreshing cache entries (s)

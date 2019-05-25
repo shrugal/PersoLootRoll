@@ -1,5 +1,9 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
 local Inspect, Unit, Util = Addon.Inspect, Addon.Unit, Addon.Util
+---@class Item
 local Self = Addon.Item
 
 -------------------------------------------------------

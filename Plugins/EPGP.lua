@@ -1,9 +1,14 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
+---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local EPGP = LibStub("AceAddon-3.0"):GetAddon("EPGP", true)
 local LGP = LibStub("LibGearPoints-1.2", true)
 local GS = LibStub("LibGuildStorage-1.2", true)
 local GUI, Options, Roll, Session, Unit, Util = Addon.GUI, Addon.Options, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
+---@class EPGP : Module
 local Self = Addon.EPGP
 
 Self.NAME = "EPGP"

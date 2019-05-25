@@ -1,4 +1,8 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@class Addon
+local Addon = select(2, ...)
+---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local RI = LibStub("LibRealmInfo")
 local CB = LibStub("CallbackHandler-1.0")

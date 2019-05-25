@@ -1,8 +1,13 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
+---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local AceGUI = LibStub("AceGUI-3.0")
 local CB = LibStub("CallbackHandler-1.0")
 local Comm, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+---@class GUI
 local Self = Addon.GUI
 
 --- Add a player column entry

@@ -1,4 +1,7 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
 local Locale = Addon.Locale
 local lang = "enUS"
 
@@ -47,6 +50,7 @@ L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT"] = "You have won %s from <%s>! Please tra
 L["MSG_ROLL_WINNER_WHISPER_MASTERLOOT_OWN"] = "You have won your own %s!"
 
 -- Addon
+---@class L
 local L = LibStub("AceLocale-3.0"):NewLocale(Name, lang, lang == Locale.FALLBACK)
 if not L then return end
 

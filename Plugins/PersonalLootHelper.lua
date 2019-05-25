@@ -1,5 +1,9 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
 local Comm, Item, Roll, Session, Unit, Util = Addon.Comm, Addon.Item, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
+---@class PLH : Module
 local Self = Addon.PLH
 
 Self.NAME = "PersonalLootHelper"

@@ -1,5 +1,9 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
 local Comm, GUI, Item, Roll, Session, Unit, Util = Addon.Comm, Addon.GUI, Addon.Item, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
+---@class RCLC : Module
 local Self = Addon.RCLC
 
 Self.NAME = "RCLootCouncil"

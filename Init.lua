@@ -1,4 +1,7 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
 local Version = GetAddOnMetadata("PersoLootRoll", "Version")
 LibStub("AceAddon-3.0"):NewAddon(Addon, Name, "AceConsole-3.0", "AceComm-3.0", "AceSerializer-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceHook-3.0")
 
@@ -8,10 +11,11 @@ Addon.VERSION = tonumber(Version) or Version
 Addon.DEBUG = false
 
 -- Modules
-
+---@class Module
 Addon.Module = {}
 local Module = Addon.Module
 
+---@return boolean
 function Module:ShouldBeEnabled() return self.enableState end
 
 function Module:CheckState(...)

@@ -1,7 +1,12 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
+---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local CB = LibStub("CallbackHandler-1.0")
 local Comm, GUI, Roll, Unit, Util = Addon.Comm, Addon.GUI, Addon.Roll, Addon.Unit, Addon.Util
+---@class Session : Module
 local Self = Addon.Session
 
 -- Events

@@ -1,5 +1,9 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
 local Events, Locale, Session, Roll, Unit, Util = Addon.Events, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
+---@class Comm
 local Self = Addon.Comm
 
 Self.PREFIX = Addon.ABBR

@@ -1,6 +1,11 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
+---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Comm, Item, Roll, Unit, Util = Addon.Comm, Addon.Item, Addon.Roll, Addon.Unit, Addon.Util
+---@class Trade : Module
 local Self = Addon.Trade
 
 Self.items = {player = {}, target = {}}

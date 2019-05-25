@@ -1,6 +1,10 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
 local AceEvent = LibStub("AceEvent-3.0")
 local Util = Addon.Util
+---@class Registrar
 local Self = Util.Registrar
 
 ---

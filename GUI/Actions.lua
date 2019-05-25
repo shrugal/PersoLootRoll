@@ -1,7 +1,12 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
+---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local AceGUI = LibStub("AceGUI-3.0")
 local GUI, Inspect, Item, Masterloot, Roll, Trade, Unit, Util = Addon.GUI, Addon.Inspect, Addon.Item, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+---@class Actions : Module
 local Self = GUI.Actions
 
 Self.frames = {}

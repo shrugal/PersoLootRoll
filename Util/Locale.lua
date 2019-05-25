@@ -1,6 +1,10 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
 local RI = LibStub("LibRealmInfo")
 local Unit, Util = Addon.Unit, Addon.Util
+---@class Locale
 local Self = Addon.Locale
 
 -- The region's default language

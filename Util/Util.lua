@@ -1,7 +1,12 @@
-local Name, Addon = ...
+---@type string
+local Name = ...
+---@type Addon
+local Addon = select(2, ...)
 local Unit = Addon.Unit
+---@class Util
 local Self = Addon.Util
 
+---@type Registrar
 Self.Registrar = {}
 
 -------------------------------------------------------
