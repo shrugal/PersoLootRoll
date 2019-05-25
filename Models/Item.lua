@@ -15,26 +15,37 @@ Self.LVL_THRESHOLD = 10
 -- Item level threshold
 Self.ILVL_THRESHOLD = 15
 
--- For editor auto-completion:
--- Quality: LE_ITEM_QUALITY_POOR, LE_ITEM_QUALITY_COMMON, LE_ITEM_QUALITY_UNCOMMON, LE_ITEM_QUALITY_RARE, LE_ITEM_QUALITY_EPIC, LE_ITEM_QUALITY_LEGENDARY, LE_ITEM_QUALITY_ARTIFACT, LE_ITEM_QUALITY_HEIRLOOM, LE_ITEM_QUALITY_WOW_TOKEN
--- Bind types: LE_ITEM_BIND_NONE, LE_ITEM_BIND_ON_ACQUIRE, LE_ITEM_BIND_ON_EQUIP, LE_ITEM_BIND_ON_USE, LE_ITEM_BIND_QUEST
-
 -- Tooltip search patterns
 Self.PATTERN_LINK = "(|?c?f?f?%x*|?H?item:[^|]*|?h?[^|]*|?h?|?r?)"
+---@type string
 Self.PATTERN_ILVL = ITEM_LEVEL:gsub("%%d", "(%%d+)")
+---@type string
 Self.PATTERN_ILVL_SCALED = ITEM_LEVEL_ALT:gsub("%(%%d%)", "%%%(%%%d%%%)"):gsub("%%d", "(%%d+)")
+---@type string
 Self.PATTERN_MIN_LEVEL = ITEM_MIN_LEVEL:gsub("%%d", "(%%d+)")
+---@type string
 Self.PATTERN_HEIRLOOM_LEVEL = ITEM_LEVEL_RANGE:gsub("%%d", "(%%d+)")
+---@type string
 Self.PATTERN_RELIC_TYPE = RELIC_TOOLTIP_TYPE:gsub("%%s", "(.+)")
+---@type string
 Self.PATTERN_CLASSES = ITEM_CLASSES_ALLOWED:gsub("%%s", "(.+)")
+---@type string
 Self.PATTERN_SPEC = ITEM_REQ_SPECIALIZATION:gsub("%%s", "(.+)")
+---@type string
 Self.PATTERN_STRENGTH = ITEM_MOD_STRENGTH:gsub("%%c%%s", "^%%p(.+)")
+---@type string
 Self.PATTERN_INTELLECT = ITEM_MOD_INTELLECT:gsub("%%c%%s", "^%%p(.+)")
+---@type string
 Self.PATTERN_AGILITY = ITEM_MOD_AGILITY:gsub("%%c%%s", "^%%p(.+)")
+---@type string
 Self.PATTERN_SOULBOUND = ITEM_SOULBOUND
+---@type string
 Self.PATTERN_TRADE_TIME_REMAINING = BIND_TRADE_TIME_REMAINING:gsub("%%s", ".+")
+---@type string
 Self.PATTERN_APPEARANCE_KNOWN = TRANSMOGRIFY_TOOLTIP_APPEARANCE_KNOWN
+---@type string
 Self.PATTERN_APPEARANCE_UNKNOWN = TRANSMOGRIFY_TOOLTIP_APPEARANCE_UNKNOWN
+---@type string
 Self.PATTERN_APPEARANCE_UNKNOWN_ITEM = TRANSMOGRIFY_TOOLTIP_ITEM_UNKNOWN_APPEARANCE_KNOWN
 
 -- Item loading status
@@ -107,6 +118,8 @@ Self.queue = {}
 -------------------------------------------------------
 
 -- Get the item link from a string
+---@param str string|table
+---@return string
 function Self.GetLink(str)
     if type(str) == "table" then
         return str.link
@@ -116,6 +129,8 @@ function Self.GetLink(str)
 end
 
 -- Get a version of the link for the given player level
+---@param link string
+---@param level integer
 function Self.GetLinkForLevel(link, level)
     local i = 0
     return link:gsub(":[^:]*", function (s)
@@ -127,6 +142,8 @@ function Self.GetLinkForLevel(link, level)
 end
 
 -- Get a version of the link that is scaled to the given player level
+---@param link string
+---@param level integer
 function Self.GetLinkScaled(link, level)
    local i, numBonusIds = 0, 1
    return link:gsub(":([^:]*)", function (s)
@@ -152,12 +169,20 @@ function Self.IsLink(str)
 end
 
 -- Make item link printable
+---@param str string
+---@return string
+---@return integer
 function Self.GetPrintableLink(str)
     return gsub(str.link or str, "\124", "\124\124");
 end
 
 -- Get just one item attribute, without creating an item instance or figuring out all other attributes as well
 -- TODO: Optimize with line number restrictions
+---@param i integer
+---@param line string
+---@param lines table
+---@param attr string
+---@return any
 local fullScanFn = function (i, line, lines, attr)
     -- classes
     if attr == "classes" then
@@ -211,6 +236,9 @@ local fullScanFn = function (i, line, lines, attr)
     end
 end
 
+---@param item Item|string|integer
+---@param attr string
+---@return any
 function Self.GetInfo(item, attr, ...)
     local isInstance = type(item) == "table" and item.link and true
     local id = isInstance and item.id or tonumber(item)
@@ -301,6 +329,11 @@ end
 -------------------------------------------------------
 
 -- Create an item instance from a link
+---@param item Item|string
+---@param owner string
+---@param bagOrEquip integer
+---@param slot integer
+---@return Item
 function Self.FromLink(item, owner, bagOrEquip, slot, isTradable)
     if type(item) == "string" then
         owner = owner and Unit.Name(owner) or nil
@@ -319,6 +352,8 @@ function Self.FromLink(item, owner, bagOrEquip, slot, isTradable)
 end
 
 -- Create an item instance for the given equipment slot
+---@param slot integer
+---@param unit string
 function Self.FromSlot(slot, unit, isTradable)
     unit = unit or "player"
     local link = GetInventoryItemLink(unit, slot)
@@ -328,6 +363,9 @@ function Self.FromSlot(slot, unit, isTradable)
 end
 
 -- Create an item instance from the given bag position
+---@param bag integer
+---@param slot integer
+---@param isTradable boolean
 function Self.FromBagSlot(bag, slot, isTradable)
     local link = GetContainerItemLink(bag, slot)
     if link then
@@ -336,6 +374,7 @@ function Self.FromBagSlot(bag, slot, isTradable)
 end
 
 -- Get the currently equipped artifact weapon
+---@param unit string
 function Self.GetEquippedArtifact(unit)
     unit = unit or "player"
     local classId = Unit.ClassId(unit)
@@ -357,6 +396,7 @@ end
 -------------------------------------------------------
 
 -- Get item info from a link
+---@param self Item
 function Self:GetLinkInfo()
     if self.infoLevel < Self.INFO_LINK then
         local info = Self.INFO.link
@@ -462,11 +502,13 @@ end
 -------------------------------------------------------
 
 -- Get the equipment location or relic type
+---@return string
 function Self:GetLocation()
     return self:GetBasicInfo().isRelic and self:GetFullInfo().relicType or self.equipLoc
 end
 
 -- Determine if two items belong to the same location
+---@param item Item|string|integer
 function Self:IsSameLocation(item, weaponsSameLoc)
     local selfLoc = (type(self) == "table" or Self.IsLink(self)) and Self.GetInfo(self, "equipLoc") or self
     local itemLoc = (type(item) == "table" or Self.IsLink(item)) and Self.GetInfo(item, "equipLoc") or item
@@ -496,6 +538,8 @@ function Self:IsSameLocation(item, weaponsSameLoc)
 end
 
 -- Get a list of owned items by equipment location
+---@param loc Item|string
+---@param allWeapons boolean
 function Self.GetOwnedForLocation(loc, allWeapons)
     local items = Util.Tbl()
     local classId = Unit.ClassId("player")
@@ -563,7 +607,7 @@ end
 -- Get number of slots for a given equipment location
 function Self:GetSlotCountForLocation()
     -- No point in doing this if we don't have the info yet
-    _, success = self:GetBasicInfo()
+    local _, success = self:GetBasicInfo()
     if not success then return 0 end
 
     if self.isRelic then
@@ -584,6 +628,7 @@ function Self:GetSlotCountForLocation()
 end
 
 -- Get the threshold for the item's slot
+---@param upper boolean
 function Self:GetThresholdForLocation(unit, upper)
     local unit = Unit(unit or "player")
     local f = Addon.db.profile.filter
@@ -610,6 +655,7 @@ function Self:GetThresholdForLocation(unit, upper)
 end
 
 -- Get the reference level for equipment location
+---@param unit string
 function Self:GetLevelForLocation(unit)
     unit = Unit(unit or "player")
     local loc = self:GetLocation()
@@ -620,7 +666,7 @@ function Self:GetLevelForLocation(unit)
             -- Weapons
             Self.UpdatePlayerCacheWeapons()
 
-            local loc = Util.Select(loc, Self.TYPE_HOLDABLE, Self.TYPE_WEAPONOFFHAND, Self.TYPE_2HWEAPON, Self.TYPE_WEAPON, loc)
+            loc = Util.Select(loc, Self.TYPE_HOLDABLE, Self.TYPE_WEAPONOFFHAND, Self.TYPE_2HWEAPON, Self.TYPE_WEAPON, loc)
             local slotMin
 
             for spec in pairs(Self.CLASSES[Unit.ClassId(unit)].specs) do
@@ -652,6 +698,7 @@ function Self:GetLevelForLocation(unit)
 end
 
 -- Get equipped item links for the location
+---@param unit string
 function Self:GetEquippedForLocation(unit)
     unit = Unit(unit or "player")
     local isSelf = Unit.IsSelf(unit)
@@ -659,7 +706,7 @@ function Self:GetEquippedForLocation(unit)
     if self:GetBasicInfo().isRelic then
         return Inspect.GetLink(unit, self:GetFullInfo().relicType)
     elseif self.isEquippable then
-        links = Util.Tbl()
+        local links = Util.Tbl()
         for i,slot in pairs(Self.SLOTS[self.equipLoc]) do
             tinsert(links, isSelf and GetInventoryItemLink(unit, slot) or Inspect.GetLink(unit, slot) or nil)
         end
@@ -677,6 +724,7 @@ function Self:GetGem(slot)
 end
 
 -- Get artifact relics in the item
+---@param relicTypes table
 function Self:GetRelics(relicTypes)
     local id = self:GetBasicInfo().id
 
@@ -732,6 +780,7 @@ end
 -------------------------------------------------------
 
 -- Check if an item can be equipped
+---@param unit string
 function Self:CanBeEquipped(unit, ...)
     -- Check if it's equippable
     if not self:GetBasicInfo().isEquippable then
@@ -783,12 +832,13 @@ function Self:CanBeEquipped(unit, ...)
 end
 
 -- Check the item quality
+---@param loot boolean
 function Self:HasSufficientQuality(loot)
     local quality = Self.GetInfo(self, "quality")
 
     if not quality or quality >= LE_ITEM_QUALITY_LEGENDARY then
         return false
-    elseif loot and Util.IsLegacyLoot() then
+    elseif loot and Util.IsTransmogRun() then
         return quality >= LE_ITEM_QUALITY_COMMON
     elseif IsInRaid() then
         return quality >= LE_ITEM_QUALITY_EPIC
@@ -882,13 +932,14 @@ function Self:IsPawnUpgrade(unit, ...)
 end
 
 -- Check if the unit might need the transmog appearance
+---@param unit string
 function Self:IsTransmogMissing(unit)
     if Util.In(self.equipLoc, Self.TYPES_NO_TRANSMOG) then
         return false
     elseif Unit.IsSelf(unit or "player") then
         return Addon.db.profile.filter.transmog and self:GetFullInfo().isTransmogKnown == false
     else
-        return not Addon:UnitIsTracking(unit) and Util.IsLegacyLoot()
+        return not Addon:UnitIsTracking(unit) and Util.IsTransmogRun()
     end
 end
 
@@ -899,6 +950,8 @@ function Self:SetEligible(unit)
 end
 
 -- Check who in the group could use the item
+---@param unit string
+---@return table|boolean
 function Self:GetEligible(unit)
     if not self.eligible then
         if unit then
@@ -944,6 +997,7 @@ function Self:GetEligible(unit)
 end
 
 -- Get the # of eligible players
+---@param othersOnly boolean
 function Self:GetNumEligible(checkIlvl, othersOnly)
     local n = 0
     for unit,v in pairs(self:GetEligible()) do
@@ -957,6 +1011,8 @@ end
 -------------------------------------------------------
 
 -- Check if a looted item should be checked further
+---@param self Item|string
+---@param owner string
 function Self:ShouldBeChecked(owner)
     owner = owner or type(self) == "table" and self.owner
     local item = type(self) == "table" and self.link or self
@@ -1036,6 +1092,11 @@ end
 -------------------------------------------------------
 
 -- Check if the item (given by self or bag+slot) is tradable
+---@param selfOrBag Item|integer
+---@param slot integer
+---@return boolean
+---@return boolean
+---@return boolean
 function Self.IsTradable(selfOrBag, slot)
     local bag, isSoulbound, bindTimeout
 
@@ -1090,6 +1151,7 @@ function Self.IsTradable(selfOrBag, slot)
 end
 
 -- Get the item's position
+---@param refresh boolean
 function Self:GetPosition(refresh)
     if not self.isOwner or not refresh and self.bagOrEquip and self.slot ~= 0 then
         return self.bagOrEquip, self.slot, self.isTradable
@@ -1151,14 +1213,19 @@ end
 -------------------------------------------------------
 
 -- Get an entry from the player level cache
+---@param loc string
+---@param spec integer
 function Self.GetPlayerCache(loc, spec)
     return Self.playerCache[spec and loc .. spec or loc]
 end
 
 -- Set an entry ont he player level cache
+---@param loc string
+---@param specOrCache integer|table
+---@param cache table
 function Self.SetPlayerCache(loc, specOrCache, cache)
     cache = cache or specOrCache
-    spec = cache and specOrCache
+    local spec = cache and specOrCache
     Self.playerCache[spec and loc .. spec or loc] = cache
 end
 
@@ -1169,8 +1236,7 @@ function Self.UpdatePlayerCacheWeapons()
 
     for spec,info in pairs(specs) do
         for _,loc in pairs(info.weapons or Self.TYPES_WEAPON) do
-            local loc = Util.Select(loc, Self.TYPE_HOLDABLE, Self.TYPE_WEAPONOFFHAND, Self.TYPE_2HWEAPON, Self.TYPE_WEAPON, loc)
-            local key = loc .. spec
+            loc = Util.Select(loc, Self.TYPE_HOLDABLE, Self.TYPE_WEAPONOFFHAND, Self.TYPE_2HWEAPON, Self.TYPE_WEAPON, loc)
             local cache = Self.GetPlayerCache(loc, spec) or Util.Tbl()
 
             if not Self.IsPlayerCacheValid(cache) then
@@ -1231,6 +1297,7 @@ function Self.UpdatePlayerCacheWeapons()
 end
 
 -- Check if a player cache entry is still valid
+---@param cacheOrKey table|string
 function Self.IsPlayerCacheValid(cacheOrKey)
     local cache = Util.Check(type(cacheOrKey) == "string", Self.playerCache[cacheOrKey], cacheOrKey)
     return cache and cache.ilvl and cache.time and cache.time + Inspect.REFRESH < GetTime()
@@ -1245,7 +1312,7 @@ function Self:IsScaled()
     if Self.GetInfo(self, "quality") == LE_ITEM_QUALITY_HEIRLOOM then
         return true
     end
-    
+
     local linkLevel = Self.GetInfo(self, "linkLevel")
     local upgradeLevel = Self.GetInfo(self, "upgradeLevel")
     return linkLevel and upgradeLevel and (linkLevel ~= upgradeLevel or upgradeLevel > UnitLevel("player"))

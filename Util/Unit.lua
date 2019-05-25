@@ -24,6 +24,9 @@ Self.SHAMAN = 7
 Self.WARLOCK = 9
 Self.WARRIOR = 1
 
+-- Expansion max player levels
+Self.EXP_LEVELS = {60, 70, 80, 85, 90, 100, 110, 120, 130, 140}
+
 -- Specs
 Self.SPECS = {
     250, 251, 252,      -- Death Knight
@@ -285,6 +288,15 @@ function Self.Specs(unit)
         Self.specs = Self.specs or Util.TblCopy(Self.SPECS, function (id) return select(2, GetSpecializationInfoByID(id)) end)
         return Self.specs
     end
+end
+
+-- Get the appropriate expansion for a unit
+function Self.Expansion(unit)
+    local uLvl = UnitLevel(unit)
+    for i,eLvl in ipairs(Self.EXP_LEVELS) do
+        if eLvl >= uLvl then return i end
+    end
+    return 1
 end
 
 -- Get a unit's class color

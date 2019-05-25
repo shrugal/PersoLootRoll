@@ -5,8 +5,7 @@ local Addon = select(2, ...)
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local RI = LibStub("LibRealmInfo")
-local CB = LibStub("CallbackHandler-1.0")
-local Comm, GUI, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+local Comm, GUI, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon
 
 -- Logging
@@ -33,7 +32,7 @@ Self.errorRate = 0
 Self.CHANNEL_ALPHA = "alpha"
 Self.CHANNEL_BETA = "beta"
 Self.CHANNEL_STABLE = "stable"
-Self.CHANNELS = Util.TblFlip({Self.CHANNEL_ALPHA, Self.CHANNEL_BETA, Self.CHANNEL_STABLE})
+Self.CHANNELS = {alpha = 1, beta = 2, stable = 3}
 
 Self.versions = {}
 Self.versionNoticeShown = false
@@ -128,6 +127,7 @@ function Self:OnDisable()
     self:CheckState(true)
 end
 
+---@param debug boolean
 function Self:ToggleDebug(debug)
     if debug ~= nil then
         self.DEBUG = debug
@@ -147,6 +147,7 @@ end
 -------------------------------------------------------
 
 -- Chat command handling
+---@param msg string
 function Self:HandleChatCommand(msg)
     local args = Util.Tbl(self:GetArgs(msg, 10))
     args[11] = nil
@@ -172,8 +173,8 @@ function Self:HandleChatCommand(msg)
 
         -- Add submenus as additional options
         if Util.StrIsEmpty(args[1]) then
-            for i,v in pairs(subs) do
-                local name = Util.StrUcFirst(v)
+            for _,v in pairs(subs) do
+                name = Util.StrUcFirst(v)
                 local getter = LibStub("AceConfigRegistry-3.0"):GetOptionsTable(Name .. " " .. name)
                 print("  |cffffff78" .. v .. "|r - " .. (getter("cmd", "AceConfigCmd-3.0").name or name))
             end
@@ -184,7 +185,7 @@ function Self:HandleChatCommand(msg)
     elseif cmd == "roll" then
         local ml, isML, items, itemOwner, timeout = Session.GetMasterlooter(), Session.IsMasterlooter(), Util.Tbl(), "player"
 
-        for i,v in pairs(args) do
+        for _,v in pairs(args) do
             if tonumber(v) then
                 timeout = tonumber(v)
             elseif Item.IsLink(v) then
@@ -203,9 +204,7 @@ function Self:HandleChatCommand(msg)
         elseif not next(items) then
             self:Error(L["USAGE_ROLL"])
         else
-            local ml = Session.GetMasterlooter()
-
-            for i,item in pairs(items) do
+            for _,item in pairs(items) do
                 item = Item.FromLink(item, itemOwner)
                 local roll = Roll.Add(item, ml or "player", nil, nil, timeout)
 
@@ -336,16 +335,20 @@ function Self:CheckState(refresh)
 end
 
 -- Check if the addon is currently active
+---@param refresh boolean
 function Self:IsActive(refresh)
     return self:CheckState(refresh) >= Self.STATE_ACTIVE
 end
 
 -- Check if the addon is currently tracking loot etc.
+---@param refresh boolean
+---@return boolean
 function Self:IsTracking(refresh)
     return self:CheckState(refresh) >= Self.STATE_TRACKING
 end
 
 -- Active state changed
+---@param active boolean
 function Self:OnActiveChanged(active)
     if active then
         -- Schedule version check
@@ -371,6 +374,7 @@ function Self:OnActiveChanged(active)
 end
 
 -- Tracking state changed
+---@param tracking boolean
 function Self:OnTrackingChanged(tracking)
     Comm.Send(Comm["EVENT_" .. (tracking and "ENABLE" or "DISABLE")])
 
@@ -386,7 +390,7 @@ function Self:UnitIsTracking(unit, inclCompAddons)
         return self:IsTracking()
     else
         unit = Unit.Name(unit)
-        return self.versions[unit] and not self.disabled[unit] or inclCompAddons and self:GetCompAddonUser(unit)
+        return Util.Bool(self.versions[unit] and not self.disabled[unit] or inclCompAddons and self:GetCompAddonUser(unit))
     end
 end
 
@@ -395,6 +399,8 @@ end
 -------------------------------------------------------
 
 -- Set a unit's version string
+---@param unit string
+---@param version string|number
 function Self:SetVersion(unit, version)
     version = tonumber(version) or version
 
@@ -415,6 +421,7 @@ end
 
 -- Get major, channel and minor versions for the given version string or unit
 -- TODO: Automatically set TOC version to tag or revision starting with in v19
+---@param versionOrUnit string|number
 function Self:GetVersion(versionOrUnit)
     local version = (not versionOrUnit or Unit.IsSelf(versionOrUnit)) and Self.VERSION
         or type(versionOrUnit) == "string" and self.versions[Unit.Name(versionOrUnit)]
@@ -457,6 +464,9 @@ function Self:CompareVersion(versionOrUnit)
     return 0
 end
 
+---@param unit string
+---@param addon string
+---@param version string|number
 function Self:SetCompAddonUser(unit, addon, version)
     unit = Unit.Name(unit)
     if not self.versions[unit] then
@@ -464,6 +474,9 @@ function Self:SetCompAddonUser(unit, addon, version)
     end
 end
 
+---@param unit string
+---@param addon string
+---@return string
 function Self:GetCompAddonUser(unit, addon)
     unit = Unit.Name(unit)
     if addon then
@@ -498,6 +511,7 @@ end
 -------------------------------------------------------
 
 -- Write to log and print if lvl is high enough
+---@param line string
 function Addon:Echo(lvl, line, ...)
     if lvl == Self.ECHO_DEBUG then
         for i=1, select("#", ...) do

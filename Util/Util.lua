@@ -33,9 +33,9 @@ Self.EXP_WOD = 6
 Self.EXP_LEGION = 7
 Self.EXP_BFA = 8
 Self.EXP_NEXT = 9
-Self.EXP_LEVELS = {60, 70, 80, 85, 90, 100, 110, 120, 130, 140}
 
 -- Check if the current group is a guild group
+---@return string|boolean
 function Self.IsGuildGroup(guild)
     if not IsInGroup() or guild == "" then
         return false
@@ -57,6 +57,8 @@ function Self.IsGuildGroup(guild)
 end
 
 -- Check if the current group is a community group
+---@param commId integer
+---@return integer|boolean
 function Self.IsCommunityGroup(commId)
     if not IsInGroup() or not Self.TblFirstWhere(C_Club.GetSubscribedClubs(), "clubType", Enum.ClubType.Character, "clubId", commId) then
         return false
@@ -80,6 +82,7 @@ function Self.IsCommunityGroup(commId)
 end
 
 -- Get a list of guild ranks
+---@return table<integer,string>
 function Self.GetGuildRanks()
     local t, i, name = Self.Tbl(), 1, GuildControlGetRankName(1)
     while not Self.StrIsEmpty(name) do
@@ -89,6 +92,8 @@ function Self.GetGuildRanks()
     return t
 end
 
+-- Get a list of club ranks
+---@return table<integer,string>
 function Self.GetClubRanks(clubId)
     if not clubId then return end
 
@@ -112,12 +117,14 @@ end
 
 -- Check if the legacy loot mode is active
 function Self.IsLegacyLoot()
-    if IsInInstance() and GetLootMethod() == "personalloot" then
-        local iExp = Self.GetInstanceExp()
-        local pExp = Self.TblFindFn(Self.EXP_LEVELS, function (v) return v >= UnitLevel("player") end)
+    local iExp = Self.GetInstanceExp()
+    return iExp and GetLootMethod() == "personalloot" and iExp < Unit.Expansion("player") - 1
+end
 
-        return iExp and pExp and iExp < pExp - 1
-    end
+-- Check if the current session is a transmog run
+function Self.IsTransmogRun()
+    local iExp = Self.GetInstanceExp()
+    return iExp and GetLootMethod() == "personalloot" and iExp < Unit.Expansion("player")
 end
 
 -- Check if currently in a timewalking dungeon
@@ -125,6 +132,7 @@ function Self.IsTimewalking()
     return Self.In(select(3, GetInstanceInfo()), 24, 33)
 end
 
+-- Get the usual # of dropped items in the current instance and group setting
 function Self.GetNumDroppedItems()
     local difficulty, _, maxPlayers = select(3, GetInstanceInfo())
 
@@ -155,14 +163,15 @@ function Self.GetHiddenTooltip()
 end
 
 -- Fill a tooltip and scan it line by line
-function Self.ScanTooltip(fn, linkOrbag, slot, ...)
+---@param linkOrBag string | integer
+function Self.ScanTooltip(fn, linkOrBag, slot, ...)
     local tooltip = Self.GetHiddenTooltip()
     tooltip:ClearLines()
 
     if not slot then
-        tooltip:SetHyperlink(linkOrbag)
+        tooltip:SetHyperlink(linkOrBag)
     else
-        tooltip:SetBagItem(linkOrbag, slot)
+        tooltip:SetBagItem(linkOrBag, slot)
     end
 
     local lines = tooltip:NumLines()
@@ -178,6 +187,8 @@ function Self.ScanTooltip(fn, linkOrbag, slot, ...)
 end
 
 -- Get the correct bag position, if it exists (e.g. 1, 31 -> 2, 1)
+---@return integer
+---@return integer
 function Self.GetBagPosition(bag, slot)
     local numSlots = GetContainerNumSlots(bag)
     if bag < 0 or bag > NUM_BAG_SLOTS or not numSlots or numSlots == 0 then
@@ -199,6 +210,9 @@ function Self.Equals(a, b)
 end
 
 -- Compare two values, returns -1 for a < b, 0 for a == b and 1 for a > b
+---@generic T
+---@param a T
+---@param b T
 function Self.Compare(a, b)
     return a == b and 0
     or a == nil and 1
@@ -207,6 +221,10 @@ function Self.Compare(a, b)
 end
 
 -- Create an iterator
+---@param from number
+---@param to number
+---@param step number
+---@return function(steps: number, reset: boolean): number
 function Self.Iter(from, to, step)
     local i = from or 0
     return function (steps, reset)
@@ -216,16 +234,26 @@ function Self.Iter(from, to, step)
 end
 
 -- Return val if it's not nil, default otherwise
+---@generic T
+---@param val T
+---@param default T
+---@return T
 function Self.Default(val, default)
     if val ~= nil then return val else return default end
 end
 
 -- Return a when cond is true, b otherwise
+---@generic T
+---@param cond any
+---@param a T
+---@param b T
+---@return T
 function Self.Check(cond, a, b)
     if cond then return a else return b end
 end
 
 -- Check if the value is truthy (true, ~=0, ~="", ~=[])
+---@param val any
 function Self.IsSet(val)
     local t = type(val)
     return val
@@ -241,6 +269,10 @@ function Self.IsEmpty(val)
 end
 
 -- Iterate tables or parameter lists
+---@generic T, I
+---@param t T[]
+---@param i I
+---@return I, T
 local Fn = function (t, i)
     i = (i or 0) + 1
     if i > #t then
@@ -250,6 +282,10 @@ local Fn = function (t, i)
         return i, Self.Check(v == Self.TBL_NIL, nil, v)
     end
 end
+---@generic T, I
+---@return function(t: T[], i: I): I, T
+---@return T
+---@return I
 function Self.Each(...)
     if ... and type(...) == "table" then
         return next, ...
@@ -259,6 +295,10 @@ function Self.Each(...)
         return Fn, Self.TblTmp(...)
     end
 end
+---@generic T, I
+---@return function(t: T[], i: I): I, T
+---@return T
+---@return I
 function Self.IEach(...)
     if ... and type(...) == "table" then
         return Fn, ...
@@ -268,6 +308,8 @@ function Self.IEach(...)
 end
 
 -- Shortcut for val == x or val == y or ...
+---@param val any
+---@return boolean
 function Self.In(val, ...)
     for i,v in Self.Each(...) do
         if v == val then return true end
@@ -276,6 +318,8 @@ function Self.In(val, ...)
 end
 
 -- Shortcut for val == a and b or val == c and d or ...
+---@param val any
+---@return any
 function Self.Select(val, ...)
     local n = select("#", ...)
     
@@ -293,11 +337,13 @@ end
 
 Self.stack = {}
 
+---@param val any
 function Self.Push(val)
     tinsert(Self.stack, val == nil and Self.TBL_NIL or val)
     return Self
 end
 
+---@return any
 function Self.Pop()
     local val = tremove(Self.stack)
     return Self.Check(val == Self.TBL_NIL, nil, val)
@@ -308,6 +354,8 @@ end
 -------------------------------------------------------
 
 -- Create a table that tracks the highest numerical index and offers count+newIndex fields and Add function
+---@param t table
+---@return table
 function Self.TblCounter(t)
     t = t or {}
     local count = 0
@@ -360,6 +408,7 @@ function Self.TblHash(...)
 end
 
 -- Add one or more tables to the cache, first parameter can define a recursive depth
+---@vararg table|boolean
 function Self.TblRelease(...)
     local depth = type(...) ~= "table" and (type(...) == "number" and max(0, (...)) or ... and Self.tblPoolSize) or 0
 
@@ -395,9 +444,16 @@ function Self.TblTmp(...)
     return setmetatable(t, Self.TBL_EMPTY)
 end
 
-function Self.TblHashTmp(...) return setmetatable(Self.TblHash(...), Self.TBL_EMPTY) end
-function Self.TblIsTmp(t) return getmetatable(t) == Self.TBL_EMPTY end
+function Self.TblHashTmp(...)
+    return setmetatable(Self.TblHash(...), Self.TBL_EMPTY)
+end
 
+---@param t table
+function Self.TblIsTmp(t)
+    return getmetatable(t) == Self.TBL_EMPTY
+end
+
+---@vararg table
 function Self.TblReleaseTmp(...)
     for i=1, select("#", ...) do
         local t = select(i, ...)
@@ -408,6 +464,7 @@ end
 -- GET/SET
 
 -- Get a value from a table
+---@return any
 function Self.TblGet(t, ...)
     local n, path = select("#", ...), ...
    
@@ -429,6 +486,9 @@ function Self.TblGet(t, ...)
 end
 
 -- Set a value on a table
+---@vararg any
+---@return table
+---@return any
 function Self.TblSet(t, ...)
     local n, path = select("#", ...), ...
     local val = select(n, ...)
@@ -470,12 +530,16 @@ function Self.TblRandomKey(t)
 end
 
 -- Get a random entry from the table
+---@param t table
+---@return any
 function Self.TblRandom(t)
     local key = Self.TblRandomKey(t)
     return key and t[key]
 end
 
 -- Get table keys
+---@param t table
+---@return table
 function Self.TblKeys(t)
     local u = Self.Tbl()
     for i,v in pairs(t) do tinsert(u, i) end
@@ -483,6 +547,8 @@ function Self.TblKeys(t)
 end
 
 -- Get table values as continuously indexed list
+---@param t table
+---@return table
 function Self.TblValues(t)
     local u = Self.Tbl()
     for i,v in pairs(t) do tinsert(u, v) end
@@ -490,6 +556,8 @@ function Self.TblValues(t)
 end
 
 -- Turn a table into a continuously indexed list (in-place)
+---@param t table
+---@return table
 function Self.TblList(t)
     local n = Self.TblCount(t)
     for k=1, n do
@@ -515,14 +583,36 @@ end
 
 -- SUB
 
-function Self.TblSub(t, s, e) return {unpack(t, s or 1, e)} end
-function Self.TblHead(t, n) return Self.TblSub(t, 1, n or 1) end
-function Self.TblTail(t, n) return Self.TblSub(t, #t - (n or 1)) end
-function Self.TblSplice(t, s, e, u) return Self.TblMerge(Self.TblHead(t, s), u or {}, Self.TblSub(#t, e)) end
+---@param t table
+---@param s integer
+---@param e integer
+function Self.TblSub(t, s, e)
+    return {unpack(t, s or 1, e)}
+end
+
+function Self.TblHead(t, n)
+    return Self.TblSub(t, 1, n or 1)
+end
+
+---@param t table
+---@param n integer
+function Self.TblTail(t, n)
+    return Self.TblSub(t, #t - (n or 1))
+end
+
+---@param t table
+---@param s integer
+---@param e integer
+---@param u integer
+function Self.TblSplice(t, s, e, u)
+    return Self.TblMerge(Self.TblHead(t, s), u or {}, Self.TblSub(#t, e))
+end
 
 -- ITERATE
 
 -- Good old FoldLeft
+---@param t table
+---@param u any
 function Self.TblFoldL(t, fn, u, index, ...)
     fn, u = Self.Fn(fn), u or Self.Tbl()
     for i,v in pairs(t) do
@@ -545,6 +635,9 @@ function Self.TblIter(t, fn, ...)
 end
 
 -- Call a function on every table entry
+---@param fn function
+---@param index boolean
+---@param notVal boolean
 function Self.TblCall(t, fn, index, notVal, ...)
     for i,v in pairs(t) do
         Self.FnCall(Self.Fn(fn, v), v, i, index, notVal, ...)
@@ -553,13 +646,39 @@ end
 
 -- COUNT, SUM, MULTIPLY, MIN, MAX
 
-function Self.TblCount(t) return Self.TblFoldL(t, Self.FnInc, 0) end
-function Self.TblSum(t) return Self.TblFoldL(t, Self.FnAdd, 0) end
-function Self.TblMul(t) return Self.TblFoldL(t, Self.FnMul, 1) end
-function Self.TblMin(t, start) return Self.TblFoldL(t, math.min, start or select(2, next(t))) end
-function Self.TblMax(t, start) return Self.TblFoldL(t, math.max, start or select(2, next(t))) end
+---@return integer
+function Self.TblCount(t)
+    return Self.TblFoldL(t, Self.FnInc, 0)
+end
+
+---@param t table
+---@return number
+function Self.TblSum(t)
+    return Self.TblFoldL(t, Self.FnAdd, 0)
+end
+
+---@param t table
+---@return number
+function Self.TblMul(t)
+    return Self.TblFoldL(t, Self.FnMul, 1)
+end
+
+---@param t table
+---@param start number
+---@return number
+function Self.TblMin(t, start)
+    return Self.TblFoldL(t, math.min, start or select(2, next(t)))
+end
+
+---@param t table
+---@param start number
+---@return number
+function Self.TblMax(t, start)
+    return Self.TblFoldL(t, math.max, start or select(2, next(t)))
+end
 
 -- Count the # of occurences of given value(s)
+---@param t table
 function Self.TblCountOnly(t, ...)
     local n = 0
     for i,v in pairs(t) do
@@ -578,6 +697,7 @@ function Self.TblCountExcept(t, ...)
 end
 
 -- Count the # of tables that have given key/val pairs
+---@param t table
 function Self.TblCountWhere(t, ...)
     local n = 0
     for i,u in pairs(t) do
@@ -587,6 +707,8 @@ function Self.TblCountWhere(t, ...)
 end
 
 -- Count using a function
+---@param index boolean
+---@param notVal boolean
 function Self.TblCountFn(t, fn, index, notVal, ...)
     local n, fn = 0, Self.Fn(fn)
     for i,v in pairs(t) do
@@ -599,6 +721,8 @@ end
 -- SEARCH
 
 -- Search for something in a table and return the index
+---@param t table
+---@param fn function(v: any, i: any): boolean
 function Self.TblSearch(t, fn, ...)
     fn = Self.Fn(fn) or Self.FnId
     for i,v in pairs(t) do
@@ -609,6 +733,7 @@ function Self.TblSearch(t, fn, ...)
 end
 
 -- Check if one table is contained within the other
+---@param t table
 function Self.TblContains(t, u, deep)
     if t == u then
         return true
@@ -629,11 +754,13 @@ function Self.TblContains(t, u, deep)
 end
 
 -- Check if two tables are equal
+---@param deep boolean
 function Self.TblEquals(a, b, deep)
     return type(a) == "table" and type(b) == "table" and Self.TblContains(a, b, deep) and Self.TblContains(b, a, deep)
 end
 
 -- Check if a table matches the given key-value pairs
+---@param t table
 function Self.TblMatches(t, ...)
     if type(...) == "table" then
         return Self.TblContains(t, ...)
@@ -651,16 +778,22 @@ function Self.TblMatches(t, ...)
 end
 
 -- Check if a value is a filled table
+---@param t table
 function Self.TblIsSet(t)
     return type(t) == "table" and next(t) and true or false
 end
 
 -- Check if a value is not a table or empty
+---@param t table
 function Self.TblIsEmpty(t)
     return not Self.TblIsSet(t)
 end
 
 -- Find a value in a table
+---@param t table
+---@param val any
+---@return any
+---@return any
 function Self.TblFind(t, val)
     for i,v in pairs(t) do
         if v == val then return i, v end
@@ -668,6 +801,8 @@ function Self.TblFind(t, val)
 end
 
 -- Find a set of key/value pairs in a table
+---@return any
+---@return any
 function Self.TblFindWhere(t, ...)
     for i,v in pairs(t) do
         if Self.TblMatches(v, ...) then return i, v end
@@ -675,6 +810,10 @@ function Self.TblFindWhere(t, ...)
 end
 
 -- Find the first element matching a fn
+---@param index boolean
+---@param notVal boolean
+---@return any
+---@return any
 function Self.TblFindFn(t, fn, index, notVal, ...)
     for i,v in pairs(t) do
         if Self.FnCall(Self.Fn(fn, v), v, i, index, notVal, ...) then
@@ -684,6 +823,7 @@ function Self.TblFindFn(t, fn, index, notVal, ...)
 end
 
 -- Find the first element (optinally matching a fn)
+---@return any
 function Self.TblFirst(t, fn, index, notVal, ...)
     if not fn then
         return select(2, next(t))
@@ -693,6 +833,7 @@ function Self.TblFirst(t, fn, index, notVal, ...)
 end
 
 -- Find the first set of key/value pairs in a table
+---@return any
 function Self.TblFirstWhere(t, ...)
     return select(2, Self.TblFindWhere(t, ...))
 end
@@ -700,6 +841,10 @@ end
 -- FILTER
 
 -- Filter by a function
+---@param t table
+---@param index boolean
+---@param notVal boolean
+---@param k boolean
 function Self.TblFilter(t, fn, index, notVal, k, ...)
     fn = Self.Fn(fn) or Self.FnId
 
@@ -729,29 +874,37 @@ function Self.TblSelect(t, ...)
 end
 
 -- Omit specific keys from a table
+---@param t table
 function Self.TblUnselect(t, ...)
     for i,v in Self.Each(...) do t[v] = nil end
     return t
 end
 
 -- Filter by a value
+---@param k boolean
 function Self.TblOnly(t, val, k)
     return Self.TblFilter(t, Self.Equals, nil, nil, k, val)
 end
 
 -- Filter by not being a value
 local Fn = function (v, val) return v ~= val end
+---@param val any
+---@param k boolean
 function Self.TblExcept(t, val, k)
     return Self.TblFilter(t, Fn, nil, nil, k, val)
 end
 
 -- Filter by a set of key/value pairs in a table
+---@param t table
+---@param k boolean
 function Self.TblWhere(t, k, ...)
     return Self.TblFilter(t, Self.TblMatches, nil, nil, k, ...)
 end
 
 -- Filter by not having a set of key/value pairs in a table
 local Fn = function (...) return not Self.TblMatches(...) end
+---@param t table
+---@param k boolean
 function Self.TblExceptWhere(t, k, ...)
     return Self.TblFilter(t, Fn, nil, nil, k, ...)
 end
@@ -759,6 +912,9 @@ end
 -- COPY
 
 -- Copy a table and optionally apply a function to every entry
+---@param fn function
+---@param index boolean
+---@param notVal boolean
 function Self.TblCopy(t, fn, index, notVal, ...)
     local fn, u = Self.Fn(fn), Self.Tbl()
     for i,v in pairs(t) do
@@ -802,6 +958,8 @@ function Self.TblCopyUnselect(t, ...)
 end
 
 -- Filter by a value
+---@param t table
+---@param k boolean
 function Self.TblCopyOnly(t, val, k)
     local u = Self.Tbl()
     for i,v in pairs(t) do
@@ -813,6 +971,8 @@ function Self.TblCopyOnly(t, val, k)
 end
 
 -- Filter by not being a value
+---@param val any
+---@param k boolean
 function Self.TblCopyExcept(t, val, k)
     local u = Self.Tbl()
     for i,v in pairs(t) do
@@ -824,6 +984,8 @@ function Self.TblCopyExcept(t, val, k)
 end
 
 -- Filter by a set of key/value pairs in a table
+---@param t table
+---@param k boolean
 function Self.TblCopyWhere(t, k, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
@@ -835,6 +997,8 @@ function Self.TblCopyWhere(t, k, ...)
 end
 
 -- Filter by not having a set of key/value pairs in a table
+---@param t table
+---@param k boolean
 function Self.TblCopyExceptWhere(t, k, ...)
     local u = Self.Tbl()
     for i,v in pairs(t) do
@@ -848,6 +1012,8 @@ end
 -- MAP
 
 -- Change table values by applying a function
+---@param index boolean
+---@param notVal boolean
 function Self.TblMap(t, fn, index, notVal, ...)
     fn = Self.Fn(fn)
     for i,v in pairs(t) do
@@ -857,16 +1023,19 @@ function Self.TblMap(t, fn, index, notVal, ...)
 end
 
 -- Change table keys by applying a function
-function Self.TblMapKeys(t, fn, val, notIndex, ...)
+---@param index boolean
+---@param notVal boolean
+function Self.TblMapKeys(t, fn, index, notVal, ...)
     fn = Self.Fn(fn)
     local u = Self.Tbl()
     for i,v in pairs(t) do
-        u[Self.FnCall(fn, i, v, val, notIndex, ...)] = v
+        u[Self.FnCall(fn, i, v, index, notVal, ...)] = v
     end
     return u
 end
 
 -- Change table values by extracting a key
+---@param t table
 function Self.TblPluck(t, k)
     for i,v in pairs(t) do
         t[i] = v[k]
@@ -892,6 +1061,8 @@ end
 -- GROUP
 
 -- Group table entries by funciton
+---@param t table
+---@param fn function(v: any, i: any): any
 function Self.TblGroup(t, fn)
     fn = Self.Fn(fn) or Self.FnId
     local u = Self.Tbl()
@@ -904,6 +1075,7 @@ function Self.TblGroup(t, fn)
 end
 
 -- Group table entries by key
+---@param t table
 function Self.TblGroupBy(t, k)
     fn = Self.Fn(fn) or Self.FnId
     local u = Self.Tbl()
@@ -927,7 +1099,9 @@ end
 
 -- SET
 
--- Make sure all table entries are unique 
+-- Make sure all table entries are unique
+---@param t table
+---@param k boolean
 function Self.TblUnique(t, k)
     local u = Self.Tbl()
     for i,v in pairs(t) do
@@ -942,6 +1116,7 @@ function Self.TblUnique(t, k)
 end
 
 -- Substract the given tables from the table
+---@param t table
 function Self.TblDiff(t, ...)
     local k = select(select("#", ...), ...) == true
 
@@ -957,6 +1132,7 @@ function Self.TblDiff(t, ...)
 end
 
 -- Intersect the table with given tables
+---@param t table
 function Self.TblIntersect(t, ...)
     local k = select(select("#", ...), ...) == true
 
@@ -972,8 +1148,9 @@ function Self.TblIntersect(t, ...)
 end
 
 -- Check if the intersection of the given tables is not empty
+---@param t table
 function Self.TblIntersects(t, ...)
-    for i,v in pairs(t) do
+    for _,v in pairs(t) do
         local found = true
         for i=1, select("#", ...) do
             if not Self.In(v, (select(i, ...))) then
@@ -991,15 +1168,60 @@ end
 
 -- CHANGE
 
-function Self.TblInsert(t, i, v, k) if k or i and not tonumber(i) then t[i] = v elseif i then tinsert(t, i, v) else tinsert(t, v) end end
-function Self.TblRemove(t, i, k) if k or i and not tonumber(i) then t[i] = nil elseif i then tremove(t, i) else tremove(t) end end
-function Self.TblPush(t, v) tinsert(t, v) return t end
-function Self.TblPop(t) return tremove(t) end
-function Self.TblDrop(t) tremove(t) return t end
-function Self.TblShift(t) return tremove(t, 1) end
-function Self.TblUnshift(t, v) tinsert(t, 1, v) return t end
+---@param i any
+---@param v any
+---@param k boolean
+function Self.TblInsert(t, i, v, k)
+    if k or i and not tonumber(i) then
+        t[i] = v
+    elseif i then
+        tinsert(t, i, v)
+    else
+        tinsert(t, v)
+    end
+end
+
+function Self.TblRemove(t, i, k)
+    if k or i and not tonumber(i) then
+        t[i] = nil
+    elseif i then
+        tremove(t, i)
+    else
+        tremove(t)
+    end
+end
+
+---@param t table
+function Self.TblPush(t, v)
+    tinsert(t, v)
+    return t
+end
+
+---@param t table
+function Self.TblPop(t)
+    return tremove(t)
+end
+
+---@param t table
+function Self.TblDrop(t)
+    tremove(t)
+    return t
+end
+
+---@param t table
+function Self.TblShift(t)
+    return tremove(t, 1)
+end
+
+---@param t table
+function Self.TblUnshift(t, v)
+    tinsert(t, 1, v)
+    return t
+end
 
 -- Rotate by l (l>0: left, l<0: right)
+---@param t table
+---@param l integer
 function Self.TblRotate(t, l)
     l = l or 1
     for i=1, math.abs(l) do
@@ -1053,6 +1275,8 @@ end
 -- OTHER
 
 -- Convert the table into tuples of n
+---@param t table
+---@param n integer
 function Self.TblTuple(t, n)
     local u, n, r = Self.Tbl(), n or 2
     for i,v in pairs(t) do
@@ -1066,6 +1290,8 @@ function Self.TblTuple(t, n)
 end
 
 -- This just looks nicer when chaining
+---@param t table
+---@param fn function
 function Self.TblUnpack(t, fn)
     fn = Self.Fn(fn) or Self.FnId
     return fn(unpack(t))
@@ -1073,11 +1299,14 @@ end
 
 -- Flatten a list of tables by one dimension
 local Fn = function (u, v) return Self.TblMerge(u, v) end
+---@param t table
+---@return table
 function Self.TblFlatten(t)
     return Self.TblFoldL(t, Fn, Self.Tbl())
 end
 
 -- Wipe multiple tables at once
+---@vararg table
 function Self.TblWipe(...)
     for i=1,select("#", ...) do wipe((select(i, ...))) end
     return ...
@@ -1098,18 +1327,23 @@ end
 --                       String                      --
 -------------------------------------------------------
 
+---@return boolean
 function Self.StrIsSet(str)
     return type(str) == "string" and str:trim() ~= ""
 end
 
+---@param str string
 function Self.StrIsEmpty(str)
     return not Self.StrIsSet(str)
 end
 
+---@param str string
 function Self.StrStartsWith(str, str2)
     return type(str) == "string" and str:sub(1, str2:len()) == str2
 end
 
+---@param str string
+---@param str2 string
 function Self.StrEndsWith(str, str2)
     return type(str) == "string" and str:sub(-str2:len()) == str2
 end
@@ -1140,6 +1374,7 @@ function Self.StrSplit(str, del)
 end
 
 -- Join a bunch of strings with given delimiter
+---@vararg string
 function Self.StrJoin(del, ...)
     local s = ""
     for _,v in Self.Each(...) do
@@ -1151,45 +1386,64 @@ function Self.StrJoin(del, ...)
 end
 
 -- Uppercase only if language supports letter casing
+---@param str string
+---@param locale string
 function Self.StrUcLang(str, locale)
     return Self.In(locale or GetLocale(), "koKR", "zhCN", "zhTW") and str or str:upper()
 end
 
 -- Lowercase only if language supports letter casing
+---@param str string
+---@param locale string
 function Self.StrLcLang(str, locale)
     return Self.In(locale or GetLocale(), "koKR", "zhCN", "zhTW") and str or str:lower()
 end
 
 -- Uppercase first char
+---@param str string
+---@param locale string
 function Self.StrUcFirst(str, locale)
     return str:sub(1, 1):upper() .. str:sub(2)
 end
 
 -- Lowercase first char
+---@param str string
+---@param locale string
+---@return string
 function Self.StrLcFirst(str, locale)
     return str:sub(1, 1):lower() .. str:sub(2)
 end
 
 -- Check if string is a number
+---@param str string
+---@param leadingZero boolean
 function Self.StrIsNumber(str, leadingZero)
     return tonumber(str) and (leadingZero or not Self.StrStartsWith(str, "0"))
 end
 
 -- Get abbreviation of given length
+---@param str string
 function Self.StrAbbr(str, length)
     return str:len() <= length and str or str:sub(1, length) .. "..."
 end
 
+---@param a number
 function Self.StrColor(r, g, b, a)
     return ("%.2x%.2x%.2x%.2x"):format((a or 1) * 255, (r or 1) * 255, (g or 1) * 255, (b or 1) * 255)
 end
 
+---@param str string
+---@param from integer
+---@param len integer
+---@param sub string
 function Self.StrReplace(str, from, len, sub)
     from, len, sub = from or 1, len or str:len(), sub or ""
     local to = from < 0 and str:len() + from + len + 1 or from + len
     return str:sub(1, from - 1) .. sub .. str:sub(to)
 end
 
+---@param str string
+---@param del string
 function Self.StrToCamelCase(str, del)
     local s = ""
     for v in str:gmatch("[^" .. (del or "%p%s") .. "]+") do
@@ -1198,6 +1452,8 @@ function Self.StrToCamelCase(str, del)
     return Self.StrLcFirst(s)
 end
 
+---@param str string
+---@param del string
 function Self.StrFromCamelCase(str, del, case)
     local s = str:gsub("%u", (del or " ") .. "%1")
     return case == true and s:upper() or case == false and s:lower() or s
@@ -1213,10 +1469,21 @@ function Self.NumRound(num, p)
     return floor(num * p + .5) / p
 end
 
--- Check if num is in interval (exclusive or inclusive)
-function Self.NumBetween(num, a, b) return num > a and num < b end
-function Self.NumIn(num, a, b) return num >= a and num <= b end
+-- Check if num is in interval (exclusive)
+---@param num number
+---@param a number
+---@param b number
+function Self.NumBetween(num, a, b)
+    return num > a and num < b
+end
 
+-- Check if num is in interval (inclusive)
+function Self.NumIn(num, a, b)
+    return num >= a and num <= b
+end
+
+---@param num number
+---@param minLength number
 function Self.NumToHex(num, minLength)
     return ("%." .. (minLength or 1) .. "x"):format(num)
 end
@@ -1247,6 +1514,9 @@ function Self.FnFalse() return false end
 function Self.FnZero() return 0 end
 function Self.FnNoop() end
 
+---@param index boolean
+---@param notVal boolean
+---@return any
 function Self.FnCall(fn, v, i, index, notVal, ...)
     if index and notVal then
         return fn(i, ...)
@@ -1260,21 +1530,52 @@ function Self.FnCall(fn, v, i, index, notVal, ...)
 end
 
 -- Get a value directly or as return value of a function
+---@param fn function
 function Self.FnVal(fn, ...)
     return (type(fn) == "function" and Self.Push(fn(...)) or Self.Push(fn)).Pop()
 end
-    
+
 -- Some math
-function Self.FnInc(i) return i+1 end
-function Self.FnDec(i) return i-1 end
-function Self.FnAdd(a, b) return a+b end
-function Self.FnSub(a, b) return a-b end
-function Self.FnMul(a, b) return a*b end
-function Self.FnDiv(a, b) return a/b end
+---@param i number
+function Self.FnInc(i)
+    return i+1
+end
+
+---@param i number
+function Self.FnDec(i)
+    return i-1
+end
+
+---@param a number
+---@param b number
+function Self.FnAdd(a, b)
+    return a+b
+end
+
+---@param a number
+---@param b number
+function Self.FnSub(a, b)
+    return a-b
+end
+
+---@param a number
+---@param b number
+function Self.FnMul(a, b)
+    return a*b
+end
+
+---@param a number
+---@param b number
+function Self.FnDiv(a, b)
+    return a/b
+end
 
 -- MODIFY
 
 -- Throttle a function, so it is executed at most every n seconds
+---@param fn function
+---@param n number
+---@param leading boolean
 function Self.FnThrottle(fn, n, leading)
     local Fn, timer, called
     Fn = function (...)
@@ -1356,12 +1657,16 @@ end})
 Dispatchers[0] = function(func)
 	return xpcall(func, errorhandler)
 end
- 
+
+---@param func function
 function Self.Safecall(func, ...)
 	return Dispatchers[select("#", ...)](func, ...)
 end
 
 -- Get string representation values for dumping
+---@param val any
+---@param depth integer
+---@return string
 function Self.ToString(val, depth)
     depth = depth or 3
     local t = type(val)

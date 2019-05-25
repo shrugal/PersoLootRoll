@@ -7,6 +7,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local CB = LibStub("CallbackHandler-1.0")
 local Comm, Events, GUI, Item, Locale, Session, Trade, Unit, Util = Addon.Comm, Addon.Events, Addon.GUI, Addon.Item, Addon.Locale, Addon.Session, Addon.Trade, Addon.Unit, Addon.Util
 ---@class Roll
+---@field item Item
 local Self = Addon.Roll
 
 -- Default schedule delay
