@@ -2,7 +2,7 @@
 local Name = ...
 ---@type Addon
 local Addon = select(2, ...)
-local Comm, GUI, Item, Roll, Session, Unit, Util = Addon.Comm, Addon.GUI, Addon.Item, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
+local Comm, Item, Roll, Session, Unit, Util = Addon.Comm, Addon.Item, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
 ---@class RCLC : Module
 local Self = Addon.RCLC
 
@@ -52,6 +52,10 @@ Self.offerShown = nil
 Self.session = {}
 Self.timers = {}
 
+---@param link string
+---@param itemOwner string
+---@param owner string
+---@return Roll
 function Self.FindOrAddRoll(link, itemOwner, owner)
     return Roll.Find(nil, owner, link, nil, itemOwner) or Roll.Add(Item.FromLink(link, itemOwner or owner), owner or itemOwner)
 end
@@ -68,7 +72,7 @@ function Self.SetMasterlooter(unit)
     Self.SetCouncil()
 end
 
---- Translate a RCLC mldb to PLR session rules
+-- Translate a RCLC mldb to PLR session rules
 -- From RCLootCouncil:
 -- selfVote        = db.selfVote or nil
 -- multiVote       = db.multiVote or nil
@@ -81,7 +85,8 @@ end
 -- responses       = changedResponses
 -- timeout         = db.timeout
 -- rejectTrade     = db.rejectTrade or nil
-function Self.SetRules(mldb, council)
+---@param mldb table
+function Self.SetRules(mldb)
     Self.mldb = mldb or Self.mldb
 
     if Self.mldb then
@@ -129,6 +134,7 @@ function Self.SetCouncil(council)
 end
 
 -- Translate a RCLC response to a PLR bid
+---@param resp string
 function Self.ResponseToBid(resp)
     local numNeedAnswers = #Session.rules.answers1
 
@@ -157,6 +163,7 @@ end
 -------------------------------------------------------
 
 -- Send a RCLC message
+---@param target string
 function Self.Send(cmd, target, ...)
     if not Self:IsEnabled() then return end
     print("RCLC:OUT", cmd, target, ...)
@@ -177,7 +184,7 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
     local fromGL = Unit.IsUnit(unit, Unit.GroupLeader())
     local fromML = Unit.IsUnit(unit, ml)
     local isML = Unit.IsSelf(ml)
-    
+
     print("RCLC:IN", cmd, data, channel, unit, fromGL, fromML)
 
     -- VERSION_CHECK
@@ -192,12 +199,12 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
 
         local class, rank = select(2, UnitClass("player")), select(2, GetGuildInfo("player"))
         Self.Send(Self.CMD_VERSION, channel == Comm.TYPE_WHISPER and unit or channel, Unit.FullName("player"), class, rank, Self.VERSION)
-    
+
     -- VERSION
     elseif cmd == Self.CMD_VERSION then
         Addon:SetCompAddonUser(unit, Self.NAME, data[4])
         Session.SetMasterlooting(unit, Unit.GroupLeader())
-    
+
     -- PLAYER_INFO_REQ
     elseif cmd == Self.CMD_PLAYER_INFO_REQ then
         local class, role, rank, ilvl, spec = select(2, UnitClass("player")), UnitGroupRolesAssigned("player"), select(2, GetGuildInfo("player")), select(2, GetAverageItemLevel()), GetSpecializationInfo(GetSpecialization())
@@ -207,7 +214,7 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
     elseif cmd == Self.CMD_ROLL_TRADABLE then
         local roll = Self.FindOrAddRoll(data[1], unit, ml)
         roll.item.isTradable = true
-    
+
     -- UNTRADABLE
     elseif cmd == Self.CMD_ROLL_UNTRADABLE then
         local roll = Self.FindOrAddRoll(data[1], unit)
@@ -227,7 +234,7 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
         if roll and bid and (fromML or unit == Unit(fromUnit)) then
             roll:Bid(bid, fromUnit, nil, fromML)
         end
-    
+
     -- VOTE
     elseif cmd == Self.CMD_ROLL_VOTE then
         local sId, vote, n = unpack(data)
@@ -239,7 +246,7 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
     -- RANDOM
     elseif cmd == Self.CMD_ROLL_RANDOM then
         -- TODO
-        
+
     -- ML messages
     elseif fromML then
         -- RULES
@@ -266,7 +273,7 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
                     ack.gear2[sId] = gear[2] or nil
                     ack.diff[sId] = (roll.item:GetBasicInfo().level or 0) - max(Item.GetInfo(gear[1], "level") or 0, Item.GetInfo(gear[2], "level") or 0) -- TODO: This is wrong when slots are not filled
                     ack.response[sId] = not roll.item:GetEligible("player") or nil
-                    
+
                     if not roll.item.isRelic then Util.TblRelease(gear) end
                 end
             end
@@ -350,7 +357,7 @@ function Self:OnEnable()
     Self:RegisterMessage(Roll.EVENT_VOTE, "ROLL_VOTE")
     Self:RegisterMessage(Roll.EVENT_TRADE, "ROLL_TRADE")
     Self:RegisterMessage(Session.EVENT_REQUEST, "SESSION_REQUEST")
-    
+
     -- Send version check
     Self.timers.version = Self:ScheduleTimer(Self.Send, 5, Self.CMD_VERSION_CHECK, Comm.TYPE_GROUP, Self.VERSION)
     Self.timers.sync = Self:ScheduleTimer(Self.Send, 5, Self.CMD_SYNC_REQ)
@@ -375,10 +382,16 @@ function Self:PARTY_LEADER_CHANGED()
     end
 end
 
+---@param roll Roll
 function Self:ROLL_ADD(_, roll)
     -- TODO
 end
 
+---@param roll Roll
+---@param bid number
+---@param fromUnit string
+---@param rollResult integer
+---@param isImport boolean
 function Self:ROLL_BID(_, roll, bid, fromUnit, rollResult, isImport)
     local sId = Util.TblFind(Self.session, roll)
     if sId and Unit.IsSelf(fromUnit) and not isImport then
@@ -386,14 +399,21 @@ function Self:ROLL_BID(_, roll, bid, fromUnit, rollResult, isImport)
     end
 end
 
+---@param roll Roll
+---@param vote string
+---@param fromUnit string
+---@param isImport boolean
 function Self:ROLL_VOTE(_, roll, vote, fromUnit, isImport)
     -- TODO
 end
 
+---@param roll Roll
+---@param target string
 function Self:ROLL_TRADE(_, roll, target)
     -- TODO
 end
 
+---@param target string
 function Self:SESSION_REQUEST(_, target)
     if not target or UnitIsGroupLeader(target) then
         Self.offerShown = nil

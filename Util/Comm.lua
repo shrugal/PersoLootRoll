@@ -2,7 +2,7 @@
 local Name = ...
 ---@type Addon
 local Addon = select(2, ...)
-local Events, Locale, Session, Roll, Unit, Util = Addon.Events, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
+local Locale, Session, Roll, Unit, Util = Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
 ---@class Comm
 local Self = Addon.Comm
 
@@ -224,7 +224,7 @@ end
 function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport)
     local L = LibStub("AceLocale-3.0"):GetLocale(Name)
     local fromSelf = Unit.IsSelf(fromUnit)
-    
+
     -- Show a confirmation message
     if fromSelf then
         if bid == Roll.BID_PASS then
@@ -351,7 +351,7 @@ function Self.RollEnd(roll)
                     Self.ChatLine("MSG_ROLL_" .. line, Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link)
                 end
             end
-            
+
             -- Announce to target
             if Addon.db.profile.messages.whisper.answer and not Addon:UnitIsTracking(roll.winner, true) and not (toGroup and concise) then
                 if not Session.IsMasterlooter() and roll.item:GetNumEligible(true) == 1 and line == "WINNER" then
@@ -394,17 +394,17 @@ function Self.GetTooltipLink(text, title, abbr)
     title = Self.EscapeString(title or "", true)
     return ("|cff4D85E6|Hplrtooltip:%s:%s|h[%s]|h|r"):format(title, text, abbr)
 end
- 
+
 function Self.EscapeString(str, isLinkParam)
     str = str:gsub("|H.-|h(.-)|h", "%1")
-    
+
     if isLinkParam then
         return str:gsub(":", "@c@"):gsub("|", "@b@")
     else
         return str:gsub("|c%w%w%w%w%w%w%w%w(.-)|r", "%1")
     end
 end
- 
+
 function Self.UnescapeString(str)
     return str:gsub("@c@", ":"):gsub("@b@", "|")
 end

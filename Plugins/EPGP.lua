@@ -36,16 +36,22 @@ Self.credited = {}
 -------------------------------------------------------
 
 -- Get a unit's EP
+---@param unit string
+---@return number
 function Self.UnitEP(unit)
     return (EPGP:GetEPGP(Unit.FullName(unit)))
 end
 
 -- Get a unit's GP
+---@param unit string
+---@return number
 function Self.UnitGP(unit)
     return (select(2, EPGP:GetEPGP(Unit.FullName(unit))))
 end
 
 -- Get a unit's PR
+---@param unit string
+---@return number
 function Self.UnitPR(unit)
     local ep, gp = EPGP:GetEPGP(Unit.FullName(unit))
     return ep and gp and gp ~= 0 and Util.NumRound(ep/gp, 2) or nil
@@ -58,6 +64,8 @@ function Self.UnitHasMinEP(unit)
 end
 
 -- Get the GP value for a roll
+---@param roll Roll
+---@return number
 function Self.RollGP(roll)
     if not roll.winner or not roll.bids[roll.winner] then
         return 0
@@ -72,7 +80,8 @@ end
 -------------------------------------------------------
 
 -- Pick the player with the highest PR value
-function Self.DetermineWinner(roll, candidates)
+---@param candidates table
+function Self.DetermineWinner(_, candidates)
     Util(candidates)
         .Map(function (unit) return Self.UnitHasMinEP(unit) and 1 or 0 end, true, true)
         .Only(Util.TblMax(candidates))
@@ -81,6 +90,8 @@ function Self.DetermineWinner(roll, candidates)
 end
 
 -- Add EP to the unit's account
+---@param undo boolean
+---@param trys integer
 function Self.CreditGP(roll, unit, amount, undo, trys)
     local link, gp = roll.item.link, undo and -amount or amount
 
@@ -297,7 +308,9 @@ function Self:OnDisable()
     EPGP.UnregisterCallback(Self, "StandingsChanged")
 end
 
-function Self:ROLL_AWARD(_, roll, winner, prevWinner)
+---@param roll Roll
+---@param winner string
+function Self:ROLL_AWARD(_, roll, winner)
     if Session.IsMasterlooter() and roll.isOwner and not roll.isTest then
         Self.UndoGPCredit(roll)
 
@@ -309,10 +322,12 @@ function Self:ROLL_AWARD(_, roll, winner, prevWinner)
     end
 end
 
+---@param roll Roll
 function Self:ROLL_RESTART(_, roll)
     Self.UndoGPCredit(roll)
 end
 
+---@param roll Roll
 function Self:ROLL_CLEAR(_, roll)
     Self.credited[roll.id] = nil
 end

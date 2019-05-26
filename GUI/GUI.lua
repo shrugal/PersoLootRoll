@@ -11,15 +11,17 @@ local Comm, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Com
 local Self = Addon.GUI
 
 --- Add a player column entry
--- @param  name        A unique identifier
--- @param  value       Value for sorting etc., either a primitive or callback with parameters: unit, roll, listEntry
--- @string header      Localized title, e.g. for table headers (optional: Column won't be shown)
--- @param  desc        Localized value shown to the user, either a string/int or callback with parameters: unit, roll, listEntry (optional: Value will be used)
--- @param  width       Column width, @see table layout for details (optional: Default will be used)
--- @string sortBefore  Other column name with lower sorting priority, one of "bid", "votes", "roll", "ilvl" or "unit" (optional: Column won't be used for sorting)
--- @param  sortDefault Sorting default value (optional)
--- @bool   sortDesc    Sort in descending order (optional)
--- @return table       The column entry
+---@class PlayerColumns : Registrar
+---@field Add function(name: string, value: string|number|function, header: string, desc: string|number|function, width: number, sortBefore: string, sortDefault: any, sortDesc: boolean): table
+---@param name string       A unique identifier
+---@param value string|number|function(unit: string, roll: Roll, listEntity: table):string|number   Value for sorting etc., either a primitive or callback
+---@param header string     Localized title, e.g. for table headers (optional: Column won't be shown)
+---@param desc string|number|function(unit: string, roll: Roll, listEntity: table):string|number    Localized value shown to the user (optional: Value will be used)
+---@param width number      Column width, @see table layout for details (optional: Default will be used)
+---@param sortBefore string Other column name with lower sorting priority, one of "bid", "votes", "roll", "ilvl" or "unit" (optional: Column won't be used for sorting)
+---@param sortDefault any   Sorting default value (optional)
+---@param sortDesc boolean  Sort in descending order (optional)
+---@return table            The column entry
 Self.PlayerColumns = Util.Registrar.New("GUI_PLAYER_COLUMN", "name", function (name, value, header, desc, width, sortBefore, sortDefault, sortDesc)
     return Util.TblHash("name", name, "value", value, "header", header, "desc", desc, "width", width, "sortBefore", sortBefore, "sortDefault", sortDefault, "sortDesc", sortDesc)
 end)
@@ -29,9 +31,11 @@ Self.Rolls = Self:NewModule("Rolls", nil, "AceEvent-3.0", "AceTimer-3.0")
 Self.Actions = Self:NewModule("Actions", nil, "AceEvent-3.0")
 
 -- Row highlight frame
+---@type Frame
 Self.HIGHLIGHT = CreateFrame("Frame", nil, UIParent)
 Self.HIGHLIGHT:SetFrameStrata("BACKGROUND")
 Self.HIGHLIGHT:Hide()
+---@type Texture
 local tex = Self.HIGHLIGHT:CreateTexture(nil, "BACKGROUND")
 tex:SetTexture("Interface\\Buttons\\UI-Listbox-Highlight")
 tex:SetVertexColor(1, 1, 1, .5)
@@ -173,6 +177,9 @@ function Self.ToggleMasterlootDropdown(...)
 end
 
 -- Custom bid answers
+---@param roll Roll
+---@param bid number
+---@param answers table
 function Self.ToggleAnswersDropdown(roll, bid, answers, ...)
     local dropdown = Self.dropdownAnswers
     if not dropdown then
@@ -198,6 +205,7 @@ function Self.ToggleAnswersDropdown(roll, bid, answers, ...)
 end
 
 -- Award loot
+---@param roll Roll
 function Self.ToggleAwardOrVoteDropdown(roll, ...)
     local dropdown = Self.dropdownAwardOrVote
     if not dropdown then
@@ -241,6 +249,7 @@ function Self.ToggleAwardOrVoteDropdown(roll, ...)
 end
 
 -- Award loot to unit
+---@param unit string
 function Self.ToggleAwardUnitDropdown(unit, ...)
     local dropdown = Self.dropdownAwardUnit
     if not dropdown then
@@ -282,8 +291,8 @@ end
 -------------------------------------------------------
 
 --- Get list of eligible players for a roll
--- @table  roll  The roll in question
--- @return table A sorted list of eligible players
+---@param roll Roll The roll in question
+-- @return table    A sorted list of eligible players
 function Self.GetPlayerList(roll)
     local list = Util(roll.item:GetEligible()).Copy().Merge(roll.bids).Map(function (val, unit)
         return Util.TblHash(
@@ -310,13 +319,13 @@ function Self.GetPlayerList(roll)
         end
 
         local sortPos = col.sortBefore and Util.TblFind(sortBy, col.sortBefore)
-        if sortPos then 
+        if sortPos then
             tinsert(sortBy, sortPos, col.sortDesc or false)
             tinsert(sortBy, sortPos, col.sortDefault)
             tinsert(sortBy, sortPos, col.name)
         end
     end
-    
+
     return Util.TblSortBy(list, sortBy), Util.TblRelease(sortBy)
 end
 
@@ -324,11 +333,14 @@ end
 --                      Helper                       --
 -------------------------------------------------------
 
+---@param anchor string
 function Self.ReverseAnchor(anchor)
     return anchor:gsub("TOP", "B-OTTOM"):gsub("BOTTOM", "T-OP"):gsub("LEFT", "R-IGHT"):gsub("RIGHT", "L-EFT"):gsub("-", "")
 end
 
 -- Create an interactive label for a unit, with tooltip, unitmenu and whispering on click
+---@param parent Frame|Widget
+---@param baseTooltip boolean
 function Self.CreateUnitLabel(parent, baseTooltip)
     return Self("InteractiveLabel")
         .SetFontObject(GameFontNormal)
@@ -339,7 +351,9 @@ function Self.CreateUnitLabel(parent, baseTooltip)
 end
 
 -- Create an interactive label for an item, with tooltip and click support
-function Self.CreateItemLabel(parent, anchor)
+---@param parent Frame|Widget
+---@return InteractiveLabel
+function Self.CreateItemLabel(parent)
     local f = Self("InteractiveLabel")
         .SetFontObject(GameFontNormal)
         .SetCallback("OnEnter", Self.TooltipItemLink)
@@ -354,11 +368,9 @@ function Self.CreateItemLabel(parent, anchor)
             fn(self, ...)
 
             if self.imageshown then
-                local width, imagewidth = self.frame.width or self.frame:GetWidth() or 0, self.image:GetWidth()
-                
                 self.label:ClearAllPoints()
                 self.image:ClearAllPoints()
-                
+
                 self.image:SetPoint("TOPLEFT")
                 if self.image:GetHeight() > self.label:GetHeight() then
                     self.label:SetPoint("LEFT", self.image, "RIGHT", 4, 0)
@@ -366,7 +378,7 @@ function Self.CreateItemLabel(parent, anchor)
                     self.label:SetPoint("TOPLEFT", self.image, "TOPRIGHT", 4, 0)
                 end
                 self.label:SetPoint("RIGHT")
-                
+
                 local height = max(self.image:GetHeight(), self.label:GetHeight())
                 self.resizing = true
                 self.frame:SetHeight(height)
@@ -385,8 +397,14 @@ function Self.CreateItemLabel(parent, anchor)
 end
 
 -- Create an icon button
+---@param parent Frame|Widget
+---@param onClick function
+---@param desc string
+---@param width number
+---@param height number
+---@return Icon
 function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
-    f = Self("Icon")
+    local f = Self("Icon")
         .SetImage(icon:sub(1, 9) == "Interface" and icon or "Interface\\Buttons\\" .. icon .. "-Up")
         .SetImageSize(width or 16, height or 16).SetHeight(16).SetWidth(16)
         .SetCallback("OnClick", function (...)
@@ -406,6 +424,8 @@ function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
 end
 
 -- Arrange visible icon buttons
+---@param xOff number
+---@param yOff number
 function Self.ArrangeIconButtons(parent, margin, xOff, yOff)
     margin = margin or 4
     local n, width, prev = 0, 0
@@ -426,6 +446,7 @@ function Self.ArrangeIconButtons(parent, margin, xOff, yOff)
 end
 
 -- Display the given text as tooltip
+---@param self Widget
 function Self.TooltipText(self)
     local text = self:GetUserData("text")
     if text then
@@ -436,6 +457,7 @@ function Self.TooltipText(self)
 end
 
 -- Display a regular unit tooltip
+---@param self Widget
 function Self.TooltipUnit(self)
     GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
     GameTooltip:SetUnit(self:GetUserData("unit"))
@@ -443,6 +465,7 @@ function Self.TooltipUnit(self)
 end
 
 -- Display a tooltip showing only the full name of an x-realm player
+---@param self Widget
 function Self.TooltipUnitFullName(self)
     local unit = self:GetUserData("unit")
     if unit and Unit.Realm(unit) ~= Unit.RealmName() then
@@ -454,6 +477,7 @@ function Self.TooltipUnitFullName(self)
 end
 
 -- Display a tooltip for an item link
+---@param self Widget
 function Self.TooltipItemLink(self)
     local link = self:GetUserData("link")
     if link then
@@ -463,6 +487,8 @@ function Self.TooltipItemLink(self)
     end
 end
 
+-- Display a tooltip for a chat button
+---@param self Widget
 function Self.TooltipChat(self)
     local chat = self:GetUserData("roll").chat
     local anchor = chat and self:GetUserData("anchor") or "TOP"
@@ -482,6 +508,9 @@ function Self.TooltipHide()
 end
 
 -- Handle clicks on unit labels
+---@param self Widget
+---@param event string
+---@param button string
 function Self.UnitClick(self, event, button)
     local unit = self:GetUserData("unit")
     Addon:Debug("GUI.Click:Unit", button, unit)
@@ -498,6 +527,10 @@ function Self.UnitClick(self, event, button)
     end
 end
 
+-- Handle clicks on chat buttons
+---@param self Widget
+---@param event string
+---@param button string
 function Self.ChatClick(self, event, button)
     Addon:Debug("GUI.Click:Chat", button)
 
@@ -509,8 +542,11 @@ function Self.ChatClick(self, event, button)
 end
 
 -- Award loot to or vote for unit
+---@param self Widget
 function Self.UnitAwardOrVote(self)
-    local roll, unit = self:GetUserData("roll"), self:GetUserData("unit")
+    ---@type Roll
+    local roll = self:GetUserData("roll")
+    local unit = self:GetUserData("unit")
     Addon:Debug("GUI.Click:AwardOrVote", roll and roll.id, unit)
 
     if roll:CanBeAwardedTo(unit, true) then
@@ -521,6 +557,7 @@ function Self.UnitAwardOrVote(self)
 end
 
 -- Handle clicks on item labels/icons
+---@param self Widget
 function Self.ItemClick(self)
     local link = self:GetUserData("link")
     Addon:Debug("GUI.Click:Item", link)
@@ -533,7 +570,7 @@ function Self.ItemClick(self)
 end
 
 -- Get the color for a bid
-function Self.GetBidColor(bid, hex)
+function Self.GetBidColor(bid)
     if not bid then
         return 1, 1, 1
     elseif bid == Roll.BID_DISENCHANT then
@@ -550,6 +587,8 @@ function Self.GetBidColor(bid, hex)
     end
 end
 
+-- Reset an icon widget so it can be released
+---@param self Icon
 function Self.ResetIcon(self)
     self.image:SetPoint("TOP", 0, -5)
     self.frame:SetFrameStrata("MEDIUM")
@@ -557,6 +596,8 @@ function Self.ResetIcon(self)
     self.OnRelease = nil
 end
 
+-- Reset a label widget so it can be released
+---@param self Label
 function Self.ResetLabel(self)
     self.label:SetPoint("TOPLEFT")
     self.frame:SetFrameStrata("MEDIUM")
@@ -564,6 +605,7 @@ function Self.ResetLabel(self)
     self.OnRelease = nil
 end
 
+---@return FrameWidget
 function Self.ShowExportWindow(title, text)
     local f = Self("Frame").SetLayout("Fill").SetTitle(Name .. " - " .. title).Show()()
     Self("MultiLineEditBox").DisableButton(true).SetLabel().SetText(text).AddTo(f)
@@ -571,6 +613,8 @@ function Self.ShowExportWindow(title, text)
 end
 
 -- Add row-highlighting to a table
+---@param parent Widget
+---@param skip integer
 function Self.TableRowHighlight(parent, skip)
     skip = skip or 0
     local isOver = false
@@ -583,7 +627,7 @@ function Self.TableRowHighlight(parent, skip)
                 if not MouseIsOver(self) then
                     isOver = false
                     self:SetScript("OnUpdate", nil)
-                    
+
                     if Self.HIGHLIGHT:GetParent() == self then
                         Self.HIGHLIGHT:SetParent(UIParent)
                         Self.HIGHLIGHT:Hide()
@@ -601,7 +645,7 @@ function Self.TableRowHighlight(parent, skip)
                             bottom = min(bottom or math.huge, childBottom - spaceV/2)
                         end
                     end
-                    
+
                     if top and bottom then
                         Self(Self.HIGHLIGHT)
                             .SetParent(self)
@@ -628,6 +672,9 @@ function Self.TableRowHighlight(parent, skip)
 end
 
 -- Add row-backgrounds to a table
+---@param parent Widget
+---@param colors function|table
+---@param skip integer
 function Self.TableRowBackground(parent, colors, skip)
     local default = {1, 1, 1, 0.5}
     colors = colors or default
@@ -761,7 +808,7 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
     local spaceH = tableObj.spaceH or tableObj.space or 0
     local spaceV = tableObj.spaceV or tableObj.space or 0
     local totalH = (content:GetWidth() or content.width or 0) - spaceH * (#cols - 1)
-    
+
     -- We need to reuse these because layout events can come in very frequently
     local layoutCache = obj:GetUserData("layoutCache")
     if not layoutCache then
@@ -769,7 +816,7 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
         obj:SetUserData("layoutCache", layoutCache)
     end
     local t, laneH, laneV, rowspans, rowStart, colStart = unpack(layoutCache)
-    
+
     -- Create the grid
     local n, slotFound = 0
     for i,child in ipairs(children) do
@@ -834,7 +881,7 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
                         local f = child.frame
                         f:ClearAllPoints()
                         local childH = f:GetWidth() or 0
-    
+
                         laneH[col] = max(laneH[col], childH - GetCellDimension("H", laneH, colStart[child], col - 1, spaceH))
                     end
                 end
@@ -868,7 +915,7 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
                 local cellObj = child:GetUserData("cell")
                 local offsetH = GetCellDimension("H", laneH, 1, colStart[child] - 1, spaceH) + (colStart[child] == 1 and 0 or spaceH)
                 local cellH = GetCellDimension("H", laneH, colStart[child], col, spaceH)
-                
+
                 local f = child.frame
                 f:ClearAllPoints()
                 local childH = f:GetWidth() or 0
@@ -878,7 +925,7 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
                 if child:IsFullWidth() or alignFn == "fill" or childH > cellH then
                     f:SetPoint("RIGHT", content, "LEFT", offsetH + align + cellH, 0)
                 end
-                
+
                 if child.DoLayout then
                     child:DoLayout()
                 end
@@ -897,7 +944,7 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
                 local cellObj = child:GetUserData("cell")
                 local offsetV = GetCellDimension("V", laneV, 1, rowStart[child] - 1, spaceV) + (rowStart[child] == 1 and 0 or spaceV)
                 local cellV = GetCellDimension("V", laneV, rowStart[child], row, spaceV)
-                    
+
                 local f = child.frame
                 local childV = f:GetHeight() or 0
 
@@ -913,7 +960,7 @@ AceGUI:RegisterLayout("PLR_Table", function (content, children)
     -- Calculate total width and height
     local totalH = GetCellDimension("H", laneH, 1, #laneH, spaceH)
     local totalV = GetCellDimension("V", laneV, 1, #laneV, spaceV)
-    
+
     -- Cleanup
     for _,v in pairs(layoutCache) do wipe(v) end
 

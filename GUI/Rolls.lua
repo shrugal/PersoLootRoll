@@ -9,6 +9,7 @@ local GUI, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.GUI,
 ---@class Rolls : Module
 local Self = GUI.Rolls
 
+---@type table<Widget>
 Self.frames = {}
 Self.filter = {all = false, hidden = false, done = true, awarded = true, traded = false}
 Self.status = {width = 700, height = 300}
@@ -25,6 +26,7 @@ function Self.Show()
         Self.frames.window.frame:Show()
     else
         Addon:Debug("GUI.Rolls.Show")
+        local f
 
         -- WINDOW
 
@@ -64,7 +66,7 @@ function Self.Show()
             f.frame:SetPoint("TOPRIGHT", window.closebutton, "TOPLEFT", -8, -8)
             f.frame:SetFrameStrata("HIGH")
             f.frame:Show()
-            
+
             window.optionsBtn = f
 
             -- Test button
@@ -82,7 +84,7 @@ function Self.Show()
             f.frame:SetPoint("RIGHT", window.optionsBtn.frame, "LEFT", -15, 0)
             f.frame:SetFrameStrata("HIGH")
             f.frame:Show()
-            
+
             window.testBtn = f
 
             -- Version label
@@ -96,7 +98,7 @@ function Self.Show()
                         -- Addon versions
                         local count = Util.TblCount(Addon.versions)
                         if count > 0 then
-                            GameTooltip:SetText(L["TIP_ADDON_VERSIONS"])                        
+                            GameTooltip:SetText(L["TIP_ADDON_VERSIONS"])
                             for unit,version in pairs(Addon.versions) do
                                 local name = Unit.ColoredShortenedName(unit)
                                 local versionColor = Util.Select(Addon:CompareVersion(version), -1, "ff0000", 1, "00ff00", "ffffff")
@@ -152,7 +154,7 @@ function Self.Show()
             .SetPoint("BOTTOMLEFT", 0, 0)
             .SetPoint("BOTTOMRIGHT", -25, 0)
             .SetHeight(24)()
-        
+
         do
             f = GUI("Label")
                 .SetFontObject(GameFontNormal)
@@ -178,7 +180,7 @@ function Self.Show()
                     local ml = Session.GetMasterlooter()
                     if ml then
                         Session.SetMasterlooter(nil)
-                    else 
+                    else
                         GUI.ToggleMasterlootDropdown("TOPLEFT", self.frame, "CENTER")
                     end
                 end)
@@ -244,10 +246,7 @@ function Self.Show()
             .SetPoint("TOPRIGHT")
             .SetPoint("BOTTOMLEFT", Self.frames.filter.frame, "TOPLEFT", 0, 8)()
         f.backgrounds = {}
-        local layoutFinished = f.layoutFinished
-        f.layoutFinished = function (self, width, height)
-
-        end
+        f.layoutFinished = Util.FnNoop
         Self.frames.scroll = f
 
         -- EMPTY MESSAGE
@@ -264,6 +263,7 @@ function Self.Show()
 end
 
 -- Check if the frame is currently being shown
+---@return boolean
 function Self.IsShown()
     return Self.frames.window and Self.frames.window.frame:IsShown()
 end
@@ -285,7 +285,7 @@ end
 -- Update the frame
 function Self.Update()
     if not Self.frames.window then return end
-    
+
     local f
     local ml = Session.GetMasterlooter()
     local startManually = ml and Addon.db.profile.masterloot.rules.startManually
@@ -318,7 +318,7 @@ function Self.Update()
             self.frame:SetBackdropColor(unpack(backdrop))
             self.OnRelease = nil
         end
-        
+
         -- Toggle all
         f = GUI.CreateIconButton("UI-MinusButton", actions, function (self)
             for i,child in pairs(scroll.children) do
@@ -357,27 +357,27 @@ function Self.Update()
             GUI("Label")
                 .SetFontObject(GameFontNormal)
                 .AddTo(scroll)()
-        
+
             -- Item
-            GUI.CreateItemLabel(scroll, "ANCHOR_LEFT")
-            
+            GUI.CreateItemLabel(scroll)
+
             -- Ilvl
             GUI("Label")
                 .SetFontObject(GameFontNormal)
                 .AddTo(scroll)
-        
+
             -- Owner, ML
             GUI.CreateUnitLabel(scroll)
             GUI.CreateUnitLabel(scroll)
-        
+
             -- Status
             local f = GUI("Label").SetFontObject(GameFontNormal).AddTo(scroll)()
             f.OnRelease = GUI.ResetLabel
-        
+
             -- Your bid, Winner
             GUI("Label").SetFontObject(GameFontNormal).AddTo(scroll)
             GUI.CreateUnitLabel(scroll)
-        
+
             -- Actions
             f = GUI("SimpleGroup")
                 .SetLayout(nil)
@@ -390,10 +390,10 @@ function Self.Update()
                 self.frame:SetBackdropColor(unpack(backdrop))
                 self.OnRelease = nil
             end
-        
+
             do
                 local actions = f
-        
+
                 local needGreedClick = function (self, _, button)
                     local roll, bid = self:GetUserData("roll"), self:GetUserData("bid")
                     if button == "LeftButton" then
@@ -404,33 +404,33 @@ function Self.Update()
                             GUI.ToggleAnswersDropdown(roll, bid, answers, "TOPLEFT", self.frame, "CENTER")
                         end
                     end
-                end 
-        
+                end
+
                 -- Need
                 f = GUI.CreateIconButton("UI-GroupLoot-Dice", actions, needGreedClick, NEED, 14, 14)
                 f:SetUserData("bid", Roll.BID_NEED)
                 f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-        
+
                 -- Greed
                 f = GUI.CreateIconButton("UI-GroupLoot-Coin", actions, needGreedClick, GREED)
                 f:SetUserData("bid", Roll.BID_GREED)
                 f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-        
+
                 -- Disenchant
                 f = GUI.CreateIconButton("UI-GroupLoot-DE", actions, function (self)
                     self:GetUserData("roll"):Bid(Roll.BID_DISENCHANT)
                 end, ROLL_DISENCHANT, 14, 14)
-        
+
                 -- Pass
                 GUI.CreateIconButton("UI-GroupLoot-Pass", actions, function (self)
                     self:GetUserData("roll"):Bid(Roll.BID_PASS)
                 end, PASS, 13, 13)
-        
+
                 -- Advertise
                 GUI.CreateIconButton("UI-GuildButton-MOTD", actions, function (self)
                     self:GetUserData("roll"):Advertise(true)
                 end, L["ADVERTISE"], 13, 13)
-        
+
                 -- Award randomly
                 GUI.CreateIconButton("Interface\\GossipFrame\\BankerGossipIcon", actions, function (self)
                     self:GetUserData("roll"):End(true)
@@ -440,7 +440,7 @@ function Self.Update()
                 f = GUI.CreateIconButton("Interface\\GossipFrame\\GossipGossipIcon", actions, GUI.ChatClick, nil, 13, 13)
                 f:SetCallback("OnEnter", GUI.TooltipChat)
                 f.frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-        
+
                 -- Trade
                 GUI.CreateIconButton("Interface\\GossipFrame\\VendorGossipIcon", actions, function (self)
                     self:GetUserData("roll"):Trade()
@@ -452,7 +452,7 @@ function Self.Update()
                 end, START)
                 f.image:SetPoint("TOP", 0, 2)
                 f.image:SetTexCoord(0.05, 0.95, 0.05, 0.95)
-        
+
                 -- Restart
                 f = GUI.CreateIconButton("UI-RotationLeft-Button", actions, function (self)
                     local dialog = StaticPopup_Show(GUI.DIALOG_ROLL_RESTART)
@@ -462,7 +462,7 @@ function Self.Update()
                 end, L["RESTART"])
                 f.image:SetPoint("TOP", 0, 2)
                 f.image:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-        
+
                 -- Cancel
                 f = GUI.CreateIconButton("CancelButton", actions, function (self)
                     local dialog = StaticPopup_Show(GUI.DIALOG_ROLL_CANCEL)
@@ -478,12 +478,12 @@ function Self.Update()
                     self:GetUserData("roll"):ToggleVisibility()
                 end)
                 f.image:SetPoint("TOP", 0, 1)
-        
+
                 -- Toggle
                 f = GUI.CreateIconButton("UI-PlusButton", actions, function (self)
                     local roll = self:GetUserData("roll")
                     local details = self:GetUserData("details")
-        
+
                     if details:IsShown() then
                         Self.open[roll.id] = nil
                         details.frame:Hide()
@@ -498,7 +498,7 @@ function Self.Update()
                 end)
                 f.image:SetPoint("TOP", 0, 2)
             end
-        
+
             -- Details
             local details = GUI("SimpleGroup")
                 .SetLayout("PLR_Table")
@@ -507,7 +507,7 @@ function Self.Update()
                 .SetUserData("cell", {colspan = 99})
                 .SetUserData("table", {spaceH = 10, spaceV = 2})
                 .AddTo(scroll)()
-        
+
             do
                 details.content:SetPoint("TOPLEFT", details.frame, "TOPLEFT", 8, -8)
                 details.content:SetPoint("BOTTOMRIGHT", details.frame, "BOTTOMRIGHT", -8, 8)
@@ -677,10 +677,12 @@ end
 -------------------------------------------------------
 
 -- Update the details view of a row
+---@param details SimpleGroup
+---@param roll Roll
 function Self.UpdateDetails(details, roll)
     details.frame:Show()
     details:PauseLayout()
-    
+
     local children = details.children
 
     -- Header
@@ -690,7 +692,7 @@ function Self.UpdateDetails(details, roll)
 
     if #children == 0 then
         local columns = {1, {25, 100}, {34, 100}, {25, 100}, {25, 100}, {25, 100}, 100}
-        
+
         for i,v in pairs(header) do
             if v == "CUSTOM" then
                 local j = 0
@@ -723,7 +725,7 @@ function Self.UpdateDetails(details, roll)
             -- Unit, Ilvl
             GUI.CreateUnitLabel(details)
             GUI("Label").SetFontObject(GameFontNormal).AddTo(details)
-        
+
             -- Items
             local grp = GUI("SimpleGroup")
                 .SetLayout(nil)
@@ -747,16 +749,18 @@ function Self.UpdateDetails(details, roll)
                     GUI("Label").SetFontObject(GameFontNormal).AddTo(details)
                 end
             end
-        
+
             -- Bid, Roll
             GUI("Label").SetFontObject(GameFontNormal).AddTo(details)
             GUI("Label").SetFontObject(GameFontNormal).AddTo(details)
-        
+
             -- Votes
             GUI("InteractiveLabel")
                 .SetFontObject(GameFontNormal)
                 .SetCallback("OnEnter", function (self)
-                    local roll, unit = self:GetUserData("roll"), self:GetUserData("unit")
+                    ---@type Roll
+                    local roll = self:GetUserData("roll")
+                    local unit = self:GetUserData("unit")
                     if Util.TblCountOnly(roll.votes, unit) > 0 then
                         GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOM")
                         GameTooltip:SetText(L["TIP_VOTES"])
@@ -771,7 +775,7 @@ function Self.UpdateDetails(details, roll)
                 end)
                 .SetCallback("OnLeave", GUI.TooltipHide)
                 .AddTo(details)
-        
+
             -- Action
             local f = GUI("Button")
                 .SetWidth(100)
@@ -865,10 +869,12 @@ end
 -------------------------------------------------------
 
 -- Create a filter checkbox
+---@param key string
+---@return CheckBox
 function Self.CreateFilterCheckbox(key)
     local parent = Self.frames.filter
 
-    f = GUI("CheckBox")
+    local f = GUI("CheckBox")
         .SetLabel(L["FILTER_" .. key:upper()])
         .SetCallback("OnValueChanged", function (self, _, checked)
             if Self.filter[key] ~= checked then
@@ -887,12 +893,14 @@ function Self.CreateFilterCheckbox(key)
         .AddTo(parent)
         .SetPoint("LEFT", parent.children[#parent.children-1].frame, "RIGHT", 15, 0)()
     f:SetWidth(f.text:GetStringWidth() + 24)
+
     return f
 end
 
 -- Roll status OnUpdate callback
+---@param frame Frame
 function Self.OnStatusUpdate(frame)
-    local roll, txt = frame.obj:GetUserData("roll")
+    local roll = frame.obj:GetUserData("roll")
     if roll.status == Roll.STATUS_RUNNING then
         local timeLeft = roll:GetTimeLeft(true)
         GUI(frame.obj)
@@ -907,8 +915,11 @@ function Self.OnStatusUpdate(frame)
     end
 end
 
+---@param self Widget
 function Self.UnitConfirmOrVote(self, ...)
-    local roll, unit = self:GetUserData("roll"), self:GetUserData("unit")
+    ---@type Roll
+    local roll = self:GetUserData("roll")
+    local unit = self:GetUserData("unit")
     Addon:Debug("GUI.Click:Rolls.ConfirmOrVote", roll and roll.id, unit, Self.confirm)
 
     if roll:CanBeAwardedTo(unit, true) and not (Self.confirm.roll == roll.id and Self.confirm.unit == unit) then
@@ -939,12 +950,14 @@ function Self:OnDisable()
     Self:UnregisterAllMessages()
 end
 
+---@param roll Roll
 function Self:ROLL_START(_, roll)
     if roll.isOwner and Session.IsMasterlooter() or Addon.db.profile.ui.showRollsWindow and (roll.item.isOwner or roll:ShouldBeBidOn()) then
         Self.Show()
     end
 end
 
+---@param roll Roll
 function Self:ROLL_CLEAR(_, roll)
     Self.open[roll.id] = nil
 end

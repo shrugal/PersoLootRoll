@@ -1,5 +1,3 @@
----@type string
-local Name = ...
 ---@type Addon
 local Addon = select(2, ...)
 local Unit = Addon.Unit
@@ -322,7 +320,7 @@ end
 ---@return any
 function Self.Select(val, ...)
     local n = select("#", ...)
-    
+
     for i=1, n - n % 2, 2 do
         local a, b = select(i, ...)
         if val == a then return b end
@@ -359,7 +357,7 @@ end
 function Self.TblCounter(t)
     t = t or {}
     local count = 0
-    
+
     setmetatable(t, {
         __index = function (t, k)
             return k == "count" and count
@@ -467,13 +465,13 @@ end
 ---@return any
 function Self.TblGet(t, ...)
     local n, path = select("#", ...), ...
-   
+
     if n == 1 and type(path) == "string" and path:find("%.") then
         path = Self.TblTmp(("."):split((...)))
     elseif type(path) ~= "table" then
         path = Self.TblTmp(...)
     end
-    
+
     for i,k in Self.IEach(path) do
         if k == nil then
             break
@@ -492,14 +490,14 @@ end
 function Self.TblSet(t, ...)
     local n, path = select("#", ...), ...
     local val = select(n, ...)
-   
+
     if n == 2 and type(path) == "string" and path:find("%.") then
         path = Self.TblTmp(("."):split((...)))
     elseif type(path) ~= "table" then
         path = Self.TblTmp(...)
         tremove(path)
     end
-   
+
     local u, j = t
     for i,k in Self.IEach(path) do
         if k == nil then
@@ -512,7 +510,7 @@ function Self.TblSet(t, ...)
     end
 
     u[j] = val
-   
+
     return t, val
 end
 
@@ -1077,7 +1075,6 @@ end
 -- Group table entries by key
 ---@param t table
 function Self.TblGroupBy(t, k)
-    fn = Self.Fn(fn) or Self.FnId
     local u = Self.Tbl()
     for i,v in pairs(t) do
         i = v[k]
@@ -1248,7 +1245,7 @@ function Self.TblSortBy(t, ...)
     local args = type(...) == "table" and (...) or Self.TblTmp(...)
     return Self.TblSort(t, function (a, b)
         for i=1, #args, 3 do
-            local key, default, fn = args[i], args[i+1], args[i+2]            
+            local key, default, fn = args[i], args[i+1], args[i+2]
             fn = fn == true and Fn or Self.Fn(fn) or Self.Compare
 
             local cmp = fn(a and a[key] or default, b and b[key] or default)
@@ -1632,17 +1629,17 @@ local function CreateDispatcher(argCount)
 		local xpcall, eh = ...
 		local method, ARGS
 		local function call() return method(ARGS) end
-	
+
 		local function dispatch(func, ...)
 			method = func
 			if not method then return end
 			ARGS = ...
 			return xpcall(call, eh)
 		end
-	
+
 		return dispatch
 	]]
-	
+
 	local ARGS = {}
 	for i = 1, argCount do ARGS[i] = "arg"..i end
 	code = code:gsub("ARGS", table.concat(ARGS, ", "))

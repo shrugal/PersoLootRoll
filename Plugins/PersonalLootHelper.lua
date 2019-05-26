@@ -28,6 +28,9 @@ Self.initialized = false
 -------------------------------------------------------
 
 -- Send a PLH message
+---@param action string
+---@param roll Roll|string
+---@param param any
 function Self.Send(action, roll, param)
     if Self:IsEnabled() then
         local msg = not roll and ("%s~ ~%s"):format(action, param)
@@ -57,7 +60,7 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
     else
         local item = Item.IsLink(param) and param or itemId
         local roll = Roll.Find(nil, nil, item, nil, owner, Roll.STATUS_RUNNING) or Roll.Find(nil, nil, item, nil, owner)
-        
+
         -- Trade: The owner offers the item up for requests
         if action == Self.ACTION_TRADE and not roll and fromOwner and Item.IsLink(param) then
             Addon:Debug("PLH.Event.Trade", itemId, owner, param, msg)
@@ -97,7 +100,7 @@ function Self:OnEnable()
     Self:RegisterMessage(Roll.EVENT_START, "ROLL_START")
     Self:RegisterMessage(Roll.EVENT_BID, "ROLL_BID")
     Self:RegisterMessage(Roll.EVENT_AWARD, "ROLL_AWARD")
-    
+
     -- Send version check
     Self.Send(Self.ACTION_CHECK, nil, Unit.FullName("player"))
 end
@@ -109,6 +112,7 @@ function Self:OnDisable()
     Self:UnregisterMessage(Roll.EVENT_AWARD)
 end
 
+---@param roll Roll
 function Self:ROLL_START(_, roll)
     if roll.isOwner and not roll.isTest then
         -- Send TRADE message
@@ -116,6 +120,10 @@ function Self:ROLL_START(_, roll)
     end
 end
 
+---@param roll Roll
+---@param bid number
+---@param fromUnit string
+---@param isImport boolean
 function Self:ROLL_BID(_, roll, bid, fromUnit, _, isImport)
     local fromSelf = Unit.IsSelf(fromUnit)
 
@@ -133,6 +141,7 @@ function Self:ROLL_BID(_, roll, bid, fromUnit, _, isImport)
     end
 end
 
+---@param roll Roll
 function Self:ROLL_AWARD(_, roll)
     if roll.winner and not roll.isWinner and roll.isOwner and Addon.GetCompAddonUser(roll.winner, Self.NAME) and not roll.isTest then
         -- Send OFFER message

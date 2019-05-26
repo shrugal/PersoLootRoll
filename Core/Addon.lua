@@ -619,6 +619,9 @@ end
 --                       Timer                       --
 -------------------------------------------------------
 
+---@param timer table
+---@param to number
+---@return table
 function Self:ExtendTimerTo(timer, to, ...)
     if not timer.canceled and (select("#", ...) > 0 or timer.ends - GetTime() < to) then
         self:CancelTimer(timer)
@@ -636,10 +639,13 @@ function Self:ExtendTimerTo(timer, to, ...)
     end
 end
 
+---@param timer table
+---@param by number
 function Self:ExtendTimerBy(timer, by, ...)
     return self:ExtendTimerTo(timer, (timer.ends - GetTime()) + by, ...)
 end
 
+---@param timer table
 function Self:TimerIsRunning(timer)
     return timer and not timer.canceled and timer.ends > GetTime()
 end

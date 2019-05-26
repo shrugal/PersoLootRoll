@@ -4,13 +4,17 @@ local Name = ...
 local Addon = select(2, ...)
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Comm, GUI, Item, Locale, Session, Roll, Unit, Util = Addon.Comm, Addon.GUI, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
+local Comm, Item, Locale, Session, Roll, Unit, Util = Addon.Comm, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
 local Self = Addon
 
 -- Message patterns
+---@type string
 Self.PATTERN_BONUS_LOOT = LOOT_ITEM_BONUS_ROLL:gsub("%%s", ".+")
+---@type string
 Self.PATTERN_CRAFTING = CREATED_ITEM:gsub("%%s", ".+")
+---@type string
 Self.PATTERN_CRAFTING_SELF = LOOT_ITEM_CREATED_SELF:gsub("%%s", ".+")
+---@type string
 Self.PATTERN_ROLL_RESULT = RANDOM_ROLL_RESULT:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%%d%$", "%%"):gsub("%%s", "(.+)"):gsub("%%d", "(%%d+)")
 
 -- Version check
@@ -106,6 +110,7 @@ end
 
 -- System
 
+---@param msg string
 function Self.CHAT_MSG_SYSTEM(_, _, msg)
     if not Self:IsTracking() then return end
 
@@ -119,7 +124,7 @@ function Self.CHAT_MSG_SYSTEM(_, _, msg)
             else
                 result, from, to = tonumber(result), tonumber(from), tonumber(to)
             end
-            
+
             Self:Debug("Events.RandomRoll", unit, result, from, to, msg)
 
             -- Rolls lower than 50 will screw with the result scaling
@@ -142,7 +147,7 @@ function Self.CHAT_MSG_SYSTEM(_, _, msg)
                     return
                 end
             end
-            
+
             -- Find the roll
             local i, roll = to % 50
             if i == 0 then
@@ -151,11 +156,11 @@ function Self.CHAT_MSG_SYSTEM(_, _, msg)
                 roll = Util.TblFirstWhere(Self.rolls, "status", Roll.STATUS_RUNNING, "posted", i)
             end
 
-            
+
             -- Get the correct bid and scaled roll result
             local bid = to < 100 and Roll.BID_GREED or Roll.BID_NEED
             result = Util.NumRound(result * 100 / to)
-            
+
             -- Register the unit's bid
             if roll and (roll.isOwner or Unit.IsSelf(unit)) and roll:UnitCanBid(unit, bid) then
                 Self:Debug("Events.RandomRoll.Bid", bid, result, roll)
@@ -198,6 +203,8 @@ end
 
 -- Loot
 
+---@param msg string
+---@param sender string
 function Self.CHAT_MSG_LOOT(_, _, msg, _, _, _, sender)
     local unit = Unit(sender)
     if not Self:IsTracking() or not Unit.InGroup(unit) or not Unit.IsSelf(unit) and Self:UnitIsTracking(unit, true) then return end
@@ -246,6 +253,8 @@ end
 
 -- Group/Raid/Instance
 
+---@param msg string
+---@param sender string
 function Self.CHAT_MSG_GROUP(_, _, msg, sender)
     local unit = Unit(sender)
     if not Self:IsTracking() then return end
@@ -294,6 +303,9 @@ end
 
 -- Whisper
 
+---@param msg string
+---@param sender string
+---@param lineId integer
 function Self.CHAT_MSG_WHISPER_FILTER(_, _, msg, sender, _, _, _, _, _, _, _, _, lineId)
     local unit = Unit(sender)
     if not Self:IsTracking() or not Unit.InGroup(unit) then return end
@@ -318,7 +330,7 @@ function Self.CHAT_MSG_WHISPER_FILTER(_, _, msg, sender, _, _, _, _, _, _, _, _,
     if link and Session.IsMasterlooter() and Addon.db.profile.masterloot.rules.startWhisper then
         local req = msg:gsub(Item.PATTERN_LINK, ""):trim():gsub("[%c%p]+", ""):gsub("%s%s+", " ")
         local reqLc = req:lower()
-        
+
         local patterns = Util.StrJoin(",", "roll", Locale.GetCommLine("MSG_ROLL", unit), Locale.GetCommLine("MSG_ROLL"))
         print(patterns)
         for p in patterns:gmatch("[^,]+") do
@@ -326,6 +338,7 @@ function Self.CHAT_MSG_WHISPER_FILTER(_, _, msg, sender, _, _, _, _, _, _, _, _,
             if req:match(p) or reqLc:match(p) then
                 roll = Roll.Find(nil, nil, link, nil, unit)
                 if roll and roll.status < Roll.STATUS_DONE then
+                    ---@type function
                     local action = Util.Select(roll.status, Roll.STATUS_CANCELED, Roll.Restart, Roll.STATUS_PENDING, Roll.Start)
                     roll:Adopt(not not action)
                     roll.item.isTradable = true
@@ -356,7 +369,7 @@ function Self.CHAT_MSG_WHISPER_FILTER(_, _, msg, sender, _, _, _, _, _, _, _, _,
                         if not recent then recent = roll else recent = true end
                     end
                 end
-                    
+
                 if roll.status == Roll.STATUS_DONE and (roll.owner == unit or roll.isOwner and (roll.winner == unit or roll.item:GetEligible(unit))) then
                     lastEnded = max(lastEnded, roll.ended + Self.CHAT_MARGIN_AFTER)
                 end
@@ -417,12 +430,12 @@ function Self.CHAT_MSG_WHISPER_FILTER(_, _, msg, sender, _, _, _, _, _, _, _, _,
             end
         end
     end
-       
+
     -- Suppress the message and/or send an answer
     if answer ~= nil then
         suppress = answer ~= nil and Self.db.profile.messages.whisper.suppress
         answer = Self.db.profile.messages.whisper.answer and answer
-        
+
         -- Suppress the message and print an info message instead
         if suppress then
             Self:Info(L["ROLL_WHISPER_SUPPRESSED"],
@@ -443,6 +456,9 @@ function Self.CHAT_MSG_WHISPER_FILTER(_, _, msg, sender, _, _, _, _, _, _, _, _,
     return suppress
 end
 
+---@param msg string
+---@param receiver string
+---@param lineId integer
 function Self.CHAT_MSG_WHISPER_INFORM_FILTER(_, _, msg, receiver, _, _, _, _, _, _, _, _, lineId)
     local unit = Unit(receiver)
     if not Self:IsTracking() or not Unit.InGroup(unit) or lineId == Self.lastWhisperedLineId then return end
@@ -468,6 +484,7 @@ end
 --                       Item                        --
 -------------------------------------------------------
 
+---@param bagId integer
 function Self.ITEM_PUSH(_, _, bagId)
     Self.lastLootedBag = bagId == 0 and 0 or (bagId - CharacterBag0Slot:GetID() + 1)
 end
@@ -478,7 +495,7 @@ end
 
 function Self.ITEM_UNLOCKED(_, _, bagOrEquip, slot)
     local pos = {bagOrEquip, slot}
-    
+
     if #Self.lastLocked == 1 and not Util.TblEquals(pos, Self.lastLocked[1]) then
         -- The item has been moved
         local from, to = Self.lastLocked[1], pos
@@ -506,7 +523,7 @@ function Self.ITEM_UNLOCKED(_, _, bagOrEquip, slot)
                 break
             end
         end
-    
+
         if item1 then item1:SetPosition(pos2) end
         if item2 then item2:SetPosition(pos1) end
     end
@@ -540,7 +557,7 @@ Comm.ListenData(Comm.EVENT_CHECK, function (event, data, channel, sender, unit)
 
         -- Send version
         Comm.SendData(Comm.EVENT_VERSION, Self.VERSION, target)
-        
+
         -- Send disabled state
         if not Self.db.profile.enabled then
             Comm.Send(Comm.EVENT_DISABLE, target)
@@ -636,7 +653,7 @@ Comm.ListenData(Comm.EVENT_VOTE, function (event, data, channel, sender, unit)
 
     local owner = data.fromUnit and unit or nil
     local fromUnit = data.fromUnit or unit
-    
+
     local roll = Roll.Find(data.ownerId, owner)
     if roll then
         roll:Vote(data.vote, fromUnit, owner ~= nil)

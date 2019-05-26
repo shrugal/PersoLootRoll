@@ -4,13 +4,14 @@ local Name = ...
 local Addon = select(2, ...)
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local AceGUI = LibStub("AceGUI-3.0")
-local GUI, Inspect, Item, Masterloot, Roll, Trade, Unit, Util = Addon.GUI, Addon.Inspect, Addon.Item, Addon.Masterloot, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+local GUI, Roll, Trade, Unit, Util = Addon.GUI, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 ---@class Actions : Module
 local Self = GUI.Actions
 
+---@type table<Widget>
 Self.frames = {}
 Self.moving = nil
+---@type table<string, boolean>
 Self.anchors = Util.TblFlip({"TOPLEFT", "TOP", "TOPRIGHT", "RIGHT", "BOTTOMRIGHT", "BOTTOM", "BOTTOMLEFT", "LEFT", "CENTER"}, false)
 
 -------------------------------------------------------
@@ -18,6 +19,7 @@ Self.anchors = Util.TblFlip({"TOPLEFT", "TOP", "TOPRIGHT", "RIGHT", "BOTTOMRIGHT
 -------------------------------------------------------
 
 -- Show the frame
+---@param move boolean
 function Self.Show(move)
     if Self.frames.window then
         Self.frames.window.frame:Show()
@@ -83,6 +85,7 @@ function Self.Show(move)
 end
 
 -- Check if the frame is currently being shown
+---@return boolean
 function Self.IsShown()
     return Self.frames.window and Self.frames.window.frame:IsShown()
 end
@@ -106,7 +109,7 @@ end
 
 function Self.Update()
     if not Self.frames.window then return end
-    
+
     local f
     local parent = Self.frames.window
     local children = parent.children
@@ -126,16 +129,16 @@ function Self.Update()
             GUI("Label")
                 .SetFontObject(GameFontNormal)
                 .AddTo(parent)
-        
+
             -- Item
             GUI.CreateItemLabel(parent)
-        
+
             -- Status
             f = GUI("Label").SetFontObject(GameFontNormal).AddTo(parent)()
-            
+
             -- Target
             GUI.CreateUnitLabel(parent)
-        
+
             -- Actions
             local actions = GUI("SimpleGroup")
                 .SetLayout(nil)
@@ -177,7 +180,7 @@ function Self.Update()
                 f.image:SetPoint("TOP", 0, 1)
             end
         end
-        
+
         local action = roll:GetActionRequired()
         local target = roll:GetActionTarget()
         local canTrade = Trade.ShouldInitTrade(roll)
@@ -202,7 +205,7 @@ function Self.Update()
             .Show()
 
         -- Actions
-        do 
+        do
             local actions = children[it()]
             local children = actions.children
             local it = Util.Iter()
@@ -231,7 +234,7 @@ function Self.Update()
             GUI(children[it()]).Toggle(Util.In(action, Roll.ACTION_AWARD, Roll.ACTION_VOTE))
             -- Hide
             GUI(children[it()]).SetUserData("roll", roll)
-            
+
             GUI.ArrangeIconButtons(actions)
         end
     end
@@ -241,7 +244,7 @@ function Self.Update()
         children[it(0)]:Release()
         children[it(0)] = nil
     end
-    
+
     -- Hide if empty
     if Util.TblCount(rolls) == 0 and not Self.moving then
         Self.Hide()
@@ -306,7 +309,7 @@ function Self.UpdateButtons()
         .SetImage("Interface\\Buttons\\LockButton-" .. (Self.moving and "L" or "Unl") .. "ocked-Up", 0.2, 0.8, 0.2, 0.8)
         .SetImageSize(12, 12).SetWidth(12).SetHeight(12)
         .SetUserData("text", Self.moving and LOCK or UNLOCK)
-    
+
     -- Anchor buttons
     for name,btn in pairs(Self.anchors) do
         if not Self.moving then
@@ -342,7 +345,7 @@ end
 -------------------------------------------------------
 
 function Self.CreateHeaderIconButton(text, n, onClick, icon, ...)
-    f = GUI("Icon")
+    local f = GUI("Icon")
         .SetImage(icon:sub(1, 9) == "Interface" and icon or "Interface\\Buttons\\" .. icon, ...)
         .SetImageSize(12, 12).SetWidth(12).SetHeight(12)
         .SetCallback("OnClick", onClick)
@@ -365,8 +368,13 @@ end
 function Self:OnEnable()
     Self:RegisterMessage(Roll.EVENT_CHANGE, Self.ROLL_CHANGE)
 end
-function Self:OnDisable() Self:UnregisterAllMessages() end
 
+function Self:OnDisable()
+    Self:UnregisterAllMessages()
+end
+
+---@param e string
+---@param roll Roll
 function Self.ROLL_CHANGE(_, e, roll)
     if Addon.db.profile.ui.showActionsWindow and Util.In(e, Roll.EVENT_END, Roll.EVENT_AWARD, Roll.EVENT_TOGGLE) and roll:GetActionRequired() then
         Self.Show()

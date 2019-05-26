@@ -1,5 +1,3 @@
----@type string
-local Name = ...
 ---@type Addon
 local Addon = select(2, ...)
 local GUI, Unit, Util = Addon.GUI, Addon.Unit, Addon.Util
@@ -362,6 +360,10 @@ Self.TRINKET_UPDATE_TRIES = 2
 Self.TRINKET_UPDATE_PER_TRY = 1
 
 -- Completely rebuild the trinket list
+---@param tier integer
+---@param isRaid integer
+---@param instance integer
+---@param difficulty integer
 function Self.UpdateTrinkets(tier, isRaid, instance, difficulty)
     tier = tier or 1
     isRaid = (isRaid == true or isRaid == 1) and 1 or 0
@@ -376,7 +378,7 @@ function Self.UpdateTrinkets(tier, isRaid, instance, difficulty)
         wipe(Self.TRINKETS)
         Util.TblInspect(Self.TRINKETS)
     end
-    
+
     -- Go through all tiers, dungeon/raid, instances and difficulties
     for t=tier,EJ_GetNumTiers() do
         EJ_SelectTier(t)
@@ -398,7 +400,7 @@ function Self.UpdateTrinkets(tier, isRaid, instance, difficulty)
         end
         isRaid = 0
     end
-    
+
     Addon:Info("Updating trinkets complete!")
     Self.ExportTrinkets()
 end
@@ -411,6 +413,10 @@ function Self.CancelUpdateTrinkets()
 end
 
 -- Update trinkets for one instance+difficulty
+---@param tier integer
+---@param instance integer
+---@param difficulty integer
+---@param timeLeft number
 function Self.UpdateInstanceTrinkets(tier, instance, difficulty, timeLeft)
     timeLeft = timeLeft or Self.TRINKET_UPDATE_TRIES * Self.TRINKET_UPDATE_PER_TRY
     if timeLeft < Self.TRINKET_UPDATE_PER_TRY then return end
@@ -422,7 +428,7 @@ function Self.UpdateInstanceTrinkets(tier, instance, difficulty, timeLeft)
     EJ_SelectInstance(instance)
     EJ_SetDifficulty(difficulty)
     EJ_SetSlotFilter(LE_ITEM_FILTER_TYPE_TRINKET)
-    
+
     -- Get trinkets for all the reference specs
     local t = {}
     for n,info in pairs(Self.TRINKET_SPECS) do
@@ -460,6 +466,7 @@ function Self.UpdateInstanceTrinkets(tier, instance, difficulty, timeLeft)
 end
 
 -- Export the trinkets list
+---@param loaded boolean
 function Self.ExportTrinkets(loaded)
     if not loaded and next(Self.TRINKETS) then
         for id in pairs(Self.TRINKETS) do GetItemInfo(id) end

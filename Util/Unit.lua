@@ -1,5 +1,3 @@
----@type string
-local Name = ...
 ---@type Addon
 local Addon = select(2, ...)
 local RI = LibStub("LibRealmInfo")
@@ -57,6 +55,7 @@ function Self.RealmName()
 end
 
 -- Get a unit's realm name
+---@param unit string
 function Self.Realm(unit)
     local name, realm = UnitFullName(Self(unit))
     realm = realm ~= "" and realm or Self.RealmName()
@@ -65,6 +64,7 @@ function Self.Realm(unit)
 end
 
 -- Get a unique indentifier for the unit's realm connection
+---@param unit string
 function Self.ConnectedRealm(unit)
     local realm = Self.Realm(unit)
     local connections = realm and select(9, RI:GetRealmInfo(realm))
@@ -95,6 +95,8 @@ function Self.Name(unit)
 end
 
 -- Get a unit's short name (without realm name)
+---@param unit string
+---@return string
 function Self.ShortName(unit)
     local name = UnitName(Self(unit))
 
@@ -105,6 +107,8 @@ function Self.ShortName(unit)
 end
 
 -- Get a unit's full name (always incl. realm name)
+---@param unit string
+---@return string
 function Self.FullName(unit)
     local name, realm = UnitFullName(Self(unit))
     realm = realm ~= "" and realm or Self.RealmName()
@@ -116,6 +120,8 @@ function Self.FullName(unit)
 end
 
 -- Get a unit's short name with a (*) at the end if the unit is from another realm
+---@param unit string
+---@return string
 function Self.ShortenedName(unit)
     unit = Self(unit)
     local name, realm = UnitFullName(unit)
@@ -126,11 +132,15 @@ function Self.ShortenedName(unit)
 end
 
 -- Get a unit's name in class color
+---@param name string
+---@param unit string
+---@return string
 function Self.ColoredName(name, unit)
     return ("|c%s%s|r"):format(Self.Color(unit or name).colorStr, name)
 end
 
 -- It's just such a common usecase
+---@param unit string
 function Self.ColoredShortenedName(unit)
     return unit and Self.ColoredName(Self.ShortenedName(unit), unit)
 end
@@ -148,6 +158,8 @@ function Self.GuildName(unit)
 end
 
 -- The the unit's rank in our guild
+---@param unit string
+---@return integer
 function Self.GuildRank(unit)
     if not unit then return end
 
@@ -164,6 +176,8 @@ function Self.IsGuildMember(unit)
 end
 
 -- Check if given unit or rank has officer privileges
+---@param unitOrRank string|integer
+---@return boolean
 function Self.IsGuildOfficer(unitOrRank)
     local rank = type(unitOrRank) == "number" and unitOrRank or IsGuildMember(unitOrRank) and C_GuildInfo.GetGuildRankOrder(UnitGUID(unitOrRank))
     local info = rank and C_GuildInfo.GuildControlGetRankFlags(rank)
@@ -199,6 +213,7 @@ function Self.IsClubMember(unit)
 end
 
 -- Get common community ids
+---@param unit string
 function Self.CommonClubs(unit)
     if not unit then return end
 
@@ -232,12 +247,14 @@ end
 -------------------------------------------------------
 
 -- Shortcut for checking whether a unit is in our party or raid
+---@param onlyOthers boolean
 function Self.InGroup(unit, onlyOthers)
     local isSelf = Self.IsSelf(unit)
     return not (isSelf and onlyOthers) and (isSelf or UnitInParty(unit) or UnitInRaid(unit))
 end
 
 -- Get a unit's group rank
+---@return integer
 function Self.GroupRank(unit)
     for i=1,GetNumGroupMembers() do
         local grpUnit, rank = GetRaidRosterInfo(i)
@@ -248,6 +265,7 @@ function Self.GroupRank(unit)
 end
 
 -- Get the current group leader
+---@return string
 function Self.GroupLeader()
     for i=1,GetNumGroupMembers() do
         local unit, rank = GetRaidRosterInfo(i)
@@ -272,11 +290,14 @@ function Self.IsSelf(unit)
 end
 
 -- Get the unit's class id
+---@return integer
 function Self.ClassId(unit)
     return unit and select(3, UnitClass(unit))
 end
 
 -- Get a list of all specs
+---@param unit string
+---@return table
 function Self.Specs(unit)
     if unit then
         local classId, specs = Self.ClassId(unit), Util.Tbl()
@@ -317,6 +338,7 @@ function Self.IsEnchanter()
 end
 
 setmetatable(Self, {
+    ---@param unit string
     __call = function (_, unit)
         return unit and unit:gsub("-" .. Self.RealmName(), "") or ""
     end

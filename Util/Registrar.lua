@@ -1,5 +1,3 @@
----@type string
-local Name = ...
 ---@type Addon
 local Addon = select(2, ...)
 local AceEvent = LibStub("AceEvent-3.0")
@@ -18,11 +16,11 @@ Self.EVENT_UPDATE = "UPDATE"
 Self.EVENT_REMOVE = "REMOVE"
 Self.EVENT_CHANGE = "CHANGE"
 
---- Create a new registrar instance
--- @string name The name for this registrar, used to generate an event prefix
--- @mixed  idKey If passed the registrar operates as a continually indexed list
--- @fn addFn Custom "Add" function
--- @return Registrar the new registrar
+-- Create a new registrar instance
+---@param name string       The name for this registrar, used to generate an event prefix
+---@param idKey any         If passed the registrar operates as a continually indexed list
+---@param addFn function    Custom "Add" function
+---@return Registrar        The new registrar
 function Self.New(name, idKey, addFn)
     local prefix = "PLR_" .. name
 
@@ -40,9 +38,9 @@ function Self.New(name, idKey, addFn)
     }, {__index = Self})
 end
 
---- Get an entry by key
--- @mixed key
--- @return mixed
+-- Get an entry by key
+---@param key any
+---@return any
 function Self:Get(key)
     if self.idKey then
         local i, v = Util.TblFindWhere(self.register, self.idKey, key)
@@ -52,11 +50,11 @@ function Self:Get(key)
     end
 end
 
---- Set an entry for the given key
--- @mixed key
--- @mixed val
--- @int i Position in the list
--- @return mixed
+-- Set an entry for the given key
+---@param key any
+---@param val any
+---@param i integer Position in the list
+---@return any
 function Self:Set(key, val, i)
     local prev, prevI = self:Get(key)
 
@@ -77,9 +75,9 @@ function Self:Set(key, val, i)
     return val
 end
 
---- Update an entry by key
--- @mixed key
--- @return mixed
+-- Update an entry by key
+---@param key any
+---@return any
 function Self:Update(key, ...)
     local val = self:Get(key)
     if val then
@@ -93,8 +91,8 @@ function Self:Update(key, ...)
     return val
 end
 
---- Remove one or more entries by key
--- @mixed ... A list of keys
+-- Remove one or more entries by key
+---@vararg any A list of keys
 function Self:Remove(...)
     for _,key in Util.Each(...) do
         local val, i = self:Get(key)
@@ -105,7 +103,7 @@ function Self:Remove(...)
     end
 end
 
---- Interate through all entries
+-- Interate through all entries
 function Self:Iter()
     if self.idKey then
         return ipairs(self.register)
@@ -114,7 +112,7 @@ function Self:Iter()
     end
 end
 
---- Get a list of keys
+-- Get a list of keys
 function Self:Keys()
     if self.idKey then
         return Util(self.register).Copy().Pluck(self.idKey)()
@@ -123,14 +121,13 @@ function Self:Keys()
     end
 end
 
---- Makes Util table functions available on the Registrar instance
+-- Makes Util table functions available on the Registrar instance
 local k
 local fn = function (self, ...) return Util["Tbl" .. k](self.register, ...) end
 setmetatable(Self, {__index = function (self, key) if Util["Tbl" .. key] then k = key return fn end end})
 
---- Helper to fire events
--- @string msg
--- @mixed ...
+-- Helper to fire events
+---@param msg string
 function Self:SendMessage(msg, ...)
     local e = self.prefix .. "_" .. msg
 

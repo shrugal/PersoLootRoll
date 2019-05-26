@@ -27,16 +27,23 @@ Self.lastQueued = 0
 -------------------------------------------------------
 
 -- Get ivl for given unit and location
+---@param unit string
+---@param location string
+---@return integer
 function Self.GetLevel(unit, location)
     return Self.cache[unit] and Self.cache[unit].levels[location] or 0
 end
 
 -- Get link(s) for given unit and slot
+---@param unit string
+---@param slot string
+---@return string
 function Self.GetLink(unit, slot)
     return Self.cache[unit] and Self.cache[unit].links[slot] or nil
 end
 
 -- Check if an entry exists and isn't out-of-date
+---@param unit string
 function Self.IsValid(unit)
     return Self.cache[unit] and Self.cache[unit].time + Self.REFRESH > GetTime()
 end
@@ -147,6 +154,7 @@ function Self.Update(unit)
 end
 
 -- Clear everything and stop tracking for one or all players
+---@param unit string
 function Self.Clear(unit)
     if unit then
         Util.TblRelease(true, Self.cache[unit])
@@ -161,6 +169,7 @@ function Self.Clear(unit)
 end
 
 -- Queue a unit or the entire group for inspection
+---@param unit string
 function Self.Queue(unit)
     unit = Unit.Name(unit)
     if not Addon:IsTracking() then return end
@@ -178,7 +187,7 @@ function Self.Queue(unit)
                 Self.queue[unit] = Self.MAX_PER_CHAR
             end
         end
-        
+
         if allFound then
             Self.lastQueued = GetTime()
         end
@@ -199,7 +208,7 @@ function Self.Loop()
     -- Get the next unit to inspect (with max inspects left -> wide search, random -> so we don't get stuck on one unit)
     local units = Util.TblCopyFilter(Self.queue, filterFn, true, nil, true)
     local unit = next(units) and Util(units).Only(Util.TblMax(units), true).RandomKey()()
-    
+
     if unit then
         Self.target = unit
         NotifyInspect(unit)
@@ -248,10 +257,12 @@ function Self:OnEnable()
     end
 end
 
+---@param unit string
 function Self:PARTY_MEMBER_ENABLE(_, unit)
     if Addon:IsTracking() then Self.Queue(unit) end
 end
 
+---@param guid string
 function Self:INSPECT_READY(_, guid)
     local _, _, _, _, _, name, realm = GetPlayerInfoByGUID(guid)
     local unit = realm and realm ~= "" and name .. "-" .. realm or name
@@ -265,13 +276,14 @@ function Self:INSPECT_READY(_, guid)
         ClearInspectPlayer()
         Self.target = nil
     end
-    
+
     -- Extend a running loop timer
     if Addon:TimerIsRunning(Self.timer) then
         Self.timer = Addon:ExtendTimerTo(Self.timer, Self.INSPECT_DELAY)
     end
 end
 
+---@param msg string
 function Self:CHAT_MSG_SYSTEM(_, msg)
     if not Addon:IsTracking() then return end
 
@@ -284,7 +296,7 @@ function Self:CHAT_MSG_SYSTEM(_, msg)
             return
         end
     end
-    
+
     -- Check if a player left the group/raid
     for _,pattern in pairs(Comm.PATTERNS_LEFT) do
         local unit = msg:match(pattern)
@@ -295,12 +307,14 @@ function Self:CHAT_MSG_SYSTEM(_, msg)
     end
 end
 
+---@param active boolean
 function Self:ACTIVE_CHANGE(active)
     if not active then
         Self.Clear()
     end
 end
 
+---@param tracking boolean
 function Self:TRACKING_CHANGE(tracking)
     if tracking then
         Self.Queue()

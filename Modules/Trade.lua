@@ -4,7 +4,7 @@ local Name = ...
 local Addon = select(2, ...)
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Comm, Item, Roll, Unit, Util = Addon.Comm, Addon.Item, Addon.Roll, Addon.Unit, Addon.Util
+local Comm, Roll, Unit, Util = Addon.Comm, Addon.Roll, Addon.Unit, Addon.Util
 ---@class Trade : Module
 local Self = Addon.Trade
 
@@ -16,6 +16,7 @@ Self.timers = {}
 -------------------------------------------------------
 
 -- Try to initiate a trade
+---@param target string
 function Self.Initiate(target)
     target = Unit.Name(target)
 
@@ -23,7 +24,7 @@ function Self.Initiate(target)
     Self.Cancel()
 
     Addon:Verbose(L["TRADE_START"], Comm.GetPlayerLink(target))
-        
+
     -- Trade with owner
     if CheckInteractDistance(target, Util.INTERACT_TRADE) then
         InitiateTrade(target)
@@ -38,7 +39,7 @@ function Self.Initiate(target)
                 Self.Cancel()
             elseif CheckInteractDistance(target, Util.INTERACT_TRADE) then
                 Addon:CancelTimer(Self.timers.follow)
-               
+
                 Self.timers.follow = Addon:ScheduleTimer(function ()
                     Self.timers.follow = nil
                     InitiateTrade(target)
@@ -107,6 +108,8 @@ end
 -------------------------------------------------------
 
 -- Check if the user should be allowed to initiate trade with a roll owner or winner
+---@param roll Roll
+---@return boolean
 function Self.ShouldInitTrade(roll)
     local target = roll:GetActionTarget()
     return target and (roll:GetOwnerAddon() or roll.chat or IsGuildMember(target) or Unit.IsFriend(target) or Unit.IsClubMember(target))
@@ -148,10 +151,12 @@ function Self:TRADE_SHOW()
     end
 end
 
+---@param slot integer
 function Self:TRADE_PLAYER_ITEM_CHANGED(_, slot)
     Self.items.player[slot] = GetTradePlayerItemLink(slot)
 end
 
+---@param slot integer
 function Self:TRADE_TARGET_ITEM_CHANGED(_, slot)
     Self.items.target[slot] = GetTradeTargetItemLink(slot)
 end

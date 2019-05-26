@@ -4,7 +4,6 @@ local Name = ...
 local Addon = select(2, ...)
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local CB = LibStub("CallbackHandler-1.0")
 local Comm, GUI, Roll, Unit, Util = Addon.Comm, Addon.GUI, Addon.Roll, Addon.Unit, Addon.Util
 ---@class Session : Module
 local Self = Addon.Session
@@ -49,6 +48,8 @@ Self.masterlooting = {}
 -------------------------------------------------------
 
 -- Set (or reset) the masterlooter
+---@param rules table
+---@param silent boolean
 function Self.SetMasterlooter(unit, rules, silent)
     unit = unit and Unit.Name(unit)
 
@@ -63,7 +64,7 @@ function Self.SetMasterlooter(unit, rules, silent)
         Self.masterlooter = nil
         wipe(Self.rules)
     end
-    
+
     PersoLootRollML = unit
     Self.masterlooter = unit
 
@@ -92,6 +93,7 @@ function Self.SetMasterlooter(unit, rules, silent)
 end
 
 -- Check if the unit (or the player) is our masterlooter
+---@param unit string
 function Self.GetMasterlooter(unit)
     unit = Unit.Name(unit or "player")
     if Unit.IsSelf(unit) then
@@ -102,11 +104,15 @@ function Self.GetMasterlooter(unit)
 end
 
 -- Check if the unit (or the player) is our masterlooter
+---@param unit string
+---@return boolean
 function Self.IsMasterlooter(unit)
     return Self.masterlooter and UnitIsUnit(Self.masterlooter, unit or "player")
 end
 
 -- Set a unit's masterlooting status
+---@param unit string
+---@param ml string
 function Self.SetMasterlooting(unit, ml)
     unit, ml = unit and Unit.Name(unit), ml and Unit.Name(ml)
     Self.masterlooting[unit] = ml
@@ -129,6 +135,7 @@ end
 -------------------------------------------------------
 
 -- Check if the given unit can send us a ruleset
+---@param unit string
 function Self.UnitAllow(unit)
     unit = Unit.Name(unit)
     local config = Addon.db.profile.masterloot
@@ -147,7 +154,7 @@ function Self.UnitAllow(unit)
     for i,v in pairs(Addon.db.profile.masterloot.whitelists[GetRealmName()] or Util.TBL_EMPTY) do
         if UnitIsUnit(unit, i) then return true end
     end
-    
+
     local guild = Unit.GuildName(unit)
 
     -- Check everything else
@@ -205,6 +212,7 @@ function Self.Restore()
 end
 
 -- Set the session rules
+---@param silent boolean
 function Self.SetRules(rules, silent)
     if Self.IsMasterlooter() then
         local c = Addon.db.profile.masterloot
@@ -252,6 +260,8 @@ end
 Self.RefreshRules = Util.FnDebounce(Self.RefreshRules, 0.1, true)
 
 -- Check if the unit is on the loot council
+---@param refresh boolean
+---@param groupRank integer
 function Self.IsOnCouncil(unit, refresh, groupRank)
     unit = Unit(unit or "player")
     local fullName = Unit.FullName(unit)
@@ -300,12 +310,14 @@ end
 -------------------------------------------------------
 
 -- Ask someone to be your masterlooter
+---@param target string
 function Self.SendRequest(target)
     Comm.Send(Comm.EVENT_MASTERLOOT_ASK, nil, target)
     Self:SendMessage(Self.EVENT_REQUEST, target)
 end
 
 -- Send masterlooter offer to unit
+---@param silent boolean
 function Self.SendOffer(target, silent)
     if Self.IsMasterlooter() then
         Comm.SendData(Comm.EVENT_MASTERLOOT_OFFER, {session = Self.rules, silent = silent}, target)
@@ -313,6 +325,7 @@ function Self.SendOffer(target, silent)
 end
 
 -- Confirm unit as your masterlooter
+---@param target string
 function Self.SendConfirmation(target)
     Comm.Send(Comm.EVENT_MASTERLOOT_ACK, Unit.FullName(Self.masterlooter), target)
 end
@@ -401,6 +414,7 @@ function Self:GROUP_LEFT()
     wipe(Self.masterlooting)
 end
 
+---@param msg string
 function Self:CHAT_MSG_SYSTEM(_, msg)
     -- Check if a player left the group/raid
     for _,pattern in pairs(Comm.PATTERNS_LEFT) do

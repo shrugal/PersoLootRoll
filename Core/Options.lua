@@ -9,7 +9,7 @@ local CD = LibStub("AceConfigDialog-3.0")
 local CR = LibStub("AceConfigRegistry-3.0")
 local LDB = LibStub("LibDataBroker-1.1")
 local LDBIcon = LibStub("LibDBIcon-1.0")
-local Comm, GUI, Inspect, Item, Locale, Session, Roll, Unit, Util = Addon.Comm, Addon.GUI, Addon.Inspect, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
+local GUI, Item, Locale, Session, Roll, Unit, Util = Addon.GUI, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
 ---@class Options
 local Self = Addon.Options
 
@@ -33,7 +33,7 @@ Self.DEFAULTS = {
             showActionsWindow = true,
             showRollsWindow = false
         },
-        
+
         -- Item filter
         filter = {
             lvlThreshold = Item.LVL_THRESHOLD,
@@ -149,12 +149,12 @@ Self.CAT_GENERAL = "GENERAL"
 Self.CAT_MASTERLOOT = "MASTERLOOT"
 Self.CAT_MESSAGES = "MESSAGES"
 
---- Add custom options for the given key
--- @string         key     Unique indentifier
--- @string         cat     The options category that should be extended
--- @string         path    Dot-separated path inside the options data, ending with a new namespace for these custom options
--- @table|function options Options data, either a table or a callback with parameters: cat, path
--- @function       sync    Callback handling import/export operations with parameters: data, isImport, cat, path (optional)
+-- Add custom options for the given key
+---@param key string                Unique indentifier
+---@param cat string                The options category that should be extended
+---@param path string               Dot-separated path inside the options data, ending with a new namespace for these custom options
+---@param options table|function    Options data, either a table or a callback with parameters: cat, path
+---@param sync function(data, isImport, cat, path)  Callback handling import/export operations
 Self.CustomOptions = Util.Registrar.New("OPTION", nil, function (key, cat, path, options, sync)
     return Util.TblHash("key", key, "cat", cat, "path", path, "options", options, "sync", sync)
 end)
@@ -179,7 +179,7 @@ function Self.Register()
     -- Messages
     C:RegisterOptionsTable(Name .. " Messages", Self.RegisterMessages)
     Self.frames.Messages = CD:AddToBlizOptions(Name .. " Messages", L["OPT_MESSAGES"], Name)
-    
+
     -- Masterloot
     C:RegisterOptionsTable(Name .. " Masterloot", Self.RegisterMasterloot)
     Self.frames.Masterloot = CD:AddToBlizOptions(Name .. " Masterloot", L["OPT_MASTERLOOT"], Name)
@@ -763,7 +763,7 @@ end
 
 function Self.RegisterMasterloot()
     local it = Self.it
-    
+
     -- Clubs
     local clubs = Util(C_Club.GetSubscribedClubs())
         .ExceptWhere(false, "clubType", Enum.ClubType.Other)
@@ -774,7 +774,7 @@ function Self.RegisterMasterloot()
 
     -- This fixes the spacing bug with AceConfigDialog
     CD:ConfigTableChanged("ConfigTableChanged", Name .. " Masterloot")
-    
+
     local options = {
         name = L["OPT_MASTERLOOT"],
         type = "group",
@@ -1236,6 +1236,7 @@ end
 -------------------------------------------------------
 
 -- Read one or all params from a communities' description
+---@param key string
 function Self.ReadFromClub(clubId, key)
     local t, found = not key and Util.Tbl() or nil, false
 
@@ -1258,6 +1259,7 @@ function Self.ReadFromClub(clubId, key)
 end
 
 -- Check if we can write to the given club
+---@param clubId integer
 function Self.CanWriteToClub(clubId)
     local info = C_Club.GetClubInfo(clubId)
     local priv = info and C_Club.GetClubPrivileges(clubId)
@@ -1274,6 +1276,7 @@ function Self.CanWriteToClub(clubId)
 end
 
 -- Read one or all params to a communities' description
+---@param keyOrTbl string|table
 function Self.WriteToClub(clubId, keyOrTbl, val)
     local isKey = type(keyOrTbl) ~= "table"
 
@@ -1343,6 +1346,7 @@ function Self.WriteToClub(clubId, keyOrTbl, val)
 end
 
 -- Encode a param to its string representation
+---@param val any
 function Self.EncodeParam(name, val)
     local t = type(val)
     if Util.In(t, "string", "number") then
@@ -1357,6 +1361,8 @@ function Self.EncodeParam(name, val)
 end
 
 -- Decode a param from its string representation
+---@param str string
+---@return any
 function Self.DecodeParam(name, str)
     local t = Util.StrStartsWith(name, "council") and "table" or type(Addon.db.defaults.profile.masterloot.rules[name])
     if t == "boolean" then
@@ -1453,7 +1459,7 @@ function Self.Migrate()
         end
     end
     f.version = 4
-    
+
     -- Char
     if c.version then
         if c.version < 4 then
@@ -1477,6 +1483,10 @@ function Self.Migrate()
 end
 
 -- Migrate a single option
+---@param depth integer|boolean
+---@param destKey string
+---@param filter table|string|function
+---@param keep boolean
 function Self.MigrateOption(key, source, dest, depth, destKey, filter, keep)
     if source then
         depth = type(depth) == "number" and depth or depth and 10 or 0
