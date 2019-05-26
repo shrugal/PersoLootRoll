@@ -1,7 +1,3 @@
-- Added ML option to only start rolls manually
-- Added ML option to run rolls in-order (one by one)
-- Added roll start button to rolls window and moved some other buttons around
-- Added rate limit of 10 errors/sec to error handler
-- Debounced roll window updates after roll changes to prevent flickering
-- The roll hide/show button is now always shown, regardless of roll status
-- Fixed item column overflowing in rolls window
+- Instances 1 expansion below the player are now considered transmog runs
+- Added many missing annotations in the code and removed unused imports and local variables
+- Fixed some minor bugs found through static analysis
