@@ -307,8 +307,8 @@ L["OPT_MASTERLOOT_RULES_NEED_ANSWERS_DESC"] = [=[Specify up to 9 custom answers 
 They can be accessed by right-clicking on the 'Need' button when rolling on loot.]=]
 L["OPT_MASTERLOOT_RULES_START_MANUALLY"] = "Start rolls manually"
 L["OPT_MASTERLOOT_RULES_START_MANUALLY_DESC"] = "Don't start new rolls automatically, but manually through the main rolls window."
-L["OPT_MASTERLOOT_RULES_START_IN_ORDER"] = "Start rolls one after the other"
-L["OPT_MASTERLOOT_RULES_START_IN_ORDER_DESC"] = "Start new rolls only after the previous one has ended. This will also cause subsequent rolls to start automatically even if you chose to start rolls manually."
+L["OPT_MASTERLOOT_RULES_START_LIMIT"] = "Concurrent rolls limit"
+L["OPT_MASTERLOOT_RULES_START_LIMIT_DESC"] = "Maximum number of rolls to run simultaneously. Subsequent rolls will automatically start after the previous ones have ended, even if you chose to start rolls manually.\n\nDisable by setting it to 0."
 L["OPT_MASTERLOOT_RULES_START_WHISPER"] = "Start rolls by whisper"
 L["OPT_MASTERLOOT_RULES_START_WHISPER_DESC"] = "Allow group members without the addon to whisper you an item-link and the word \"%s\" to make you start a roll for their items."
 L["OPT_MASTERLOOT_RULES_START_ALL"] = "Start rolls for everyone"

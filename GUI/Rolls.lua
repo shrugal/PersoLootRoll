@@ -289,7 +289,7 @@ function Self.Update()
     local f
     local ml = Session.GetMasterlooter()
     local startManually = ml and Addon.db.profile.masterloot.rules.startManually
-    local startInOrder = ml and Addon.db.profile.masterloot.rules.startInOrder
+    local startLimit = ml and Addon.db.profile.masterloot.rules.startLimit
 
     -- SCROLL
 
@@ -343,7 +343,7 @@ function Self.Update()
             and (Self.filter.traded or not roll.traded)
             and (Self.filter.hidden or not roll.hidden and (
                 roll.status >= Roll.STATUS_RUNNING and (roll.isWinner or roll.isOwner or roll.item.isOwner or roll.bid ~= Roll.BID_PASS)
-                or (startManually or startInOrder) and roll:CanBeStarted()
+                or (startManually or startLimit > 0) and roll:CanBeStarted()
             ))
     end).SortBy("id")()
 

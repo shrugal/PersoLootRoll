@@ -1414,13 +1414,13 @@ function Self:CanBeRun(manually)
     local ml = Session.GetMasterlooter()
     local waitForOwner = Util.Check(ml, Session.rules.allowKeep, Addon.db.profile.chillMode)
     local startManually = ml and Addon.db.profile.masterloot.rules.startManually
-    local startInOrder = ml and Addon.db.profile.masterloot.rules.startInOrder
+    local startLimit = ml and Addon.db.profile.masterloot.rules.startLimit
 
     if waitForOwner and self.itemOwnerId and not self.bids[self.item.owner] then
         return false
-    elseif startManually and not (startInOrder and Self.startedManually) then
+    elseif startManually and not (startLimit > 0 and Self.startedManually) then
         return false
-    elseif startInOrder and Util.TblFindWhere(Addon.rolls, "isOwner", true, "status", Self.STATUS_RUNNING) then
+    elseif startLimit > 0 and Util.TblCountWhere(Addon.rolls, "isOwner", true, "status", Self.STATUS_RUNNING) >= startLimit then
         return false
     else
         return true

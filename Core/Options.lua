@@ -75,9 +75,9 @@ Self.DEFAULTS = {
                 timeoutBase = Roll.TIMEOUT,
                 timeoutPerItem = Roll.TIMEOUT_PER_ITEM,
                 startManually = false,
-                startInOrder = false,
                 startWhisper = false,
                 startAll = false,
+                startLimit = 0,
                 bidPublic = false,
                 votePublic = false,
                 needAnswers = {},
@@ -890,7 +890,7 @@ function Self.RegisterMasterloot()
                             Session.RefreshRules()
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.timeoutBase end,
-                        width = Self.WIDTH_HALF_SCROLL
+                        width = Self.WIDTH_THIRD_SCROLL
                     },
                     timeoutPerItem = {
                         name = L["OPT_MASTERLOOT_RULES_TIMEOUT_PER_ITEM"],
@@ -905,7 +905,19 @@ function Self.RegisterMasterloot()
                             Session.RefreshRules()
                         end,
                         get = function () return Addon.db.profile.masterloot.rules.timeoutPerItem end,
-                        width = Self.WIDTH_HALF_SCROLL
+                        width = Self.WIDTH_THIRD_SCROLL
+                    },
+                    startLimit = {
+                        name = L["OPT_MASTERLOOT_RULES_START_LIMIT"],
+                        desc = L["OPT_MASTERLOOT_RULES_START_LIMIT_DESC"] .. "\n",
+                        type = "range",
+                        min = 0,
+                        max = 10,
+                        step = 1,
+                        order = it(),
+                        set = function (_, val) Addon.db.profile.masterloot.rules.startLimit = val end,
+                        get = function () return Addon.db.profile.masterloot.rules.startLimit end,
+                        width = Self.WIDTH_THIRD_SCROLL
                     },
                     startManually = {
                         name = L["OPT_MASTERLOOT_RULES_START_MANUALLY"],
@@ -914,16 +926,7 @@ function Self.RegisterMasterloot()
                         order = it(),
                         set = function (_, val) Addon.db.profile.masterloot.rules.startManually = val end,
                         get = function () return Addon.db.profile.masterloot.rules.startManually end,
-                        width = Self.WIDTH_HALF_SCROLL
-                    },
-                    startInOrder = {
-                        name = L["OPT_MASTERLOOT_RULES_START_IN_ORDER"],
-                        desc = L["OPT_MASTERLOOT_RULES_START_IN_ORDER_DESC"] .. "\n",
-                        type = "toggle",
-                        order = it(),
-                        set = function (_, val) Addon.db.profile.masterloot.rules.startInOrder = val end,
-                        get = function () return Addon.db.profile.masterloot.rules.startInOrder end,
-                        width = Self.WIDTH_HALF_SCROLL
+                        width = Self.WIDTH_THIRD_SCROLL
                     },
                     startWhisper = {
                         name = L["OPT_MASTERLOOT_RULES_START_WHISPER"],
@@ -932,7 +935,7 @@ function Self.RegisterMasterloot()
                         order = it(),
                         set = function (_, val) Addon.db.profile.masterloot.rules.startWhisper = val end,
                         get = function () return Addon.db.profile.masterloot.rules.startWhisper end,
-                        width = Self.WIDTH_HALF_SCROLL
+                        width = Self.WIDTH_THIRD_SCROLL
                     },
                     startAll = {
                         name = L["OPT_MASTERLOOT_RULES_START_ALL"],
@@ -941,7 +944,7 @@ function Self.RegisterMasterloot()
                         order = it(),
                         set = function (_, val) Addon.db.profile.masterloot.rules.startAll = val end,
                         get = function () return Addon.db.profile.masterloot.rules.startAll end,
-                        width = Self.WIDTH_HALF_SCROLL
+                        width = Self.WIDTH_THIRD_SCROLL
                     },
                     ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
                     bidsAndVotes = {type = "header", order = it(), name = L["OPT_MASTERLOOT_BIDS_AND_VOTES"]},

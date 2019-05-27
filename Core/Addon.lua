@@ -592,7 +592,7 @@ function Self:HandleError(msg, stack)
         local file = Name .. "\\Core\\Addon.lua[^\n]*"
         if stack:match(file .. "HandleError") or stack:match(file .. "LogExport") then
             self.errors = math.huge
-            self:Print("|cffff0000[ERROR]|r " .. msg .. "\n\nThis is an error in the error-handling system itself. Please create a new ticket on Curse, WoWInterface or GitHub, copy & paste the error message in there and add any additional info you might have. Thank you! =)")
+            self:Print("|cffff0000[ERROR]|r " .. msg .. "\n\nThis is an error in the error-handling system itself. Please create a new ticket on Curse, WoWInterface or GitLab, copy & paste the error message in there and add any additional info you might have. Thank you! =)")
         -- Log error message and stack as well as printing the error message
         elseif self.errors < Self.LOG_MAX_ERRORS then
             self.errorRate = max(0, self.errorRate - Self.LOG_MAX_ERROR_RATE * (GetTime() - self.errorPrev)) + 1
@@ -607,7 +607,7 @@ function Self:HandleError(msg, stack)
                     self:Log(Self.ECHO_ERROR, txt)
 
                     if self.errors == 1 and (not self.db or self.db.profile.messages.echo >= Self.ECHO_ERROR) then
-                        self:Print("|cffff0000[ERROR]|r " .. msg .. "\n\nPlease type in |cffbbbbbb/plr log|r, create a new ticket on Curse, WoWInterface or GitHub, copy & paste the log in there and add any additional info you might have. Thank you! =)")
+                        self:Print("|cffff0000[ERROR]|r " .. msg .. "\n\nPlease type in |cffbbbbbb/plr log|r, create a new ticket on Curse, WoWInterface or GitLab, copy & paste the log in there and add any additional info you might have. Thank you! =)")
                     end
                 end
             end
