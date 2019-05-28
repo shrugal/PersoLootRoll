@@ -1470,7 +1470,7 @@ function Self.Migrate()
             if guildId then
                 local guildRank = Util.TblGet(c, "masterloot.council.guildRank")
                 if guildRank and guildRank > 0 then
-                    Util.TblSet(p.masterloot.council.clubs, guildId, ranks, guildRank, true)
+                    Util.TblSet(p.masterloot.council.clubs, guildId, "ranks", guildRank, true)
                 end
                 c.masterloot.clubId = guildId
             end
