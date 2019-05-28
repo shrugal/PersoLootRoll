@@ -289,7 +289,7 @@ function Self.Update()
     local f
     local ml = Session.GetMasterlooter()
     local startManually = ml and Addon.db.profile.masterloot.rules.startManually
-    local startLimit = ml and Addon.db.profile.masterloot.rules.startLimit
+    local startLimit = ml and Addon.db.profile.masterloot.rules.startLimit or 0
 
     -- SCROLL
 
