@@ -5,7 +5,7 @@ Version 18
 - Added rate limit of 10 errors/sec to error handler
 - Debounced roll window updates after roll changes to prevent flickering
 - The roll hide/show button is now always shown, regardless of roll status
-- Instances 1 expansion below the player are now considered transmog runs
+- Instances one expansion below the player are now considered transmog runs
 - Added many missing annotations in the code and removed unused imports and local variables
 - Fixed some minor bugs found through static analysis
 - Fixed item column overflowing in rolls window
