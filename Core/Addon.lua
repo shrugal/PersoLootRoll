@@ -68,6 +68,7 @@ Self.EVENT_ACTIVE_CHANGE = "PLR_STATE_ACTIVE_CHANGE"
 Self.EVENT_TRACKING_CHANGE = "PLR_STATE_TRACKING_CHANGE"
 
 -- Other
+---@type Roll[]
 Self.rolls = Util.TblCounter()
 Self.timers = {}
 
@@ -209,7 +210,7 @@ function Self:HandleChatCommand(msg)
                 local roll = Roll.Add(item, ml or "player", nil, nil, timeout)
 
                 if roll.isOwner then
-                    roll:Start(true)
+                    roll:Start()
                 else
                     roll:SendStatus(true)
                 end

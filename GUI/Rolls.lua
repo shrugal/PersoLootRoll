@@ -336,6 +336,7 @@ function Self.Update()
 
     -- Rolls
 
+    ---@type Roll[]
     local rolls = Util(Addon.rolls).CopyFilter(function (roll)
         return  (Self.filter.all or roll.isOwner or roll.item.isOwner or roll.item:GetEligible("player"))
             and (Self.filter.done or (roll.status ~= Roll.STATUS_DONE))
@@ -371,7 +372,7 @@ function Self.Update()
             GUI.CreateUnitLabel(scroll)
 
             -- Status
-            local f = GUI("Label").SetFontObject(GameFontNormal).AddTo(scroll)()
+            f = GUI("Label").SetFontObject(GameFontNormal).AddTo(scroll)()
             f.OnRelease = GUI.ResetLabel
 
             -- Your bid, Winner
@@ -426,6 +427,13 @@ function Self.Update()
                     self:GetUserData("roll"):Bid(Roll.BID_PASS)
                 end, PASS, 13, 13)
 
+                -- Start
+                f = GUI.CreateIconButton("UI-SpellbookIcon-NextPage", actions, function (self)
+                    self:GetUserData("roll"):Start(true)
+                end, START)
+                f.image:SetPoint("TOP", 0, 2)
+                f.image:SetTexCoord(0.05, 0.95, 0.05, 0.95)
+
                 -- Advertise
                 GUI.CreateIconButton("UI-GuildButton-MOTD", actions, function (self)
                     self:GetUserData("roll"):Advertise(true)
@@ -445,13 +453,6 @@ function Self.Update()
                 GUI.CreateIconButton("Interface\\GossipFrame\\VendorGossipIcon", actions, function (self)
                     self:GetUserData("roll"):Trade()
                 end, TRADE, 13, 13)
-
-                -- Start
-                f = GUI.CreateIconButton("UI-SpellbookIcon-NextPage", actions, function (self)
-                    self:GetUserData("roll"):Start(true)
-                end, START)
-                f.image:SetPoint("TOP", 0, 2)
-                f.image:SetTexCoord(0.05, 0.95, 0.05, 0.95)
 
                 -- Restart
                 f = GUI.CreateIconButton("UI-RotationLeft-Button", actions, function (self)
@@ -554,7 +555,7 @@ function Self.Update()
             .Show()
 
         -- Status
-        local f = GUI(children[it()]).Show()
+        f = GUI(children[it()]).Show()
         if roll.status == Roll.STATUS_RUNNING or not roll.winner and roll.timers.award then
             f.SetUserData("roll", roll).SetScript("OnUpdate", Self.OnStatusUpdate)
             Self.OnStatusUpdate(f().frame)
@@ -595,6 +596,8 @@ function Self.Update()
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_DISENCHANT) and Unit.IsEnchanter())
             -- Pass
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:UnitCanBid(nil, Roll.BID_PASS))
+            -- Start
+            GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeStarted())
             -- Advertise
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:ShouldAdvertise(true))
             -- Award randomly
@@ -612,8 +615,6 @@ function Self.Update()
                 .SetUserData("text", canTrade and TRADE or L["TIP_CHAT_TO_TRADE"])
                 .Toggle(actionTarget)
                 .SetDisabled(not canTrade)
-            -- Start
-            GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeStarted())
             -- Restart
             GUI(children[it()]).SetUserData("roll", roll).Toggle(roll:CanBeRestarted())
             -- Cancel
