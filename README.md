@@ -126,10 +126,11 @@ PLR is translated (incl. chat messages) to
 
 - English: 100%
 - German: 100%
-- Traditional Chinese: 100% (by [BNSSNB](https://wow.curseforge.com/members/BNSSNB))
-- Simplified Chinese: 100% (by [yasen](https://wow.curseforge.com/members/yasen))
-- Spanish: 80% (by [isaracho](https://wow.curseforge.com/members/isaracho) and [jolugon](https://wow.curseforge.com/members/jolugon))
-- Russian: 60% (by [nomorecezz](https://wow.curseforge.com/members/nomorecezz))
+- Traditional Chinese: 100% (by [BNS333](https://wow.curseforge.com/members/bns333))
+- Simplified Chinese: 100% (by [john_yasen](https://wow.curseforge.com/members/john_yasen))
+- Spanish: 75% (by [jolugon](https://wow.curseforge.com/members/jolugon), [sinnkin](https://wow.curseforge.com/members/sinnkin))
+- Russian: 60% (by [Voopie](https://wow.curseforge.com/members/voopie))
+- French: 20% (by [Harkann](https://wow.curseforge.com/members/harkann))
 
  If you want to help translate it to your language or correct translation errors you found then please visit the
  [Curseforge Translation section](https://wow.curseforge.com/projects/persolootroll/localization) and also check out
@@ -139,15 +140,11 @@ PLR is translated (incl. chat messages) to
 This project is fully open-source and the source code can be found on [GitLab](https://gitlab.com/shrugal/PersoLootRoll). To test out new features there are also beta versions available. Please report any
 bugs you find with these versions should you be brave enough to install them, so the stable releases will be as bug-free as possible.
 
-### Bugs and Features
-Please create a new entry on the [issue tracker](https://gitlab.com/shrugal/PersoLootRoll/issues) you encounter any bugs or want to suggest a feature.
+### Bugs
+Please create a new entry on the [issue tracker](https://gitlab.com/shrugal/PersoLootRoll/issues) if you encounter any bugs.
 
-### Roadmap
-These are the things I have planed currently:
-
-[![Feature Requests](http://feathub.com/shrugal/PersoLootRoll?format=svg)](http://feathub.com/shrugal/PersoLootRoll)
-
-You can vote on feature request [here](http://feathub.com/shrugal/PersoLootRoll).
+### Features
+You can suggest new features and vote on existing suggestions [here](https://persolootroll.featureupvote.com/).
 
 ### Build
 To build a package from source you need to copy `.release/.env.example` to `.release/.env`, fill in the relevant infos (projects IDs and API tokens) and then
