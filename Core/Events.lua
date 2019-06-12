@@ -30,9 +30,8 @@ Self.lastVersionCheck = nil
 -- Remember the last time we chatted with someone and what roll (if any) we chatted about, so we know when to respond
 Self.lastWhispered = {}
 Self.lastWhisperedRoll = {}
-Self.lastWhisperedLineId = nil
--- Remember the last suppressed message
-Self.lastSuppressed = nil
+-- Remember which messages to suppress
+Self.suppressBelow = nil
 -- Remember the last locked item slot
 Self.lastLocked = {}
 -- Remember the bag of the last looted item
@@ -55,8 +54,10 @@ function Self.RegisterEvents()
     Self:RegisterEvent("CHAT_MSG_RAID_WARNING", "CHAT_MSG_GROUP")
     Self:RegisterEvent("CHAT_MSG_INSTANCE_CHAT", "CHAT_MSG_GROUP")
     Self:RegisterEvent("CHAT_MSG_INSTANCE_CHAT_LEADER", "CHAT_MSG_GROUP")
+    Self:RegisterEvent("CHAT_MSG_WHISPER", Self.CHAT_MSG_WHISPER)
+    Self:RegisterEvent("CHAT_MSG_WHISPER_INFORM", Self.CHAT_MSG_WHISPER_INFORM)
     ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER", Self.CHAT_MSG_WHISPER_FILTER)
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER_INFORM", Self.CHAT_MSG_WHISPER_INFORM_FILTER)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER_INFORM", Self.CHAT_MSG_WHISPER_FILTER)
     -- Item
     Self:RegisterEvent("ITEM_PUSH")
     Self:RegisterEvent("ITEM_LOCKED")
@@ -79,8 +80,10 @@ function Self.UnregisterEvents()
     Self:UnregisterEvent("CHAT_MSG_RAID_WARNING")
     Self:UnregisterEvent("CHAT_MSG_INSTANCE_CHAT")
     Self:UnregisterEvent("CHAT_MSG_INSTANCE_CHAT_LEADER")
+    Self:UnregisterEvent("CHAT_MSG_WHISPER")
+    Self:UnregisterEvent("CHAT_MSG_WHISPER_INFORM")
     ChatFrame_RemoveMessageEventFilter("CHAT_MSG_WHISPER", Self.CHAT_MSG_WHISPER_FILTER)
-    ChatFrame_RemoveMessageEventFilter("CHAT_MSG_WHISPER_INFORM", Self.CHAT_MSG_WHISPER_INFORM_FILTER)
+    ChatFrame_RemoveMessageEventFilter("CHAT_MSG_WHISPER_INFORM", Self.CHAT_MSG_WHISPER_FILTER)
     -- Item
     Self:UnregisterEvent("ITEM_PUSH")
     Self:UnregisterEvent("ITEM_LOCKED")
@@ -306,7 +309,7 @@ end
 ---@param msg string
 ---@param sender string
 ---@param lineId integer
-function Self.CHAT_MSG_WHISPER_FILTER(_, _, msg, sender, _, _, _, _, _, _, _, _, lineId)
+function Self.CHAT_MSG_WHISPER(_, msg, sender, _, _, _, _, _, _, _, _, lineId)
     local unit = Unit(sender)
     if not Self:IsTracking() or not Unit.InGroup(unit) then return end
 
@@ -378,11 +381,17 @@ function Self.CHAT_MSG_WHISPER_FILTER(_, _, msg, sender, _, _, _, _, _, _, _, _,
             roll = running or recent
         end
 
-        local ignore = not roll -- No roll found
-            or not link and Self.lastWhispered[unit] and Self.lastWhispered[unit] > min(firstStarted, max(lastEnded, firstStarted - Self.CHAT_MARGIN_BEFORE)) -- We have talked recently
+        local ignore =
+            -- No roll found
+            not roll
+            -- We talked recently
+            or not link and Self.lastWhispered[unit] and Self.lastWhispered[unit] > min(firstStarted, max(lastEnded, firstStarted - Self.CHAT_MARGIN_BEFORE))
+            -- We talked about the roll already
+            or Self.lastWhisperedRoll[unit] == roll.id
+            -- We currently want an item from the sender
             or Util.TblFindFn(Addon.rolls, function (roll)
                 return roll.owner == unit and roll.bid and roll.bid ~= Roll.BID_PASS and roll.status ~= Roll.STATUS_CANCELED and not roll.traded
-            end)   -- We currently want an item from the sender
+            end)
 
         -- Check if we should act on the whisper
         if ignore then
@@ -444,7 +453,7 @@ function Self.CHAT_MSG_WHISPER_FILTER(_, _, msg, sender, _, _, _, _, _, _, _, _,
                 Comm.GetTooltipLink(msg, L["MESSAGE"], L["MESSAGE"]),
                 answer and Comm.GetTooltipLink(answer, L["ANSWER"], L["ANSWER"]) or L["ANSWER"] .. ": -"
             )
-            Self.lastSuppressed = answer and lineId or nil
+            Self.suppressBelow = lineId + (answer and 1 or 0)
         end
 
         -- Post the answer
@@ -452,16 +461,14 @@ function Self.CHAT_MSG_WHISPER_FILTER(_, _, msg, sender, _, _, _, _, _, _, _, _,
             Comm.Chat(answer, unit)
         end
     end
-
-    return suppress
 end
 
 ---@param msg string
 ---@param receiver string
 ---@param lineId integer
-function Self.CHAT_MSG_WHISPER_INFORM_FILTER(_, _, msg, receiver, _, _, _, _, _, _, _, _, lineId)
+function Self.CHAT_MSG_WHISPER_INFORM(_, msg, receiver, _, _, _, _, _, _, _, _, lineId)
     local unit = Unit(receiver)
-    if not Self:IsTracking() or not Unit.InGroup(unit) or lineId == Self.lastWhisperedLineId then return end
+    if not Self:IsTracking() or not Unit.InGroup(unit) then return end
 
     -- Log the conversation
     for i,roll in pairs(Self.rolls) do
@@ -475,9 +482,11 @@ function Self.CHAT_MSG_WHISPER_INFORM_FILTER(_, _, msg, receiver, _, _, _, _, _,
     if msg ~= Comm.lastWhispered then
         Self.lastWhispered[Unit.Name(receiver)] = time()
     end
-    Self.lastWhisperedLineId = lineId
+end
 
-    return Self.lastSuppressed and Self.lastSuppressed + 1 == lineId or nil
+---@param lineId integer
+function Self.CHAT_MSG_WHISPER_FILTER(_, _, _, _, _, _, _, _, _, _, _, _, lineId)
+    return lineId <= (Self.suppressBelow or -1)
 end
 
 -------------------------------------------------------

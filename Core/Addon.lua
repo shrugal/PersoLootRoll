@@ -368,7 +368,7 @@ function Self:OnActiveChanged(active)
         -- Clear lastXYZ stuff
         self.lastPostedRoll = nil
         self.lastVersionCheck = nil
-        self.lastSuppressed = nil
+        self.suppressBelow = nil
         wipe(self.lastWhispered)
         wipe(self.lastWhisperedRoll)
     end
