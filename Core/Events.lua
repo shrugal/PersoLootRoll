@@ -387,7 +387,7 @@ function Self.CHAT_MSG_WHISPER(_, msg, sender, _, _, _, _, _, _, _, _, lineId)
             -- We talked recently
             or not link and Self.lastWhispered[unit] and Self.lastWhispered[unit] > min(firstStarted, max(lastEnded, firstStarted - Self.CHAT_MARGIN_BEFORE))
             -- We talked about the roll already
-            or Self.lastWhisperedRoll[unit] == roll.id
+            or roll ~= true and Self.lastWhisperedRoll[unit] == roll.id
             -- We currently want an item from the sender
             or Util.TblFindFn(Addon.rolls, function (roll)
                 return roll.owner == unit and roll.bid and roll.bid ~= Roll.BID_PASS and roll.status ~= Roll.STATUS_CANCELED and not roll.traded
