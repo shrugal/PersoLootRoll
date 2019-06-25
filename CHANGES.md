@@ -1,3 +1,1 @@
-- Fixed processing and showing whispers and answers multiple times
-- Answer bids from the same player and for the same roll just once
-- Includes updated zhTW translations
+- Fixed answering whispers when not using ML mode or "allow keep" ML option is enabled

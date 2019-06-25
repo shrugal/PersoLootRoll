@@ -1,3 +1,8 @@
+Version 18.01
+- Fixed processing and showing whispers and answers multiple times
+- Answer bids from the same player and for the same roll just once
+- Includes updated zhTW translations
+
 Version 18
 - Added ML option to only start rolls manually
 - Added ML option to run rolls in-order (one by one)

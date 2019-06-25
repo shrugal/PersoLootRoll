@@ -1330,7 +1330,7 @@ end
 -- Check if we can give the item to the given unit, now or in the future
 ---@param unit string
 function Self:CanBeGivenTo(unit)
-    return self:CanBeAwardedTo(unit, true) or self.isOwner and self.winner == unit and not self.traded
+    return self:CanBeAwardedTo(unit, true) or self.item.isOwner and self.isWinner or not self.traded
 end
 
 -- Check if we can award the roll randomly
