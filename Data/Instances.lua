@@ -168,6 +168,7 @@ Self.INSTANCES = {
     [968] =  8, -- Atal'Dazar
     [1001] = 8, -- Freehold
     [1041] = 8, -- Kings' Rest
+    [1178] = 8, -- Operation: Mechagon
     [1036] = 8, -- Shrine of the Storm
     [1023] = 8, -- Siege of Boralus
     [1030] = 8, -- Temple of Sethraliss
@@ -179,4 +180,5 @@ Self.INSTANCES = {
     [1031] = 8, -- Uldir
     [1176] = 8, -- Battle of Dazar'alor
     [1177] = 8, -- Crucible of Storms
+    [1179] = 8, -- The Eternal Palace
 }

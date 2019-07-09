@@ -1,2 +1,2 @@
-- Fixed answering whispers when not using ML mode or "allow keep" ML option is enabled
-- Fixed whisper handler when giving away multiple items
+- Updated TOC version to 8.2
+- Updated instance and trinket lists

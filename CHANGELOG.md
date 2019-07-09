@@ -1,3 +1,7 @@
+Version 18.02
+- Fixed answering whispers when not using ML mode or "allow keep" ML option is enabled
+- Fixed whisper handler when giving away multiple items
+
 Version 18.01
 - Fixed processing and showing whispers and answers multiple times
 - Answer bids from the same player and for the same roll just once
