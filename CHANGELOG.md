@@ -1,3 +1,7 @@
+Version 18.03
+- Updated TOC version to 8.2
+- Updated instance and trinket lists
+
 Version 18.02
 - Fixed answering whispers when not using ML mode or "allow keep" ML option is enabled
 - Fixed whisper handler when giving away multiple items

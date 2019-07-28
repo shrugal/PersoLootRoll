@@ -1,2 +1,1 @@
-- Updated TOC version to 8.2
-- Updated instance and trinket lists
+- Fixed error when mousing over entries in the rolls window since 8.2
