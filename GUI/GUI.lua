@@ -648,8 +648,10 @@ function Self.TableRowHighlight(parent, skip)
 
                     if top and bottom then
                         Self(Self.HIGHLIGHT)
+                            .ClearAllPoints()
                             .SetParent(self)
-                            .SetPoint("LEFT").SetPoint("RIGHT")
+                            .SetPoint("LEFT")
+                            .SetPoint("RIGHT")
                             .SetPoint("TOP", 0, top - frameTop - offset)
                             .SetHeight(top - bottom)
                             .Show()
