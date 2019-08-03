@@ -75,6 +75,38 @@ StaticPopupDialogs[Self.DIALOG_ROLL_RESTART] = {
     preferredIndex = 3
 }
 
+Self.DIALOG_ROLL_WHISPER_ASK = "PLR_ROLL_WHISPER_ASK"
+StaticPopupDialogs[Self.DIALOG_ROLL_WHISPER_ASK] = {
+    text = L["DIALOG_ROLL_WHISPER_ASK"],
+    button1 = YES,
+    button2 = NO,
+    OnAccept = function(_, data)
+        local roll, bid = Util.TblUnpack(data)
+        Addon:Debug("GUI.Click:RollWhisperAskDialog", true, roll and roll.id, bid)
+
+        Addon.db.profile.messages.whisper.ask = true
+        Addon.db.profile.messages.whisper.askPrompted = true
+
+        Self.RollBid(roll, bid)
+    end,
+    OnCancel = function(_, data, reason)
+        local roll, bid = Util.TblUnpack(data)
+        Addon:Debug("GUI.Click:RollWhisperAskDialog", reason, roll and roll.id, bid)
+
+        if reason == "clicked" then
+            Addon.db.profile.messages.whisper.ask = false
+            Addon.db.profile.messages.whisper.askPrompted = true
+
+            Self.RollBid(roll, bid)
+        end
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3,
+    cancels = Self.DIALOG_ROLL_WHISPER_ASK
+}
+
 Self.DIALOG_MASTERLOOT_ASK = "PLR_MASTERLOOT_ASK"
 StaticPopupDialogs[Self.DIALOG_MASTERLOOT_ASK] = {
     text = L["DIALOG_MASTERLOOT_ASK"],
@@ -223,7 +255,7 @@ function Self.ToggleAwardOrVoteDropdown(roll, ...)
             local f = Self("Dropdown-Item-Execute")
                 .SetText(("%s: |c%s%s|r (%s: %s, %s: %s)"):format(
                     Unit.ColoredShortenedName(player.unit),
-                    Util.StrColor(Self.GetBidColor(player.bid)), roll:GetBidName(player.bid),
+                    Util.StrColor(Self.RollBidColor(player.bid)), roll:GetBidName(player.bid),
                     L["VOTES"], player.votes,
                     L["ITEM_LEVEL"], player.ilvl
                 ))
@@ -569,8 +601,21 @@ function Self.ItemClick(self)
     end
 end
 
+-- Handle bidding on rolls through the UI
+---@param roll Roll
+---@param bid number
+function Self.RollBid(roll, bid)
+    if bid < Roll.BID_PASS and not roll:GetOwnerAddon() and not Addon.db.profile.messages.whisper.askPrompted then
+        StaticPopup_Show(Self.DIALOG_ROLL_WHISPER_ASK, nil, nil, Util.Tbl(roll, bid))
+    elseif roll:UnitCanBid("player", bid) then
+        roll:Bid(bid)
+    else
+        roll:HideRollFrame()
+    end
+end
+
 -- Get the color for a bid
-function Self.GetBidColor(bid)
+function Self.RollBidColor(bid)
     if not bid then
         return 1, 1, 1
     elseif bid == Roll.BID_DISENCHANT then

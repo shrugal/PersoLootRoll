@@ -398,7 +398,7 @@ function Self.Update()
                 local needGreedClick = function (self, _, button)
                     local roll, bid = self:GetUserData("roll"), self:GetUserData("bid")
                     if button == "LeftButton" then
-                        roll:Bid(bid)
+                        GUI.RollBid(roll, bid)
                     elseif button == "RightButton" and roll.owner == Session.GetMasterlooter() then
                         local answers = Session.rules["answers" .. bid]
                         if answers and #answers > 0 then
@@ -419,12 +419,12 @@ function Self.Update()
 
                 -- Disenchant
                 f = GUI.CreateIconButton("UI-GroupLoot-DE", actions, function (self)
-                    self:GetUserData("roll"):Bid(Roll.BID_DISENCHANT)
+                    GUI.RollBid(self:GetUserData("roll"), Roll.BID_DISENCHANT)
                 end, ROLL_DISENCHANT, 14, 14)
 
                 -- Pass
                 GUI.CreateIconButton("UI-GroupLoot-Pass", actions, function (self)
-                    self:GetUserData("roll"):Bid(Roll.BID_PASS)
+                    GUI.RollBid(self:GetUserData("roll"), Roll.BID_PASS)
                 end, PASS, 13, 13)
 
                 -- Start
@@ -456,20 +456,14 @@ function Self.Update()
 
                 -- Restart
                 f = GUI.CreateIconButton("UI-RotationLeft-Button", actions, function (self)
-                    local dialog = StaticPopup_Show(GUI.DIALOG_ROLL_RESTART)
-                    if dialog then
-                        dialog.data = self:GetUserData("roll")
-                    end
+                    StaticPopup_Show(GUI.DIALOG_ROLL_RESTART, nil, nil, self:GetUserData("roll"))
                 end, L["RESTART"])
                 f.image:SetPoint("TOP", 0, 2)
                 f.image:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 
                 -- Cancel
                 f = GUI.CreateIconButton("CancelButton", actions, function (self)
-                    local dialog = StaticPopup_Show(GUI.DIALOG_ROLL_CANCEL)
-                    if dialog then
-                        dialog.data = self:GetUserData("roll")
-                    end
+                    StaticPopup_Show(GUI.DIALOG_ROLL_CANCEL, nil, nil, self:GetUserData("roll"))
                 end, CANCEL)
                 f.image:SetPoint("TOP", 0, 1)
                 f.image:SetTexCoord(0.2, 0.8, 0.2, 0.8)
@@ -569,7 +563,7 @@ function Self.Update()
         -- Your Bid
         GUI(children[it()])
             .SetText(roll:GetBidName(roll.bid))
-            .SetColor(GUI.GetBidColor(roll.bid))
+            .SetColor(GUI.RollBidColor(roll.bid))
             .Show()
 
         -- Winner
@@ -823,7 +817,7 @@ function Self.UpdateDetails(details, roll)
         -- Bid
         GUI(children[it()])
             .SetText(roll:GetBidName(player.bid))
-            .SetColor(GUI.GetBidColor(player.bid))
+            .SetColor(GUI.RollBidColor(player.bid))
             .Show()
 
         -- Roll

@@ -431,6 +431,13 @@ function Self.TblRelease(...)
     end
 end
 
+-- Unpack and release a table
+local Fn = function (t, ...) Self.TblRelease(t) return ... end
+---@param t table
+function Self.TblUnpack(t)
+    return Fn(t, unpack(t))
+end
+
 -- TEMPORARY TABLES: Tables that are automatically released after certain operations (such as loops)
 
 function Self.TblTmp(...)
@@ -1284,14 +1291,6 @@ function Self.TblTuple(t, n)
         tinsert(r, v)
     end
     return u
-end
-
--- This just looks nicer when chaining
----@param t table
----@param fn function
-function Self.TblUnpack(t, fn)
-    fn = Self.Fn(fn) or Self.FnId
-    return fn(unpack(t))
 end
 
 -- Flatten a list of tables by one dimension

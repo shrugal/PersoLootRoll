@@ -1,1 +1,2 @@
-- Fixed error when mousing over entries in the rolls window since 8.2
+- Added warning about freezing screen when showing the log
+- Added prompt asking whether to enable automatic whispering on first bid

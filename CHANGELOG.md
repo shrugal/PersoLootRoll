@@ -1,3 +1,6 @@
+Version 18.04
+- Fixed error when mousing over entries in the rolls window since 8.2
+
 Version 18.03
 - Updated TOC version to 8.2
 - Updated instance and trinket lists

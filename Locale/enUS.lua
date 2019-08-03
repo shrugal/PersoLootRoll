@@ -152,6 +152,7 @@ L["DIALOG_OPT_MASTERLOOT_LOAD"] = "This will replace your current masterloot set
 L["DIALOG_OPT_MASTERLOOT_SAVE"] = "This will replace any masterloot settings in the guild/community info with your current settings, are you sure you want to proceed?"
 L["DIALOG_ROLL_CANCEL"] = "Do you want to cancel this roll?"
 L["DIALOG_ROLL_RESTART"] = "Do you want to restart this roll?"
+L["DIALOG_ROLL_WHISPER_ASK"] = "Do you want to automatically whisper other players to ask for loot? You can change this anytime in the \"Messages\" options."
 L["FILTER"] = "Filter"
 L["FILTER_ALL"] = "For all players"
 L["FILTER_ALL_DESC"] = "Include rolls for all players, not just yours or those with items that might interest you."

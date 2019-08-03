@@ -56,6 +56,7 @@ Self.DEFAULTS = {
             },
             whisper = {
                 ask = false,
+                askPrompted = false,
                 groupType = {lfd = true, party = true, lfr = true, raid = true, guild = false, community = false},
                 target = {friend = false, guild = false, community = false, other = true},
                 answer = true,
@@ -565,9 +566,9 @@ function Self.RegisterMessages()
                         order = it(),
                         set = function (_, val)
                             local c = Addon.db.profile.messages.whisper
-                            c.ask = val
-                            local _ = not val or Util.TblFind(c.groupType, true) or Util.TblMap(c.groupType, Util.FnTrue)
-                            local _ = not val or Util.TblFind(c.target, true) or Util.TblMap(c.target, Util.FnTrue)
+                            c.ask, c.askPrompted = val, true
+                            if val and not Util.TblFind(c.groupType, true) then Util.TblMap(c.groupType, Util.FnTrue) end
+                            if val and not Util.TblFind(c.target, true) then Util.TblMap(c.target, Util.FnTrue) end
                         end,
                         get = function () return Addon.db.profile.messages.whisper.ask end,
                         width = Self.WIDTH_THIRD
@@ -1441,9 +1442,13 @@ function Self.Migrate()
             Self.MigrateOption("ilvlThresholdRings", p, p.filter)
             Self.MigrateOption("pawn", p, p.filter)
             Self.MigrateOption("transmog", p, p.filter)
+            p.version = 7
+        end
+        if p.version < 8 then
+            p.messages.whisper.askPrompted = p.messages.whisper.ask
         end
     end
-    p.version = 7
+    p.version = 8
 
     -- Factionrealm
     if f.version then

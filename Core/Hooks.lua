@@ -89,11 +89,7 @@ function Self.EnableGroupLootRollHook()
 
                     Self:Debug("GUI.Click:Hooks.RollOnLoot", roll.id, bid)
 
-                    if roll:UnitCanBid("player", bid) then
-                        roll:Bid(bid)
-                    else
-                        roll:HideRollFrame()
-                    end
+                    GUI.RollBid(roll, bid)
                 end
             else
                 return Self.hooks.RollOnLoot(id, bid)
