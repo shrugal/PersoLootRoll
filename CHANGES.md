@@ -1,2 +1,1 @@
-- Added warning about freezing screen when showing the log
-- Added prompt asking whether to enable automatic whispering on first bid
+- Unresolved rolls owned or bid on by the player are now shown in the actions list as "wait" entries

@@ -551,7 +551,8 @@ function Self.Update()
         -- Status
         f = GUI(children[it()]).Show()
         if roll.status == Roll.STATUS_RUNNING or not roll.winner and roll.timers.award then
-            f.SetUserData("roll", roll).SetScript("OnUpdate", Self.OnStatusUpdate)
+            f.SetUserData("roll", roll)
+            .SetScript("OnUpdate", Self.OnStatusUpdate)
             Self.OnStatusUpdate(f().frame)
         else
             f.SetText(roll.traded and L["ROLL_TRADED"] or roll.winner and L["ROLL_AWARDED"] or L["ROLL_STATUS_" .. roll.status])

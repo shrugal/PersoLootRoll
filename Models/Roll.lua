@@ -42,6 +42,7 @@ Self.ACTION_TRADE = "TRADE"
 Self.ACTION_AWARD = "AWARD"
 Self.ACTION_VOTE = "VOTE"
 Self.ACTION_ASK = "ASK"
+Self.ACTION_WAIT = "WAIT"
 
 -- Custom answers
 Self.ANSWER_NEED = "NEED"
@@ -1450,24 +1451,30 @@ end
 -- Check if the player has to take an action to complete the roll (e.g. trade)
 ---@return string|boolean
 function Self:GetActionRequired()
-    if self.traded then
-        return false
-    elseif not self:GetOwnerAddon() and self.bid and self.bid ~= Self.BID_PASS then
-        return Self.ACTION_ASK
-    elseif self.item.isOwner and self.winner or self.isWinner then
-        return Self.ACTION_TRADE
-    elseif self.status == Self.STATUS_DONE and Util.TblCountExcept(self.bids, Self.BID_PASS) > 0 then
-        return self:CanBeAwarded(true) and Self.ACTION_AWARD or self:UnitCanVote() and not self.vote and Self.ACTION_VOTE or false
-    else
-        return false
+    if not self.traded then
+        if self.item.isOwner and self.winner or self.isWinner then
+            return Self.ACTION_TRADE
+        end
+        if not self.winner and Util.TblCountExcept(self.bids, Self.BID_PASS) > 0 then
+            if self.status == Self.STATUS_DONE then
+                if self:CanBeAwarded(true) then
+                    return Self.ACTION_AWARD
+                elseif self:UnitCanVote() and not self.vote then
+                    return Self.ACTION_VOTE
+                end
+            end
+            if self.item.isOwner or self.bid and self.bid ~= Self.BID_PASS then
+                return self:GetOwnerAddon() and Self.ACTION_WAIT or Self.ACTION_ASK
+            end
+        end
     end
 end
 
 -- Get the target for actions (e.g. trade, whisper)
 ---@return string
 function Self:GetActionTarget()
-    if Util.In(self:GetActionRequired(), Self.ACTION_TRADE, Self.ACTION_ASK) then
-        return self.item.isOwner and self.winner or not self.item.isOwner and self.item.owner
+    if Util.In(self:GetActionRequired(), Self.ACTION_TRADE, Self.ACTION_ASK, Self.ACTION_WAIT) then
+        return Util.Check(self.item.isOwner, self.winner, self.item.owner)
     end
 end
 

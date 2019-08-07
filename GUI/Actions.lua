@@ -196,7 +196,16 @@ function Self.Update()
             .Show()
 
         -- Status
-        GUI(children[it()]).SetText(L[action == Roll.ACTION_TRADE and (roll.isWinner and "GET_FROM" or "GIVE_TO") or action]).Show()
+        f = GUI(children[it()]).Show()
+        if action == Roll.ACTION_WAIT and roll.status == Roll.STATUS_RUNNING then
+            f.SetUserData("roll", roll)
+            .SetScript("OnUpdate", Self.OnStatusUpdate)
+            Self.OnStatusUpdate(f().frame)
+        else
+            f.SetText(L[action == Roll.ACTION_TRADE and (roll.isWinner and "GET_FROM" or "GIVE_TO") or action])
+            .SetUserData("roll", nil)
+            .SetScript("OnUpdate", nil)
+        end
 
         -- Target
         GUI(children[it()])
@@ -253,6 +262,12 @@ function Self.Update()
     Util.TblRelease(rolls)
     parent:ResumeLayout()
     parent:DoLayout()
+end
+
+function Self.OnStatusUpdate(frame)
+    local timeLeft = frame.obj:GetUserData("roll"):GetTimeLeft(true)
+    GUI(frame.obj)
+        .SetText(L["WAIT"] .. (timeLeft > 0 and " (" .. L["SECONDS"]:format(timeLeft) .. ")" or ""))
 end
 
 -------------------------------------------------------

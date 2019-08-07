@@ -107,6 +107,7 @@ L["VERSION_NOTICE"] = "There's a new version of this addon available. Please upd
 L["VOTE"] = "Vote"
 L["VOTE_WITHDRAW"] = "Withdraw"
 L["VOTES"] = "Votes"
+L["WAIT"] = "Wait"
 L["WINNER"] = "Winner"
 L["WON"] = "Won"
 L["YOUR_BID"] = "Your bid"

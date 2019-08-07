@@ -1,3 +1,7 @@
+Version 18.05-beta1
+- Added warning about freezing screen when showing the log
+- Added prompt asking whether to enable automatic whispering on first bid
+
 Version 18.04
 - Fixed error when mousing over entries in the rolls window since 8.2
 
