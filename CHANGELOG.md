@@ -1,3 +1,6 @@
+Version 18.05-beta2
+- Unresolved rolls owned or bid on by the player are now shown in the actions list as "wait" entries
+
 Version 18.05-beta1
 - Added warning about freezing screen when showing the log
 - Added prompt asking whether to enable automatic whispering on first bid
@@ -376,4 +379,4 @@ Beta 2
 - Translation updates and bugfixes
 
 Beta 1
-- First beta release.
+- First beta release

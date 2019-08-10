@@ -30,10 +30,12 @@ function Self.Show()
 
         -- WINDOW
 
-        Self.frames.window = GUI("Window")
+        local window = GUI("Window")
             .SetLayout(nil)
             .SetFrameStrata("MEDIUM")
             .SetTitle("PersoLootRoll - " .. L["ROLLS"])
+            .SetMinResize(550, 120)
+            .SetStatusTable(Self.status)
             .SetCallback("OnClose", function (self)
                 Self.status.width = self.frame:GetWidth()
                 Self.status.height = self.frame:GetHeight()
@@ -41,110 +43,119 @@ function Self.Show()
                 self:Release()
                 wipe(Self.frames)
                 wipe(Self.open)
-            end)
-            .SetMinResize(550, 120)
-            .SetStatusTable(Self.status)()
+            end)()
 
-        do
-            local window = Self.frames.window
-
-            -- Options button
-            f = GUI("Icon")
-                .SetImage("Interface\\Buttons\\UI-OptionsButton")
-                .SetImageSize(14, 14).SetHeight(16).SetWidth(16)
-                .SetCallback("OnClick", function (self)
-                    Options.Show()
-                    GameTooltip:Hide()
-                end)
-                .SetCallback("OnEnter", GUI.TooltipText)
-                .SetCallback("OnLeave", GUI.TooltipHide)
-                .SetUserData("text", OPTIONS)
-                .AddTo(window)()
-            f.OnRelease = GUI.ResetIcon
-            f.image:SetPoint("TOP", 0, -1)
-            f.frame:SetParent(window.frame)
-            f.frame:SetPoint("TOPRIGHT", window.closebutton, "TOPLEFT", -8, -8)
-            f.frame:SetFrameStrata("HIGH")
-            f.frame:Show()
-
-            window.optionsBtn = f
-
-            -- Test button
-            f = GUI("Icon")
-                .SetImage("Interface\\Buttons\\AdventureGuideMicrobuttonAlert")
-                .SetImageSize(17, 17).SetHeight(16).SetWidth(16)
-                .SetCallback("OnClick", Roll.Test)
-                .SetCallback("OnEnter", GUI.TooltipText)
-                .SetCallback("OnLeave", GUI.TooltipHide)
-                .SetUserData("text", L["TIP_TEST"])
-                .AddTo(window)()
-            f.OnRelease = GUI.ResetIcon
-            f.image:SetPoint("TOP")
-            f.frame:SetParent(window.frame)
-            f.frame:SetPoint("RIGHT", window.optionsBtn.frame, "LEFT", -15, 0)
-            f.frame:SetFrameStrata("HIGH")
-            f.frame:Show()
-
-            window.testBtn = f
-
-            -- Version label
-            f = GUI("InteractiveLabel")
-                .SetText("v" .. Addon.VERSION)
-                .SetColor(1, 0.82, 0)
-                .SetCallback("OnEnter", function(self)
-                    if IsInGroup() then
-                        GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOMRIGHT")
-
-                        -- Addon versions
-                        local count = Util.TblCount(Addon.versions)
-                        if count > 0 then
-                            GameTooltip:SetText(L["TIP_ADDON_VERSIONS"])
-                            for unit,version in pairs(Addon.versions) do
-                                local name = Unit.ColoredShortenedName(unit)
-                                local versionColor = Util.Select(Addon:CompareVersion(version), -1, "ff0000", 1, "00ff00", "ffffff")
-                                local line = ("%s: |cff%s%s|r"):format(name, versionColor, version) .. (Addon.disabled[unit] and " (" .. OFF .. ")" or "")
-                                GameTooltip:AddLine(line, 1, 1, 1, false)
-                            end
-                        end
-
-                        -- Addon missing
-                        if count + 1 < GetNumGroupMembers() then
-                            GameTooltip:AddLine((count > 0 and "\n" or "") .. L["TIP_ADDON_MISSING"])
-                            local s = ""
-                            for i=1,GetNumGroupMembers() do
-                                local unit = GetRaidRosterInfo(i)
-                                if unit and not Addon.versions[unit] and not Unit.IsSelf(unit) then
-                                    s = Util.StrPostfix(s, ", ") .. Unit.ColoredShortenedName(unit)
-                                end
-                            end
-                            GameTooltip:AddLine(s, 1, 1, 1, true)
-                        end
-
-                        -- Users of compatible addons
-                        if next(Addon.compAddonUsers) then
-                            GameTooltip:AddLine((GetNumGroupMembers() > 1 and "\n" or "") .. L["TIP_COMP_ADDON_USERS"])
-
-                            for addon,users in pairs(Addon.compAddonUsers) do
-                                local s = ""
-                                for unit,version in pairs(users) do
-                                    s = Util.StrPostfix(s, ", ") .. Unit.ColoredShortenedName(unit)
-                                end
-                                GameTooltip:AddLine(addon .. ": " .. s, 1, 1, 1, true)
-                            end
-                        end
-                        GameTooltip:Show()
-                    end
-                end)
-                .SetCallback("OnLeave", GUI.TooltipHide)
-                .AddTo(window)()
-            f.OnRelease = GUI.ResetLabel
-            f.frame:SetParent(window.frame)
-            f.frame:SetPoint("RIGHT", window.testBtn.frame, "LEFT", -15, -1)
-            f.frame:SetFrameStrata("HIGH")
-            f.frame:Show()
-
-            window.versionBtn = f
+        -- Darker background
+        GUI(select(2, window.frame:GetRegions()))
+            .SetColorTexture(0, 0, 0, 1)
+            .SetVertexColor(0, 0, 0, .8)
+        local OnRelease = window.OnRelease
+        window.OnRelease = function (self, ...)
+            GUI(select(2, self.frame:GetRegions()))
+                .SetTexture([[Interface\Tooltips\UI-Tooltip-Background]])
+                .SetVertexColor(0, 0, 0, .75)
+            self.OnRelease = OnRelease
+            self:OnRelease(...)
         end
+
+        Self.frames.window = window
+
+        -- Options button
+        f = GUI("Icon")
+            .SetImage("Interface\\Buttons\\UI-OptionsButton")
+            .SetImageSize(14, 14).SetHeight(16).SetWidth(16)
+            .SetCallback("OnClick", function (self)
+                Options.Show()
+                GameTooltip:Hide()
+            end)
+            .SetCallback("OnEnter", GUI.TooltipText)
+            .SetCallback("OnLeave", GUI.TooltipHide)
+            .SetUserData("text", OPTIONS)
+            .AddTo(window)()
+        f.OnRelease = GUI.ResetIcon
+        f.image:SetPoint("TOP", 0, -1)
+        f.frame:SetParent(window.frame)
+        f.frame:SetPoint("TOPRIGHT", window.closebutton, "TOPLEFT", -8, -8)
+        f.frame:SetFrameStrata("HIGH")
+        f.frame:Show()
+
+        window.optionsBtn = f
+
+        -- Test button
+        f = GUI("Icon")
+            .SetImage("Interface\\Buttons\\AdventureGuideMicrobuttonAlert")
+            .SetImageSize(17, 17).SetHeight(16).SetWidth(16)
+            .SetCallback("OnClick", Roll.Test)
+            .SetCallback("OnEnter", GUI.TooltipText)
+            .SetCallback("OnLeave", GUI.TooltipHide)
+            .SetUserData("text", L["TIP_TEST"])
+            .AddTo(window)()
+        f.OnRelease = GUI.ResetIcon
+        f.image:SetPoint("TOP")
+        f.frame:SetParent(window.frame)
+        f.frame:SetPoint("RIGHT", window.optionsBtn.frame, "LEFT", -15, 0)
+        f.frame:SetFrameStrata("HIGH")
+        f.frame:Show()
+
+        window.testBtn = f
+
+        -- Version label
+        f = GUI("InteractiveLabel")
+            .SetText("v" .. Addon.VERSION)
+            .SetColor(1, 0.82, 0)
+            .SetCallback("OnEnter", function(self)
+                if IsInGroup() then
+                    GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOMRIGHT")
+
+                    -- Addon versions
+                    local count = Util.TblCount(Addon.versions)
+                    if count > 0 then
+                        GameTooltip:SetText(L["TIP_ADDON_VERSIONS"])
+                        for unit,version in pairs(Addon.versions) do
+                            local name = Unit.ColoredShortenedName(unit)
+                            local versionColor = Util.Select(Addon:CompareVersion(version), -1, "ff0000", 1, "00ff00", "ffffff")
+                            local line = ("%s: |cff%s%s|r"):format(name, versionColor, version) .. (Addon.disabled[unit] and " (" .. OFF .. ")" or "")
+                            GameTooltip:AddLine(line, 1, 1, 1, false)
+                        end
+                    end
+
+                    -- Addon missing
+                    if count + 1 < GetNumGroupMembers() then
+                        GameTooltip:AddLine((count > 0 and "\n" or "") .. L["TIP_ADDON_MISSING"])
+                        local s = ""
+                        for i=1,GetNumGroupMembers() do
+                            local unit = GetRaidRosterInfo(i)
+                            if unit and not Addon.versions[unit] and not Unit.IsSelf(unit) then
+                                s = Util.StrPostfix(s, ", ") .. Unit.ColoredShortenedName(unit)
+                            end
+                        end
+                        GameTooltip:AddLine(s, 1, 1, 1, true)
+                    end
+
+                    -- Users of compatible addons
+                    if next(Addon.compAddonUsers) then
+                        GameTooltip:AddLine((GetNumGroupMembers() > 1 and "\n" or "") .. L["TIP_COMP_ADDON_USERS"])
+
+                        for addon,users in pairs(Addon.compAddonUsers) do
+                            local s = ""
+                            for unit,version in pairs(users) do
+                                s = Util.StrPostfix(s, ", ") .. Unit.ColoredShortenedName(unit)
+                            end
+                            GameTooltip:AddLine(addon .. ": " .. s, 1, 1, 1, true)
+                        end
+                    end
+                    GameTooltip:Show()
+                end
+            end)
+            .SetCallback("OnLeave", GUI.TooltipHide)
+            .AddTo(window)()
+        f.OnRelease = GUI.ResetLabel
+        f.frame:SetParent(window.frame)
+        f.frame:SetPoint("RIGHT", window.testBtn.frame, "LEFT", -15, -1)
+        f.frame:SetFrameStrata("HIGH")
+        f.frame:Show()
+
+        window.versionBtn = f
 
         -- FILTER
 

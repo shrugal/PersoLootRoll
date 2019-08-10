@@ -1,1 +1,1 @@
-- Unresolved rolls owned or bid on by the player are now shown in the actions list as "wait" entries
+- Made rolls window background a bit darker to improve visibility
