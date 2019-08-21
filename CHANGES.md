@@ -1,1 +1,1 @@
-- Made rolls window background a bit darker to improve visibility
+- Moved chat message pattern generation to `RegisterEvents()` to take modifications by other addons into account

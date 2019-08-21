@@ -7,16 +7,6 @@ local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Comm, Item, Locale, Session, Roll, Unit, Util = Addon.Comm, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
 local Self = Addon
 
--- Message patterns
----@type string
-Self.PATTERN_BONUS_LOOT = LOOT_ITEM_BONUS_ROLL:gsub("%%s", ".+")
----@type string
-Self.PATTERN_CRAFTING = CREATED_ITEM:gsub("%%s", ".+")
----@type string
-Self.PATTERN_CRAFTING_SELF = LOOT_ITEM_CREATED_SELF:gsub("%%s", ".+")
----@type string
-Self.PATTERN_ROLL_RESULT = RANDOM_ROLL_RESULT:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%%d%$", "%%"):gsub("%%s", "(.+)"):gsub("%%d", "(%%d+)")
-
 -- Version check
 Self.VERSION_CHECK_DELAY = 5
 -- Bids via whisper are ignored if we chatted after this many seconds BEFORE the roll started or AFTER the last one ended (max of the two)
@@ -40,6 +30,16 @@ Self.lastLootedBag = nil
 -- (Un)Register
 
 function Self.RegisterEvents()
+    -- Message patterns
+    ---@type string
+    Self.PATTERN_BONUS_LOOT = LOOT_ITEM_BONUS_ROLL:gsub("%%s", ".+")
+    ---@type string
+    Self.PATTERN_CRAFTING = CREATED_ITEM:gsub("%%s", ".+")
+    ---@type string
+    Self.PATTERN_CRAFTING_SELF = LOOT_ITEM_CREATED_SELF:gsub("%%s", ".+")
+    ---@type string
+    Self.PATTERN_ROLL_RESULT = RANDOM_ROLL_RESULT:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%%d%$", "%%"):gsub("%%s", "(.+)"):gsub("%%d", "(%%d+)")
+
     -- Roster
     Self:RegisterEvent("GROUP_JOINED")
     Self:RegisterEvent("GROUP_LEFT")

@@ -1,3 +1,6 @@
+Version 18.05-beta3
+- Made rolls window background a bit darker to improve visibility
+
 Version 18.05-beta2
 - Unresolved rolls owned or bid on by the player are now shown in the actions list as "wait" entries
 
