@@ -1,3 +1,6 @@
+Version 18.05-beta4
+- Moved chat message pattern generation to `RegisterEvents()` to take modifications by other addons into account
+
 Version 18.05-beta3
 - Made rolls window background a bit darker to improve visibility
 

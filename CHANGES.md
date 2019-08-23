@@ -1,1 +1,2 @@
-- Moved chat message pattern generation to `RegisterEvents()` to take modifications by other addons into account
+- Fixed `Wait` action list entries not showing or missing the action target
+- Added info message when masterloot offers are rejected due to missing permission

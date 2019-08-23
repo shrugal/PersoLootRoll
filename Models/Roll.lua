@@ -1473,8 +1473,11 @@ end
 -- Get the target for actions (e.g. trade, whisper)
 ---@return string
 function Self:GetActionTarget()
-    if Util.In(self:GetActionRequired(), Self.ACTION_TRADE, Self.ACTION_ASK, Self.ACTION_WAIT) then
+    local action = self:GetActionRequired()
+    if action == Self.ACTION_TRADE then
         return Util.Check(self.item.isOwner, self.winner, self.item.owner)
+    elseif Util.In(action, Self.ACTION_ASK, Self.ACTION_WAIT) then
+        return self.owner
     end
 end
 

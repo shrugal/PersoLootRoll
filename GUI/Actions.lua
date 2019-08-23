@@ -390,9 +390,13 @@ end
 
 ---@param e string
 ---@param roll Roll
-function Self.ROLL_CHANGE(_, e, roll)
-    if Addon.db.profile.ui.showActionsWindow and Util.In(e, Roll.EVENT_END, Roll.EVENT_AWARD, Roll.EVENT_TOGGLE) and roll:GetActionRequired() then
-        Self.Show()
+function Self.ROLL_CHANGE(_, e, roll, ...)
+    if Addon.db.profile.ui.showActionsWindow then
+        local isShowEvent = Util.In(e, Roll.EVENT_END, Roll.EVENT_AWARD, Roll.EVENT_TOGGLE)
+            or e == Roll.EVENT_BID and Unit.IsSelf(select(2, ...))
+        if isShowEvent and roll:GetActionRequired() then
+            Self.Show()
+        end
     end
     Self.Update()
 end

@@ -42,6 +42,7 @@ for _,e in pairs(Self.EVENTS) do Self:RegisterMessage(e, changeFn) end
 Self.masterlooter = nil
 Self.rules = {}
 Self.masterlooting = {}
+Self.rejectShown = {}
 
 -------------------------------------------------------
 --                    Masterlooter                   --
@@ -73,6 +74,7 @@ function Self.SetMasterlooter(unit, rules, silent)
     -- Let others know
     if unit then
         Self.SetRules(rules)
+        Self.rejectShown[unit] = nil
 
         local isSelf = UnitIsUnit(Self.masterlooter, "player")
         Addon:Info(isSelf and L["MASTERLOOTER_SELF"] or L["MASTERLOOTER_OTHER"], Comm.GetPlayerLink(unit))
@@ -312,6 +314,12 @@ end
 -- Ask someone to be your masterlooter
 ---@param target string
 function Self.SendRequest(target)
+    if target then
+        Self.rejectShown[target] = nil
+    else
+        wipe(Self.rejectShown)
+    end
+
     Comm.Send(Comm.EVENT_MASTERLOOT_ASK, nil, target)
     Self:SendMessage(Self.EVENT_REQUEST, target)
 end
@@ -362,6 +370,9 @@ Comm.ListenData(Comm.EVENT_MASTERLOOT_OFFER, function (event, data, channel, sen
         Self.SetMasterlooter(unit, data.session)
     end)
         end
+    elseif not data.silent and not Self.rejectShown[unit] then
+        Self.rejectShown[unit] = true
+        Addon:Info(L["MASTERLOOTER_REJECT"], Comm.GetPlayerLink(unit))
     end
 end)
 
@@ -412,6 +423,7 @@ end
 function Self:GROUP_LEFT()
     Self.SetMasterlooter(nil)
     wipe(Self.masterlooting)
+    wipe(Self.rejectShown)
 end
 
 ---@param msg string
@@ -426,6 +438,7 @@ function Self:CHAT_MSG_SYSTEM(_, msg)
             end
             Self.SetMasterlooting(unit, nil)
             Self.ClearMasterlooting(unit)
+            Self.rejectShown[unit] = nil
         end
     end
 end
