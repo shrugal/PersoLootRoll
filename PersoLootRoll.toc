@@ -7,6 +7,7 @@
 ## Notes-zhTW: 一個用於個人拾取的戰利品分配插件。
 ## Version: @project-version@
 ## SavedVariables: PersoLootRollDB, PersoLootRollIconDB, PersoLootRollML, PersoLootRollDebug
+## OptionalDeps: Pawn, EPGPNext, PersonalLootHelper, WoWUnit
 
 # Libs
 Libs\libs.xml

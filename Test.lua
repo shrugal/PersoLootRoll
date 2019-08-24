@@ -127,6 +127,13 @@ string.split = function (del, str, n)
     if i == 0 then table.insert(t, str) end
     return unpack(t)
 end
+string.trim = function (s) return s:match("^%s*(.-)%s*$") end
+strsplit = string.split
+strmatch = string.match
+format = string.format
+tinsert = table.insert
+tremove = table.remove
+
 GetLocale = Const("enUs")
 GetRealmName = Const("Mal'Ganis")
 GetCurrentRegion = Const(3)
@@ -134,16 +141,13 @@ GetBuildInfo = Consts("8.2.0", "31478", "Aug 12 2019", 80200)
 GetAddOnMetadata = Val("0-dev0")
 GetAutoCompleteRealms = Const({"Echsenkessel", "Mal'Ganis", "Taerar"})
 GetTime = os.time
-UnitName = Id
+UnitName = function (v) return v ~= "" and v or nil end
 UnitClass = Vals("Mage", "MAGE", 8)
 UnitRace = Vals("Troll", "Troll", 8)
 UnitFactionGroup = Vals("Horde", "Horde")
 UnitGUID = Val("Player-1612-054E4E80")
+UnitIsUnit = function (a, b) return a and a == b end
 RegisterAddonMessagePrefix = Fn
-strsplit = string.split
-strmatch = string.match
-tinsert = table.insert
-tremove = table.remove
 
 C_Timer = {}
 StaticPopupDialogs = {}
@@ -174,9 +178,11 @@ ERR_LEFT_GROUP_S = "%s leaves the party."
 ERR_INSTANCE_GROUP_REMOVED_S = "%s has left the instance group."
 ERR_RAID_MEMBER_REMOVED_S = "%s has left the raid group."
 AUTOFOLLOWSTART = "Following %s."
+HIGHLIGHT_FONT_COLOR_CODE = ""
+FONT_COLOR_CODE_CLOSE = ""
 
 -------------------------------------------------------
---                    Import stuff                   --
+--                    Import addon                   --
 -------------------------------------------------------
 
 -- Import PLR
@@ -200,4 +206,30 @@ import("Tests.WoWUnit.WoWUnit")
 -- Import tests
 import("Tests")
 
-dump(PLR)-- TODO
+-------------------------------------------------------
+--                     Run tests                     --
+-------------------------------------------------------
+
+print("[Testing]")
+WoWUnit:RunTests("PLAYER_LOGIN")
+
+local passedGroups = 0
+for _,group in ipairs(WoWUnit.children) do
+    local failed = {}
+    for i,test in ipairs(group.children) do
+        if test.numOk ~= 1 then table.insert(failed, i) end
+    end
+
+    print(group.name .. ": " .. (#failed == 0 and "Passed" or "FAILED") .. " (" .. (#group.children - #failed) .. "/" .. #group.children .. ")")
+
+    for _,i in ipairs(failed) do
+        local test = group.children[i]
+        print(" - " .. test.name .. " (" .. i .. "): " .. table.concat(test.errors, ", "):gsub("|n|n", ""):gsub("|n", " "))
+    end
+
+    passedGroups = passedGroups + (#failed == 0 and 1 or 0)
+end
+
+local success = passedGroups == #WoWUnit.children
+print("[Result]: " .. (success and "Passed" or "FAILED") .. " (" .. passedGroups .. "/" .. #WoWUnit.children .. ")")
+os.exit(not success and 1 or 0)
