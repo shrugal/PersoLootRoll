@@ -30,4 +30,5 @@ GUI\gui.xml
 
 #@do-not-package@
 ## Version: 0-dev0
+Tests\tests.xml
 #@end-do-not-package@

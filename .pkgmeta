@@ -6,7 +6,9 @@ license-output: LICENSE
 enable-nolib-creation: no
 
 ignore:
-  - release.sh
+  - Libs/WoWUnit
+  - Tests
+  - Test.lua
   - _config.yml
 
 externals:
