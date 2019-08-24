@@ -1,16 +1,3 @@
-Version 18.05-beta4
-- Moved chat message pattern generation to `RegisterEvents()` to take modifications by other addons into account
-
-Version 18.05-beta3
-- Made rolls window background a bit darker to improve visibility
-
-Version 18.05-beta2
-- Unresolved rolls owned or bid on by the player are now shown in the actions list as "wait" entries
-
-Version 18.05-beta1
-- Added warning about freezing screen when showing the log
-- Added prompt asking whether to enable automatic whispering on first bid
-
 Version 18.04
 - Fixed error when mousing over entries in the rolls window since 8.2
 
