@@ -70,34 +70,7 @@ local function xml(s)
     return stack[1]
 end
 
-local import, importLua, importXml
-
-function importLua(path, ...)
-    if ... then
-        local code = readfile(path) .. "\nreturn " .. table.concat({...}, ", ")
-        local export = {loadstring(code, path)(Name, Addon)}
-        for i, v in ipairs(export) do
-            if v ~= nil then
-                _G[select(i, ...)] = v
-            end
-        end
-        return unpack(export)
-    else
-        return loadfile(path)(Name, Addon)
-    end
-end
-
-function importXml(path, ...)
-    local dir = string.gsub(path, "(.*\\)(.*)", "%1")
-    local nodes = xml(readfile(path))[1]
-    for _,node in ipairs(nodes or {}) do
-        if node.label == "Script" or node.label == "Include" then
-            import(dir .. "\\" .. node.xarg.file, ...)
-        end
-    end
-end
-
-function import(path, ...)
+local function import(path)
     local ext, f = path:match("([^.]+)$")
     if ext ~= "lua" and ext ~= "xml" then
         path = path:gsub("%.", "\\")
@@ -109,9 +82,15 @@ function import(path, ...)
     end
 
     if ext == "lua" then
-        importLua(path, ...)
+        return loadfile(path)(Name, Addon)
     elseif ext == "xml" then
-        importXml(path, ...)
+        local dir = path:gsub("(.*\\)(.*)", "%1")
+        local nodes = xml(readfile(path))[1]
+        for _,node in ipairs(nodes or {}) do
+            if node.label == "Script" or node.label == "Include" then
+                import(dir .. "\\" .. node.xarg.file)
+            end
+        end
     end
 end
 
@@ -214,9 +193,9 @@ import("GUI")
 
 -- Import WoWUnit
 WoWUnit = CreateFrame()
-import("Libs.WoWUnit.Classes.Group")
-import("Libs.WoWUnit.Classes.Test")
-import("Libs.WoWUnit.WoWUnit")
+import("Tests.WoWUnit.Classes.Group")
+import("Tests.WoWUnit.Classes.Test")
+import("Tests.WoWUnit.WoWUnit")
 
 -- Import tests
 import("Tests")
