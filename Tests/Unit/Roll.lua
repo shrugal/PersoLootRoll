@@ -29,6 +29,7 @@ end
 
 function Tests:FindTest()
     Replace(Addon, "rolls", rolls)
+    Replace("UnitName", Test.UnitName)
 
     -- Find by id and owner
     AssertEqual(rolls[1], Roll.Find(1, "player"))
@@ -91,6 +92,8 @@ end
 
 function Tests:AddTest()
     Replace(Addon, "rolls", Util.TblCounter())
+    Replace(Roll, "CalculateTimeout", function () return 30 end)
+    Replace("UnitName", Test.UnitName)
     local assertDebug = Test.ReplaceFunction(Addon, "Debug", false)
     local assertSendMsg = Test.ReplaceFunction(Addon, "SendMessage", false)
 

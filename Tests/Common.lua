@@ -46,13 +46,12 @@ function Self.MockFunction(fn, mock)
 end
 
 function Self.ReplaceFunction(obj, key, mock)
-    local fn, test
-    if type(obj) == "function" then
-        fn, test = Self.MockFunction(obj, key)
-        Replace(obj, fn)
-    else
-        fn, test = Self.MockFunction(obj[key], mock)
-        Replace(obj, key, fn)
+    if type(obj) ~= "table" then
+        obj, key, mock = _G, obj, key
     end
+    local fn, test = Self.MockFunction(obj[key], mock)
+    Replace(obj, key, fn)
     return test
 end
+
+Self.UnitName = function (v) return v ~= "" and v or nil end
