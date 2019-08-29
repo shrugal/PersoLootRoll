@@ -1,4 +1,4 @@
-local Name = "PersoLootRoll"
+local Name = debug.getinfo(1).source:match("([^\\]+)\\[^\\]+$")
 local Addon = {}
 
 -------------------------------------------------------
