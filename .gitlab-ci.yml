@@ -22,7 +22,7 @@ build:
       - .release/*.zip
 
 test:
-  state: test
+  stage: test
   script:
     - lua Test.lua
   
