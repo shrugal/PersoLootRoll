@@ -277,9 +277,9 @@ PLR_AwardLootButtonNormalText = CreateFrame()
 
 -- Import WoWUnit
 CreateFrame(nil, "WoWUnit")
-import("Tests.WoWUnit.Classes.Group")
-import("Tests.WoWUnit.Classes.Test")
-import("Tests.WoWUnit.WoWUnit.lua")
+import("Libs.WoWUnit.Classes.Group")
+import("Libs.WoWUnit.Classes.Test")
+import("Libs.WoWUnit.WoWUnit.lua")
 fire("ADDON_LOADED", "WoWUnit")
 
 -- Import PLR

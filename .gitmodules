@@ -4,6 +4,3 @@
 [submodule "Libs/LibDataBroker-1.1"]
 	path = Libs/LibDataBroker-1.1
 	url = https://github.com/tekkub/libdatabroker-1-1
-[submodule "Tests/WoWUnit"]
-	path = Tests/WoWUnit
-	url = https://github.com/Jaliborc/WoWUnit
