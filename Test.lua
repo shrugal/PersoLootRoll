@@ -11,9 +11,8 @@ local function checkfile(path)
 end
 
 local function readfile(path)
-    local file, content = io.open(path), ""
-    if file then content = file:read("*all") file:close() end
-    return content
+    local file = io.open(path) or error("File " .. path .. " not found")
+    return file:read("*all"), file:close()
 end
 
 local function xml(s)
@@ -22,6 +21,9 @@ local function xml(s)
         string.gsub(s, "([%-%w]+)=([\"'])(.-)%2", function(w, _, a) arg[w] = a end)
         return arg
     end
+
+    -- Remove comments
+    s = s:gsub("<!%-%-.-%-%->", "")
 
     local stack = {}
     local top = {}
