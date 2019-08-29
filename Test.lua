@@ -1,4 +1,4 @@
-local Name = debug.getinfo(1).source:gsub("\\+", "/"):match("([^/]+)/[^/]+$") or (os.getenv("PWD") or ""):match("[^/]+$")
+local Name = debug.getinfo(1).source:gsub("\\", "/"):match("([^/]+)/[^/]+$") or (os.getenv("PWD") or ""):match("[^/]+$")
 local Addon = {}
 
 -------------------------------------------------------
@@ -80,11 +80,11 @@ local function import(file)
     if ext == "lua" then
         return loadfile(path)(Name, Addon)
     elseif ext == "xml" then
-        local dir = path:gsub("(.*/)(.*)", "%1")
+        local dir = path:match("^(.-)[^/]+$")
         local nodes = xml(readfile(path))[1]
         for _,node in ipairs(nodes or {}) do
             if node.label == "Script" or node.label == "Include" then
-                import(dir .. "/" .. node.xarg.file)
+                import(dir .. node.xarg.file)
             end
         end
     elseif ext == "toc" then
