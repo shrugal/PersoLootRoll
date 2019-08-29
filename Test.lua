@@ -1,4 +1,4 @@
-local Name = debug.getinfo(1).source:match("([^\\]+)\\[^\\]+$") or (os.getenv("PWD") or ""):match("[^/]+$")
+local Name = debug.getinfo(1).source:gsub("\\", "/"):match("([^/]+)/[^/]+$") or (os.getenv("PWD") or ""):match("[^/]+$")
 local Addon = {}
 
 -------------------------------------------------------
@@ -61,9 +61,10 @@ local function xml(s)
 end
 
 local function import(path)
+    path = path:gsub("\\", "/")
     local ext = path:match("([^.]+)$")
     if ext ~= "lua" and ext ~= "xml" and ext ~= "toc" then
-        path = path:gsub("%.", "\\")
+        path = path:gsub("%.", "/")
         for _,v in ipairs({"lua", "xml", "toc"}) do
             if checkfile(path .. "." .. v) then
                 path, ext = path .. "." .. v, v
@@ -75,11 +76,11 @@ local function import(path)
     if ext == "lua" then
         return loadfile(path)(Name, Addon)
     elseif ext == "xml" then
-        local dir = path:gsub("(.*\\)(.*)", "%1")
+        local dir = path:gsub("(.*/)(.*)", "%1")
         local nodes = xml(readfile(path))[1]
         for _,node in ipairs(nodes or {}) do
             if node.label == "Script" or node.label == "Include" then
-                import(dir .. "\\" .. node.xarg.file)
+                import(dir .. "/" .. node.xarg.file)
             end
         end
     elseif ext == "toc" then
