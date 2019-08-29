@@ -1,4 +1,4 @@
-local Name = debug.getinfo(1).source:match("([^\\]+)\\[^\\]+$")
+local Name = debug.getinfo(1).source:match("([^\\]+)\\[^\\]+$") or (os.getenv("PWD") or ""):match("[^/]+$")
 local Addon = {}
 
 -------------------------------------------------------
