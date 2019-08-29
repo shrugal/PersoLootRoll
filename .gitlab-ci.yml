@@ -24,6 +24,7 @@ build:
 test:
   stage: test
   variables:
+    GIT_DEPTH: 1
     GIT_SUBMODULE_STRATEGY: normal
   script:
     - lua Test.lua
