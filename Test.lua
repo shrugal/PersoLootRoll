@@ -5,6 +5,11 @@ local Addon = {}
 --                       Helper                      --
 -------------------------------------------------------
 
+local function checkfile(path)
+    local f = io.open(path)
+    return f and f:close()
+end
+
 local function readfile(path)
     local file, content = io.open(path), ""
     if file then content = file:read("*all") file:close() end
@@ -54,14 +59,19 @@ local function xml(s)
 end
 
 local function import(path)
-    local ext, f = path:match("([^.]+)$")
-    if ext ~= "lua" and ext ~= "xml" then
+    local ext = path:match("([^.]+)$")
+    if ext ~= "lua" and ext ~= "xml" and ext ~= "toc" then
         path = path:gsub("%.", "\\")
-        f = io.open(path .. "\\" .. ext:lower() .. ".xml")
-        path = f and f:close() and path .. "\\" .. ext:lower() or path
-        f = io.open(path .. ".xml")
-        ext = f and f:close() and "xml" or "lua"
-        path = path .. "." .. ext
+        if checkfile(path .. "\\" .. ext:lower() .. ".xml") then
+            path = path .. "\\" .. ext:lower()
+        end
+
+        for _,v in ipairs({"lua", "xml", "toc"}) do
+            if checkfile(path .. "." .. v) then
+                path, ext = path .. "." .. v, v
+                break
+            end
+        end
     end
 
     if ext == "lua" then
@@ -74,6 +84,14 @@ local function import(path)
                 import(dir .. "\\" .. node.xarg.file)
             end
         end
+    elseif ext == "toc" then
+        for line in io.lines(path) do
+            if line ~= "" and line:sub(1, 1) ~= "#" then
+                import(line)
+            end
+        end
+    else
+        error("Unknown file extension " .. ext)
     end
 end
 
@@ -262,17 +280,7 @@ import("Tests.WoWUnit.WoWUnit")
 fire("ADDON_LOADED", "WoWUnit")
 
 -- Import PLR
-import("Libs")
-import("Init")
-import("Util")
-import("Locale")
-import("Data")
-import("Models")
-import("Core")
-import("Modules")
-import("Plugins")
-import("GUI")
-import("Tests")
+import(Name)
 fire("ADDON_LOADED", Name)
 
 -- Startup process
