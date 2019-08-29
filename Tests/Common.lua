@@ -37,9 +37,7 @@ function Self.MockFunction(fn, mock)
             return fn(...)
         end
     end
-    local test = function (n)
-        AssertEqual(n or 1, calls)
-    end
+    local test = function (n) AssertEqual(n or 1, calls) end
     local get = function () return calls end
     local set = function (n) calls = n or 0 end
     return call, test, get, set

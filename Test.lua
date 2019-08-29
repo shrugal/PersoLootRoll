@@ -1,4 +1,4 @@
-local Name = debug.getinfo(1).source:gsub("\\", "/"):match("([^/]+)/[^/]+$") or (os.getenv("PWD") or ""):match("[^/]+$")
+local Name = debug.getinfo(1).source:gsub("\\+", "/"):match("([^/]+)/[^/]+$") or (os.getenv("PWD") or ""):match("[^/]+$")
 local Addon = {}
 
 -------------------------------------------------------
@@ -60,18 +60,22 @@ local function xml(s)
     return stack[1]
 end
 
-local function import(path)
-    path = path:gsub("\\", "/")
-    local ext = path:match("([^.]+)$")
-    if ext ~= "lua" and ext ~= "xml" and ext ~= "toc" then
+local extensions = {lua = true, xml = true, toc = true}
+local function import(file)
+    local path, ext = file:gsub("\\", "/"):match("^(.-)%.?([^.]+)$")
+
+    if not path:match("/") then
         path = path:gsub("%.", "/")
-        for _,v in ipairs({"lua", "xml", "toc"}) do
-            if checkfile(path .. "." .. v) then
-                path, ext = path .. "." .. v, v
-                break
-            end
+    end
+
+    if not extensions[ext] then
+        path = path ~= "" and path .. "/" .. ext or ext
+        for v in pairs(extensions) do
+            if checkfile(path .. "." .. v) then ext = v break end
         end
     end
+
+    path = path .. "." .. ext
 
     if ext == "lua" then
         return loadfile(path)(Name, Addon)
@@ -275,11 +279,11 @@ PLR_AwardLootButtonNormalText = CreateFrame()
 CreateFrame(nil, "WoWUnit")
 import("Tests.WoWUnit.Classes.Group")
 import("Tests.WoWUnit.Classes.Test")
-import("Tests.WoWUnit.WoWUnit")
+import("Tests.WoWUnit.WoWUnit.lua")
 fire("ADDON_LOADED", "WoWUnit")
 
 -- Import PLR
-import(Name)
+import(Name .. ".toc")
 fire("ADDON_LOADED", Name)
 
 -- Startup process
