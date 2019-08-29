@@ -62,10 +62,6 @@ local function import(path)
     local ext = path:match("([^.]+)$")
     if ext ~= "lua" and ext ~= "xml" and ext ~= "toc" then
         path = path:gsub("%.", "\\")
-        if checkfile(path .. "\\" .. ext:lower() .. ".xml") then
-            path = path .. "\\" .. ext:lower()
-        end
-
         for _,v in ipairs({"lua", "xml", "toc"}) do
             if checkfile(path .. "." .. v) then
                 path, ext = path .. "." .. v, v
