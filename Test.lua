@@ -5,23 +5,6 @@ local Addon = {}
 --                       Helper                      --
 -------------------------------------------------------
 
-local function dump(o, d)
-    d = d or 1
-    local s, i = "", (" "):rep(d * 4)
-    if type(o) == "table" then
-        for k,v in pairs(o) do
-            if type(k) ~= "string" then k = '['..k..']' end
-            s = s .. (#s > 0 and "," or "") .. "\n" .. i .. k .. " = " .. dump(v, d + 1)
-        end
-        s = "{" .. (#s > 0 and s .. "\n" .. (" "):rep((d - 1) * 4) or s) .. "}"
-    elseif type(o) == "string" then
-        s = '"' .. o .. '"'
-    else
-        s = tostring(o)
-    end
-    if d > 1 then return s else print(s) end
- end
-
 local function readfile(path)
     local file, content = io.open(path), ""
     if file then content = file:read("*all") file:close() end

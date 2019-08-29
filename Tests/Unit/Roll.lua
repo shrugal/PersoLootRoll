@@ -4,7 +4,7 @@ if not WoWUnit then return end
 local Name = ...
 ---@type Addon
 local Addon = select(2, ...)
-local Item, Roll, Util = Addon.Item, Addon.Roll, Addon.Util
+local Roll, Test, Util = Addon.Roll, Addon.Test, Addon.Util
 local Assert, AssertEqual, AssertFalse, Replace = WoWUnit.IsTrue, WoWUnit.AreEqual, WoWUnit.IsFalse, WoWUnit.Replace
 
 local Tests = WoWUnit(Name .. ".Unit.Roll")
@@ -91,5 +91,62 @@ end
 
 function Tests:AddTest()
     Replace(Addon, "rolls", Util.TblCounter())
-    Roll.Add("item1", "player")
+    local assertDebug = Test.ReplaceFunction(Addon, "Debug", false)
+    local assertSendMsg = Test.ReplaceFunction(Addon, "SendMessage", false)
+
+    local roll = Roll.Add("item1", "player")
+    AssertEqual({
+        disenchant = false,
+        timers = {},
+        whispers = 0,
+        votes = {},
+        item = {
+            isOwner = true,
+            infoLevel = 0,
+            link = "item1",
+            position = {},
+            owner = "player"
+        },
+        status = 0,
+        created = time(),
+        rolls = {},
+        timeout = 30,
+        id = 1,
+        owner = "player",
+        ownerId = 1,
+        isOwner = true,
+        itemOwnerId = 1,
+        bids = {}
+    }, roll)
+    AssertEqual(roll, Addon.rolls[1])
+    assertDebug()
+    assertSendMsg()
+
+    roll = Roll.Add("item2", "party1", 2, 1, 60, true)
+    AssertEqual({
+        disenchant = true,
+        timers = {},
+        whispers = 0,
+        votes = {},
+        item = {
+            isOwner = false,
+            infoLevel = 0,
+            link = "item2",
+            position = {},
+            owner = "party1"
+        },
+        status = 0,
+        created = time(),
+        rolls = {},
+        timeout = 60,
+        id = 2,
+        owner = "party1",
+        ownerId = 2,
+        isOwner = false,
+        itemOwnerId = 1,
+        bids = {}
+    }, roll)
+    AssertEqual(roll, Addon.rolls[2])
+    assertDebug(2)
+    assertSendMsg(2)
 end
