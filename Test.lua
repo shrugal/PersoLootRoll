@@ -138,6 +138,7 @@ CreateFrame = function (_, name, parent)
         GetPoint = function (_, k) return unpack(points[k]) end,
         GetNumPoints = function () return #points end,
         ClearAllPoints = function () wipe(points) end,
+        NumLines = Const(0),
         CreateTexture = CreateChild,
         CreateFontString = CreateChild,
         FireEvent = function (_, e, ...) if scripts.OnEvent and events[e] then scripts.OnEvent(f, e, ...) end end,
@@ -149,14 +150,7 @@ CreateFrame = function (_, name, parent)
 end
 
 CreateFrame(nil, "UIParent")
-
-local loggedIn = false
-IsLoggedIn = function () return loggedIn end
-
-local group = 0
-GetNumGroupMembers = function () return group and group + 1 or 0 end
-IsInGroup = function () return group > 0 end
-IsInRaid = function () return group > 5 end
+CreateFrame(nil, "DEFAULT_CHAT_FRAME")
 
 geterrorhandler = Const(Fn)
 seterrorhandler = Fn
@@ -166,6 +160,10 @@ hooksecurefunc = function (tbl, name, fn)
     if not fn then tbl, name, fn = _G, tbl, name end
     local orig = tbl[name]
     tbl[name] = function (...) local r = {orig(...)} fn(...) return unpack(r) end
+end
+GetClassInfo = function (i)
+    local c = ({"Warrior", "Paladin", "Hunter", "Rogue", "Priest", "Death Knight", "Shaman", "Mage", "Warlock", "Monk", "Druid", "Demon Hunter"})[i]
+    return c, c:upper():gsub(" ", "_"), i
 end
 string.split = function (del, str, n)
     local t, i = {}, 0
@@ -186,6 +184,8 @@ tremove = table.remove
 time = function (...) return math.floor(os.time(...)) end
 max = math.max
 min = math.min
+ceil = math.ceil
+floor = math.floor
 
 GetLocale = Const("enUs")
 GetRealmName = Const("Mal'Ganis")
@@ -209,11 +209,20 @@ UnitClass = Vals("Mage", "MAGE", 8)
 UnitRace = Vals("Troll", "Troll", 8)
 UnitFactionGroup = Vals("Horde", "Horde")
 UnitGUID = Val("Player-1612-054E4E80")
+UnitLevel = Val(120)
 UnitIsUnit = function (a, b) return a and a == b end
+UnitExists = Val(true)
+UnitInParty = Val(false)
+UnitInRaid = Val(false)
 RegisterAddonMessagePrefix = Fn
 IsInInstance = Const(false)
 IsAddOnLoaded = function (n) return n == "WoWUnit" or n == Name end
 InterfaceOptions_AddCategory = Fn
+IsLoggedIn = Const(false)
+GetNumGroupMembers = Const(0)
+IsInGroup = Const(false)
+IsInRaid = Const(false)
+IsEquippableItem = Val(true)
 ChatFrame_AddMessageEventFilter = Fn
 
 C_ChallengeMode = Obj
@@ -264,15 +273,24 @@ DIFFICULTY_PRIMARYRAID_MYTHIC = 16
 DIFFICULTY_PRIMARYRAID_LFR = 17
 NUM_GROUP_LOOT_FRAMES = 0
 NUM_CHAT_WINDOWS = 0
-LOOT_ITEM_BONUS_ROLL = "" -- TODO
-CREATED_ITEM = "" -- TODO
-LOOT_ITEM_CREATED_SELF = "" -- TODO
-RANDOM_ROLL_RESULT = "" -- TODO
+LOOT_ITEM_BONUS_ROLL ="%s receives bonus loot: %s."
+CREATED_ITEM ="%s creates: %s."
+LOOT_ITEM_CREATED_SELF ="You create: %s."
+RANDOM_ROLL_RESULT ="%s rolls %d (%d-%d)"
+LE_ITEM_QUALITY_COMMON = 2
+LE_ITEM_QUALITY_RARE = 3
+LE_ITEM_QUALITY_EPIC = 4
+LE_ITEM_QUALITY_LEGENDARY = 5
+MAX_PLAYER_LEVEL = 120
+NUM_BAG_SLOTS = 0
+RAID_CLASS_COLORS = setmetatable({}, {__index = function ()
+    return {colorStr = "ffffffff", r = 1, g = 1, b = 1}
+end})
 
 PLR_AwardLootButtonNormalText = CreateFrame()
 
 -------------------------------------------------------
---                        Init                       --
+--                     Run tests                     --
 -------------------------------------------------------
 
 -- Import WoWUnit
@@ -282,25 +300,23 @@ import("Libs.WoWUnit.Classes.Test")
 import("Libs.WoWUnit.WoWUnit.lua")
 fire("ADDON_LOADED", "WoWUnit")
 
--- Import PLR
+-- Import addon
 import(Name .. ".toc")
 fire("ADDON_LOADED", Name)
 
 -- Startup process
 fire("SPELLS_CHANGED")
-loggedIn = true
+IsLoggedIn = Const(true)
 fire("PLAYER_LOGIN")
 fire("PLAYER_ENTERING_WORLD")
 fire("PLAYER_ALIVE")
 update()
 
--------------------------------------------------------
---                     Run tests                     --
--------------------------------------------------------
-
+-- Run tests
 print("[Testing]")
 WoWUnit:RunTests("PLAYER_LOGIN")
 
+-- Gather results
 local passedGroups = 0
 for _,group in ipairs(WoWUnit.children) do
     local failed = {}
@@ -318,6 +334,7 @@ for _,group in ipairs(WoWUnit.children) do
     passedGroups = passedGroups + (#failed == 0 and 1 or 0)
 end
 
+-- Show results
 local success = passedGroups == #WoWUnit.children
 print("[Result]: " .. (success and "Passed" or "FAILED") .. " (" .. passedGroups .. "/" .. #WoWUnit.children .. ")")
 

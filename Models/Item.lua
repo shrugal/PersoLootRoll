@@ -253,6 +253,9 @@ function Self.GetInfo(item, attr, ...)
     -- id
     elseif attr == "id" and id then
         return id
+    -- link
+    elseif attr == "link" and link then
+        return link
     -- quality
     elseif attr == "quality" then
         local color = Self.GetInfo(item, "color")
