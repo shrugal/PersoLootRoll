@@ -97,7 +97,7 @@ local function import(file)
     if not path:match("/") then
         path = path:gsub("%.", "/")
     end
-    
+
     print("-> parts", path, ext)
 
     if not extensions[ext] then
@@ -109,8 +109,8 @@ local function import(file)
     end
 
     path = path .. "." .. ext
-    
-    print("-> path", path)
+
+    print("-> paths", path)
 
     if ext == "lua" then
         return loadfile(path)(Name, Addon)
@@ -123,9 +123,10 @@ local function import(file)
             end
         end
     elseif ext == "toc" then
+        local dir = path:match("^(.-)[^/]+$")
         for line in io.lines(path) do
             if line ~= "" and line:sub(1, 1) ~= "#" then
-                import(line)
+                import(dir .. line)
             end
         end
     else
