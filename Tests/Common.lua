@@ -11,21 +11,26 @@ local Roll, Unit, Util = Addon.Roll, Addon.Unit, Addon.Util
 Addon.Test = {}
 local Self = Addon.Test
 
-function Self.Dump(o, d)
-    d = d or 1
-    local s, i = "", (" "):rep(d * 4)
+function Self.Dump(o, maxDepth, depth)
+    maxDepth = maxDepth or 5
+    depth = depth or 1
+    local s, i = "", (" "):rep(depth * 4)
     if type(o) == "table" then
-        for k,v in pairs(o) do
-            if type(k) ~= "string" then k = '['..k..']' end
-            s = s .. (#s > 0 and "," or "") .. "\n" .. i .. k .. " = " .. Self.Dump(v, d + 1)
+        if depth > maxDepth then
+            s = "{...}"
+        else
+            for k,v in pairs(o) do
+                if type(k) ~= "string" then k = '['..k..']' end
+                s = s .. (#s > 0 and "," or "") .. "\n" .. i .. k .. " = " .. Self.Dump(v, maxDepth, depth + 1)
+            end
+            s = "{" .. (#s > 0 and s .. "\n" .. (" "):rep((depth - 1) * 4) or s) .. "}"
         end
-        s = "{" .. (#s > 0 and s .. "\n" .. (" "):rep((d - 1) * 4) or s) .. "}"
     elseif type(o) == "string" then
         s = '"' .. o .. '"'
     else
         s = tostring(o)
     end
-    if d > 1 then return s else print(s) end
+    if depth > 1 then return s else print(s) end
  end
 
 function Self.MockFunction(fn, mock)
@@ -53,15 +58,13 @@ function Self.ReplaceFunction(obj, key, mock)
     return test
 end
 
-function Self.ReplaceDefault(fns)
-    fns = fns or {
-        "GetRealmName", "UnitName", "UnitFullName", "UnitIsUnit", "UnitClass",
+function Self.ReplaceDefault()
+    for _,fn in pairs({
+        "GetRealmName", "UnitName", "UnitFullName", "UnitIsUnit", "UnitClass", "UnitExists",
         "GetItemInfo", "GetDetailedItemLevelInfo",
         "GetNumGroupMembers", "IsInGroup", "IsInRaid", "GetRaidRosterInfo",
         "UnitInParty", "UnitInRaid"
-    }
-
-    for _,fn in pairs(fns) do
+    }) do
         Replace(fn, Self[fn])
     end
 end
@@ -124,6 +127,10 @@ end
 
 function Self.UnitIsUnit(a, b)
     return a and a == b or Self.Unit(a) == Self.Unit(b)
+end
+
+function Self.UnitExists(v)
+    return not not Self.Unit(v)
 end
 
 function Self.UnitClass(v)

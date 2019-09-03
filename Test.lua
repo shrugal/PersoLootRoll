@@ -112,7 +112,7 @@ local Const = function (v) return function () return v end end
 local Consts = function (...) local args = {...} return function () return unpack(args) end end
 local Val = function (v) return function (a) if a then return v end end end
 local Vals = function (...) local args = {...} return function (...) if ... then return unpack(args) end end end
-local Meta = { __index = function (_, k) return k.sub and k:sub(1,1) == k:sub(1,1):upper() and Fn or nil end }
+local Meta = { __index = function (_, k) if k.match and k:match("^[A-Z]") and k:match("[^A-Z_]") then return Fn end end }
 local Obj = setmetatable({}, Meta)
 
 CreateFrame = function (_, name, parent)
@@ -226,7 +226,7 @@ IsEquippableItem = Val(true)
 ChatFrame_AddMessageEventFilter = Fn
 
 C_ChallengeMode = Obj
-C_Timer = Obj
+C_Timer = { After = function (t, fn) fn() end }
 StaticPopupDialogs = {}
 SlashCmdList = {}
 AlertFrame = CreateFrame()
@@ -283,9 +283,7 @@ LE_ITEM_QUALITY_EPIC = 4
 LE_ITEM_QUALITY_LEGENDARY = 5
 MAX_PLAYER_LEVEL = 120
 NUM_BAG_SLOTS = 0
-RAID_CLASS_COLORS = setmetatable({}, {__index = function ()
-    return {colorStr = "ffffffff", r = 1, g = 1, b = 1}
-end})
+RAID_CLASS_COLORS = setmetatable({}, {__index = function () return {colorStr = "ffffffff", r = 1, g = 1, b = 1} end})
 
 PLR_AwardLootButtonNormalText = CreateFrame()
 
@@ -303,6 +301,7 @@ fire("ADDON_LOADED", "WoWUnit")
 -- Import addon
 import(Name .. ".toc")
 fire("ADDON_LOADED", Name)
+Addon.ScheduleRepeatingTimer = Addon.ScheduleTimer
 
 -- Startup process
 fire("SPELLS_CHANGED")

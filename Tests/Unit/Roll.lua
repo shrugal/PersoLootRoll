@@ -9,7 +9,7 @@ local Assert, AssertEqual, AssertFalse, Replace = WoWUnit.IsTrue, WoWUnit.AreEqu
 
 local Tests = WoWUnit(Name .. ".Unit.Roll")
 
-local GetUpdateData = function (roll, eligible, bidPublic, votePublic)
+local getUpdateData = function (roll, eligible, started, bidPublic, votePublic)
     local data = Util(roll).Copy().Select(
         "owner", "ownerId", "itemOwnerId", "status", "started",
         "timeout", "posted", "winner", "traded"
@@ -23,6 +23,7 @@ local GetUpdateData = function (roll, eligible, bidPublic, votePublic)
         isTradable = roll.item.isTradable or nil,
         eligible = eligible or 1
     }
+    data.started = started
 
     if bidPublic then
         data.bids = roll.bids
@@ -109,8 +110,7 @@ function Tests:AddTest()
     Test.ReplaceDefault()
     Replace(Addon, "rolls", Util.TblCounter())
     Replace(Roll, "CalculateTimeout", function () return 30 end)
-    local AssertDebugCalled = Test.ReplaceFunction(Addon, "Debug", false)
-    local AssertSendMessageCalled = Test.ReplaceFunction(Addon, "SendMessage", false)
+    local assertMsgSend = Test.ReplaceFunction(Addon, "SendMessage", false)
 
     -- Item owned by the player
     local roll = Roll.Add(Test.items.item1[2], Test.units.player.name)
@@ -138,8 +138,7 @@ function Tests:AddTest()
         bids = {}
     }, roll)
     AssertEqual(roll, Addon.rolls[1])
-    AssertDebugCalled()
-    AssertSendMessageCalled()
+    assertMsgSend()
 
     -- Item owned by someone else
     roll = Roll.Add(Test.items.item2[2], Test.units.party1.name, 2, 1, 60, true)
@@ -167,8 +166,7 @@ function Tests:AddTest()
         bids = {}
     }, roll)
     AssertEqual(roll, Addon.rolls[2])
-    AssertDebugCalled(2)
-    AssertSendMessageCalled(2)
+    assertMsgSend(2)
 
     -- TODO: Item owned by masterlooter
 end
@@ -176,7 +174,36 @@ end
 function Tests.UpdateTest()
     Test.ReplaceDefault()
     Replace(Addon, "rolls", Util.TblCounter())
+    Replace(Addon.Item, "OnLoaded", function (_, fn) return fn() end)
+    Replace(Addon, "ScheduleTimer", function () return true end)
+    local assertMsgSend = Test.ReplaceFunction(Addon, "SendMessage", false)
+    local now, data, roll = time()
 
-    local data = GetUpdateData(Test.rolls[3], 2)
+    -- Simple test
+    data = getUpdateData(Test.rolls[3], 2, now - 2)
     Roll.Update(data, data.owner)
+    Assert(Addon.rolls[1])
+    roll = Addon.rolls[1]
+    roll.item = {link = roll.item.link, owner = roll.item.owner}
+    AssertEqual({
+        timers = {bid = true},
+        whispers = 0,
+        votes = {},
+        item = {
+            link = Test.items.item3[2],
+            owner = "Party1Name",
+        },
+        status = Roll.STATUS_RUNNING,
+        created = now,
+        rolls = {},
+        timeout = 30,
+        started = data.started,
+        id = 1,
+        owner = "Party1Name",
+        ownerId = 1,
+        isOwner = false,
+        itemOwnerId = 1,
+        bids = {}
+    }, Addon.rolls[1])
+    assertMsgSend(3)
 end
