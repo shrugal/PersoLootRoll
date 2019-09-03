@@ -91,39 +91,31 @@ end
 
 local extensions = {lua = true, xml = true, toc = true}
 local function import(file)
-    print("import", file)
     local path, ext = file:gsub("\\", "/"):match("^(.-)%.?([^.]+)$")
 
     if not path:match("/") then
         path = path:gsub("%.", "/")
     end
 
-    print("-> parts", path, ext)
-
     if not extensions[ext] then
         path = path ~= "" and path .. "/" .. ext or ext
         for v in pairs(extensions) do
-            print("-> check", path .. "." .. v)
             if checkfile(path .. "." .. v) then ext = v break end
         end
     end
 
     path = path .. "." .. ext
-
-    print("-> paths", path)
+    local dir = path:match("^(.-)[^/]+$")
 
     if ext == "lua" then
         return loadfile(path)(Name, Addon)
     elseif ext == "xml" then
-        local dir = path:match("^(.-)[^/]+$")
-        local nodes = xml(readfile(path))[1]
-        for _,node in ipairs(nodes or {}) do
+        for _,node in ipairs(xml(readfile(path))[1] or {}) do
             if node.label == "Script" or node.label == "Include" then
                 import(dir .. node.xarg.file)
             end
         end
     elseif ext == "toc" then
-        local dir = path:match("^(.-)[^/]+$")
         for line in readfile(path):gmatch("[^\r\n]+") do
             if line ~= "" and line:sub(1, 1) ~= "#" then
                 import(dir .. line)
