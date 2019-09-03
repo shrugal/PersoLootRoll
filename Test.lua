@@ -124,7 +124,7 @@ local function import(file)
         end
     elseif ext == "toc" then
         local dir = path:match("^(.-)[^/]+$")
-        for line in io.lines(path) do
+        for line in readfile(path):gmatch("[^\r\n]+") do
             if line ~= "" and line:sub(1, 1) ~= "#" then
                 import(dir .. line)
             end
