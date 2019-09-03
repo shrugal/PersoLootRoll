@@ -11,9 +11,6 @@ stages:
 
 build:
   stage: build
-  only:
-    - tags
-    - web
   script:
     - release.sh -d
   artifacts:
@@ -27,7 +24,7 @@ test:
     GIT_DEPTH: 1
     GIT_SUBMODULE_STRATEGY: normal
   script:
-    - lua Test.lua
+    - lua Test.lua -b
   
 curseforge:
   <<: *releases

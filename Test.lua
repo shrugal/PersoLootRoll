@@ -1,5 +1,36 @@
+
 local Name = debug.getinfo(1).source:gsub("\\", "/"):match("([^/]+)/[^/]+$") or (os.getenv("PWD") or ""):match("[^/]+$")
 local Addon = {}
+
+local options = {
+    build = false,
+    buildPath = ".release/" .. Name
+}
+
+-- Parse args
+local key
+for i=1,select("#", ...) do
+    local arg = select(i, ...)
+    if arg:match("^%-%-") then
+        key = arg:gsub("^%-%-", "")
+    elseif arg:match("^%-[a-zA-Z]$") then
+        key = ({
+            b = "build"
+        })[arg:gsub("^-", "")]
+        options[key] = true
+        key = nil
+    else
+        if type(options[key]) == "boolean" then
+            arg = arg == "true" or arg == "1"
+        elseif type(options[key]) == "number" then
+            arg = tonumber(arg)
+        end
+        options[key] = arg
+        key = nil
+    end
+end
+
+local importPath = options.build and options.buildPath or "."
 
 -------------------------------------------------------
 --                       Helper                      --
@@ -299,9 +330,12 @@ import("Libs.WoWUnit.WoWUnit.lua")
 fire("ADDON_LOADED", "WoWUnit")
 
 -- Import addon
-import(Name .. ".toc")
-fire("ADDON_LOADED", Name)
+import(importPath .. "/" .. Name .. ".toc")
+if options.build then
+    import("Tests.tests")
+end
 Addon.ScheduleRepeatingTimer = Addon.ScheduleTimer
+fire("ADDON_LOADED", Name)
 
 -- Startup process
 fire("SPELLS_CHANGED")
