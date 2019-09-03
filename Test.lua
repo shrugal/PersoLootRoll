@@ -17,16 +17,14 @@ for i=1,select("#", ...) do
         key = ({
             b = "build"
         })[arg:gsub("^-", "")]
-        options[key] = true
-        key = nil
+        options[key], key = true
     else
         if type(options[key]) == "boolean" then
             arg = arg == "true" or arg == "1"
         elseif type(options[key]) == "number" then
             arg = tonumber(arg)
         end
-        options[key] = arg
-        key = nil
+        options[key], key = arg
     end
 end
 
@@ -93,20 +91,26 @@ end
 
 local extensions = {lua = true, xml = true, toc = true}
 local function import(file)
+    print("import", file)
     local path, ext = file:gsub("\\", "/"):match("^(.-)%.?([^.]+)$")
 
     if not path:match("/") then
         path = path:gsub("%.", "/")
     end
+    
+    print("-> parts", path, ext)
 
     if not extensions[ext] then
         path = path ~= "" and path .. "/" .. ext or ext
         for v in pairs(extensions) do
+            print("-> check", path .. "." .. v)
             if checkfile(path .. "." .. v) then ext = v break end
         end
     end
 
     path = path .. "." .. ext
+    
+    print("-> path", path)
 
     if ext == "lua" then
         return loadfile(path)(Name, Addon)
