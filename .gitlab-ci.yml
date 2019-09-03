@@ -9,7 +9,16 @@ stages:
   only:
     - /^\d[\d\.]*(-(alpha|beta)\d+)?$/
 
+quicktest:
+  stage: test
+  variables:
+    GIT_DEPTH: 1
+    GIT_SUBMODULE_STRATEGY: normal
+  script:
+    - lua Test.lua
+
 build:
+  <<: *releases
   stage: build
   script:
     - release.sh -d
@@ -19,10 +28,10 @@ build:
       - .release/*.zip
 
 test:
+  <<: *releases
   stage: test
   variables:
     GIT_DEPTH: 1
-    GIT_SUBMODULE_STRATEGY: normal
   script:
     - lua Test.lua -b
   
