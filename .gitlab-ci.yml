@@ -6,19 +6,10 @@ stages:
   - deploy
 
 .releases: &releases
-  only:
-    - /^\d[\d\.]*(-(alpha|beta)\d+)?$/
-
-quicktest:
-  stage: test
-  variables:
-    GIT_DEPTH: 1
-    GIT_SUBMODULE_STRATEGY: normal
-  script:
-    - lua Test.lua
+  - /^\d[\d\.]*(-(alpha|beta)\d+)?$/
 
 build:
-  <<: *releases
+  only: *releases
   stage: build
   script:
     - release.sh -d
@@ -27,16 +18,26 @@ build:
       - .release/PersoLootRoll/
       - .release/*.zip
 
+quicktest:
+  stage: test
+  except: *releases
+  variables:
+    GIT_DEPTH: 1
+    GIT_SUBMODULE_STRATEGY: normal
+  script:
+    - lua Test.lua
+
 test:
-  <<: *releases
+  only: *releases
   stage: test
   variables:
     GIT_DEPTH: 1
+    GIT_SUBMODULE_STRATEGY: normal
   script:
     - lua Test.lua -b
   
 curseforge:
-  <<: *releases
+  only: *releases
   stage: deploy
   environment:
     name: CurseForge
@@ -45,7 +46,7 @@ curseforge:
     - release.sh -ocelzWHG
 
 wowinterface:
-  <<: *releases
+  only: *releases
   stage: deploy
   environment:
     name: WoWInterface
@@ -54,7 +55,7 @@ wowinterface:
     - release.sh -ocelzLHG
 
 github:
-  <<: *releases
+  only: *releases
   stage: deploy
   environment:
     name: GitHub
@@ -63,7 +64,7 @@ github:
     - release.sh -ocelzLWG
 
 gitlab:
-  <<: *releases
+  only: *releases
   stage: deploy
   environment:
     name: GitLab
