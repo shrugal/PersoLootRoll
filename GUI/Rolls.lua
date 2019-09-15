@@ -325,18 +325,18 @@ end
 -------------------------------------------------------
 
 function Self.Update()
-    if Self.filter.id and not Self.TestRoll(Roll.Get(Self.filter.id)) then
-        Self.filter.id = nil
-    end
+    if Self.frames.window then
+        if Self.filter.id and not Self.TestRoll(Roll.Get(Self.filter.id)) then
+            Self.filter.id = nil
+        end
 
-    Self.UpdateRolls()
-    Self.UpdateItems()
+        Self.UpdateRolls()
+        Self.UpdateItems()
+    end
 end
 
 -- Update the frame
 function Self.UpdateRolls()
-    if not Self.frames.window then return end
-
     local f
     local ml = Session.GetMasterlooter()
 
