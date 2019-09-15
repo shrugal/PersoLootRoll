@@ -11,10 +11,18 @@ local Self = GUI.Rolls
 
 ---@type table<Widget>
 Self.frames = {}
-Self.filter = {all = false, hidden = false, done = true, awarded = true, traded = false}
+---@type table<Widget>
+Self.buttons = {}
+Self.filter = {all = false, hidden = false, done = true, awarded = true, traded = false, id = nil}
 Self.status = {width = 700, height = 300}
 Self.open = {}
 Self.confirm = {roll = nil, unit = nil}
+
+---@type Texture
+local HIGHLIGHT = UIParent:CreateTexture(nil, "OVERLAY")
+HIGHLIGHT:SetTexture("Interface\\PaperDollInfoFrame\\UI-GearManager-ItemButton-Highlight")
+HIGHLIGHT:SetTexCoord(.1, .6, .1, .7)
+HIGHLIGHT:SetBlendMode("ADD")
 
 -------------------------------------------------------
 --                     Show/Hide                     --
@@ -39,10 +47,9 @@ function Self.Show()
             .SetCallback("OnClose", function (self)
                 Self.status.width = self.frame:GetWidth()
                 Self.status.height = self.frame:GetHeight()
-                self.optionsBtn, self.versionBtn = nil, nil
                 self:Release()
-                wipe(Self.frames)
-                wipe(Self.open)
+                HIGHLIGHT:SetParent(UIParent)
+                Util.TblWipe(Self.frames, Self.buttons, Self.open, Self.confirm)
             end)()
 
         -- Darker background
@@ -59,6 +66,8 @@ function Self.Show()
         end
 
         Self.frames.window = window
+
+        -- BUTTONS
 
         -- Options button
         f = GUI("Icon")
@@ -79,7 +88,7 @@ function Self.Show()
         f.frame:SetFrameStrata("HIGH")
         f.frame:Show()
 
-        window.optionsBtn = f
+        Self.buttons.options = f
 
         -- Test button
         f = GUI("Icon")
@@ -93,11 +102,11 @@ function Self.Show()
         f.OnRelease = GUI.ResetIcon
         f.image:SetPoint("TOP")
         f.frame:SetParent(window.frame)
-        f.frame:SetPoint("RIGHT", window.optionsBtn.frame, "LEFT", -15, 0)
+        f.frame:SetPoint("RIGHT", Self.buttons.options.frame, "LEFT", -15, 0)
         f.frame:SetFrameStrata("HIGH")
         f.frame:Show()
 
-        window.testBtn = f
+        Self.buttons.test = f
 
         -- Version label
         f = GUI("InteractiveLabel")
@@ -151,11 +160,33 @@ function Self.Show()
             .AddTo(window)()
         f.OnRelease = GUI.ResetLabel
         f.frame:SetParent(window.frame)
-        f.frame:SetPoint("RIGHT", window.testBtn.frame, "LEFT", -15, -1)
+        f.frame:SetPoint("RIGHT", Self.buttons.test.frame, "LEFT", -15, -1)
         f.frame:SetFrameStrata("HIGH")
         f.frame:Show()
 
-        window.versionBtn = f
+        Self.buttons.version = f
+
+        -- ITEMS
+
+        f = GUI("ScrollFrame")
+            .SetLayout("List")
+            .AddTo(Self.frames.window)
+            .SetPoint("TOPRIGHT", Self.frames.window.content, "TOPLEFT", -4, 8)
+            .SetPoint("BOTTOM")
+            .SetFrameStrata("LOW")
+            .SetWidth(40)()
+        local fixScroll, onRelease = f.FixScroll, f.OnRelease
+        f.FixScroll = function (self, ...)
+            fixScroll(self, ...)
+            self.scrollbar:Hide()
+            self.scrollframe:SetPoint("BOTTOMRIGHT")
+        end
+        f.OnRelease = function (self)
+            self.content:SetFrameStrata("MEDIUM")
+            self.FixScroll, self.OnRelease = fixScroll, onRelease
+            self:OnRelease()
+        end
+        Self.frames.items = f
 
         -- FILTER
 
@@ -293,14 +324,21 @@ end
 --                      Update                       --
 -------------------------------------------------------
 
--- Update the frame
 function Self.Update()
+    if Self.filter.id and not Self.TestRoll(Roll.Get(Self.filter.id)) then
+        Self.filter.id = nil
+    end
+
+    Self.UpdateRolls()
+    Self.UpdateItems()
+end
+
+-- Update the frame
+function Self.UpdateRolls()
     if not Self.frames.window then return end
 
     local f
     local ml = Session.GetMasterlooter()
-    local startManually = ml and Addon.db.profile.masterloot.rules.startManually
-    local startLimit = ml and Addon.db.profile.masterloot.rules.startLimit or 0
 
     -- SCROLL
 
@@ -314,7 +352,7 @@ function Self.Update()
     if #children == 0 then
         scroll.userdata.table.columns = {20, 1, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, 8 * 20 - 4}
 
-        for i,v in pairs(header) do
+        for _,v in pairs(header) do
             GUI("Label").SetFontObject(GameFontNormal).SetText(L[v]).SetColor(1, 0.82, 0).AddTo(scroll)
         end
 
@@ -331,13 +369,13 @@ function Self.Update()
         end
 
         -- Toggle all
-        f = GUI.CreateIconButton("UI-MinusButton", actions, function (self)
-            for i,child in pairs(scroll.children) do
+        f = GUI.CreateIconButton("UI-MinusButton", actions, function ()
+            for _,child in pairs(scroll.children) do
                 if child:GetUserData("isDetails") then child.frame:Hide() end
             end
             wipe(Self.open)
             Self.Update()
-        end)
+        end, L["HIDE_ALL"])
         f.image:SetPoint("TOP", 0, 2)
         f.frame:SetPoint("TOPRIGHT")
 
@@ -345,19 +383,11 @@ function Self.Update()
         GUI.TableRowBackground(scroll, function (_, _, cols) return cols > 1 and color end, #header + 1)
     end
 
+    GUI(children[#header + 1].children[1]).Toggle(not Self.filter.id)
+
     -- Rolls
 
-    ---@type Roll[]
-    local rolls = Util(Addon.rolls).CopyFilter(function (roll)
-        return  (Self.filter.all or roll.isOwner or roll.item.isOwner or roll.item:GetEligible("player"))
-            and (Self.filter.done or (roll.status ~= Roll.STATUS_DONE))
-            and (Self.filter.awarded or not roll.winner)
-            and (Self.filter.traded or not roll.traded)
-            and (Self.filter.hidden or not roll.hidden and (
-                roll.status >= Roll.STATUS_RUNNING and (roll.isWinner or roll.isOwner or roll.item.isOwner or roll.bid ~= Roll.BID_PASS)
-                or (startManually or startLimit > 0) and roll:CanBeStarted()
-            ))
-    end).SortBy("id")()
+    local rolls = Self.GetRolls(true)
 
     GUI(Self.frames.empty).Toggle(Util.TblCount(rolls) == 0)
 
@@ -633,6 +663,7 @@ function Self.Update()
                 .Show()
             -- Toggle
             GUI(children[it()])
+                .Toggle(not Self.filter.id)
                 .SetImage("Interface\\Buttons\\UI-" .. (Self.open[roll.id] and "Minus" or "Plus") .. "Button-Up")
                 .SetUserData("roll", roll)
                 .SetUserData("details", details)
@@ -642,7 +673,7 @@ function Self.Update()
 
         -- Details
         local details = children[it()]
-        if Self.open[roll.id] then
+        if Self.open[roll.id] or Self.filter.id == roll.id then
             Self.UpdateDetails(details, roll)
         else
             details.frame:Hide()
@@ -872,8 +903,94 @@ function Self.UpdateDetails(details, roll)
 end
 
 -------------------------------------------------------
+--                    Update Items                   --
+-------------------------------------------------------
+
+function Self.UpdateItems()
+    local f
+    local items = Self.frames.items
+    local children = items.children
+    local size = 40
+
+    items:PauseLayout()
+
+    if #children == 0 then
+        f = GUI.CreateIcon(items, GUI.TooltipText, Self.ItemClick)
+        GUI(f).SetImageSize(size, size)
+            .SetWidth(size)
+            .SetHeight(size)
+            .SetImage(237285)
+            .SetUserData("text", L["SHOW_ALL"])
+    end
+
+    local rolls = Self.GetRolls()
+    local selected
+
+    local it = Util.Iter(1)
+    for _,roll in ipairs(rolls) do
+        if not children[it(0) + 1] then
+            f = GUI.CreateItemIcon(items, Self.ItemClick)
+            GUI(f).SetImageSize(size, size)
+                .SetWidth(size)
+                .SetHeight(size)
+                .SetUserData("anchor", "ANCHOR_LEFT")
+        end
+
+        f = GUI(children[it()])
+            .SetImage(roll.item.texture)
+            .SetUserData("id", roll.id)
+            .SetUserData("link", roll.item.link)()
+
+        if Self.filter.id == roll.id then
+            selected = f.frame
+        end
+    end
+
+    GUI(HIGHLIGHT)
+        .SetParent(selected or children[1].frame)
+        .SetAllPoints()
+
+    -- Release the rest
+    while children[it()] do
+        children[it(0)]:Release()
+        children[it(0)] = nil
+    end
+
+    Util.TblRelease(rolls)
+    items:ResumeLayout()
+    items:DoLayout()
+end
+
+-------------------------------------------------------
 --                      Helpers                      --
 -------------------------------------------------------
+
+---@return Roll[]
+function Self.GetRolls(filterById)
+    return Util(Addon.rolls).CopyFilter(function (roll)
+        if filterById and Self.filter.id then
+            return Self.filter.id == roll.id
+        else
+            return Self.TestRoll(roll)
+        end
+    end).SortBy("id")()
+end
+
+function Self.TestRoll(roll)
+    local ml = Session.GetMasterlooter()
+    local startManually = ml and Addon.db.profile.masterloot.rules.startManually
+    local startLimit = ml and Addon.db.profile.masterloot.rules.startLimit or 0
+
+    return  roll
+        and (Self.filter.all or roll.isOwner or roll.item.isOwner or roll.item:GetEligible("player"))
+        and (Self.filter.done or (roll.status ~= Roll.STATUS_DONE))
+        and (Self.filter.awarded or not roll.winner)
+        and (Self.filter.traded or not roll.traded)
+        and (Self.filter.hidden or not roll.hidden and (
+            roll.status >= Roll.STATUS_RUNNING and (roll.isWinner or roll.isOwner or roll.item.isOwner or roll.bid ~= Roll.BID_PASS)
+            or (startManually or startLimit > 0) and roll:CanBeStarted()
+        ))
+end
 
 -- Create a filter checkbox
 ---@param key string
@@ -902,6 +1019,12 @@ function Self.CreateFilterCheckbox(key)
     f:SetWidth(f.text:GetStringWidth() + 24)
 
     return f
+end
+
+function Self.ItemClick(self)
+    local id = self:GetUserData("id")
+    Self.filter.id = Self.filter.id ~= id and id or nil
+    Self.Update()
 end
 
 -- Roll status OnUpdate callback

@@ -428,6 +428,26 @@ function Self.CreateItemLabel(parent)
     return f
 end
 
+function Self.CreateIcon(parent, onEnter, onClick)
+    local f = Self("Icon")
+        .setCallback("OnEnter", onEnter)
+        .SetCallback("OnLeave", Self.TooltipHide)
+        .SetCallback("OnClick", function (...)
+            onClick(...)
+            Self.TooltipHide()
+        end)
+        .AddTo(parent)
+        .Show()()
+    f.image:SetPoint("TOP")
+    f.OnRelease = Self.ResetIcon
+
+    return f
+end
+
+function Self.CreateItemIcon(parent, onClick)
+    return Self.CreateIcon(parent, Self.TooltipItemLink, onClick)
+end
+
 -- Create an icon button
 ---@param parent Frame|Widget
 ---@param onClick function
@@ -436,23 +456,17 @@ end
 ---@param height number
 ---@return Icon
 function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
-    local f = Self("Icon")
-        .SetImage(icon:sub(1, 9) == "Interface" and icon or "Interface\\Buttons\\" .. icon .. "-Up")
-        .SetImageSize(width or 16, height or 16).SetHeight(16).SetWidth(16)
-        .SetCallback("OnClick", function (...)
+    return Self(
+        Self.CreateIcon(parent, Self.TooltipText, function (...)
             if desc then Addon:Debug("GUI.Click:IconButton", desc) end
             onClick(...)
-            GameTooltip:Hide()
         end)
-        .SetCallback("OnEnter", Self.TooltipText)
-        .SetCallback("OnLeave", Self.TooltipHide)
-        .SetUserData("text", desc)
-        .AddTo(parent)
-        .Show()()
-    f.image:SetPoint("TOP")
-    f.OnRelease = Self.ResetIcon
-
-    return f
+    )
+        .SetImage(icon:sub(1, 9) == "Interface" and icon or "Interface\\Buttons\\" .. icon .. "-Up")
+        .SetImageSize(width or 16, height or 16)
+        .SetHeight(16)
+        .SetWidth(16)
+        .SetUserData("text", desc)()
 end
 
 -- Arrange visible icon buttons
@@ -635,9 +649,9 @@ end
 -- Reset an icon widget so it can be released
 ---@param self Icon
 function Self.ResetIcon(self)
-    self.image:SetPoint("TOP", 0, -5)
     self.frame:SetFrameStrata("MEDIUM")
     self.frame:RegisterForClicks("LeftButtonUp")
+    self.image:SetPoint("TOP", 0, -5)
     self.OnRelease = nil
 end
 
@@ -1037,6 +1051,7 @@ local Fn = function (...)
             or f.frame and f.frame[k] and f.frame
             or f.image and f.image[k] and f.image
             or f.label and f.label[k] and f.label
+            or f.content and f.content[k] and f.content
         obj[k](obj, ...)
 
         -- Fix Label's stupid image anchoring
