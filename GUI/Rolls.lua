@@ -48,7 +48,7 @@ function Self.Show()
                 Self.status.width = self.frame:GetWidth()
                 Self.status.height = self.frame:GetHeight()
                 self:Release()
-                HIGHLIGHT:SetParent(UIParent)
+                GUI(HIGHLIGHT).SetParent(UIParent).Hide()
                 Util.TblWipe(Self.frames, Self.buttons, Self.open, Self.confirm)
             end)()
 
@@ -946,15 +946,16 @@ function Self.UpdateItems()
         end
     end
 
-    GUI(HIGHLIGHT)
-        .SetParent(selected or children[1].frame)
-        .SetAllPoints()
-
     -- Release the rest
     while children[it()] do
         children[it(0)]:Release()
         children[it(0)] = nil
     end
+
+    GUI(HIGHLIGHT)
+        .SetParent(selected or children[1].frame)
+        .SetAllPoints()
+        .Show()
 
     Util.TblRelease(rolls)
     items:ResumeLayout()
