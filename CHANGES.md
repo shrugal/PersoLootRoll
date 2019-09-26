@@ -1,6 +1,1 @@
-- Added prompt asking whether to enable automatic whispering on first bid
-- Added info message when masterloot offers are rejected due to missing permission
-- Added warning about freezing screen when showing the log
-- Made rolls window background a bit darker to improve readability
-- Unresolved rolls owned or bid on by the player are now shown in the actions list as "wait" entries
-- Moved chat message pattern generation to `RegisterEvents()` to take modifications by other addons into account
+- Updated interface version for 8.2.5
