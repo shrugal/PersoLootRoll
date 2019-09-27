@@ -63,7 +63,7 @@ end
 
 -- Figure out the channel and target for a message
 function Self.GetDestination(target)
-    local target = target or Self.TYPE_GROUP
+    target = target or Self.TYPE_GROUP
 
     if target == Self.TYPE_GROUP then
         if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
@@ -99,8 +99,7 @@ function Self.ShouldInitChat(target)
         end
 
         -- Check target
-        local target = c.whisper.target
-        local guild = Unit.GuildName(unit)
+        target = c.whisper.target
         local isGuild, isCommunity, isFriend = Unit.IsGuildMember(unit), Unit.IsClubMember(unit), Unit.IsFriend(unit)
 
         if isGuild or isCommunity or isFriend then
@@ -187,7 +186,7 @@ function Self.Listen(event, method, fromSelf, fromAll)
     Addon:RegisterComm(Self.GetPrefix(event), function (event, msg, channel, sender)
         msg = msg ~= "" and msg ~= " " and msg or nil
         local unit = Unit(sender)
-        if Addon:IsEnabled() and fromAll or Unit.InGroup(unit, not fromSelf) then
+        if Addon:IsEnabled() and (fromAll or Unit.InGroup(unit, not fromSelf)) then
             method(event, msg, channel, sender, unit)
         end
     end)
