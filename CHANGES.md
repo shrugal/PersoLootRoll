@@ -1,4 +1,1 @@
-- Added unit testing, they won't be included in releases but should help detect bugs early
-- Added item filter on the left side of the roll overview window
-- Updated readme
-- Includes updated translations
+- Updated interface version for 8.2.5

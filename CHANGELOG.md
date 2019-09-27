@@ -1,3 +1,9 @@
+Version 19-beta1
+- Added unit testing, they won't be included in releases but should help detect bugs early
+- Added item filter on the left side of the roll overview window
+- Updated readme
+- Includes updated translations
+
 Version 18.05
 - Added prompt asking whether to enable automatic whispering on first bid
 - Added info message when masterloot offers are rejected due to missing permission
