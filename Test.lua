@@ -2,12 +2,28 @@
 local Name = debug.getinfo(1).source:gsub("\\", "/"):match("([^/]+)/[^/]+$") or (os.getenv("PWD") or ""):match("[^/]+$")
 local Addon = {}
 
+-- Static info
+local BUILD = {"8.2.5", "32028", "Sep 30 2019", 80205}
+local LOCALE = "enUS"
+local REGION = 3
+local REALM = "Mal'Ganis"
+local REALM_CONNECTED = {"Echsenkessel", "Mal'Ganis", "Taerar"}
+local VERSION = "0-dev0"
+local FACTION = "Horde"
+local RACE = 8
+local CLASS = 8
+local LEVEL = 120
+local GUID = "Player-1612-054E4E80"
+
+local CLASSES = {"Warrior", "Paladin", "Hunter", "Rogue", "Priest", "Death Knight", "Shaman", "Mage", "Warlock", "Monk", "Druid", "Demon Hunter"}
+local RACES = {"Human", "Orc", "Dwarf", "Night Elf", "Undead", "Tauren", "Gnome", "Troll", "Goblin", "Blood Elf", "Draenei", "Fel Orc", "Naga", "Broken", "Skeleton", "Vrykul", "Tuskarr", "Forest Troll", "Taunka", "Northrend Skeleton", "Ice Troll", "Worgen", "Gilnean", "Pandaren", "Pandaren", "Pandaren", "Nightborne", "Highmountain Tauren", "Void Elf", "Lightforged Draenei", "Zandalari Troll", "Kul Tiran", "Human", "Dark Iron Dwarf", "Vulpera", "Mag'har Orc", "Mechagnome"}
+
+-- Options
 local options = {
     build = false,
     buildPath = ".release/" .. Name
 }
 
--- Parse args
 local key
 for i=1,select("#", ...) do
     local arg = select(i, ...)
@@ -190,7 +206,7 @@ hooksecurefunc = function (tbl, name, fn)
     tbl[name] = function (...) local r = {orig(...)} fn(...) return unpack(r) end
 end
 GetClassInfo = function (i)
-    local c = ({"Warrior", "Paladin", "Hunter", "Rogue", "Priest", "Death Knight", "Shaman", "Mage", "Warlock", "Monk", "Druid", "Demon Hunter"})[i]
+    local c = CLASSES[i]
     return c, c:upper():gsub(" ", "_"), i
 end
 string.split = function (del, str, n)
@@ -215,12 +231,12 @@ min = math.min
 ceil = math.ceil
 floor = math.floor
 
-GetLocale = Const("enUs")
-GetRealmName = Const("Mal'Ganis")
-GetCurrentRegion = Const(3)
-GetBuildInfo = Consts("8.2.0", "31478", "Aug 12 2019", 80200)
-GetAddOnMetadata = Val("0-dev0")
-GetAutoCompleteRealms = Const({"Echsenkessel", "Mal'Ganis", "Taerar"})
+GetLocale = Const(LOCALE)
+GetRealmName = Const(REALM)
+GetAutoCompleteRealms = Const(REALM_CONNECTED)
+GetCurrentRegion = Const(REGION)
+GetBuildInfo = Consts(unpack(BUILD))
+GetAddOnMetadata = Val(VERSION)
 GetTime = function (...) return math.floor(os.clock(...)) end
 GetInstanceInfo = Fn
 GetLootRollTimeLeft = Val(0)
@@ -233,11 +249,11 @@ SetItemRef = Fn
 UnitPopup_ShowMenu = Fn
 UnitName = function (v) return v ~= "" and v or nil end
 UnitFullName = UnitName
-UnitClass = Vals("Mage", "MAGE", 8)
-UnitRace = Vals("Troll", "Troll", 8)
-UnitFactionGroup = Vals("Horde", "Horde")
-UnitGUID = Val("Player-1612-054E4E80")
-UnitLevel = Val(120)
+UnitClass = Vals(GetClassInfo(CLASS))
+UnitRace = Vals(RACES[RACE], RACES[RACE], RACE)
+UnitFactionGroup = Vals(FACTION, FACTION)
+UnitGUID = Val(GUID)
+UnitLevel = Val(LEVEL)
 UnitIsUnit = function (a, b) return a and a == b end
 UnitExists = Val(true)
 UnitInParty = Val(false)
