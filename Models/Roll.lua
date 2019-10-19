@@ -17,7 +17,7 @@ Self.CLEAR = 1200
 -- Base timeout
 Self.TIMEOUT = 20
 -- Timeout increase per item
-Self.TIMEOUT_PER_ITEM = 10
+Self.TIMEOUT_PER_ITEM = 5
 -- How much longer should rolls be when in chill mode
 Self.TIMEOUT_CHILL_MODE = 2
 -- Seconds after a roll ended when it's still considered "recently" ended
