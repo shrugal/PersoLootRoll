@@ -332,6 +332,21 @@ function Self.Update()
 
         Self.UpdateRolls()
         Self.UpdateItems()
+
+        Self.DoLayout(false, true)
+    end
+end
+
+function Self.DoLayout(now, next, frame)
+    frame = frame or Self.frames.scroll
+
+    if frame then
+        if now then
+            frame:DoLayout()
+        end
+        if next then
+            Self:ScheduleTimer(frame.DoLayout, 0, frame)
+        end
     end
 end
 
@@ -529,8 +544,8 @@ function Self.UpdateRolls()
                         Self.UpdateDetails(details, roll)
                         self:SetImage("Interface\\Buttons\\UI-MinusButton-Up")
                     end
-                    self.parent.parent:DoLayout()
-                    Self:ScheduleTimer(self.parent.parent.DoLayout, 0, self.parent.parent)
+                    
+                    Self.DoLayout(true, true)
                 end)
                 f.image:SetPoint("TOP", 0, 2)
             end
