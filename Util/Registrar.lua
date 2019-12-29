@@ -43,7 +43,7 @@ end
 ---@return any
 function Self:Get(key)
     if self.idKey then
-        local i, v = Util.TblFindWhere(self.register, self.idKey, key)
+        local i, v = Util.Tbl.FindWhere(self.register, self.idKey, key)
         return v, i
     else
         return self.register[key]
@@ -69,7 +69,7 @@ function Self:Set(key, val, i)
         end
     end
 
-    Util.TblInsert(self.register, not self.idKey and key or i, val, not self.idKey or prev)
+    Util.Tbl.Insert(self.register, not self.idKey and key or i, val, not self.idKey or prev)
     self:SendMessage(Self.EVENT_SET, key, val, prev, i or #self.register)
 
     return val
@@ -97,7 +97,7 @@ function Self:Remove(...)
     for _,key in Util.Each(...) do
         local val, i = self:Get(key)
         if val ~= nil then
-            Util.TblRemove(self.register, not self.idKey and key or i, not self.idKey)
+            Util.Tbl.Remove(self.register, not self.idKey and key or i, not self.idKey)
             self:SendMessage(Self.EVENT_REMOVE, key, val)
         end
     end
@@ -115,16 +115,25 @@ end
 -- Get a list of keys
 function Self:Keys()
     if self.idKey then
-        return Util(self.register).Copy().Pluck(self.idKey)()
+        return Util(self.register):Copy():Pluck(self.idKey)()
     else
-        return Util.TblKeys(self.register)
+        return Util.Tbl.Keys(self.register)
     end
 end
 
 -- Makes Util table functions available on the Registrar instance
 local k
-local fn = function (self, ...) return Util["Tbl" .. k](self.register, ...) end
-setmetatable(Self, {__index = function (self, key) if Util["Tbl" .. key] then k = key return fn end end})
+local fn = function (self, ...)
+    return Util.Tbl[k](self.register, ...)
+end
+setmetatable(Self, {
+    __index = function (self, key)
+        if Util.Tbl[key] then
+            k = key
+            return fn
+        end
+    end
+})
 
 -- Helper to fire events
 ---@param msg string

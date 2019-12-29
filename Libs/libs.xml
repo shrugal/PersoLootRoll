@@ -16,6 +16,7 @@
 	<Include file="AceSerializer-3.0\AceSerializer-3.0.xml"/>
 
 	<!-- Other -->
+	<Include file="LibUtil\LibUtil.xml"/>
 	<Include file="LibDataBroker-1.1\LibDataBroker-1.1.lua"/>
 	<Include file="LibDBIcon-1.0\lib.xml"/>	
 	<Include file="LibRealmInfo\LibRealmInfo.lua"/>

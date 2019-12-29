@@ -376,7 +376,7 @@ function Self.UpdateTrinkets(tier, isRaid, instance, difficulty)
     if tier == 1 and isRaid == 0 and instance == 1 and difficulty == 1 then
         Addon:Info("Updating trinket list from Dungeon Journal ...")
         wipe(Self.TRINKETS)
-        Util.TblInspect(Self.TRINKETS)
+        Util.Tbl.Inspect(Self.TRINKETS)
     end
 
     -- Go through all tiers, dungeon/raid, instances and difficulties

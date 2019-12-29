@@ -152,31 +152,31 @@ Self.AWARD_METHODS = {Self.AWARD_VOTES, Self.AWARD_BIDS, Self.AWARD_ROLLS, Self.
 ---@param fn function   A callback that removes everyone but the possible winners from the candidates list, with parameters: roll, candidates
 ---@param before string The custom method will be applied before this method (optional: defaults to Self.AWARD_RANDOM)
 Self.AwardMethods = Util.Registrar.New("ROLL_AWARD_METHOD", "key", function (key, fn, before)
-    return Util.TblHash("key", key, "fn", fn), select(2, Self.AwardMethods:Get(before or Self.AWARD_RANDOM))
+    return Util.Tbl.Hash("key", key, "fn", fn), select(2, Self.AwardMethods:Get(before or Self.AWARD_RANDOM))
 end)
 
 -- VOTES
 Self.AwardMethods:Add(Self.AWARD_VOTES, function (roll, candidates)
-    Util.TblMap(candidates, Util.FnZero)
+    Util.Tbl.Map(candidates, Util.Fn.Zero)
     for _,to in pairs(roll.votes) do candidates[to] = (candidates[to] or 0) + 1 end
-    Util.TblOnly(candidates, Util.TblMax(candidates))
+    Util.Tbl.Only(candidates, Util.Tbl.Max(candidates))
 end)
 
 -- BIDS
 Self.AwardMethods:Add(Self.AWARD_BIDS, function (roll, candidates)
     for unit in pairs(candidates) do candidates[unit] = roll.bids[unit] end
-    Util.TblOnly(candidates, Util.TblMin(candidates))
+    Util.Tbl.Only(candidates, Util.Tbl.Min(candidates))
 end)
 
 -- ROLLS
 Self.AwardMethods:Add(Self.AWARD_ROLLS, function (roll, candidates)
     for unit in pairs(candidates) do candidates[unit] = roll.rolls[unit] or random(100) end
-    Util.TblOnly(candidates, Util.TblMax(candidates))
+    Util.Tbl.Only(candidates, Util.Tbl.Max(candidates))
 end)
 
 -- RANDOM
 Self.AwardMethods:Add(Self.AWARD_RANDOM, function (_, candidates)
-    Util.TblSelect(candidates, Util.TblRandomKey(candidates))
+    Util.Tbl.Select(candidates, Util.Tbl.RandomKey(candidates))
 end)
 
 -------------------------------------------------------
@@ -242,7 +242,7 @@ end
 -- Shortcut to search rolls by key-value pairs
 ---@return Roll
 function Self.FindWhere(...)
-    return Util.TblFirstWhere(Addon.rolls, ...)
+    return Util.Tbl.FirstWhere(Addon.rolls, ...)
 end
 
 -- Create and add a roll to the list
@@ -447,7 +447,7 @@ end
 
 -- Create a test roll
 function Self.Test()
-    local slots = Util.Tbl()
+    local slots = Util.Tbl.New()
     for i,v in pairs(Item.SLOTS) do
         for j,slot in pairs(v) do
             if GetInventoryItemLink("player", slot) then
@@ -456,7 +456,7 @@ function Self.Test()
         end
     end
 
-    local slot = Util.TblRandom(slots)
+    local slot = Util.Tbl.Random(slots)
     if slot then
         local roll = Self.Add(Item.FromSlot(slot, "player", true), "player")
         roll.isTest = true
@@ -601,7 +601,7 @@ function Self:Restart(started, pending)
         self.timers[i] = nil
     end
 
-    Util.TblExcept(Addon.lastWhisperedRoll, self.id, true)
+    Util.Tbl.Except(Addon.lastWhisperedRoll, self.id, true)
 
     self:SetStatus(Self.STATUS_PENDING)
     Addon:SendMessage(Self.EVENT_RESTART, self)
@@ -637,7 +637,7 @@ function Self:Bid(bid, fromUnit, roll, isImport)
     -- Handle custom answers
     local answer, answers = 10*bid - 10*floor(bid), Session.rules["answers" .. floor(bid)]
     if bid == floor(bid) and answers and Session.IsMasterlooter(self.owner) then
-        local i = Util.TblFind(answers, bid == Self.BID_NEED and Self.ANSWER_NEED or Self.ANSWER_GREED)
+        local i = Util.Tbl.Find(answers, bid == Self.BID_NEED and Self.ANSWER_NEED or Self.ANSWER_GREED)
         if i then bid, answer = bid + (i / 10), i end
     end
 
@@ -794,7 +794,6 @@ function Self:End(winner, cleanup, force)
             end
         end
 
-        local statusSend = false
         local prevWinner = self.winner
 
         -- Set winner
@@ -812,7 +811,6 @@ function Self:End(winner, cleanup, force)
                 -- It has already been traded
                 if self.winner == self.item.owner then
                     self:OnTraded(self.winner)
-                    statusSend = true
                 end
 
                 -- Let everyone know
@@ -892,14 +890,14 @@ function Self:SetStatus(status)
     self.status = status
 
     if self.status ~= prev then
-        Self.startedManually = Self.startedManually and Util.TblFindFn(Addon.rolls, fn) ~= nil
+        Self.startedManually = Self.startedManually and Util.Tbl.FindFn(Addon.rolls, fn) ~= nil
 
         Addon:SendMessage(Self.EVENT_STATUS, self, self.status, prev)
     end
 end
 
 -- Check if we can start other pending rolls after status updates
-Addon:RegisterMessage(Self.EVENT_STATUS, Util.FnDebounce(function (_, roll)
+Addon:RegisterMessage(Self.EVENT_STATUS, Util.Fn.Debounce(function (_, roll)
     if roll.isOwner then
         for i,roll in pairs(Addon.rolls) do
             if roll.isOwner and roll:CanBeRun() and roll:Validate() then
@@ -915,21 +913,21 @@ end, 0))
 
 -- Figure out a winner
 function Self:DetermineWinner()
-    local candidates = Util.TblCopyExcept(self.bids, Self.BID_PASS, true)
+    local candidates = Util.Tbl.CopyExcept(self.bids, Self.BID_PASS, true)
 
     for i,method in Self.AwardMethods:Iter() do
         method.fn(self, candidates)
 
-        if Util.TblCount(candidates) == 1 then
-            return next(candidates), Util.TblRelease(candidates)
+        if Util.Tbl.Count(candidates) == 1 then
+            return next(candidates), Util.Tbl.Release(candidates)
         end
     end
 
-    Util.TblRelease(candidates)
+    Util.Tbl.Release(candidates)
 
     -- Check for disenchanter
     if Session.GetMasterlooter() then
-        local dis = Util.TblCopyFilter(Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()] or Util.TBL_EMPTY, Unit.InGroup, true, true, true)
+        local dis = Util.Tbl.CopyFilter(Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()] or Util.Tbl.EMPTY, Unit.InGroup, true, true, true)
         if next(dis) then
             for unit in pairs(dis) do self:Bid(Self.BID_DISENCHANT, unit, nil, true) end
             return self:DetermineWinner()
@@ -985,7 +983,7 @@ function Self:ValidateBid(bid, fromUnit, roll, isImport, answer, answers)
     elseif isImport then
         return true
     -- Check if it's a valid bid
-    elseif not Util.TblFind(Self.BIDS, floor(bid)) or Session.GetMasterlooter(self.owner) and answer > 0 and not (answers and answers[answer]) then
+    elseif not Util.Tbl.Find(Self.BIDS, floor(bid)) or Session.GetMasterlooter(self.owner) and answer > 0 and not (answers and answers[answer]) then
         if Unit.IsSelf(fromUnit) then
             Addon:Error(L["ERROR_ROLL_BID_UNKNOWN_SELF"])
         else
@@ -1056,7 +1054,7 @@ function Self:ShowRollFrame()
 
             -- TODO: This is required to circumvent a bug in ElvUI
             if self.shown then
-                Util.TblList(GroupLootContainer.rollFrames)
+                Util.Tbl.List(GroupLootContainer.rollFrames)
                 GroupLootContainer_Update(GroupLootContainer)
             end
         else
@@ -1072,7 +1070,7 @@ function Self:HideRollFrame()
         GroupLootContainer_RemoveFrame(GroupLootContainer, frame)
 
         -- TODO: This is required to circumvent a bug in ElvUI
-        Util.TblList(GroupLootContainer.rollFrames)
+        Util.Tbl.List(GroupLootContainer.rollFrames)
         GroupLootContainer_Update(GroupLootContainer)
     end
 end
@@ -1097,11 +1095,11 @@ end
 ---@param unit string
 function Self:AddChat(msg, unit)
     unit = unit or "player"
-    local c = ChatTypeInfo[Unit.IsSelf(unit) and "WHISPER_INFORM" or "WHISPER"] or Util.TBL_EMPTY
-    c = Util.StrColor(c.r, c.g, c.b)
+    local c = ChatTypeInfo[Unit.IsSelf(unit) and "WHISPER_INFORM" or "WHISPER"] or Util.Tbl.EMPTY
+    c = Util.Str.Color(c.r, c.g, c.b)
     msg = ("|c%s[|r%s|c%s]: %s|r"):format(c, Unit.ColoredShortenedName(unit), c, msg)
 
-    self.chat = self.chat or Util.Tbl()
+    self.chat = self.chat or Util.Tbl.New()
     tinsert(self.chat, msg)
 
     Addon:SendMessage(Self.EVENT_CHAT, self, msg, unit)
@@ -1139,7 +1137,7 @@ function Self:Advertise(manually, silent)
     self:ExtendTimeLeft()
 
     -- Get the next free roll slot
-    local concise, slot = self:ShouldBeConcise() and Util.TblCountFn(Addon.rolls, Self.IsActive) <= 1
+    local concise, slot = self:ShouldBeConcise() and Util.Tbl.CountFn(Addon.rolls, Self.IsActive) <= 1
     for i=concise and 0 or 1,49 do
         if not Self.FindWhere("status", Self.STATUS_RUNNING, "posted", i) then
             slot = i break
@@ -1168,7 +1166,7 @@ end
 ---@param full boolean
 function Self:SendStatus(noCheck, target, full)
     if (noCheck or self.isOwner) and not self.isTest then
-        local data = Util.Tbl()
+        local data = Util.Tbl.New()
         data.owner = Unit.FullName(self.owner)
         data.ownerId = self.ownerId
         data.itemOwnerId = self.itemOwnerId
@@ -1179,7 +1177,7 @@ function Self:SendStatus(noCheck, target, full)
         data.posted = self.posted
         data.winner = self.winner and Unit.FullName(self.winner)
         data.traded = self.traded and Unit.FullName(self.traded)
-        data.item = Util.TblHash(
+        data.item = Util.Tbl.Hash(
             "link", self.item.link,
             "owner", Unit.FullName(self.item.owner),
             "isTradable", Util.Check(self.item.isTradable == false and not Addon.DEBUG, false, nil),
@@ -1188,18 +1186,18 @@ function Self:SendStatus(noCheck, target, full)
 
         if full then
             if Addon.db.profile.bidPublic or Session.rules.bidPublic or Session.IsOnCouncil(target) then
-                data.bids = Util.TblMapKeys(self.bids, Unit.FullName)
-                data.rolls = Util.TblMapKeys(self.rolls, Unit.FullName)
+                data.bids = Util.Tbl.MapKeys(self.bids, Unit.FullName)
+                data.rolls = Util.Tbl.MapKeys(self.rolls, Unit.FullName)
             end
 
             if Session.rules.votePublic or Session.IsOnCouncil(target) then
-                data.votes = Util(self.votes).MapKeys(Unit.FullName).Map(Unit.FullName)()
+                data.votes = Util(self.votes):MapKeys(Unit.FullName):Map(Unit.FullName)()
             end
         end
 
         Comm.SendData(Comm.EVENT_ROLL_STATUS, data, target or Comm.TYPE_GROUP)
 
-        Util.TblRelease(true, data)
+        Util.Tbl.Release(true, data)
     end
 end
 
@@ -1338,11 +1336,11 @@ end
 function Self:CanBeAwardedRandomly()
     if not (self.status == Self.STATUS_DONE and self:CanBeAwarded(true)) then
         return false
-    elseif Util.TblCountExcept(self.bids, Self.BID_PASS) > 0 then
+    elseif Util.Tbl.CountExcept(self.bids, Self.BID_PASS) > 0 then
         return true
     elseif self:HasMasterlooter() then
         local disenchanter = Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()]
-        for name in pairs(disenchanter or Util.TBL_EMPTY) do
+        for name in pairs(disenchanter or Util.Tbl.EMPTY) do
             if Unit.InGroup(disenchanter) then
                 return true
             end
@@ -1377,7 +1375,7 @@ function Self:UnitCanBid(unit, bid, checkIlvl)
     elseif not self.bids[unit] and self:UnitCanWin(unit, true, checkIlvl) then
         if self.status == Self.STATUS_DONE then
             -- Only non-pass bids on done rolls, and only if there are no non-pass bids
-            return bid ~= Self.BID_PASS and Util.TblCountExcept(self.rolls, Self.BID_PASS) == 0
+            return bid ~= Self.BID_PASS and Util.Tbl.CountExcept(self.rolls, Self.BID_PASS) == 0
         else
             return true
         end
@@ -1421,7 +1419,7 @@ function Self:CanBeRun(manually)
         return false
     elseif startManually and not (startLimit > 0 and Self.startedManually) then
         return false
-    elseif startLimit > 0 and Util.TblCountWhere(Addon.rolls, "isOwner", true, "status", Self.STATUS_RUNNING) >= startLimit then
+    elseif startLimit > 0 and Util.Tbl.CountWhere(Addon.rolls, "isOwner", true, "status", Self.STATUS_RUNNING) >= startLimit then
         return false
     else
         return true
@@ -1455,7 +1453,7 @@ function Self:GetActionRequired()
         if self.item.isOwner and self.winner or self.isWinner then
             return Self.ACTION_TRADE
         end
-        if not self.winner and Util.TblCountExcept(self.bids, Self.BID_PASS) > 0 then
+        if not self.winner and Util.Tbl.CountExcept(self.bids, Self.BID_PASS) > 0 then
             if self.status == Self.STATUS_DONE then
                 if self:CanBeAwarded(true) then
                     return Self.ACTION_AWARD

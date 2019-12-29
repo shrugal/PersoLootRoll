@@ -90,9 +90,9 @@ function Self.SetRules(mldb)
     Self.mldb = mldb or Self.mldb
 
     if Self.mldb then
-        local needAnswers, greedAnswers = Util.Tbl(), Util.Tbl()
+        local needAnswers, greedAnswers = Util.Tbl.New(), Util.Tbl.New()
         for i=1,Self.mldb.numButtons do
-            local answer = Util.TblGet(Self.mldb.buttons.default, i, "text")
+            local answer = Util.Tbl.Get(Self.mldb.buttons.default, i, "text")
             if answer then
                 tinsert((answer == GREED or greedAnswers[1]) and greedAnswers or needAnswers, answer)
             end
@@ -105,7 +105,7 @@ function Self.SetRules(mldb)
             votePublic = true, -- not Self.mldb.anonymousVoting,
             answers1 = needAnswers,
             answers2 = greedAnswers,
-            council = Session.rules.council or Util.Tbl()
+            council = Session.rules.council or Util.Tbl.New()
         })
     else
         Self.Send(Self.CMD_RULES_REQ)
@@ -168,9 +168,9 @@ function Self.Send(cmd, target, ...)
     if not Self:IsEnabled() then return end
     print("RCLC:OUT", cmd, target, ...)
 
-    local data = Util.Tbl(...)
+    local data = Util.Tbl.New(...)
     Comm.Send(Self.PREFIX, Self:Serialize(cmd, data), target)
-    Util.TblRelease(data)
+    Util.Tbl.Release(data)
 end
 
 -- Process incoming RCLC message
@@ -260,7 +260,7 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
         -- SESSION_START/SESSION_ADD
         elseif Util.In(cmd, Self.CMD_SESSION_START, Self.CMD_SESSION_ADD, Self.CMD_SYNC) then
             Util.Dump(data[1])
-            local ack = Util.TblHash("gear1", Util.Tbl(), "gear2", Util.Tbl(), "diff", Util.Tbl(), "response", Util.Tbl())
+            local ack = Util.Tbl.Hash("gear1", Util.Tbl.New(), "gear2", Util.Tbl.New(), "diff", Util.Tbl.New(), "response", Util.Tbl.New())
 
             for sId,v in pairs(data[1]) do
                 sId = v.session or sId
@@ -274,16 +274,16 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
                     ack.diff[sId] = (roll.item:GetBasicInfo().level or 0) - max(Item.GetInfo(gear[1], "level") or 0, Item.GetInfo(gear[2], "level") or 0) -- TODO: This is wrong when slots are not filled
                     ack.response[sId] = not roll.item:GetEligible("player") or nil
 
-                    if not roll.item.isRelic then Util.TblRelease(gear) end
+                    if not roll.item.isRelic then Util.Tbl.Release(gear) end
                 end
             end
 
-            if Util.TblCount(ack.diff) > 0 then
+            if Util.Tbl.Count(ack.diff) > 0 then
                 local spec, ilvl = GetSpecializationInfo(GetSpecialization()), select(2, GetAverageItemLevel())
                 Self.Send(Self.CMD_SESSION_ACK, Comm.TYPE_GROUP, Unit.FullName("player"), spec, ilvl, ack)
             end
 
-            Util.TblRelease(1, ack)
+            Util.Tbl.Release(1, ack)
 
         -- SESSION_END
         elseif cmd == Self.CMD_SESSION_END then
@@ -393,7 +393,7 @@ end
 ---@param rollResult integer
 ---@param isImport boolean
 function Self:ROLL_BID(_, roll, bid, fromUnit, rollResult, isImport)
-    local sId = Util.TblFind(Self.session, roll)
+    local sId = Util.Tbl.Find(Self.session, roll)
     if sId and Unit.IsSelf(fromUnit) and not isImport then
         Self.Send(Self.CMD_ROLL_BID, Comm.TYPE_GROUP, sId, Unit.FullName("player"), {response = Self.BidToResponse(roll.bid)})
     end

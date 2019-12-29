@@ -291,7 +291,7 @@ function Self.EnableChatLinksHook()
             local title, text = string.split(":", args)
             GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
             GameTooltip:ClearLines()
-            if not Util.StrIsEmpty(title) then
+            if not Util.Str.IsEmpty(title) then
                 GameTooltip:AddLine(Comm.UnescapeString(title), 1, .82, 0)
             end
             GameTooltip:AddLine(Comm.UnescapeString(text), 1, 1, 1, true)
@@ -338,7 +338,7 @@ function Self.EnableUnitMenusHook()
             if UIDROPDOWNMENU_MENU_LEVEL == 1 then
                 button:Hide()
 
-                if Util.In(menu, menus) and Util.TblFirst(Self.rolls, "CanBeAwardedTo", nil, nil, unit, true) then
+                if Util.In(menu, menus) and Util.Tbl.First(Self.rolls, "CanBeAwardedTo", nil, nil, unit, true) then
                     local parent = _G["DropDownList1"]
                     local placed = false
                     

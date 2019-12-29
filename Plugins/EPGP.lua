@@ -54,7 +54,7 @@ end
 ---@return number
 function Self.UnitPR(unit)
     local ep, gp = EPGP:GetEPGP(Unit.FullName(unit))
-    return ep and gp and gp ~= 0 and Util.NumRound(ep/gp, 2) or nil
+    return ep and gp and gp ~= 0 and Util.Num.Round(ep/gp, 2) or nil
 end
 
 -- Check if a unit has enough EP
@@ -71,7 +71,7 @@ function Self.RollGP(roll)
         return 0
     else
         local bid, weights = roll.bids[roll.winner], Self.db.profile.bidWeights
-        return Util.NumRound((LGP:GetValue(roll.item.link) or 0) * (weights[bid] or weights[floor(bid)] or 0))
+        return Util.Num.Round((LGP:GetValue(roll.item.link) or 0) * (weights[bid] or weights[floor(bid)] or 0))
     end
 end
 
@@ -83,10 +83,10 @@ end
 ---@param candidates table
 function Self.DetermineWinner(_, candidates)
     Util(candidates)
-        .Map(function (unit) return Self.UnitHasMinEP(unit) and 1 or 0 end, true, true)
-        .Only(Util.TblMax(candidates))
-        .Map(function (unit) return Self.UnitPR(unit) or 0 end, true, true)
-        .Only(Util.TblMax(candidates))
+        :Map(function (unit) return Self.UnitHasMinEP(unit) and 1 or 0 end, true, true)
+        :Only(Util.Tbl.Max(candidates))
+        :Map(function (unit) return Self.UnitPR(unit) or 0 end, true, true)
+        :Only(Util.Tbl.Max(candidates))
 end
 
 -- Add EP to the unit's account
@@ -137,7 +137,7 @@ function Self.GetBidWeightOptions(bid, it)
         if answers and answers[info.arg] and answers[info.arg] ~= answer then
             return answers[info.arg]
         else
-            return Util.StrJoin(" ", not (info.arg == 0 and answers and Util.TblFind(answers, answer)) and L["ROLL_BID_" .. bid], info.arg == 0 and "(" .. DEFAULT .. ")")
+            return Util.Str.Join(" ", not (info.arg == 0 and answers and Util.Tbl.Find(answers, answer)) and L["ROLL_BID_" .. bid], info.arg == 0 and "(" .. DEFAULT .. ")")
         end
     end
     local get = function (info)
@@ -208,8 +208,8 @@ function Self.RegisterOptions()
                     desc = L["EPGP_OPT_AWARD_BEFORE_DESC"],
                     type = "select",
                     order = it(),
-                    values = Util.TblCopy(Roll.AWARD_METHODS, function (v) return L["ROLL_AWARD_" .. v] end),
-                    get = function () return Util.TblFind(Roll.AWARD_METHODS, Self.db.profile.awardBefore) end,
+                    values = Util.Tbl.Copy(Roll.AWARD_METHODS, function (v) return L["ROLL_AWARD_" .. v] end),
+                    get = function () return Util.Tbl.Find(Roll.AWARD_METHODS, Self.db.profile.awardBefore) end,
                     set = function (_, val)
                         val = Roll.AWARD_METHODS[val] or Roll.AWARD_BIDS
 
@@ -232,7 +232,7 @@ function Self.RegisterOptions()
             -- Import
             Self.db.profile.awardBefore = Util.Default(data.epgpAwardBefore, Self.db.defaults.awardBefore)
 
-            Self.db.profile.bidWeights = Util.TblCopy(Self.db.defaults.bidWeights)
+            Self.db.profile.bidWeights = Util.Tbl.Copy(Self.db.defaults.bidWeights)
             if data.epgpBidWeights then
                 for i,v in data.epgpBidWeights:gmatch("(-?%d*%.?%d*) ?= ?(-?%d*%.?%d*)") do
                     i, v = tonumber(i), tonumber(v)
@@ -245,10 +245,10 @@ function Self.RegisterOptions()
                 data.epgpAwardBefore = Self.db.profile.awardBefore
             end
 
-            if not Util.TblEquals(Self.db.profile.bidWeights, Self.db.defaults.bidWeights) then
+            if not Util.Tbl.Equals(Self.db.profile.bidWeights, Self.db.defaults.bidWeights) then
                 data.epgpBidWeights = Util(Self.db.profile.bidWeights)
-                    .Copy(function (v, i) return v ~= Self.db.defaults.bidWeights[i] and ("%s=%s"):format(i, v) or nil end, true)
-                    .Concat(", ")()
+                    :Copy(function (v, i) return v ~= Self.db.defaults.bidWeights[i] and ("%s=%s"):format(i, v) or nil end, true)
+                    :Concat(", ")()
             end
         end
     end)

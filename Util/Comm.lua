@@ -73,7 +73,7 @@ function Self.GetDestination(target)
         elseif IsInGroup() then
             return Self.TYPE_PARTY
         end
-    elseif Util.TblFind(Self.TYPES, target) then
+    elseif Util.Tbl.Find(Self.TYPES, target) then
         return target
     else
         return Self.TYPE_WHISPER, Unit.Name(target)
@@ -139,7 +139,7 @@ function Self.Chat(msg, target)
     if not channel then
         return
     elseif channel ~= Self.TYPE_WHISPER then
-        msg = Util.StrPrefix(msg, Self.CHAT_PREFIX)
+        msg = Util.Str.Prefix(msg, Self.CHAT_PREFIX)
     end
 
     if player then
@@ -236,7 +236,7 @@ function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport)
     if not isImport and not roll.isTest then
         -- Inform others
         if roll.isOwner then
-            local data = Util.TblHash("ownerId", roll.ownerId, "bid", bid, "roll", randomRoll, "fromUnit", Unit.FullName(fromUnit))
+            local data = Util.Tbl.Hash("ownerId", roll.ownerId, "bid", bid, "roll", randomRoll, "fromUnit", Unit.FullName(fromUnit))
 
             -- Send to all or the council
             if Util.Check(Session.GetMasterlooter(), Session.rules.bidPublic, Addon.db.profile.bidPublic) then
@@ -247,11 +247,11 @@ function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport)
                 end
             end
 
-            Util.TblRelease(data)
+            Util.Tbl.Release(data)
         -- Send bid to owner
         elseif fromSelf then
             if roll.ownerId then
-                Self.SendData(Self.EVENT_BID, Util.TblHash("ownerId", roll.ownerId, "bid", bid), roll.owner)
+                Self.SendData(Self.EVENT_BID, Util.Tbl.Hash("ownerId", roll.ownerId, "bid", bid), roll.owner)
             elseif bid ~= Roll.BID_PASS and not roll:GetOwnerAddon() then
                 local owner, link = roll.item.owner, roll.item.link
 
@@ -288,7 +288,7 @@ function Self.RollVote(roll, vote, fromUnit, isImport)
     -- Inform others
     if not isImport and not roll.isTest then
         if roll.isOwner then
-            local data = Util.TblHash("ownerId", roll.ownerId, "vote", Unit.FullName(vote), "fromUnit", Unit.FullName(fromUnit))
+            local data = Util.Tbl.Hash("ownerId", roll.ownerId, "vote", Unit.FullName(vote), "fromUnit", Unit.FullName(fromUnit))
 
             -- Send to all or the council
             if Session.rules.votePublic then
@@ -299,10 +299,10 @@ function Self.RollVote(roll, vote, fromUnit, isImport)
                 end
             end
 
-            Util.TblRelease(data)
+            Util.Tbl.Release(data)
         elseif fromSelf then
             -- Send to owner
-            Self.SendData(Self.EVENT_VOTE, Util.TblHash("ownerId", roll.ownerId, "vote", Unit.FullName(vote)), Session.GetMasterlooter())
+            Self.SendData(Self.EVENT_VOTE, Util.Tbl.Hash("ownerId", roll.ownerId, "vote", Unit.FullName(vote)), Session.GetMasterlooter())
         end
     end
 end
@@ -388,7 +388,7 @@ function Self.GetBidLink(roll, unit, bid)
 end
 
 function Self.GetTooltipLink(text, title, abbr)
-    abbr = abbr and Self.EscapeString(abbr) or Util.StrAbbr(Self.EscapeString(text), 15)
+    abbr = abbr and Self.EscapeString(abbr) or Util.Str.Abbr(Self.EscapeString(text), 15)
     text = Self.EscapeString(text, true)
     title = Self.EscapeString(title or "", true)
     return ("|cff4D85E6|Hplrtooltip:%s:%s|h[%s]|h|r"):format(title, text, abbr)

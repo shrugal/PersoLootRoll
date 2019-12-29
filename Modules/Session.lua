@@ -153,7 +153,7 @@ function Self.UnitAllow(unit)
     end
 
     -- Check whitelist
-    for i,v in pairs(Addon.db.profile.masterloot.whitelists[GetRealmName()] or Util.TBL_EMPTY) do
+    for i,v in pairs(Addon.db.profile.masterloot.whitelists[GetRealmName()] or Util.Tbl.EMPTY) do
         if UnitIsUnit(unit, i) then return true end
     end
 
@@ -259,7 +259,7 @@ function Self.RefreshRules()
         Self.SetRules()
     end
 end
-Self.RefreshRules = Util.FnDebounce(Self.RefreshRules, 0.1, true)
+Self.RefreshRules = Util.Fn.Debounce(Self.RefreshRules, 0.1, true)
 
 -- Check if the unit is on the loot council
 ---@param refresh boolean
@@ -393,14 +393,14 @@ Comm.Listen(Comm.EVENT_MASTERLOOT_DEC, function (event, player, channel, sender,
     player = Unit(player)
 
     -- Clear the player's masterlooter
-    if Self.IsMasterlooter(unit) and (Util.StrIsEmpty(player) or UnitIsUnit(player, "player")) then
+    if Self.IsMasterlooter(unit) and (Util.Str.IsEmpty(player) or UnitIsUnit(player, "player")) then
         Self.SetMasterlooter(nil, nil, true)
     elseif player == unit or Self.masterlooting[player] == unit then
         Self.SetMasterlooting(player, nil)
     end
 
     -- Clear everybody who has the sender as masterlooter
-    if Util.StrIsEmpty(player) then
+    if Util.Str.IsEmpty(player) then
         Self.ClearMasterlooting(unit)
     end
 end)

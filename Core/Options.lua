@@ -157,7 +157,7 @@ Self.CAT_MESSAGES = "MESSAGES"
 ---@param options table|function    Options data, either a table or a callback with parameters: cat, path
 ---@param sync function(data, isImport, cat, path)  Callback handling import/export operations
 Self.CustomOptions = Util.Registrar.New("OPTION", nil, function (key, cat, path, options, sync)
-    return Util.TblHash("key", key, "cat", cat, "path", path, "options", options, "sync", sync)
+    return Util.Tbl.Hash("key", key, "cat", cat, "path", path, "options", options, "sync", sync)
 end)
 
 -- Other
@@ -207,9 +207,9 @@ end
 function Self.ApplyCustomOptions(cat, options)
     for _,entry in Self.CustomOptions:Iter() do
         if entry.cat == cat then
-            local data = Util.FnVal(entry.options, cat, entry.path)
+            local data = Util.Fn.Val(entry.options, cat, entry.path)
             data.order = data.order or Self.it()
-            Util.TblSet(options, entry.path, data)
+            Util.Tbl.Set(options, entry.path, data)
         end
     end
 end
@@ -417,8 +417,8 @@ function Self.RegisterGeneral()
                     trinkets = L["TRINKETS"],
                     rings = L["RINGS"]
                 },
-                set = function (_, key, val) Addon.db.profile.filter["ilvlThreshold" .. Util.StrUcFirst(key)] = val end,
-                get = function (_, key) return Addon.db.profile.filter["ilvlThreshold" .. Util.StrUcFirst(key)] end,
+                set = function (_, key, val) Addon.db.profile.filter["ilvlThreshold" .. Util.Str.UcFirst(key)] = val end,
+                get = function (_, key) return Addon.db.profile.filter["ilvlThreshold" .. Util.Str.UcFirst(key)] end,
                 width = Self.WIDTH_THIRD
             },
             ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
@@ -520,7 +520,7 @@ function Self.RegisterMessages()
                         set = function (_, val)
                             local c = Addon.db.profile.messages.group
                             c.announce = val
-                            local _ = not val or Util.TblFind(c.groupType, true) or Util.TblMap(c.groupType, Util.FnTrue)
+                            local _ = not val or Util.Tbl.Find(c.groupType, true) or Util.Tbl.Map(c.groupType, Util.Fn.True)
                         end,
                         get = function () return Addon.db.profile.messages.group.announce end,
                         width = Self.WIDTH_THIRD * 2
@@ -535,7 +535,7 @@ function Self.RegisterMessages()
                         set = function (_, key, val)
                             local c = Addon.db.profile.messages.group
                             c.groupType[Self.groupKeys[key]] = val
-                            c.announce = Util.TblFind(c.groupType, true) and c.announce or false
+                            c.announce = Util.Tbl.Find(c.groupType, true) and c.announce or false
                         end,
                         get = function (_, key) return Addon.db.profile.messages.group.groupType[Self.groupKeys[key]] end,
                         width = Self.WIDTH_THIRD
@@ -567,8 +567,8 @@ function Self.RegisterMessages()
                         set = function (_, val)
                             local c = Addon.db.profile.messages.whisper
                             c.ask, c.askPrompted = val, true
-                            if val and not Util.TblFind(c.groupType, true) then Util.TblMap(c.groupType, Util.FnTrue) end
-                            if val and not Util.TblFind(c.target, true) then Util.TblMap(c.target, Util.FnTrue) end
+                            if val and not Util.Tbl.Find(c.groupType, true) then Util.Tbl.Map(c.groupType, Util.Fn.True) end
+                            if val and not Util.Tbl.Find(c.target, true) then Util.Tbl.Map(c.target, Util.Fn.True) end
                         end,
                         get = function () return Addon.db.profile.messages.whisper.ask end,
                         width = Self.WIDTH_THIRD
@@ -583,7 +583,7 @@ function Self.RegisterMessages()
                         set = function (_, key, val)
                             local c = Addon.db.profile.messages.whisper
                             c.target[Self.targetKeys[key]] = val
-                            c.ask = Util.TblFind(c.target, true) and c.ask or false
+                            c.ask = Util.Tbl.Find(c.target, true) and c.ask or false
                         end,
                         get = function (_, key) return Addon.db.profile.messages.whisper.target[Self.targetKeys[key]] end,
                         width = Self.WIDTH_THIRD
@@ -598,7 +598,7 @@ function Self.RegisterMessages()
                         set = function (_, key, val)
                             local c = Addon.db.profile.messages.whisper
                             c.groupType[Self.groupKeys[key]] = val
-                            c.ask = Util.TblFind(c.groupType, true) and c.ask or false
+                            c.ask = Util.Tbl.Find(c.groupType, true) and c.ask or false
                         end,
                         get = function (_, key) return Addon.db.profile.messages.whisper.groupType[Self.groupKeys[key]] end,
                         width = Self.WIDTH_THIRD
@@ -671,7 +671,7 @@ function Self.GetCustomMessageOptions(isDefault)
     local set = function (info, val)
         local line, c = info[3], Addon.db.profile.messages.lines
         if not c[lang] then c[lang] = {} end
-        c[lang][line] = not (Util.StrIsEmpty(val) or val == locale[line]) and val or nil
+        c[lang][line] = not (Util.Str.IsEmpty(val) or val == locale[line]) and val or nil
     end
     local get = function (info)
         local line, c = info[3], Addon.db.profile.messages.lines
@@ -686,7 +686,7 @@ function Self.GetCustomMessageOptions(isDefault)
     end
     local add = function (line, i)
         local iLine = i and line .. "_" .. i or line
-        desc = ("%s: %q%s"):format(DEFAULT, locale[iLine], Util.StrPrefix(L["OPT_" .. line .. "_DESC"], "\n\n"))
+        desc = ("%s: %q%s"):format(DEFAULT, locale[iLine], Util.Str.Prefix(L["OPT_" .. line .. "_DESC"], "\n\n"))
         t[iLine] = {
             name = L["OPT_" .. line]:format(i),
             desc = desc:gsub("(%%.)", "|cffffff78%1|r"):gsub("%d:", "|cffffff78%1|r"),
@@ -767,10 +767,11 @@ function Self.RegisterMasterloot()
 
     -- Clubs
     local clubs = Util(C_Club.GetSubscribedClubs())
-        .ExceptWhere(false, "clubType", Enum.ClubType.Other)
-        .SortBy("clubType", nil, true)()
-    local clubValues = Util(clubs).Copy()
-        .Map(function (info) return info.name .. (info.clubType == Enum.ClubType.Guild and " (" .. GUILD .. ")" or "") end)()
+        :ExceptWhere(false, "clubType", Enum.ClubType.Other)
+        :SortBy("clubType", nil, true)()
+    local clubValues = Util(clubs)
+        :Copy()
+        :Map(function (info) return info.name .. (info.clubType == Enum.ClubType.Guild and " (" .. GUILD .. ")" or "") end)()
     Addon.db.char.masterloot.clubId = Addon.db.char.masterloot.clubId or clubs[1] and clubs[1].clubId
 
     -- This fixes the spacing bug with AceConfigDialog
@@ -793,7 +794,7 @@ function Self.RegisterMasterloot()
                     Session.RefreshRules()
                 end,
                 get = function ()
-                    return Util.TblFindWhere(clubs, "clubId", Addon.db.char.masterloot.clubId)
+                    return Util.Tbl.FindWhere(clubs, "clubId", Addon.db.char.masterloot.clubId)
                 end,
                 width = Self.WIDTH_HALF
             },
@@ -841,11 +842,11 @@ function Self.RegisterMasterloot()
                         order = it(),
                         set = function (_, val)
                             local r, w, t = GetRealmName(), Addon.db.profile.masterloot.whitelists
-                            if w[r] then t = wipe(w[r]) else t = Util.Tbl() w[r] = t end
+                            if w[r] then t = wipe(w[r]) else t = Util.Tbl.New() w[r] = t end
                             for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do t[v] = true end
                         end,
                         get = function ()
-                            return Util(Addon.db.profile.masterloot.whitelists[GetRealmName()] or Util.TBL_EMPTY).Keys().Sort().Concat(", ")()
+                            return Util(Addon.db.profile.masterloot.whitelists[GetRealmName()] or Util.Tbl.EMPTY):Keys():Sort():Concat(", ")()
                         end,
                         width = Self.WIDTH_FULL
                     },
@@ -983,7 +984,7 @@ function Self.RegisterMasterloot()
                             local t = wipe(Addon.db.profile.masterloot.rules.needAnswers)
                             for v in val:gmatch("[^,]+") do
                                 v = v:gsub("^%s*(.*)%s*$", "%1")
-                                if #t < 9 and not Util.StrIsEmpty(v) then
+                                if #t < 9 and not Util.Str.IsEmpty(v) then
                                     tinsert(t, v == NEED and Roll.ANSWER_NEED or v)
                                 end
                             end
@@ -1007,7 +1008,7 @@ function Self.RegisterMasterloot()
                             local t = wipe(Addon.db.profile.masterloot.rules.greedAnswers)
                             for v in val:gmatch("[^,]+") do
                                 v = v:gsub("^%s*(.*)%s*$", "%1")
-                                if #t < 9 and not Util.StrIsEmpty(v) then
+                                if #t < 9 and not Util.Str.IsEmpty(v) then
                                     tinsert(t, v == GREED and Roll.ANSWER_GREED or v)
                                 end
                             end
@@ -1038,11 +1039,11 @@ function Self.RegisterMasterloot()
                         order = it(),
                         set = function (_, val)
                             local r, w, t = GetRealmName(), Addon.db.profile.masterloot.rules.disenchanter
-                            if w[r] then t = wipe(w[r]) else t = Util.Tbl() w[r] = t end
+                            if w[r] then t = wipe(w[r]) else t = Util.Tbl.New() w[r] = t end
                             for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do t[v] = true end
                         end,
                         get = function ()
-                            return Util(Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()] or Util.TBL_EMPTY).Keys().Sort().Concat(", ")()
+                            return Util(Addon.db.profile.masterloot.rules.disenchanter[GetRealmName()] or Util.Tbl.EMPTY):Keys():Sort():Concat(", ")()
                         end,
                         width = Self.WIDTH_FULL
                     },
@@ -1122,12 +1123,12 @@ function Self.RegisterMasterloot()
                         end,
                         set = function (_, key, val)
                             local clubId = Addon.db.char.masterloot.clubId
-                            Util.TblSet(Addon.db.profile.masterloot.council.clubs, clubId, "ranks", key, val)
+                            Util.Tbl.Set(Addon.db.profile.masterloot.council.clubs, clubId, "ranks", key, val)
                             Session.RefreshRules()
                         end,
                         get = function (_, key)
                             local clubId = Addon.db.char.masterloot.clubId
-                            return Util.TblGet(Addon.db.profile.masterloot.council.clubs, clubId, "ranks", key)
+                            return Util.Tbl.Get(Addon.db.profile.masterloot.council.clubs, clubId, "ranks", key)
                         end
                     },
                     whitelist = {
@@ -1137,12 +1138,12 @@ function Self.RegisterMasterloot()
                         order = it(),
                         set = function (_, val)
                             local r, w, t = GetRealmName(), Addon.db.profile.masterloot.council.whitelists
-                            if w[r] then t = wipe(w[r]) else t = Util.Tbl() w[r] = t end
+                            if w[r] then t = wipe(w[r]) else t = Util.Tbl.New() w[r] = t end
                             for v in val:gmatch("[^%s%d%c,;:_<>|/\\]+") do t[v] = true end
                             Session.RefreshRules()
                         end,
                         get = function ()
-                            return Util(Addon.db.profile.masterloot.council.whitelists[GetRealmName()] or Util.TBL_EMPTY).Keys().Sort().Concat(", ")()
+                            return Util(Addon.db.profile.masterloot.council.whitelists[GetRealmName()] or Util.Tbl.EMPTY):Keys():Sort():Concat(", ")()
                         end,
                         width = Self.WIDTH_FULL
                     }
@@ -1171,13 +1172,13 @@ function Self.ImportRules()
         end
     end
 
-    c.rules.disenchanter[GetRealmName()] = Util.TblIsSet(s.disenchanter) and Util(s.disenchanter).Map(Unit.FullName).Flip(true)()
+    c.rules.disenchanter[GetRealmName()] = Util.Tbl.IsSet(s.disenchanter) and Util(s.disenchanter):Map(Unit.FullName):Flip(true)()
 
     -- Council
     local ranks = Util.GetClubRanks(clubId)
-    Util.TblSet(c.council.clubs, clubId, "ranks", s.councilRanks and Util(s.councilRanks).Map(function (v) return tonumber(v) or Util.TblFind(ranks, v) end).Flip(true)() or {})
-    c.council.roles = s.councilRoles and Util.TblFlip(s.councilRoles, true) or {}
-    c.council.whitelists[GetRealmName()] = Util.TblIsSet(s.councilWhitelist) and Util(s.councilWhitelist).Map(Unit.FullName).Flip(true)()
+    Util.Tbl.Set(c.council.clubs, clubId, "ranks", s.councilRanks and Util(s.councilRanks):Map(function (v) return tonumber(v) or Util.Tbl.Find(ranks, v) end):Flip(true)() or {})
+    c.council.roles = s.councilRoles and Util.Tbl.Flip(s.councilRoles, true) or {}
+    c.council.whitelists[GetRealmName()] = Util.Tbl.IsSet(s.councilWhitelist) and Util(s.councilWhitelist):Map(Unit.FullName):Flip(true)()
 
     -- Custom
     Self.SyncCustomOptions(s, true)
@@ -1191,25 +1192,25 @@ function Self.ExportRules()
 
     local info = C_Club.GetClubInfo(clubId)
     local c = Addon.db.profile.masterloot
-    local s = Util.Tbl()
+    local s = Util.Tbl.New()
 
     -- Rules
     for i,v in pairs(c.rules) do
         local d = Addon.db.defaults.profile.masterloot.rules[i]
-        if i ~= "disenchanter" and v ~= d and not (type(v) == "table" and Util.TblEquals(v, d)) then
+        if i ~= "disenchanter" and v ~= d and not (type(v) == "table" and Util.Tbl.Equals(v, d)) then
             s[i] = v
         end
     end
 
-    local dis = Util.TblKeys(c.rules.disenchanter[GetRealmName()] or Util.TBL_EMPTY)
+    local dis = Util.Tbl.Keys(c.rules.disenchanter[GetRealmName()] or Util.Tbl.EMPTY)
     if next(dis) then s.disenchanter = dis end
 
     -- Council
-    local ranks = Util(Util.TblGet(c.council.clubs, clubId, "ranks") or Util.TBL_EMPTY).CopyOnly(true, true).Keys()()
+    local ranks = Util(Util.Tbl.Get(c.council.clubs, clubId, "ranks") or Util.Tbl.EMPTY):CopyOnly(true, true):Keys()()
     if next(ranks) then s.councilRanks = ranks end
-    local roles = Util(c.council.roles).CopyOnly(true, true).Keys()()
+    local roles = Util(c.council.roles):CopyOnly(true, true):Keys()()
     if next(roles) then s.councilRoles = roles end
-    local wl = Util.TblKeys(c.council.whitelists[GetRealmName()] or Util.TBL_EMPTY)
+    local wl = Util.Tbl.Keys(c.council.whitelists[GetRealmName()] or Util.Tbl.EMPTY)
     if next(wl) then s.councilWhitelist = wl end
 
     -- Custom
@@ -1242,14 +1243,14 @@ end
 -- Read one or all params from a communities' description
 ---@param key string
 function Self.ReadFromClub(clubId, key)
-    local t, found = not key and Util.Tbl() or nil, false
+    local t, found = not key and Util.Tbl.New() or nil, false
 
     local info = C_Club.GetClubInfo(clubId)
-    if info and not Util.StrIsEmpty(info.description) then
+    if info and not Util.Str.IsEmpty(info.description) then
         for i,line in Util.Each(("\n"):split(info.description)) do
             local name, val = line:match("^PLR%-(.-): ?(.*)")
             if name then
-                name = Util.StrToCamelCase(name)
+                name = Util.Str.ToCamelCase(name)
                 if not key then
                     t[name] = Self.DecodeParam(name, val)
                 elseif key == name then
@@ -1286,7 +1287,7 @@ function Self.WriteToClub(clubId, keyOrTbl, val)
 
     local info = C_Club.GetClubInfo(clubId)
     if info then
-        local desc, i, found = Util.StrSplit(info.description, "\n"), 1, Util.Tbl()
+        local desc, i, found = Util.Str.Split(info.description, "\n"), 1, Util.Tbl.New()
 
         -- Update or delete existing entries
         while desc[i] do
@@ -1294,7 +1295,7 @@ function Self.WriteToClub(clubId, keyOrTbl, val)
 
             local param = line:match("^PLR%-(.-):")
             if param then
-                local name = Util.StrToCamelCase(param)
+                local name = Util.Str.ToCamelCase(param)
                 found[name] = true
 
                 if not isKey or isKey == name then
@@ -1328,12 +1329,12 @@ function Self.WriteToClub(clubId, keyOrTbl, val)
                 end
 
                 found[name] = true
-                tinsert(desc, found[Self.DIVIDER] + 1, ("PLR-%s: %s"):format(Util.StrFromCamelCase(name, "-", true), Self.EncodeParam(name, v)))
+                tinsert(desc, found[Self.DIVIDER] + 1, ("PLR-%s: %s"):format(Util.Str.FromCamelCase(name, "-", true), Self.EncodeParam(name, v)))
             end
         end
 
-        local str = Util.TblConcat(desc, "\n")
-        Util.TblRelease(desc, found)
+        local str = Util.Tbl.Concat(desc, "\n")
+        Util.Tbl.Release(desc, found)
 
         -- We can only write to guild communities, and only when we have the rights to do so
         if str == info.description then
@@ -1368,13 +1369,13 @@ end
 ---@param str string
 ---@return any
 function Self.DecodeParam(name, str)
-    local t = Util.StrStartsWith(name, "council") and "table" or type(Addon.db.defaults.profile.masterloot.rules[name])
+    local t = Util.Str.StartsWith(name, "council") and "table" or type(Addon.db.defaults.profile.masterloot.rules[name])
     if t == "boolean" then
         return Util.In(str:lower(), "true", "1", "yes")
     elseif t == "number" then
         return tonumber(str)
     elseif t == "table" then
-        local val = Util.Tbl()
+        local val = Util.Tbl.New()
         for v in str:gmatch("[^,]+") do
             v = v:gsub("^%s*(.*)%s*$", "%1")
             tinsert(val, tonumber(v) or v)
@@ -1423,12 +1424,12 @@ function Self.Migrate()
                 Self.MigrateOption("raidassistant", p.masterlooter.council, p.masterloot.council.roles)
 
                 local guildId = C_Club.GetGuildClubId()
-                if guildId and Util.TblGet(p, "masterlooter.council") then
+                if guildId and Util.Tbl.Get(p, "masterlooter.council") then
                     if p.masterlooter.council.guildmaster then
-                        Util.TblSet(p.masterloot.council.clubs, guildId, "ranks", 1, true)
+                        Util.Tbl.Set(p.masterloot.council.clubs, guildId, "ranks", 1, true)
                     end
                     if p.masterlooter.council.guildofficer then
-                        Util.TblSet(p.masterloot.council.clubs, guildId, "ranks", 2, true)
+                        Util.Tbl.Set(p.masterloot.council.clubs, guildId, "ranks", 2, true)
                     end
                 end
 
@@ -1453,14 +1454,14 @@ function Self.Migrate()
     -- Factionrealm
     if f.version then
         if f.version < 4 then
-            if Util.TblGet(f, "masterloot.whitelist") then
+            if Util.Tbl.Get(f, "masterloot.whitelist") then
                 for i in pairs(f.masterloot.whitelist) do
-                    Util.TblSet(p.masterloot.whitelists, GetRealmName(), i, true)
+                    Util.Tbl.Set(p.masterloot.whitelists, GetRealmName(), i, true)
                 end
             end
-            if Util.TblGet(f, "masterlooter.councilWhitelist") then
+            if Util.Tbl.Get(f, "masterlooter.councilWhitelist") then
                 for i in pairs(f.masterlooter.councilWhitelist) do
-                    Util.TblSet(p.masterloot.council.whitelists, GetRealmName(), i, true)
+                    Util.Tbl.Set(p.masterloot.council.whitelists, GetRealmName(), i, true)
                 end
             end
             f.masterloot, f.masterlooter = nil
@@ -1473,9 +1474,9 @@ function Self.Migrate()
         if c.version < 4 then
             local guildId = C_Club.GetGuildClubId()
             if guildId then
-                local guildRank = Util.TblGet(c, "masterloot.council.guildRank")
+                local guildRank = Util.Tbl.Get(c, "masterloot.council.guildRank")
                 if guildRank and guildRank > 0 then
-                    Util.TblSet(p.masterloot.council.clubs, guildId, "ranks", guildRank, true)
+                    Util.Tbl.Set(p.masterloot.council.clubs, guildId, "ranks", guildRank, true)
                 end
                 c.masterloot.clubId = guildId
             end
@@ -1556,9 +1557,9 @@ end
 
 function Self.SetValOrDefault(path, val)
     if val == nil then
-        local d = Util.TblGet(Addon.db, "defaults." .. path)
-        Util.TblSet(Addon.db, path, type(d) == "table" and Util.TblCopy(d) or d)
+        local d = Util.Tbl.Get(Addon.db, "defaults." .. path)
+        Util.Tbl.Set(Addon.db, path, type(d) == "table" and Util.Tbl.Copy(d) or d)
     else
-        Util.TblSet(Addon.db, path, val)
+        Util.Tbl.Set(Addon.db, path, val)
     end
 end

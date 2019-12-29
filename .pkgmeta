@@ -12,6 +12,8 @@ ignore:
   - _config.yml
 
 externals:
+  Libs/LibUtil:
+    url: https://gitlab.com/shrugal/LibUtil.git
   Libs/LibDataBroker-1.1:
     url: https://github.com/tekkub/libdatabroker-1-1
     tag: v1.1.4

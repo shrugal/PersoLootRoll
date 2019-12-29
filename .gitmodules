@@ -7,3 +7,6 @@
 [submodule "Libs/WoWUnit"]
 	path = Libs/WoWUnit
 	url = https://github.com/Jaliborc/WoWUnit
+[submodule "Libs/LibUtil"]
+	path = Libs/LibUtil
+	url = https://gitlab.com/shrugal/LibUtil.git

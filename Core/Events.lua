@@ -140,7 +140,7 @@ function Self.CHAT_MSG_SYSTEM(_, _, msg)
             if not UnitExists(unit) then
                 for i=1,GetNumGroupMembers() do
                     local unitGroup = GetRaidRosterInfo(i)
-                    if unitGroup and Util.StrStartsWith(unitGroup, unit) then
+                    if unitGroup and Util.Str.StartsWith(unitGroup, unit) then
                         unit = unitGroup break
                     end
                 end
@@ -156,13 +156,13 @@ function Self.CHAT_MSG_SYSTEM(_, _, msg)
             if i == 0 then
                 roll = Self.lastPostedRoll
             else
-                roll = Util.TblFirstWhere(Self.rolls, "status", Roll.STATUS_RUNNING, "posted", i)
+                roll = Util.Tbl.FirstWhere(Self.rolls, "status", Roll.STATUS_RUNNING, "posted", i)
             end
 
 
             -- Get the correct bid and scaled roll result
             local bid = to < 100 and Roll.BID_GREED or Roll.BID_NEED
-            result = Util.NumRound(result * 100 / to)
+            result = Util.Num.Round(result * 100 / to)
 
             -- Register the unit's bid
             if roll and (roll.isOwner or Unit.IsSelf(unit)) and roll:UnitCanBid(unit, bid) then
@@ -292,7 +292,7 @@ function Self.CHAT_MSG_GROUP(_, _, msg, sender)
             local msgLc = msg:lower()
 
             for i,bid in Util.Each("NEED", "PASS") do
-                local patterns = Util(",").Join(_G[bid], bid == "NEED" and YES .. ",+" or NO .. ",-", L["MSG_" .. bid], L ~= D and D["MSG_" .. bid] or "").LcLang()()
+                local patterns = Util(","):Join(_G[bid], bid == "NEED" and YES .. ",+" or NO .. ",-", L["MSG_" .. bid], L ~= D and D["MSG_" .. bid] or ""):LcLang()()
                 for p in patterns:gmatch("[^,]+") do
                     if msg:match("^" .. p .. "$") or msgLc:match("^" .. p .. "$") then
                         roll:Bid(Roll["BID_" .. bid], unit)
@@ -334,7 +334,7 @@ function Self.CHAT_MSG_WHISPER(_, msg, sender, _, _, _, _, _, _, _, _, lineId)
         local req = msg:gsub(Item.PATTERN_LINK, ""):trim():gsub("[%c%p]+", ""):gsub("%s%s+", " ")
         local reqLc = req:lower()
 
-        local patterns = Util.StrJoin(",", "roll", Locale.GetCommLine("MSG_ROLL", unit), Locale.GetCommLine("MSG_ROLL"))
+        local patterns = Util.Str.Join(",", "roll", Locale.GetCommLine("MSG_ROLL", unit), Locale.GetCommLine("MSG_ROLL"))
         print(patterns)
         for p in patterns:gmatch("[^,]+") do
             print(p, req:match(p))
@@ -389,7 +389,7 @@ function Self.CHAT_MSG_WHISPER(_, msg, sender, _, _, _, _, _, _, _, _, lineId)
             -- We talked about the roll already
             or roll ~= true and Self.lastWhisperedRoll[unit] == roll.id
             -- We currently want an item from the sender
-            or Util.TblFindFn(Addon.rolls, function (roll)
+            or Util.Tbl.FindFn(Addon.rolls, function (roll)
                 return roll.owner == unit and roll.bid and roll.bid ~= Roll.BID_PASS and roll.status ~= Roll.STATUS_CANCELED and not roll.traded
             end)
 
@@ -505,13 +505,13 @@ end
 function Self.ITEM_UNLOCKED(_, _, bagOrEquip, slot)
     local pos = {bagOrEquip, slot}
 
-    if #Self.lastLocked == 1 and not Util.TblEquals(pos, Self.lastLocked[1]) then
+    if #Self.lastLocked == 1 and not Util.Tbl.Equals(pos, Self.lastLocked[1]) then
         -- The item has been moved
         local from, to = Self.lastLocked[1], pos
 
         for i,roll in pairs(Self.rolls) do
             if roll.item.isOwner and not roll.traded then
-                if Util.TblEquals(from, roll.item.position) then
+                if Util.Tbl.Equals(from, roll.item.position) then
                     roll.item:SetPosition(to)
                     break
                 end
@@ -523,9 +523,9 @@ function Self.ITEM_UNLOCKED(_, _, bagOrEquip, slot)
         local item1, item2
 
         for i,roll in pairs(Self.rolls) do
-            if not item1 and Util.TblEquals(pos1, roll.item.position) then
+            if not item1 and Util.Tbl.Equals(pos1, roll.item.position) then
                 item1 = roll.item
-            elseif not item2 and Util.TblEquals(pos2, roll.item.position) then
+            elseif not item2 and Util.Tbl.Equals(pos2, roll.item.position) then
                 item2 = roll.item
             end
             if item1 and item2 then

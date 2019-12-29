@@ -49,7 +49,7 @@ function Self.Show()
                 Self.status.height = self.frame:GetHeight()
                 self:Release()
                 GUI(HIGHLIGHT).SetParent(UIParent).Hide()
-                Util.TblWipe(Self.frames, Self.buttons, Self.open, Self.confirm)
+                Util.Tbl.Wipe(Self.frames, Self.buttons, Self.open, Self.confirm)
             end)()
 
         -- Darker background
@@ -117,7 +117,7 @@ function Self.Show()
                     GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOMRIGHT")
 
                     -- Addon versions
-                    local count = Util.TblCount(Addon.versions)
+                    local count = Util.Tbl.Count(Addon.versions)
                     if count > 0 then
                         GameTooltip:SetText(L["TIP_ADDON_VERSIONS"])
                         for unit,version in pairs(Addon.versions) do
@@ -135,7 +135,7 @@ function Self.Show()
                         for i=1,GetNumGroupMembers() do
                             local unit = GetRaidRosterInfo(i)
                             if unit and not Addon.versions[unit] and not Unit.IsSelf(unit) then
-                                s = Util.StrPostfix(s, ", ") .. Unit.ColoredShortenedName(unit)
+                                s = Util.Str.Postfix(s, ", ") .. Unit.ColoredShortenedName(unit)
                             end
                         end
                         GameTooltip:AddLine(s, 1, 1, 1, true)
@@ -148,7 +148,7 @@ function Self.Show()
                         for addon,users in pairs(Addon.compAddonUsers) do
                             local s = ""
                             for unit,version in pairs(users) do
-                                s = Util.StrPostfix(s, ", ") .. Unit.ColoredShortenedName(unit)
+                                s = Util.Str.Postfix(s, ", ") .. Unit.ColoredShortenedName(unit)
                             end
                             GameTooltip:AddLine(addon .. ": " .. s, 1, 1, 1, true)
                         end
@@ -243,9 +243,9 @@ function Self.Show()
                         -- Info
                         local s = Session.rules
                         local timeoutBase, timeoutPerItem = s.timeoutBase or Roll.TIMEOUT, s.timeoutPerItem or Roll.TIMEOUT_PER_ITEM
-                        local council = not s.council and "-" or Util(s.council).Keys().Map(function (unit)
+                        local council = not s.council and "-" or Util(s.council):Keys():Map(function (unit)
                             return Unit.ColoredShortenedName(unit)
-                        end).Concat(", ")()
+                        end):Concat(", ")()
                         local bids = L[s.bidPublic and "PUBLIC" or "PRIVATE"]
                         local votes = L[s.votePublic and "PUBLIC" or "PRIVATE"]
 
@@ -254,7 +254,7 @@ function Self.Show()
                         GameTooltip:AddLine(L["TIP_MASTERLOOT_INFO"]:format(Unit.ColoredName(ml), timeoutBase, timeoutPerItem, council, bids, votes), 1, 1, 1)
 
                         -- Players
-                        GameTooltip:AddLine("\n" .. L["TIP_MASTERLOOTING"]:format(1 + Util.TblCountOnly(Session.masterlooting, ml)))
+                        GameTooltip:AddLine("\n" .. L["TIP_MASTERLOOTING"]:format(1 + Util.Tbl.CountOnly(Session.masterlooting, ml)))
                         local units = Unit.ColoredName(UnitName("player"))
                         for unit,unitMl in pairs(Session.masterlooting) do
                             if ml == unitMl then
@@ -288,7 +288,7 @@ function Self.Show()
             .SetPoint("TOPRIGHT")
             .SetPoint("BOTTOMLEFT", Self.frames.filter.frame, "TOPLEFT", 0, 8)()
         f.backgrounds = {}
-        f.layoutFinished = Util.FnNoop
+        f.layoutFinished = Util.Fn.Noop
         Self.frames.scroll = f
 
         -- EMPTY MESSAGE
@@ -363,7 +363,7 @@ function Self.UpdateRolls()
 
     -- Header
 
-    local header = Util.Tbl("ID", "ITEM", "LEVEL", "OWNER", "ML", "STATUS", "YOUR_BID", "WINNER")
+    local header = Util.Tbl.New("ID", "ITEM", "LEVEL", "OWNER", "ML", "STATUS", "YOUR_BID", "WINNER")
     if #children == 0 then
         scroll.userdata.table.columns = {20, 1, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, {25, 100}, 8 * 20 - 4}
 
@@ -404,7 +404,7 @@ function Self.UpdateRolls()
 
     local rolls = Self.GetRolls(true)
 
-    GUI(Self.frames.empty).Toggle(Util.TblCount(rolls) == 0)
+    GUI(Self.frames.empty).Toggle(Util.Tbl.Count(rolls) == 0)
 
     local it = Util.Iter(#header + 1)
     for i,roll in ipairs(rolls) do
@@ -701,7 +701,7 @@ function Self.UpdateRolls()
         children[it(0)] = nil
     end
 
-    Util.TblRelease(rolls, header)
+    Util.Tbl.Release(rolls, header)
     scroll:ResumeLayout()
     scroll:DoLayout()
 
@@ -740,7 +740,7 @@ function Self.UpdateDetails(details, roll)
 
     -- Header
 
-    local header = Util.Tbl("PLAYER", "ITEM_LEVEL", "EQUIPPED", "CUSTOM", "BID", "ROLL", "VOTES", "")
+    local header = Util.Tbl.New("PLAYER", "ITEM_LEVEL", "EQUIPPED", "CUSTOM", "BID", "ROLL", "VOTES", "")
     local numCols = #header - 1 + GUI.PlayerColumns:CountWhere("header")
 
     if #children == 0 then
@@ -814,7 +814,7 @@ function Self.UpdateDetails(details, roll)
                     ---@type Roll
                     local roll = self:GetUserData("roll")
                     local unit = self:GetUserData("unit")
-                    if Util.TblCountOnly(roll.votes, unit) > 0 then
+                    if Util.Tbl.CountOnly(roll.votes, unit) > 0 then
                         GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOM")
                         GameTooltip:SetText(L["TIP_VOTES"])
                         for fromUnit,toUnit in pairs(roll.votes) do
@@ -861,13 +861,13 @@ function Self.UpdateDetails(details, roll)
             end
         end
 
-        if not roll.item.isRelic then Util.TblRelease(links) end
+        if not roll.item.isRelic then Util.Tbl.Release(links) end
 
         -- Custom columns
         for i,col in GUI.PlayerColumns:Iter() do
             if col.header then
                 GUI(children[it()])
-                    .SetText(Util.FnVal(col.desc, player.unit, roll, player) or player[col.name] or "-")
+                    .SetText(Util.Fn.Val(col.desc, player.unit, roll, player) or player[col.name] or "-")
                     .Show()
             end
         end
@@ -880,7 +880,7 @@ function Self.UpdateDetails(details, roll)
 
         -- Roll
         GUI(children[it()])
-            .SetText(player.roll and Util.NumRound(player.roll) or "-")
+            .SetText(player.roll and Util.Num.Round(player.roll) or "-")
             .Show()
 
         -- Votes
@@ -913,7 +913,7 @@ function Self.UpdateDetails(details, roll)
         children[it(0)] = nil
     end
 
-    Util.TblRelease(1, players, header)
+    Util.Tbl.Release(1, players, header)
     details:ResumeLayout()
 end
 
@@ -972,7 +972,7 @@ function Self.UpdateItems()
         .SetAllPoints()
         .Show()
 
-    Util.TblRelease(rolls)
+    Util.Tbl.Release(rolls)
     items:ResumeLayout()
     items:DoLayout()
 end
@@ -983,13 +983,13 @@ end
 
 ---@return Roll[]
 function Self.GetRolls(filterById)
-    return Util(Addon.rolls).CopyFilter(function (roll)
+    return Util(Addon.rolls):CopyFilter(function (roll)
         if filterById and Self.filter.id then
             return Self.filter.id == roll.id
         else
             return Self.TestRoll(roll)
         end
-    end).SortBy("id")()
+    end):SortBy("id")()
 end
 
 function Self.TestRoll(roll)
@@ -1082,7 +1082,7 @@ end
 -------------------------------------------------------
 
 -- Debounce updates after roll changes to prevent flickering
-local updateDebounced = Util.FnDebounce(Self.Update, 0.02)
+local updateDebounced = Util.Fn.Debounce(Self.Update, 0.02)
 
 function Self:OnEnable()
     Self:RegisterMessage(Roll.EVENT_START, "ROLL_START")

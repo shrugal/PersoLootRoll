@@ -187,7 +187,7 @@ local fullScanFn = function (i, line, lines, attr)
     -- classes
     if attr == "classes" then
         local classes = line:match(Self.PATTERN_CLASSES)
-        return classes and Util.StrSplit(classes, ", ") or nil
+        return classes and Util.Str.Split(classes, ", ") or nil
     -- spec
     elseif attr == "spec" then
         local spec = line:match(Self.PATTERN_SPEC)
@@ -214,7 +214,7 @@ local fullScanFn = function (i, line, lines, attr)
         end
 
         if match then
-            local attrs = Util.Tbl()
+            local attrs = Util.Tbl.New()
             for j=i,min(lines, i + 3) do
                 line = _G[Addon.ABBR .."_HiddenTooltipTextLeft" .. j]:GetText()
                 for _,a in pairs(Self.ATTRIBUTES) do
@@ -260,7 +260,7 @@ function Self.GetInfo(item, attr, ...)
     elseif attr == "quality" then
         local color = Self.GetInfo(item, "color")
         -- This is a workaround for epic item links having color "a335ee", but ITEM_QUALITY_COLORS has "a334ee"
-        return color == "a335ee" and 4 or color and Util.TblFindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. color) or 1
+        return color == "a335ee" and 4 or color and Util.Tbl.FindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. color) or 1
     -- level, baseLevel, realLevel
     elseif Util.In(attr, "level", "baseLevel") or attr == "realLevel" and not Self.IsScaled(item) then
         return (select(attr == "baseLevel" and 3 or 1, GetDetailedItemLevelInfo(link or id)))
@@ -295,7 +295,7 @@ function Self.GetInfo(item, attr, ...)
                         if i > info.numBonusIds + numBonusIds then
                             return bonusIds
                         else
-                            bonusIds = bonusIds or Util.Tbl()
+                            bonusIds = bonusIds or Util.Tbl.New()
                             tinsert(bonusIds, tonumber(v))
                         end
                     elseif i == info[attr] - 1 + numBonusIds then
@@ -416,10 +416,10 @@ function Self:GetLinkInfo()
         for v in self.link:gmatch(":(%-?%d*)") do
             i = i + 1
    
-            if info.bonusIds and Util.NumIn(i - info.numBonusIds, 1, self.numBonusIds or 0) then
-                Util.TblSet(self, "bonusIds", i - info.numBonusIds, tonumber(v))
+            if info.bonusIds and Util.Num.In(i - info.numBonusIds, 1, self.numBonusIds or 0) then
+                Util.Tbl.Set(self, "bonusIds", i - info.numBonusIds, tonumber(v))
             else
-                attr = Util.TblFind(info, i - 1 + (self.numBonusIds or 1))
+                attr = Util.Tbl.Find(info, i - 1 + (self.numBonusIds or 1))
                 if attr then
                     self[attr] = tonumber(v)
                 end
@@ -427,7 +427,7 @@ function Self:GetLinkInfo()
         end
         
         -- Some extra infos TODO: This is a workaround for epic item links having color "a335ee", but ITEM_QUALITY_COLORS has "a334ee"
-        self.quality = self.color == "a335ee" and 4 or self.color and Util.TblFindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. self.color) or 1
+        self.quality = self.color == "a335ee" and 4 or self.color and Util.Tbl.FindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. self.color) or 1
         self.infoLevel = Self.INFO_LINK
     end
 
@@ -439,7 +439,7 @@ function Self:GetBasicInfo()
     self:GetLinkInfo()
     
     if self.infoLevel == Self.INFO_LINK then
-        local data = Util.Tbl(GetItemInfo(self.link))
+        local data = Util.Tbl.New(GetItemInfo(self.link))
         if next(data) then
             -- Get correct level
             local level, _, baseLevel = GetDetailedItemLevelInfo(self.link)
@@ -458,7 +458,7 @@ function Self:GetBasicInfo()
             self.isTradable = Util.Default(self.isTradable, not self.isSoulbound or nil)
             self.infoLevel = Self.INFO_BASIC
         end
-        Util.TblRelease(data)
+        Util.Tbl.Release(data)
     end
 
     return self, self.infoLevel >= Self.INFO_BASIC
@@ -517,9 +517,9 @@ function Self:IsSameLocation(item, weaponsSameLoc)
     local itemLoc = (type(item) == "table" or Self.IsLink(item)) and Self.GetInfo(item, "equipLoc") or item
 
     -- Artifact relics (and maybe other things without equipLoc)
-    if Util.StrIsEmpty(selfLoc) then
-        return Util.StrIsEmpty(itemLoc)
-    elseif Util.StrIsEmpty(itemLoc) then
+    if Util.Str.IsEmpty(selfLoc) then
+        return Util.Str.IsEmpty(itemLoc)
+    elseif Util.Str.IsEmpty(itemLoc) then
         return false
     end
 
@@ -536,7 +536,7 @@ function Self:IsSameLocation(item, weaponsSameLoc)
     elseif Util.In(selfLoc, Self.TYPE_WEAPONOFFHAND, Self.TYPE_HOLDABLE) then
         return itemLoc ~= Self.TYPE_WEAPONMAINHAND
     else
-        return selfWeapon or Util.TblEquals(Self.SLOTS[selfLoc], Self.SLOTS[itemLoc])
+        return selfWeapon or Util.Tbl.Equals(Self.SLOTS[selfLoc], Self.SLOTS[itemLoc])
     end
 end
 
@@ -544,7 +544,7 @@ end
 ---@param loc Item|string
 ---@param allWeapons boolean
 function Self.GetOwnedForLocation(loc, allWeapons)
-    local items = Util.Tbl()
+    local items = Util.Tbl.New()
     local classId = Unit.ClassId("player")
 
     local isRelic
@@ -619,7 +619,7 @@ function Self:GetSlotCountForLocation()
 
         for i,spec in pairs(Self.CLASSES[classId].specs) do
             if Addon.db.char.specs[i] then
-                n = n + Util.TblCountOnly(spec.artifact.relics, self.relicType)
+                n = n + Util.Tbl.CountOnly(spec.artifact.relics, self.relicType)
             end
         end
         return n
@@ -687,8 +687,8 @@ function Self:GetLevelForLocation(unit)
                 local owned = self:GetOwnedForLocation()
                 cache.time = GetTime()
                 cache.ilvl = owned and Util(owned)
-                    .Map(Self.GetInfo, nil, nil, "maxLevel")
-                    .Sort(true)(self:GetSlotCountForLocation()) or 0
+                    :Map(Self.GetInfo, nil, nil, "maxLevel")
+                    :Sort(true)(self:GetSlotCountForLocation()) or 0
                 Self.playerCache[loc] = cache
             end
 
@@ -709,7 +709,7 @@ function Self:GetEquippedForLocation(unit)
     if self:GetBasicInfo().isRelic then
         return Inspect.GetLink(unit, self:GetFullInfo().relicType)
     elseif self.isEquippable then
-        local links = Util.Tbl()
+        local links = Util.Tbl.New()
         for i,slot in pairs(Self.SLOTS[self.equipLoc]) do
             tinsert(links, isSelf and GetInventoryItemLink(unit, slot) or Inspect.GetLink(unit, slot) or nil)
         end
@@ -757,7 +757,7 @@ function Self:GetRelicSlots(unique)
 
                 -- Remove all relicTypes that occur in other weapons
                 if unique then
-                    relics = Util.TblCopy(relics)
+                    relics = Util.Tbl.Copy(relics)
                     for slot,relicType in pairs(relics) do
                         for i,spec in pairs(class.specs) do
                             if spec.artifact.id ~= id then
@@ -925,7 +925,7 @@ function Self:IsPawnUpgrade(unit, ...)
     else
         local data = PawnGetItemData(self.link)
         if data then
-            for i,scale in pairs(PawnIsItemAnUpgrade(data) or Util.TBL_EMPTY) do
+            for i,scale in pairs(PawnIsItemAnUpgrade(data) or Util.Tbl.EMPTY) do
                 if not ... or Util.In(PawnCommon.Scales[scale.ScaleName].specID, ...) then
                     return true
                 end
@@ -966,17 +966,17 @@ function Self:GetEligible(unit)
                 return false
             else
                 local isSelf = Unit.IsSelf(unit)
-                local specs = isSelf and Util(Addon.db.char.specs).CopyOnly(true, true).Keys()() or nil
+                local specs = isSelf and Util(Addon.db.char.specs):CopyOnly(true, true):Keys()() or nil
                 local isUseful = self:IsUseful(unit, specs)
 
                 if isUseful and isSelf and Addon.db.profile.filter.pawn and IsAddOnLoaded("Pawn") and self.equipLoc ~= Self.TYPE_TRINKET then
                     isUseful = self:IsPawnUpgrade(unit, specs)
                 end
 
-                return isUseful or false, Util.TblRelease(specs)
+                return isUseful or false, Util.Tbl.Release(specs)
             end
         else
-            local eligible = Util.Tbl()
+            local eligible = Util.Tbl.New()
             for i=1,GetNumGroupMembers() do
                 local unit = GetRaidRosterInfo(i)
                 if unit then
@@ -1073,7 +1073,7 @@ function Self:OnFullyLoaded(fn, ...)
     else
         local entry, try = {fn = fn, args = {...}}
         try = function (n)
-            local i = Util.TblFind(Self.queue, entry)
+            local i = Util.Tbl.Find(Self.queue, entry)
             if i then
                 if self:IsFullyLoaded(n >= 5) then
                     tremove(Self.queue, i)
@@ -1240,7 +1240,7 @@ function Self.UpdatePlayerCacheWeapons()
     for spec,info in pairs(specs) do
         for _,loc in pairs(info.weapons or Self.TYPES_WEAPON) do
             loc = Util.Select(loc, Self.TYPE_HOLDABLE, Self.TYPE_WEAPONOFFHAND, Self.TYPE_2HWEAPON, Self.TYPE_WEAPON, loc)
-            local cache = Self.GetPlayerCache(loc, spec) or Util.Tbl()
+            local cache = Self.GetPlayerCache(loc, spec) or Util.Tbl.New()
 
             if not Self.IsPlayerCacheValid(cache) then
                 -- Find another applicable and valid cache entry
@@ -1248,7 +1248,7 @@ function Self.UpdatePlayerCacheWeapons()
                 for i,info2 in pairs(specs) do
                     local cache2 = Self.GetPlayerCache(loc, i)
                     if info.attribute == info2.attribute and info.weapons == info2.weapons and Self.IsPlayerCacheValid(cache2) and not cache2.spec then
-                        Util.TblMerge(cache, cache2)
+                        Util.Tbl.Merge(cache, cache2)
                         found = true break
                     end
                 end
@@ -1296,7 +1296,7 @@ function Self.UpdatePlayerCacheWeapons()
         end
     end
 
-    Util.TblRelease(true, owned)
+    Util.Tbl.Release(true, owned)
 end
 
 -- Check if a player cache entry is still valid

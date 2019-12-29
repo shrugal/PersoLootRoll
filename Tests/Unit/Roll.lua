@@ -10,7 +10,7 @@ local Assert, AssertEqual, AssertFalse, Replace = WoWUnit.IsTrue, WoWUnit.AreEqu
 local Tests = WoWUnit(Name .. ".Unit.Roll")
 
 local getUpdateData = function (roll, eligible, started, bidPublic, votePublic)
-    local data = Util(roll).Copy().Select(
+    local data = Util(roll):Copy():Select(
         "owner", "ownerId", "itemOwnerId", "status", "started",
         "timeout", "posted", "winner", "traded"
     )()
@@ -108,7 +108,7 @@ end
 
 function Tests:AddTest()
     Test.ReplaceDefault()
-    Replace(Addon, "rolls", Util.TblCounter())
+    Replace(Addon, "rolls", Util.Tbl.Counter())
     Replace(Roll, "CalculateTimeout", function () return 30 end)
     local assertMsgSend = Test.ReplaceFunction(Addon, "SendMessage", false)
 
@@ -173,7 +173,7 @@ end
 
 function Tests.UpdateTest()
     Test.ReplaceDefault()
-    Replace(Addon, "rolls", Util.TblCounter())
+    Replace(Addon, "rolls", Util.Tbl.Counter())
     Replace(Addon.Item, "OnLoaded", function (_, fn) return fn() end)
     Replace(Addon, "ScheduleTimer", function () return true end)
     local assertMsgSend = Test.ReplaceFunction(Addon, "SendMessage", false)

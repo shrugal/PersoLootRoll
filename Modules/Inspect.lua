@@ -56,7 +56,7 @@ end
 function Self.Update(unit)
     unit = Unit.Name(unit)
 
-    local info = Self.cache[unit] or Util.TblHash("levels", Util.Tbl(), "links", Util.Tbl())
+    local info = Self.cache[unit] or Util.Tbl.Hash("levels", Util.Tbl.New(), "links", Util.Tbl.New())
     local isValid = Self.IsValid(unit)
 
     -- Remember when we did this
@@ -100,11 +100,11 @@ function Self.Update(unit)
     local uniqueTypes = weapon and weapon:GetRelicSlots(true)
 
     if relics and uniqueTypes then
-        relics, uniqueTypes = Util.TblGroupKeys(relics), Util.TblFlip(uniqueTypes)
+        relics, uniqueTypes = Util.Tbl.GroupKeys(relics), Util.Tbl.Flip(uniqueTypes)
 
         for relicType,slots in pairs(relics) do
             local slotMin
-            local links = Util.Tbl()
+            local links = Util.Tbl.New()
             local isUnique = uniqueTypes[relicType]
 
             for i,slot in pairs(slots) do
@@ -135,17 +135,17 @@ function Self.Update(unit)
             else
                 if slotMin or not isValid or #info.links[relicType] < #links then
                     wipe(info.links[relicType])
-                    Util.TblMerge(info.links[relicType], links)
+                    Util.Tbl.Merge(info.links[relicType], links)
                 end
-                Util.TblRelease(links)
+                Util.Tbl.Release(links)
             end
         end
     end
 
-    Util.TblRelease(1, weapon, relics, uniqueTypes)
+    Util.Tbl.Release(1, weapon, relics, uniqueTypes)
 
     -- Check if the inspect was successfull
-    local failed = Util.TblCountOnly(info.levels, false) + Util.TblCountOnly(info.links, false) > 0
+    local failed = Util.Tbl.CountOnly(info.levels, false) + Util.Tbl.CountOnly(info.links, false) > 0
     local inspectsLeft = Self.queue[unit] or Self.MAX_PER_CHAR
 
     -- Update cache and queue entries
@@ -157,12 +157,12 @@ end
 ---@param unit string
 function Self.Clear(unit)
     if unit then
-        Util.TblRelease(true, Self.cache[unit])
+        Util.Tbl.Release(true, Self.cache[unit])
         Self.cache[unit] = nil
         Self.queue[unit] = nil
     else
         Self.lastQueued = 0
-        Util.TblRelease(true, unpack(Self.cache))
+        Util.Tbl.Release(true, unpack(Self.cache))
         wipe(Self.cache)
         wipe(Self.queue)
     end
@@ -206,15 +206,15 @@ function Self.Loop()
     end
 
     -- Get the next unit to inspect (with max inspects left -> wide search, random -> so we don't get stuck on one unit)
-    local units = Util.TblCopyFilter(Self.queue, filterFn, true, nil, true)
-    local unit = next(units) and Util(units).Only(Util.TblMax(units), true).RandomKey()()
+    local units = Util.Tbl.CopyFilter(Self.queue, filterFn, true, nil, true)
+    local unit = next(units) and Util(units):Only(Util.Tbl.Max(units), true):RandomKey()()
 
     if unit then
         Self.target = unit
         NotifyInspect(unit)
     end
 
-    local delay = max(Self.INSPECT_DELAY, Util.TblCount(Self.queue) == 0 and Self.QUEUE_DELAY - (GetTime() - Self.lastQueued) or 0)
+    local delay = max(Self.INSPECT_DELAY, Util.Tbl.Count(Self.queue) == 0 and Self.QUEUE_DELAY - (GetTime() - Self.lastQueued) or 0)
     Self.timer = Addon:ScheduleTimer(Self.Loop, delay)
  end
 

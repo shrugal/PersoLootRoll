@@ -103,14 +103,14 @@ Self.rolls = {
     {id = 8, ownerId = 6, owner = Self.units.party3.name, status = Roll.STATUS_DONE,    itemOwnerId = 2, timeout = 30, item = {id = 6, owner = Self.units.party1.name, infoLevel = 1, link = Self.items.item8[2]}}
 }
 
-Self.group = Util(Self.units).Copy().Pluck("name")()
+Self.group = Util(Self.units):Copy():Pluck("name")()
 
 function Self.GetRealmName()
     return "Mal'Ganis"
 end
 
 function Self.Unit(v)
-    return Self.units[v] or select(2, Util.TblFindWhere(Self.units, "name", v))
+    return Self.units[v] or select(2, Util.Tbl.FindWhere(Self.units, "name", v))
 end
 
 function Self.UnitName(v)
@@ -145,7 +145,7 @@ function Self.GetItemInfo(v)
         return unpack(
             Self.items[v] or
             Self.items["item" .. v] or
-            select(2, Util.TblFindWhere(Self.items, 2, v)) or
+            select(2, Util.Tbl.FindWhere(Self.items, 2, v)) or
             {}
         )
     end
@@ -156,13 +156,13 @@ function Self.GetDetailedItemLevelInfo(v)
     return lvl, false, lvl
 end
 
-function Self.GetNumGroupMembers() return Util.TblCount(Self.group) end
+function Self.GetNumGroupMembers() return Util.Tbl.Count(Self.group) end
 function Self.IsInGroup() return Self.GetNumGroupMembers() > 0 end
 function Self.IsInRaid() return Self.GetNumGroupMembers() > 5 end
 function Self.UnitInRaid(v) return Self.UnitInParty(v) end
 
 function Self.UnitInParty(v)
-    return not not (Self.group[v] or Util.TblFind(Self.group, v))
+    return not not (Self.group[v] or Util.Tbl.Find(Self.group, v))
 end
 
 function Self.GetRaidRosterInfo(i)

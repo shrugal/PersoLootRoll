@@ -12,7 +12,7 @@ local Self = GUI.Actions
 Self.frames = {}
 Self.moving = nil
 ---@type table<string, boolean>
-Self.anchors = Util.TblFlip({"TOPLEFT", "TOP", "TOPRIGHT", "RIGHT", "BOTTOMRIGHT", "BOTTOM", "BOTTOMLEFT", "LEFT", "CENTER"}, false)
+Self.anchors = Util.Tbl.Flip({"TOPLEFT", "TOP", "TOPRIGHT", "RIGHT", "BOTTOMRIGHT", "BOTTOM", "BOTTOMLEFT", "LEFT", "CENTER"}, false)
 
 -------------------------------------------------------
 --                     Show/Hide                     --
@@ -45,7 +45,7 @@ function Self.Show(move)
         end
         Self.frames.window.OnRelease = function (self)
             Self.frames.window = nil
-            Util.TblCall(Self.frames, "Release")
+            Util.Tbl.Call(Self.frames, "Release")
             wipe(Self.frames)
             self.frame:SetFrameStrata("FULLSCREEN_DIALOG")
             self.LayoutFinished = fn
@@ -117,9 +117,9 @@ function Self.Update()
 
     -- Rolls
 
-    local rolls = Util(Addon.rolls).CopyFilter(function (roll)
+    local rolls = Util(Addon.rolls):CopyFilter(function (roll)
         return roll:GetActionRequired() and not roll.hidden
-    end).SortBy("id")()
+    end):SortBy("id")()
 
     local it = Util.Iter()
     for _,roll in pairs(rolls) do
@@ -255,11 +255,11 @@ function Self.Update()
     end
 
     -- Hide if empty
-    if Util.TblCount(rolls) == 0 and not Self.moving then
+    if Util.Tbl.Count(rolls) == 0 and not Self.moving then
         Self.Hide()
     end
 
-    Util.TblRelease(rolls)
+    Util.Tbl.Release(rolls)
     parent:ResumeLayout()
     parent:DoLayout()
 end

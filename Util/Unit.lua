@@ -217,7 +217,7 @@ end
 function Self.CommonClubs(unit)
     if not unit then return end
 
-    local t, guid = Util.Tbl(), UnitGUID(unit)
+    local t, guid = Util.Tbl.New(), UnitGUID(unit)
     for _,info in pairs(C_Club.GetSubscribedClubs()) do
         if info.clubType == Enum.ClubType.Character then
             for _,memberId in pairs(C_Club.GetClubMembers(info.clubId)) do
@@ -227,7 +227,7 @@ function Self.CommonClubs(unit)
             end
         end
     end
-    return Util.TblUnique(t)
+    return Util.Tbl.Unique(t)
 end
 
 function Self.ClubMemberInfo(unit, clubId)
@@ -281,7 +281,7 @@ end
 
 -- Check if units are equal
 function Self.IsUnit(unit, otherUnit)
-    return unit == otherUnit or Util.StrIsSet(unit) and Util.StrIsSet(otherUnit) and UnitIsUnit(unit, otherUnit)
+    return unit == otherUnit or Util.Str.IsSet(unit) and Util.Str.IsSet(otherUnit) and UnitIsUnit(unit, otherUnit)
 end
 
 -- Check if the unit is the current player
@@ -300,13 +300,13 @@ end
 ---@return table
 function Self.Specs(unit)
     if unit then
-        local classId, specs = Self.ClassId(unit), Util.Tbl()
+        local classId, specs = Self.ClassId(unit), Util.Tbl.New()
         for i=1,GetNumSpecializationsForClassID(classId) do
             specs[i] = select(2, GetSpecializationInfoForClassID(classId, i))
         end
         return specs
     else
-        Self.specs = Self.specs or Util.TblCopy(Self.SPECS, function (id) return select(2, GetSpecializationInfoByID(id)) end)
+        Self.specs = Self.specs or Util.Tbl.Copy(Self.SPECS, function (id) return select(2, GetSpecializationInfoByID(id)) end)
         return Self.specs
     end
 end

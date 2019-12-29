@@ -69,7 +69,7 @@ Self.EVENT_TRACKING_CHANGE = "PLR_STATE_TRACKING_CHANGE"
 
 -- Other
 ---@type Roll[]
-Self.rolls = Util.TblCounter()
+Self.rolls = Util.Counter.New()
 Self.timers = {}
 
 -------------------------------------------------------
@@ -150,7 +150,7 @@ end
 -- Chat command handling
 ---@param msg string
 function Self:HandleChatCommand(msg)
-    local args = Util.Tbl(self:GetArgs(msg, 10))
+    local args = Util.Tbl.New(self:GetArgs(msg, 10))
     args[11] = nil
     local cmd = tremove(args, 1)
 
@@ -165,26 +165,26 @@ function Self:HandleChatCommand(msg)
         local name, pre, line = Name, "plr config", msg:sub(cmd:len() + 2)
 
         -- Handle submenus
-        local subs = Util.Tbl("messages", "masterloot", "profiles")
+        local subs = Util.Tbl.New("messages", "masterloot", "profiles")
         if Util.In(args[1], subs) then
-            name, pre, line = name .. " " .. Util.StrUcFirst(args[1]), pre .. " " .. args[1], line:sub(args[1]:len() + 2)
+            name, pre, line = name .. " " .. Util.Str.UcFirst(args[1]), pre .. " " .. args[1], line:sub(args[1]:len() + 2)
         end
 
         LibStub("AceConfigCmd-3.0").HandleCommand(self, pre, name, line)
 
         -- Add submenus as additional options
-        if Util.StrIsEmpty(args[1]) then
+        if Util.Str.IsEmpty(args[1]) then
             for _,v in pairs(subs) do
-                name = Util.StrUcFirst(v)
+                name = Util.Str.UcFirst(v)
                 local getter = LibStub("AceConfigRegistry-3.0"):GetOptionsTable(Name .. " " .. name)
                 print("  |cffffff78" .. v .. "|r - " .. (getter("cmd", "AceConfigCmd-3.0").name or name))
             end
         end
 
-        Util.TblRelease(subs)
+        Util.Tbl.Release(subs)
     -- Roll
     elseif cmd == "roll" then
-        local ml, isML, items, itemOwner, timeout = Session.GetMasterlooter(), Session.IsMasterlooter(), Util.Tbl(), "player"
+        local ml, isML, items, itemOwner, timeout = Session.GetMasterlooter(), Session.IsMasterlooter(), Util.Tbl.New(), "player"
 
         for _,v in pairs(args) do
             if tonumber(v) then
@@ -228,7 +228,7 @@ function Self:HandleChatCommand(msg)
         elseif Session.GetMasterlooter() then
             for i=1,2 do
                 if Util.In(bid, Session.rules["answers" .. i]) then
-                    bid = i + Util.TblFind(Session.rules["answers" .. i], bid) / 10
+                    bid = i + Util.Tbl.Find(Session.rules["answers" .. i], bid) / 10
                 end
             end
         end
@@ -324,7 +324,7 @@ function Self:CheckState(refresh)
 
             for i=max(state, state+cmp), max(self.state, self.state-cmp), cmp do
                 local s = Self.STATES[i]
-                local fn = Self["On" .. Util.StrUcFirst(s:lower()) .. "Changed"]
+                local fn = Self["On" .. Util.Str.UcFirst(s:lower()) .. "Changed"]
 
                 if fn then fn(self, self.state >= i) end
                 Self:SendMessage("STATE_" .. s .. "_CHANGE", self.state >= i)
@@ -358,7 +358,7 @@ function Self:OnActiveChanged(active)
         end
     else
         -- Clear roll data
-        Util.TblIter(self.rolls, Roll.Clear)
+        Util.Tbl.Iter(self.rolls, Roll.Clear)
 
         -- Clear versions and disabled
         wipe(self.versions)
@@ -383,7 +383,7 @@ function Self:OnTrackingChanged(tracking)
         Comm.Send(Comm.EVENT_SYNC)
     end
 end
-Self.OnTrackingChanged = Util.FnDebounce(Self.OnTrackingChanged, 0.1)
+Self.OnTrackingChanged = Util.Fn.Debounce(Self.OnTrackingChanged, 0.1)
 
 -- Check if the given unit is tracking
 function Self:UnitIsTracking(unit, inclCompAddons)
@@ -430,7 +430,7 @@ function Self:GetVersion(versionOrUnit)
 
     local n = tonumber(version)
     if n then
-        return floor(n), Self.CHANNEL_STABLE, Util.NumRound((n - floor(n)) * 100), 0
+        return floor(n), Self.CHANNEL_STABLE, Util.Num.Round((n - floor(n)) * 100), 0
     elseif type(version) == "string" then
         local major, channel, minor, revision = version:match("([%d%.]+)-(%a+)(%d+)-?(%d*)")
         if major and channel and minor then
@@ -471,7 +471,7 @@ end
 function Self:SetCompAddonUser(unit, addon, version)
     unit = Unit.Name(unit)
     if not self.versions[unit] then
-        Util.TblSet(self.compAddonUsers, addon, unit, version)
+        Util.Tbl.Set(self.compAddonUsers, addon, unit, version)
     end
 end
 
@@ -481,18 +481,18 @@ end
 function Self:GetCompAddonUser(unit, addon)
     unit = Unit.Name(unit)
     if addon then
-        return Util.TblGet(Addon.compAddonUsers, addon, unit)
+        return Util.Tbl.Get(Addon.compAddonUsers, addon, unit)
     else
-        return Util.TblFindWhere(Addon.compAddonUsers, unit)
+        return Util.Tbl.FindWhere(Addon.compAddonUsers, unit)
     end
 end
 
 -- Get the number of addon users in the group
 function Self:GetNumAddonUsers(inclCompAddons)
-    local n = Util.TblCount(self.versions) - Util.TblCount(self.disabled)
+    local n = Util.Tbl.Count(self.versions) - Util.Tbl.Count(self.disabled)
 
     if inclCompAddons then
-        local users = Util.Tbl()
+        local users = Util.Tbl.New()
         for _,t in pairs(self.compAddonUsers) do
             for unit in pairs(t) do
                 if not self.versions[unit] then
@@ -500,8 +500,8 @@ function Self:GetNumAddonUsers(inclCompAddons)
                 end
             end
         end
-        n = n + Util.TblCount(users)
-        Util.TblRelease(users)
+        n = n + Util.Tbl.Count(users)
+        Util.Tbl.Release(users)
     end
 
     return n
@@ -516,7 +516,7 @@ end
 function Addon:Echo(lvl, line, ...)
     if lvl == Self.ECHO_DEBUG then
         for i=1, select("#", ...) do
-            line = line .. (i == 1 and " - " or ", ") .. Util.ToString((select(i, ...)))
+            line = line .. (i == 1 and " - " or ", ") .. Util.Str.ToString((select(i, ...)))
         end
     else
         line = line:format(...)
@@ -539,7 +539,7 @@ function Self:Debug(...) self:Echo(Self.ECHO_DEBUG, ...) end
 function Self:Log(lvl, line)
     tinsert(self.log, ("[%.1f] %s: %s"):format(GetTime(), Self.ECHO_LEVELS[lvl or Self.ECHO_INFO], line or "-"))
     while #self.log > Self.LOG_MAX_ENTRIES do
-        Util.TblShift(self.log)
+        Util.Tbl.Shift(self.log)
     end
 end
 
@@ -549,7 +549,7 @@ function Self:LogExport(warned)
         local realm = GetRealmName()
         local _, name, _, _, lang, _, region = RI:GetRealmInfo(realm)    
         local txt = ("~ PersoLootRoll ~ Version: %s ~ Date: %s ~ Locale: %s ~ Realm: %s-%s (%s) ~"):format(Self.VERSION or "?", date() or "?", GetLocale() or "?", region or "?", name or realm or "?", lang or "?")
-        txt = txt .. "\n" .. Util.TblConcat(self.log, "\n")
+        txt = txt .. "\n" .. Util.Tbl.Concat(self.log, "\n")
 
         GUI.ShowExportWindow("Export log", txt)
     else

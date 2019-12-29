@@ -23,7 +23,7 @@ local Self = Addon.GUI
 ---@param sortDesc boolean  Sort in descending order (optional)
 ---@return table            The column entry
 Self.PlayerColumns = Util.Registrar.New("GUI_PLAYER_COLUMN", "name", function (name, value, header, desc, width, sortBefore, sortDefault, sortDesc)
-    return Util.TblHash("name", name, "value", value, "header", header, "desc", desc, "width", width, "sortBefore", sortBefore, "sortDefault", sortDefault, "sortDesc", sortDesc)
+    return Util.Tbl.Hash("name", name, "value", value, "header", header, "desc", desc, "width", width, "sortBefore", sortBefore, "sortDefault", sortDefault, "sortDesc", sortDesc)
 end)
 
 -- Windows
@@ -81,7 +81,7 @@ StaticPopupDialogs[Self.DIALOG_ROLL_WHISPER_ASK] = {
     button1 = YES,
     button2 = NO,
     OnAccept = function(_, data)
-        local roll, bid = Util.TblUnpack(data)
+        local roll, bid = Util.Tbl.Unpack(data)
         Addon:Debug("GUI.Click:RollWhisperAskDialog", true, roll and roll.id, bid)
 
         Addon.db.profile.messages.whisper.ask = true
@@ -90,7 +90,7 @@ StaticPopupDialogs[Self.DIALOG_ROLL_WHISPER_ASK] = {
         Self.RollBid(roll, bid)
     end,
     OnCancel = function(_, data, reason)
-        local roll, bid = Util.TblUnpack(data)
+        local roll, bid = Util.Tbl.Unpack(data)
         Addon:Debug("GUI.Click:RollWhisperAskDialog", reason, roll and roll.id, bid)
 
         if reason == "clicked" then
@@ -255,7 +255,7 @@ function Self.ToggleAwardOrVoteDropdown(roll, ...)
             local f = Self("Dropdown-Item-Execute")
                 .SetText(("%s: |c%s%s|r (%s: %s, %s: %s)"):format(
                     Unit.ColoredShortenedName(player.unit),
-                    Util.StrColor(Self.RollBidColor(player.bid)), roll:GetBidName(player.bid),
+                    Util.Str.Color(Self.RollBidColor(player.bid)), roll:GetBidName(player.bid),
                     L["VOTES"], player.votes,
                     L["ITEM_LEVEL"], player.ilvl
                 ))
@@ -273,7 +273,7 @@ function Self.ToggleAwardOrVoteDropdown(roll, ...)
 
         dropdown.frame:SetWidth(max(200, width + 32 + dropdown:GetLeftBorderWidth() + dropdown:GetRightBorderWidth()))
 
-        Util.TblRelease(1, players)
+        Util.Tbl.Release(1, players)
         dropdown:Open(...)
     else
         dropdown:Close()
@@ -326,17 +326,17 @@ end
 ---@param roll Roll The roll in question
 -- @return table    A sorted list of eligible players
 function Self.GetPlayerList(roll)
-    local list = Util(roll.item:GetEligible()).Copy().Merge(roll.bids).Map(function (val, unit)
-        return Util.TblHash(
+    local list = Util(roll.item:GetEligible()):Copy():Merge(roll.bids):Map(function (val, unit)
+        return Util.Tbl.Hash(
             "unit", unit,
             "ilvl", roll.item:GetLevelForLocation(unit),
             "bid", type(val) == "number" and val or nil,
-            "votes", Util.TblCountOnly(roll.votes, unit),
+            "votes", Util.Tbl.CountOnly(roll.votes, unit),
             "roll", roll.rolls[unit]
         )
-    end, true).List()()
+    end, true):List()()
 
-    local sortBy = Util.Tbl(
+    local sortBy = Util.Tbl.New(
         "bid",   99,  false,
         "votes", 0,   true,
         "roll",  100, true,
@@ -347,10 +347,10 @@ function Self.GetPlayerList(roll)
     -- Add custom columns
     for i,col in Self.PlayerColumns:Iter() do
         for j,entry in pairs(list) do
-            entry[col.name] = Util.FnVal(col.value, entry.unit, roll, entry)
+            entry[col.name] = Util.Fn.Val(col.value, entry.unit, roll, entry)
         end
 
-        local sortPos = col.sortBefore and Util.TblFind(sortBy, col.sortBefore)
+        local sortPos = col.sortBefore and Util.Tbl.Find(sortBy, col.sortBefore)
         if sortPos then
             tinsert(sortBy, sortPos, col.sortDesc or false)
             tinsert(sortBy, sortPos, col.sortDefault)
@@ -358,7 +358,7 @@ function Self.GetPlayerList(roll)
         end
     end
 
-    return Util.TblSortBy(list, sortBy), Util.TblRelease(sortBy)
+    return Util.Tbl.SortBy(list, sortBy), Util.Tbl.Release(sortBy)
 end
 
 -------------------------------------------------------
@@ -394,7 +394,7 @@ function Self.CreateItemLabel(parent)
         .AddTo(parent)()
 
     -- Fix the stupid label anchors
-    local methods = Util.TblCopySelect(f, "OnWidthSet", "SetText", "SetImage", "SetImageSize")
+    local methods = Util.Tbl.CopySelect(f, "OnWidthSet", "SetText", "SetImage", "SetImageSize")
     for name,fn in pairs(methods) do
         f[name] = function (self, ...)
             fn(self, ...)
@@ -421,7 +421,7 @@ function Self.CreateItemLabel(parent)
     end
     f.OnRelease = function (self)
         for name,fn in pairs(methods) do f[name] = fn end
-        Util.TblRelease(methods)
+        Util.Tbl.Release(methods)
         f.OnRelease = nil
     end
 
@@ -620,7 +620,7 @@ end
 ---@param bid number
 function Self.RollBid(roll, bid)
     if bid < Roll.BID_PASS and not roll:GetOwnerAddon() and not Addon.db.profile.messages.whisper.askPrompted then
-        StaticPopup_Show(Self.DIALOG_ROLL_WHISPER_ASK, nil, nil, Util.Tbl(roll, bid))
+        StaticPopup_Show(Self.DIALOG_ROLL_WHISPER_ASK, nil, nil, Util.Tbl.New(roll, bid))
     elseif roll:UnitCanBid("player", bid) then
         roll:Bid(bid)
     else
@@ -748,7 +748,7 @@ function Self.TableRowBackground(parent, colors, skip)
     parent.LayoutFinished = function (self, ...)
         if LayoutFinished then LayoutFinished(self, ...) end
 
-        Util.TblCall(textures, "Hide")
+        Util.Tbl.Call(textures, "Hide")
 
         local frameTop, frameBottom = parent.frame:GetTop(), parent.frame:GetBottom()
         local offset = parent.localstatus and parent.localstatus.offset or parent.status and parent.status.offset or 0
@@ -800,7 +800,7 @@ function Self.TableRowBackground(parent, colors, skip)
 
     local OnRelease = parent.OnRelease
     parent.OnRelease = function (self, ...)
-        Util.TblCall(textures, "Hide")
+        Util.Tbl.Call(textures, "Hide")
         self.LayoutFinished = LayoutFinished
         self.OnRelease = OnRelease
         if self.OnRelease then self.OnRelease(self, ...) end
@@ -1057,7 +1057,7 @@ local Fn = function (...)
         -- Fix Label's stupid image anchoring
         if Util.In(obj.type, "Label", "InteractiveLabel") and Util.In(k, "SetText", "SetFont", "SetFontObject", "SetImage") then
             local strWidth, imgWidth = obj.label:GetStringWidth(), obj.imageshown and obj.image:GetWidth() or 0
-            local width = Util.NumRound(strWidth + imgWidth + (min(strWidth, imgWidth) > 0 and 4 or 0), 1)
+            local width = Util.Num.Round(strWidth + imgWidth + (min(strWidth, imgWidth) > 0 and 4 or 0), 1)
             obj:SetWidth(width)
         end
     end
@@ -1065,7 +1065,7 @@ local Fn = function (...)
 end
 setmetatable(Self.C, {
     __index = function (c, k)
-        c.k = Util.StrUcFirst(k)
+        c.k = Util.Str.UcFirst(k)
         return Fn
     end,
     __call = function (c, i)
