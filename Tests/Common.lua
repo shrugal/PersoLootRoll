@@ -33,6 +33,7 @@ function Self.Dump(o, maxDepth, depth)
     if depth > 1 then return s else print(s) end
  end
 
+-- Wrap fn in call counter and optionally mock it
 function Self.MockFunction(fn, mock)
     local calls = 0
     local call = function (...)
@@ -49,6 +50,7 @@ function Self.MockFunction(fn, mock)
     return call, test, get, set
 end
 
+-- Replace a fn with a mock using Self.MockFunction
 function Self.ReplaceFunction(obj, key, mock)
     if type(obj) ~= "table" then
         obj, key, mock = _G, obj, key
@@ -58,6 +60,7 @@ function Self.ReplaceFunction(obj, key, mock)
     return test
 end
 
+-- Apply default replacements to mock up a controlled test environment
 function Self.ReplaceDefault()
     for _,fn in pairs({
         "GetRealmName", "UnitName", "UnitFullName", "UnitIsUnit", "UnitClass", "UnitExists",
