@@ -49,19 +49,19 @@ function Self.IsGuildGroup(guild)
         if g then
             guilds[g] = (guilds[g] or 0) + 1
             if (not guild or g == guild) and guilds[g] / n > Self.GROUP_THRESHOLD then
-                Self.TblRelease(guilds)
+                Self.Tbl.Release(guilds)
                 return g
             end
         end
     end
-    Self.TblRelease(guilds)
+    Self.Tbl.Release(guilds)
 end
 
 -- Check if the current group is a community group
 ---@param commId integer
 ---@return integer|boolean
 function Self.IsCommunityGroup(commId)
-    if not IsInGroup() or not Self.TblFirstWhere(C_Club.GetSubscribedClubs(), "clubType", Enum.ClubType.Character, "clubId", commId) then
+    if not IsInGroup() or not Self.Tbl.FirstWhere(C_Club.GetSubscribedClubs(), "clubType", Enum.ClubType.Character, "clubId", commId) then
         return false
     end
 
@@ -72,21 +72,21 @@ function Self.IsCommunityGroup(commId)
             for _,clubId in pairs(c) do
                 comms[clubId] = (comms[clubId] or 0) + 1
                 if (not commId or commId == clubId) and comms[clubId] / n >= Self.GROUP_THRESHOLD then
-                    Self.TblRelease(comms, c)
+                    Self.Tbl.Release(comms, c)
                     return clubId
                 end
             end
-            Self.TblRelease(c)
+            Self.Tbl.Release(c)
         end
     end
-    Self.TblRelease(comms)
+    Self.Tbl.Release(comms)
 end
 
 -- Get a list of guild ranks
 ---@return table<integer,string>
 function Self.GetGuildRanks()
     local t, i, name = Self.Tbl(), 1, GuildControlGetRankName(1)
-    while not Self.StrIsEmpty(name) do
+    while not Self.Str.IsEmpty(name) do
         t[i] = name
         i, name = i + 1, GuildControlGetRankName(i + 1)
     end
@@ -104,7 +104,7 @@ function Self.GetClubRanks(clubId)
     elseif info.clubType == Enum.ClubType.Guild then
         return Self.GetGuildRanks()
     else
-        return Self.TblFlip(Enum.ClubRoleIdentifier)
+        return Self.Tbl.Flip(Enum.ClubRoleIdentifier)
     end
 end
 
