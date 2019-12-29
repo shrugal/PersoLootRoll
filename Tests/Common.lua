@@ -98,6 +98,8 @@ Self.items = {
     item8 = {"item8", "||Hitem:8::::::::120:66::3:1:3524:::|h[item8]|h|r", 4, 415, 120, "Armor", "Plate", 1, "INVTYPE_CHEST", 2901581, 0, 4, 4, 1, 7, nil, false}
 }
 
+Self.roll = {id = 1, ownerId = 1, owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_PENDING, itemOwnerId = 1, timeout = 30, item = {owner = Self.units.player.name, isOwner = true, infoLevel = 0, link = Self.items.item1[2]}}
+
 Self.rolls = {
     {id = 1, ownerId = 1, owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_RUNNING, itemOwnerId = 1, timeout = 30, item = {id = 1, owner = Self.units.player.name, infoLevel = 1, link = Self.items.item1[2], isTradable = true}},
     {id = 2, ownerId = 2, owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_DONE,    itemOwnerId = 2, timeout = 30, item = {id = 2, owner = Self.units.player.name, infoLevel = 1, link = Self.items.item2[2], isTradable = true}},

@@ -134,62 +134,30 @@ function Tests:AddTest()
     Test.ReplaceDefault()
     Replace(Addon, "rolls", Util.Counter.New())
     Replace(Roll, "CalculateTimeout", function () return 30 end)
+
     local AssertEvents = Test.ReplaceFunction(Addon, "SendMessage", false)
 
+    local roll
+
     -- Item owned by the player
-    local roll = Roll.Add(Test.items.item1[2], Test.units.player.name)
-    AssertEqual({
-        disenchant = false,
-        timers = {},
-        whispers = 0,
-        votes = {},
-        item = {
-            isOwner = true,
-            infoLevel = 0,
-            link = Test.items.item1[2],
-            position = {},
-            owner = Test.units.player.name
-        },
-        status = 0,
-        created = time(),
-        rolls = {},
-        timeout = 30,
-        id = 1,
-        owner = Test.units.player.name,
-        ownerId = 1,
-        isOwner = true,
-        itemOwnerId = 1,
-        bids = {}
-    }, roll)
-    AssertEqual(roll, Addon.rolls[1])
+    roll = Util.Tbl.Copy(Test.roll)
+    roll.disenchant = false
+    Roll.Add(roll.item.link, roll.owner)
+    AssertRoll(roll, 1)
     AssertEvents(1)
 
     -- Item owned by someone else
-    roll = Roll.Add(Test.items.item2[2], Test.units.party1.name, 2, 1, 60, true)
-    AssertEqual({
-        disenchant = true,
-        timers = {},
-        whispers = 0,
-        votes = {},
-        item = {
-            isOwner = false,
-            infoLevel = 0,
-            link = Test.items.item2[2],
-            position = {},
-            owner = Test.units.party1.name
-        },
-        status = 0,
-        created = time(),
-        rolls = {},
-        timeout = 60,
-        id = 2,
-        owner = Test.units.party1.name,
-        ownerId = 2,
-        isOwner = false,
-        itemOwnerId = 1,
-        bids = {}
-    }, roll)
-    AssertEqual(roll, Addon.rolls[2])
+    roll = Util.Tbl.Copy(Test.roll)
+    roll.owner = Test.units.party1.name
+    roll.isOwner = false
+    roll.item.owner = roll.owner
+    roll.item.isOwner = false
+    roll.ownerId = 2
+    roll.itemOwnerId = 2
+    roll.timeout = 60
+    roll.disenchant = true
+    Roll.Add(roll.item.link, roll.owner, roll.ownerId, roll.itemOwnerId, roll.timeout, roll.disenchant)
+    AssertRoll(roll, 2)
     AssertEvents(1)
 
     -- TODO: Item owned by masterlooter
@@ -200,11 +168,9 @@ function Tests.UpdateTest()
     Replace(Addon, "rolls", Util.Counter.New())
     Replace(Addon, "ScheduleTimer", function () return true end)
 
-    -- Allow changing ML
     local ml = nil
     Replace(Session, "GetMasterlooter", function () return ml end)
 
-    -- Mock sending messages
     local AssertEvents = Test.ReplaceFunction(Addon, "SendMessage", false)
 
     local roll
