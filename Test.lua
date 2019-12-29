@@ -146,10 +146,6 @@ local frames = {}
 local fire = function (...) for _,f in ipairs(frames) do f:FireEvent(...) end end
 local update = function () for _,f in ipairs(frames) do f:FireUpdate() end end
 
--------------------------------------------------------
---                      WoW mocks                    --
--------------------------------------------------------
-
 local Fn = function () end
 local Id = function (v) return v end
 local Const = function (v) return function () return v end end
@@ -158,6 +154,10 @@ local Val = function (v) return function (a) if a then return v end end end
 local Vals = function (...) local args = {...} return function (...) if ... then return unpack(args) end end end
 local Meta = { __index = function (_, k) if k.match and k:match("^[A-Z]") and k:match("[^A-Z_]") then return Fn end end }
 local Obj = setmetatable({}, Meta)
+
+-------------------------------------------------------
+--                      WoW mocks                    --
+-------------------------------------------------------
 
 CreateFrame = function (_, name, parent)
     parent = parent or UIParent
@@ -196,6 +196,7 @@ end
 CreateFrame(nil, "UIParent")
 CreateFrame(nil, "DEFAULT_CHAT_FRAME")
 
+loadstring = loadstring or load
 geterrorhandler = Const(Fn)
 seterrorhandler = Fn
 wipe = function (t) for i in pairs(t) do t[i] = nil end end
@@ -204,10 +205,6 @@ hooksecurefunc = function (tbl, name, fn)
     if not fn then tbl, name, fn = _G, tbl, name end
     local orig = tbl[name]
     tbl[name] = function (...) local r = {orig(...)} fn(...) return unpack(r) end
-end
-GetClassInfo = function (i)
-    local c = CLASSES[i]
-    return c, c:upper():gsub(" ", "_"), i
 end
 string.split = function (del, str, n)
     local t, i = {}, 0
@@ -225,12 +222,17 @@ strmatch = string.match
 format = string.format
 tinsert = table.insert
 tremove = table.remove
+unpack = unpack or table.unpack
 time = function (...) return math.floor(os.time(...)) end
 max = math.max
 min = math.min
 ceil = math.ceil
 floor = math.floor
 
+GetClassInfo = function (i)
+    local c = CLASSES[i]
+    return c, c:upper():gsub(" ", "_"), i
+end
 GetLocale = Const(LOCALE)
 GetRealmName = Const(REALM)
 GetAutoCompleteRealms = Const(REALM_CONNECTED)

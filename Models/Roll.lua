@@ -304,6 +304,7 @@ function Self.Update(data, unit)
     local ml = Session.GetMasterlooter()
 
     -- Get the roll
+    local created = false
     local roll = Self.Find(data.ownerId, data.owner, data.item, data.itemOwnerId, data.item.owner)
         or ml and unit == ml and Self.Find(nil, nil, data.item, data.itemOwnerId, data.item.owner)
 
@@ -322,6 +323,7 @@ function Self.Update(data, unit)
         end
 
         roll = Self.Add(Item.FromLink(data.item.link, data.item.owner, nil, nil, Util.Default(data.item.isTradable, true)), data.owner, data.ownerId, data.itemOwnerId, data.timeout, data.disenchant or nil)
+        created = true
 
         if roll.isOwner then
             roll.item:OnLoaded(function ()
@@ -417,7 +419,7 @@ function Self.Update(data, unit)
 
         return true
     else
-        return false
+        return created
     end
 end
 
