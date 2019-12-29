@@ -225,7 +225,7 @@ function Tests.UpdateTest()
     AssertFalse(Roll.Update(GetUpdateData(roll), Test.units.party2.name))
     AssertEvents(0)
 
-    -- Send roll with owner different from item owner
+    -- Send roll with unit different from item owner
     roll = Test.rolls[5]
     AssertFalse(Roll.Update(GetUpdateData(roll), Test.units.party1.name))
     AssertEvents(0)
@@ -248,4 +248,224 @@ function Tests.UpdateTest()
     AssertRoll(roll, 3)
     AssertFalse(Addon.rolls[4])
     AssertEvents(0)
+
+    -- TODO: Send roll from ML
+    -- TODO: Send update from ML
+    -- TODO: Send roll and go through statuses
+    -- TODO: Send trade from winner
+    -- TODO: Send trade from item owner
+end
+
+function Tests.ClearTest()
+    -- TODO
+end
+
+function Tests.TestTest()
+    -- TODO
+end
+
+function Tests.PlrIdTest()
+    -- TODO: isPlrId
+    -- TODO: ToPlrId
+    -- TODO: FromPlrId
+    -- TODO: GetPlrId
+end
+
+function Tests.StartTest()
+    -- TODO
+end
+
+function Tests.ScheduleTest()
+    -- TODO
+end
+
+function Tests.RestartTest()
+    -- TODO
+end
+
+function Tests.AdoptTest()
+    -- TODO
+end
+
+function Tests.BidTest()
+    -- TODO
+end
+
+function Tests.VoteTest()
+    -- TODO
+end
+
+function Tests.ShouldEndTest()
+    -- TODO
+end
+
+function Tests.EndTest()
+    -- TODO
+end
+
+function Tests.CancelTest()
+    -- TODO
+end
+
+function Tests.TradeTest()
+    -- TODO: Trade
+    -- TODO: OnTraded
+end
+
+function Tests.SetStatusTest()
+    -- TODO
+end
+
+function Tests.DetermineWinnerTest()
+    -- TODO
+end
+
+function Tests.ValidateTest()
+    -- TODO
+end
+
+function Tests.ValidateBidTest()
+    -- TODO
+end
+
+function Tests.ValidateVoteTest()
+    -- TODO
+end
+
+function Tests.RollFrameTest()
+    -- TODO: GetRollFrame
+    -- TODO: ShowRollFrame
+    -- TODO: HideRollFrame
+end
+
+function Tests.ToggleVisibilityTest()
+    -- TODO
+end
+
+function Tests.AddChatTest()
+    -- TODO
+end
+
+function Tests.ShouldAdvertiseTest()
+    -- TODO
+end
+
+function Tests.ShouldBeConciseTest()
+    -- TODO
+end
+
+function Tests.AdvertiseTest()
+    -- TODO
+end
+
+function Tests.SendStatusTest()
+    -- TODO
+end
+
+function Tests.GetRunTimeTest()
+    -- TODO
+end
+
+function Tests.GetTimeLeftTest()
+    -- TODO
+end
+
+function Tests.ExtendTimeoutTest()
+    -- TODO: ExtendTimeout
+end
+
+function Tests.ExtendTimeLeftTest()
+    -- TODO
+end
+
+function Tests.CalculateTimeoutTest()
+    -- TODO
+end
+
+function Tests.ShouldBeBidOnTest()
+    -- TODO
+end
+
+function Tests.UnitisEligibleTest()
+    -- TODO
+end
+
+function Tests.CanBeWonTest()
+    -- TODO
+end
+
+function Tests.UnitCanWinTest()
+    -- TODO
+end
+
+function Tests.CanBeAwardedTest()
+    -- TODO
+end
+
+function Tests.CanBeAwardedToTest()
+    -- TODO
+end
+
+function Tests.CanBeGivenToTest()
+    -- TODO
+end
+
+function Tests.CanBeAwardedRandomlyTest()
+    -- TODO
+end
+
+function Tests.UnitCanBidTest()
+    -- TODO
+end
+
+function Tests.UnitCanVoteTest()
+    -- TODO
+end
+
+function Tests.UnitIsInvolvedTest()
+    -- TODO
+end
+
+function Tests.CanBeStartedTest()
+    -- TODO
+end
+
+function Tests.CanBeRunTest()
+    -- TODO
+end
+
+function Tests.CanBeRestartedTest()
+    -- TODO
+end
+
+function Tests.HasMasterlooterTest()
+    -- TODO
+end
+
+function Tests.IsMasterlooterTest()
+    -- TODO
+end
+
+function Tests.GetOwnerAddonTest()
+    -- TODO
+end
+
+function Tests.GetActionRequiredTest()
+    -- TODO
+end
+
+function Tests.GetActionTargetTest()
+    -- TODO
+end
+
+function Tests.IsActiveTest()
+    -- TODO
+end
+
+function Tests.IsRecentTest()
+    -- TODO
+end
+
+function Tests.GetBidNameTest()
+    -- TODO
 end
