@@ -108,7 +108,7 @@ end
 
 function Tests:AddTest()
     Test.ReplaceDefault()
-    Replace(Addon, "rolls", Util.Tbl.Counter())
+    Replace(Addon, "rolls", Util.Counter.New())
     Replace(Roll, "CalculateTimeout", function () return 30 end)
     local assertMsgSend = Test.ReplaceFunction(Addon, "SendMessage", false)
 
@@ -173,7 +173,7 @@ end
 
 function Tests.UpdateTest()
     Test.ReplaceDefault()
-    Replace(Addon, "rolls", Util.Tbl.Counter())
+    Replace(Addon, "rolls", Util.Counter.New())
     Replace(Addon.Item, "OnLoaded", function (_, fn) return fn() end)
     Replace(Addon, "ScheduleTimer", function () return true end)
     local assertMsgSend = Test.ReplaceFunction(Addon, "SendMessage", false)
