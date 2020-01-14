@@ -1,4 +1,7 @@
-- Added item filter on the left side of the roll overview window
-- Added unit testing, they won't be included in releases but should help detect bugs early
-- Updated readme
-- Includes updated translations
+- Updated interface version for 8.3
+- Updated instance and trinket lists for 8.3
+- Reduced default extra timeout per item from 10 to 5
+- Fixed rolls window layout update after filtering
+- Some minor bugfixes
+- Internal: Moved utility functions into external LibUtil library
+- Internal: Some more unit tests

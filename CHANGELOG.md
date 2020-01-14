@@ -1,3 +1,9 @@
+Version 19
+- Added item filter on the left side of the roll overview window
+- Added unit testing, they won't be included in releases but should help detect bugs early
+- Updated readme
+- Includes updated translations
+
 Version 18.06
 - Updated interface version for 8.2.5
 
