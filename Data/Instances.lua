@@ -181,4 +181,5 @@ Self.INSTANCES = {
     [1176] = 8, -- Battle of Dazar'alor
     [1177] = 8, -- Crucible of Storms
     [1179] = 8, -- The Eternal Palace
+    [1180] = 8, -- Ny'alotha, the Waking City
 }

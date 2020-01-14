@@ -266,7 +266,20 @@ function Self:HandleChatCommand(msg)
         self:LogExport()
     -- Update and export trinket list
     elseif cmd == "trinkets" then
-        Item.UpdateTrinkets()
+        if args[1] == "cancel" then
+            self:Info("Canceling trinket list update")
+            Item.CancelUpdateTrinkets()
+        else
+            self:Info("Updating trinket list from Dungeon Journal")
+
+            local tier = tonumber(args[1]) or args[1] == "full" and 1 or EJ_GetNumTiers()
+            if tier == 1 then
+                wipe(Item.TRINKETS)
+                Util.Tbl.Inspect(Item.TRINKETS)
+            end
+
+            Item.UpdateTrinkets(tier)
+        end
     -- Update and export instance list
     elseif cmd == "instances" then
         Util.ExportInstances()
