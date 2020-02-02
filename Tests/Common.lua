@@ -11,6 +11,13 @@ local Roll, Unit, Util = Addon.Roll, Addon.Unit, Addon.Util
 Addon.Test = {}
 local Self = Addon.Test
 
+Self.Fn = function () end
+Self.Id = function (v) return v end
+Self.Const = function (v) return function () return v end end
+Self.Consts = function (...) local args = {...} return function () return unpack(args) end end
+Self.Val = function (v) return function (a) if a then return v end end end
+Self.Vals = function (...) local args = {...} return function (...) if ... then return unpack(args) end end end
+
 function Self.Dump(o, maxDepth, depth)
     maxDepth = maxDepth or 5
     depth = depth or 1

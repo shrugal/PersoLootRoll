@@ -1,7 +1,2 @@
-- Updated interface version for 8.3
-- Updated instance and trinket lists for 8.3
-- Reduced default extra timeout per item from 10 to 5
-- Fixed rolls window layout update after filtering
-- Some minor bugfixes
-- Internal: Moved utility functions into external LibUtil library
-- Internal: Some more unit tests
+- Fixed wrong Util.In references in Util.Str (#13)
+- Internal: Added unit tests for Util.Str
