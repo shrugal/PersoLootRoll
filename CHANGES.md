@@ -1,2 +1,1 @@
-- Fixed wrong Util.In references in Util.Str (#13)
-- Internal: Added unit tests for Util.Str
+- Added debug messages for bids
