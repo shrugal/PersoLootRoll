@@ -2,6 +2,7 @@
 local Name = ...
 ---@type Addon
 local Addon = select(2, ...)
+local AceComm = LibStub("AceComm-3.0")
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Comm, Item, Locale, Session, Roll, Unit, Util = Addon.Comm, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
@@ -553,7 +554,7 @@ end
 -------------------------------------------------------
 
 -- Check
-Comm.ListenData(Comm.EVENT_CHECK, function (event, data, channel, sender, unit)
+Comm.ListenData(Comm.EVENT_CHECK, function (_, data, channel, sender, unit)
     if not Self.lastVersionCheck or Self.lastVersionCheck + Self.VERSION_CHECK_DELAY < GetTime() then
         Self.lastVersionCheck = GetTime()
 
@@ -575,16 +576,16 @@ Comm.ListenData(Comm.EVENT_CHECK, function (event, data, channel, sender, unit)
 end, true)
 
 -- Version
-Comm.ListenData(Comm.EVENT_VERSION, function (event, version, channel, sender, unit)
+Comm.ListenData(Comm.EVENT_VERSION, function (_, version, channel, sender, unit)
     Self:SetVersion(unit, version)
 end)
 
 -- Enable/Disable
-Comm.Listen(Comm.EVENT_ENABLE, function (event, _, _, _, unit) Self.disabled[unit] = nil end, true)
-Comm.Listen(Comm.EVENT_DISABLE, function (event, _, _, _, unit) Self.disabled[unit] = true end, true)
+Comm.Listen(Comm.EVENT_ENABLE, function (_, _, _, _, unit) Self.disabled[unit] = nil end, true)
+Comm.Listen(Comm.EVENT_DISABLE, function (_, _, _, _, unit) Self.disabled[unit] = true end, true)
 
 -- Sync
-Comm.Listen(Comm.EVENT_SYNC, function (event, msg, channel, sender, unit)
+Comm.Listen(Comm.EVENT_SYNC, function (_, msg, channel, sender, unit)
     -- Reset all owner ids and bids for the unit's rolls and items, because he/she doesn't know them anymore
     for id, roll in pairs(Self.rolls) do
         if roll.owner == unit then
@@ -623,7 +624,7 @@ Comm.Listen(Comm.EVENT_SYNC, function (event, msg, channel, sender, unit)
 end)
 
 -- Roll status
-Comm.ListenData(Comm.EVENT_ROLL_STATUS, function (event, data, channel, sender, unit)
+Comm.ListenData(Comm.EVENT_ROLL_STATUS, function (_, data, channel, sender, unit)
     if not Self:IsTracking() then return end
 
     data.owner = Unit.Name(data.owner)
@@ -635,7 +636,7 @@ Comm.ListenData(Comm.EVENT_ROLL_STATUS, function (event, data, channel, sender, 
 end)
 
 -- Bids
-Comm.ListenData(Comm.EVENT_BID, function (event, data, channel, sender, unit)
+Comm.ListenData(Comm.EVENT_BID, function (_, data, channel, sender, unit)
     if not Self:IsTracking() then return end
 
     local isImport = data.fromUnit ~= nil
@@ -647,7 +648,7 @@ Comm.ListenData(Comm.EVENT_BID, function (event, data, channel, sender, unit)
         roll:Bid(data.bid, fromUnit, isImport and data.roll, isImport)
     end
 end)
-Comm.ListenData(Comm.EVENT_BID_WHISPER, function (event, item)
+Comm.ListenData(Comm.EVENT_BID_WHISPER, function (_, item)
     if not Self:IsTracking() then return end
 
     local roll = Roll.Find(nil, item.owner, item.link)
@@ -657,7 +658,7 @@ Comm.ListenData(Comm.EVENT_BID_WHISPER, function (event, item)
 end)
 
 -- Votes
-Comm.ListenData(Comm.EVENT_VOTE, function (event, data, channel, sender, unit)
+Comm.ListenData(Comm.EVENT_VOTE, function (_, data, channel, sender, unit)
     if not Self:IsTracking() then return end
 
     local owner = data.fromUnit and unit or nil
@@ -670,11 +671,19 @@ Comm.ListenData(Comm.EVENT_VOTE, function (event, data, channel, sender, unit)
 end)
 
 -- Declaring interest
-Comm.ListenData(Comm.EVENT_INTEREST, function (event, data, channel, sender, unit)
+Comm.ListenData(Comm.EVENT_INTEREST, function (_, data, channel, sender, unit)
     if not Self:IsTracking() then return end
 
     local roll = Roll.Find(data.ownerId)
     if roll then
         roll.item:SetEligible(unit)
+    end
+end)
+
+-- XRealm
+Comm.Listen(Comm.EVENT_XREALM, function (_, data, channel, sender, unit)
+    local receiver, event, msg = data:match("^([^/]+)/([^/]+)/(.*)")
+    if Unit.IsSelf(Unit(receiver)) then
+        AceComm.callbacks:Fire(Comm.PREFIX .. event, msg, Comm.TYPE_WHISPER, sender)
     end
 end)

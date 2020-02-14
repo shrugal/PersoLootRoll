@@ -2,12 +2,14 @@
 local Name = ...
 ---@type Addon
 local Addon = select(2, ...)
+local AceComm = LibStub("AceComm-3.0")
+local CTL = ChatThrottleLib
 local Locale, Session, Roll, Unit, Util = Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
 ---@class Comm
 local Self = Addon.Comm
 
 Self.PREFIX = Addon.ABBR
-Self.CHAT_PREFIX = "[" .. Addon.ABBR .. "] "
+Self.PREFIX_CHAT = "[" .. Addon.ABBR .. "] "
 -- Max # of whispers per item for all addons in the group
 Self.MAX_WHISPERS = 2
 
@@ -37,7 +39,8 @@ Self.EVENT_MASTERLOOT_ASK = "ML-ASK"
 Self.EVENT_MASTERLOOT_OFFER = "ML-OFFER"
 Self.EVENT_MASTERLOOT_ACK = "ML-ACK"
 Self.EVENT_MASTERLOOT_DEC = "ML-DEC"
-Self.EVENTS = {Self.EVENT_CHECK, Self.EVENT_VERSION, Self.EVENT_ENABLE, Self.EVENT_DISABLE, Self.EVENT_SYNC, Self.EVENT_ROLL_STATUS, Self.EVENT_BID, Self.EVENT_BID_WHISPER, Self.EVENT_VOTE, Self.EVENT_INTEREST, Self.EVENT_MASTERLOOT_ASK, Self.EVENT_MASTERLOOT_OFFER, Self.EVENT_MASTERLOOT_ACK, Self.EVENT_MASTERLOOT_DEC}
+Self.EVENT_XREALM = "XREALM"
+Self.EVENTS = {Self.EVENT_CHECK, Self.EVENT_VERSION, Self.EVENT_ENABLE, Self.EVENT_DISABLE, Self.EVENT_SYNC, Self.EVENT_ROLL_STATUS, Self.EVENT_BID, Self.EVENT_BID_WHISPER, Self.EVENT_VOTE, Self.EVENT_INTEREST, Self.EVENT_MASTERLOOT_ASK, Self.EVENT_MASTERLOOT_OFFER, Self.EVENT_MASTERLOOT_ACK, Self.EVENT_MASTERLOOT_DEC, Self.EVENT_XREALM}
 
 -- Message patterns
 Self.PATTERN_PARTY_JOINED = ERR_JOINED_GROUP_S:gsub("%%s", "(.+)")
@@ -139,7 +142,7 @@ function Self.Chat(msg, target)
     if not channel then
         return
     elseif channel ~= Self.TYPE_WHISPER then
-        msg = Util.Str.Prefix(msg, Self.CHAT_PREFIX)
+        msg = Util.Str.Prefix(msg, Self.PREFIX_CHAT)
     end
 
     if player then
@@ -162,23 +165,28 @@ function Self.ChatLine(line, target, ...)
 end
 
 -- Send an addon message
-function Self.Send(event, msg, target, prio, callbackFn, callbackArg)
-    event = Self.GetPrefix(event)
-    local channel, player = Self.GetDestination(target)
+function Self.Send(event, msg, target, prio)
+    local channel, unit = Self.GetDestination(target)
 
-    -- TODO: This fixes a beta bug that causes a dc when sending empty strings
-    msg = (not msg or msg == "") and " " or msg
-
-    -- Send the message
     if Addon:IsEnabled() and channel then
-        Addon:SendCommMessage(event, msg, channel, player, prio, callbackFn, callbackArg)
+        -- Handle cross-realm whispers
+        if Util.In(event, Self.EVENTS) and unit and Unit.InGroup(unit) and Unit.ConnectedRealm(unit) ~= Unit.ConnectedRealm("player") then
+            msg = unit .. "/" .. event .. "/" .. msg
+            event, channel, unit = Self.EVENT_XREALM, Self.GetDestination()
+        end
+
+        event = Self.GetPrefix(event)
+
+        -- TODO: This fixes a beta bug that causes a dc when sending empty strings
+        msg = (not msg or msg == "") and " " or msg
+
+        Addon:SendCommMessage(event, msg, channel, unit, prio)
     end
 end
 
 -- Send structured addon data
-function Self.SendData(event, data, target, prio, callbackFn, callbackArg)
-    -- print("OUT", event, data, target)
-    Self.Send(event, Addon:Serialize(data), target, prio, callbackFn, callbackArg)
+function Self.SendData(event, data, target, prio)
+    Self.Send(event, Addon:Serialize(data), target, prio)
 end
 
 -- Listen for an addon message
@@ -197,7 +205,6 @@ function Self.ListenData(event, method, fromSelf, fromAll)
     Self.Listen(event, function (event, data, ...)
         local success, data = Addon:Deserialize(data)
         if success then
-            -- print("IN", event, data)
             method(event, data, ...)
         end
     end, fromSelf, fromAll)
