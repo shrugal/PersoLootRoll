@@ -6,7 +6,7 @@ stages:
   - deploy
 
 .releases: &releases
-  - /^\d[\d\.]*(-(alpha|beta)\d+)?$/
+  - /^\d[\d\.]*(-(debug|alpha|beta|stable)\d+)?$/
 
 build:
   only: *releases
