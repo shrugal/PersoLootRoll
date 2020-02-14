@@ -636,6 +636,9 @@ end)
 
 -- Bids
 Comm.ListenData(Comm.EVENT_BID, function (event, data, channel, sender, unit)
+    --@alpha@
+    Self:Debug("Events.Bid", event, data, channel, sender, unit, Self:IsTracking())
+    --@end-alpha@
     if not Self:IsTracking() then return end
 
     local isImport = data.fromUnit ~= nil
@@ -643,6 +646,9 @@ Comm.ListenData(Comm.EVENT_BID, function (event, data, channel, sender, unit)
     local fromUnit = data.fromUnit or unit
 
     local roll = Roll.Find(data.ownerId, owner)
+    --@alpha@
+    Self:Debug("Events.Bid.Roll", isImport, owner, fromUnit, roll)
+    --@end-alpha@
     if roll then
         roll:Bid(data.bid, fromUnit, isImport and data.roll, isImport)
     end

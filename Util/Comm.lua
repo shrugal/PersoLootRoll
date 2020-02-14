@@ -169,9 +169,19 @@ function Self.Send(event, msg, target, prio, callbackFn, callbackArg)
     -- TODO: This fixes a beta bug that causes a dc when sending empty strings
     msg = (not msg or msg == "") and " " or msg
 
+    --@alpha@
+    if event == Self.GetPrefix(Self.EVENT_BID) then
+        Addon:Debug("Comm.Send", event, msg, target, channel, player, prio, callbackFn, callbackArg)
+    end
+    --@end-alpha
+
     -- Send the message
     if Addon:IsEnabled() and channel then
         Addon:SendCommMessage(event, msg, channel, player, prio, callbackFn, callbackArg)
+    --@alpha@
+    elseif event == Self.GetPrefix(Self.EVENT_BID) then
+        Addon:Debug("Comm.Send.Skip", Addon:IsEnabled(), channel)
+    --@end-alpha@
     end
 end
 
@@ -186,8 +196,19 @@ function Self.Listen(event, method, fromSelf, fromAll)
     Addon:RegisterComm(Self.GetPrefix(event), function (event, msg, channel, sender)
         msg = msg ~= "" and msg ~= " " and msg or nil
         local unit = Unit(sender)
+
+        --@alpha@
+        if event == Self.EVENT_BID then
+            Addon:Debug("Comm.Listen", event, msg, channel, sender, unit)
+        end
+        --@end-alpha@
+
         if Addon:IsEnabled() and (fromAll or Unit.InGroup(unit, not fromSelf)) then
             method(event, msg, channel, sender, unit)
+        --@alpha@
+        elseif event == Self.EVENT_BID then
+            Addon:Debug("Comm.Listen.Skip", Addon:IsEnabled(), fromAll, fromSelf, Unit.InGroup(unit, not fromSelf))
+        --@end-alpha@
         end
     end)
 end
@@ -196,6 +217,13 @@ end
 function Self.ListenData(event, method, fromSelf, fromAll)
     Self.Listen(event, function (event, data, ...)
         local success, data = Addon:Deserialize(data)
+
+        --@alpha@
+        if event == Self.EVENT_BID then
+            Addon:Debug("Comm.Listen", fromSelf, fromAll, success, data)
+        end
+        --@end-alpha@
+
         if success then
             -- print("IN", event, data)
             method(event, data, ...)
@@ -224,6 +252,10 @@ function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport)
     local L = LibStub("AceLocale-3.0"):GetLocale(Name)
     local fromSelf = Unit.IsSelf(fromUnit)
 
+    --@alpha@
+    Addon:Debug("Comm.RollBid", fromSelf, bid, fromUnit, randomRoll, isImport, roll)
+    --@end-alpha@
+
     -- Show a confirmation message
     if fromSelf then
         if bid == Roll.BID_PASS then
@@ -251,6 +283,9 @@ function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport)
         -- Send bid to owner
         elseif fromSelf then
             if roll.ownerId then
+                --@alpha@
+                Addon:Debug("Comm.RollBid.SendData", Self.EVENT_BID, Util.Tbl.Hash("ownerId", roll.ownerId, "bid", bid), roll.owner)
+                --@end-alpha@
                 Self.SendData(Self.EVENT_BID, Util.Tbl.Hash("ownerId", roll.ownerId, "bid", bid), roll.owner)
             elseif bid ~= Roll.BID_PASS and not roll:GetOwnerAddon() then
                 local owner, link = roll.item.owner, roll.item.link

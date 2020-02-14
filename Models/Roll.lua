@@ -674,6 +674,10 @@ function Self:Bid(bid, fromUnit, roll, isImport)
                 self:End(nil, false, true)
             end
         end
+    --@alpha@
+    else
+        Addon:Debug("Roll.Bid.Invalid", bid, fromUnit, roll, isImport, answer, answers)
+    --@end-alpha@
     end
 
     return self
