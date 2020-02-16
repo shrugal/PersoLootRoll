@@ -554,7 +554,7 @@ end
 -------------------------------------------------------
 
 -- Check
-Comm.ListenData(Comm.EVENT_CHECK, function (_, data, channel, sender, unit)
+function Self.EVENT_CHECK(_, data, channel, sender, unit)
     if not Self.lastVersionCheck or Self.lastVersionCheck + Self.VERSION_CHECK_DELAY < GetTime() then
         Self.lastVersionCheck = GetTime()
 
@@ -573,19 +573,25 @@ Comm.ListenData(Comm.EVENT_CHECK, function (_, data, channel, sender, unit)
             Comm.Send(Comm.EVENT_DISABLE, target)
         end
     end
-end, true)
+end
+Comm.ListenData(Comm.EVENT_CHECK, Self.EVENT_CHECK, true)
 
 -- Version
-Comm.ListenData(Comm.EVENT_VERSION, function (_, version, channel, sender, unit)
+function Self.EVENT_VERSION(_, version, channel, sender, unit)
     Self:SetVersion(unit, version)
-end)
+end
+Comm.ListenData(Comm.EVENT_VERSION, Self.EVENT_VERSION)
 
--- Enable/Disable
-Comm.Listen(Comm.EVENT_ENABLE, function (_, _, _, _, unit) Self.disabled[unit] = nil end, true)
-Comm.Listen(Comm.EVENT_DISABLE, function (_, _, _, _, unit) Self.disabled[unit] = true end, true)
+-- Enable
+function Self.EVENT_ENABLE(_, _, _, _, unit) Self.disabled[unit] = nil end
+Comm.Listen(Comm.EVENT_ENABLE, Self.EVENT_ENABLE, true)
+
+-- Disable
+function Self.EVENT_DISABLE(_, _, _, _, unit) Self.disabled[unit] = true end
+Comm.Listen(Comm.EVENT_DISABLE, Self.EVENT_DISABLE, true)
 
 -- Sync
-Comm.Listen(Comm.EVENT_SYNC, function (_, msg, channel, sender, unit)
+function Self.EVENT_SYNC(_, msg, channel, sender, unit)
     -- Reset all owner ids and bids for the unit's rolls and items, because he/she doesn't know them anymore
     for id, roll in pairs(Self.rolls) do
         if roll.owner == unit then
@@ -621,10 +627,11 @@ Comm.Listen(Comm.EVENT_SYNC, function (_, msg, channel, sender, unit)
             end, Roll.DELAY)
         end
     end
-end)
+end
+Comm.Listen(Comm.EVENT_SYNC, Self.EVENT_SYNC)
 
 -- Roll status
-Comm.ListenData(Comm.EVENT_ROLL_STATUS, function (_, data, channel, sender, unit)
+function Self.EVENT_ROLL_STATUS(_, data, channel, sender, unit)
     if not Self:IsTracking() then return end
 
     data.owner = Unit.Name(data.owner)
@@ -633,10 +640,11 @@ Comm.ListenData(Comm.EVENT_ROLL_STATUS, function (_, data, channel, sender, unit
     data.traded = data.traded and Unit.Name(data.traded)
 
     Roll.Update(data, unit)
-end)
+end
+Comm.ListenData(Comm.EVENT_ROLL_STATUS, Self.EVENT_ROLL_STATUS)
 
 -- Bids
-Comm.ListenData(Comm.EVENT_BID, function (_, data, channel, sender, unit)
+function Self.EVENT_BID(_, data, channel, sender, unit)
     if not Self:IsTracking() then return end
 
     local isImport = data.fromUnit ~= nil
@@ -647,18 +655,22 @@ Comm.ListenData(Comm.EVENT_BID, function (_, data, channel, sender, unit)
     if roll then
         roll:Bid(data.bid, fromUnit, isImport and data.roll, isImport)
     end
-end)
-Comm.ListenData(Comm.EVENT_BID_WHISPER, function (_, item)
+end
+Comm.ListenData(Comm.EVENT_BID, Self.EVENT_BID)
+
+-- Bid whisper
+function Self.EVENT_BID_WHISPER(_, item)
     if not Self:IsTracking() then return end
 
     local roll = Roll.Find(nil, item.owner, item.link)
     if roll then
         roll.whispers = roll.whispers + 1
     end
-end)
+end
+Comm.ListenData(Comm.EVENT_BID_WHISPER, Self.EVENT_BID_WHISPER)
 
 -- Votes
-Comm.ListenData(Comm.EVENT_VOTE, function (_, data, channel, sender, unit)
+function Self.EVENT_VOTE(_, data, channel, sender, unit)
     if not Self:IsTracking() then return end
 
     local owner = data.fromUnit and unit or nil
@@ -668,22 +680,25 @@ Comm.ListenData(Comm.EVENT_VOTE, function (_, data, channel, sender, unit)
     if roll then
         roll:Vote(data.vote, fromUnit, owner ~= nil)
     end
-end)
+end
+Comm.ListenData(Comm.EVENT_VOTE, Self.EVENT_VOTE)
 
 -- Declaring interest
-Comm.ListenData(Comm.EVENT_INTEREST, function (_, data, channel, sender, unit)
+function Self.EVENT_INTEREST(_, data, channel, sender, unit)
     if not Self:IsTracking() then return end
 
     local roll = Roll.Find(data.ownerId)
     if roll then
         roll.item:SetEligible(unit)
     end
-end)
+end
+Comm.ListenData(Comm.EVENT_INTEREST, Self.EVENT_INTEREST)
 
 -- XRealm
-Comm.Listen(Comm.EVENT_XREALM, function (_, data, channel, sender, unit)
+function Self.EVENT_XREALM(_, data, channel, sender, unit)
     local receiver, event, msg = data:match("^([^/]+)/([^/]+)/(.*)")
     if Unit.IsSelf(Unit(receiver)) then
         AceComm.callbacks:Fire(Comm.PREFIX .. event, msg, Comm.TYPE_WHISPER, sender)
     end
-end)
+end
+Comm.Listen(Comm.EVENT_XREALM, Self.EVENT_XREALM)

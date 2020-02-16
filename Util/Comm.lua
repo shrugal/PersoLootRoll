@@ -169,6 +169,9 @@ function Self.Send(event, msg, target, prio)
     local channel, unit = Self.GetDestination(target)
 
     if Addon:IsEnabled() and channel then
+        -- TODO: This fixes a beta bug that causes a dc when sending empty strings
+        msg = (not msg or msg == "") and " " or msg
+
         -- Handle cross-realm whispers
         if Util.In(event, Self.EVENTS) and unit and Unit.InGroup(unit) and Unit.ConnectedRealm(unit) ~= Unit.ConnectedRealm("player") then
             msg = unit .. "/" .. event .. "/" .. msg
@@ -176,9 +179,6 @@ function Self.Send(event, msg, target, prio)
         end
 
         event = Self.GetPrefix(event)
-
-        -- TODO: This fixes a beta bug that causes a dc when sending empty strings
-        msg = (not msg or msg == "") and " " or msg
 
         Addon:SendCommMessage(event, msg, channel, unit, prio)
     end
