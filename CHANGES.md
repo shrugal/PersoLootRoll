@@ -1,1 +1,1 @@
-- Added proper cross-realm whisper handling
+- Added proper whisper handling across connected realms (#14)
