@@ -1,1 +1,1 @@
-- Added proper whisper handling across connected realms (#14)
+- Fixed Unit.ConnectedRealm for realms without connections (CurseForge#15)

@@ -1,3 +1,6 @@
+Version 21
+- Added proper whisper handling across connected realms (#14)
+
 Version 20.01
 - Fixed wrong Util.In references in Util.Str (#13)
 - Internal: Added unit tests for Util.Str
