@@ -219,6 +219,8 @@ end
 string.trim = function (s) return s:match("^%s*(.-)%s*$") end
 strsplit = string.split
 strmatch = string.match
+strtrim = string.trim
+strlen = string.len
 format = string.format
 tinsert = table.insert
 tremove = table.remove
@@ -249,7 +251,7 @@ GroupLootContainer_RemoveFrame = Fn
 SetLootRollItem = Fn
 SetItemRef = Fn
 UnitPopup_ShowMenu = Fn
-UnitName = function (v) return v ~= "" and v or nil end
+UnitName = function (u) local unit, realm = strsplit("-", u) return unit, realm ~= GetRealmName() and realm or nil end
 UnitFullName = UnitName
 UnitClass = Vals(GetClassInfo(CLASS))
 UnitRace = Vals(RACES[RACE], RACES[RACE], RACE)

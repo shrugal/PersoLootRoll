@@ -3,4 +3,5 @@
     <Script file="Unit\Roll.lua"/>
     <Script file="Unit\Core\Events.lua"/>
     <Script file="Unit\Util\Str.lua"/>
+    <Script file="Unit\Util\Unit.lua"/>
 </Ui>

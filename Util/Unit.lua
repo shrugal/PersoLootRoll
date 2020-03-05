@@ -72,7 +72,10 @@ function Self.ConnectedRealm(unit)
     if connections  then
         local s = ""
         for _,id in ipairs(connections) do
-            s = s .. (s == "" and "" or "-") .. select(3, RI:GetRealmInfoByID(id))
+            local name = select(3, RI:GetRealmInfoByID(id))
+            if name then
+                s = s .. (s == "" and "" or "-") .. select(3, RI:GetRealmInfoByID(id))
+            end
         end
         return s
     else
