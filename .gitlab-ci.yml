@@ -21,6 +21,12 @@ build:
 quicktest:
   stage: test
   except: *releases
+  only:
+    changes:
+      - "*.lua"
+      - "*.xml"
+      - "*.toc"
+      - "*.yml"
   variables:
     GIT_DEPTH: 1
     GIT_SUBMODULE_STRATEGY: normal
