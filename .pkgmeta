@@ -10,7 +10,6 @@ ignore:
   - Tests
   - Test.lua
   - _config.yml
-  - CHANGES.md
 
 externals:
   Libs/LibUtil:
