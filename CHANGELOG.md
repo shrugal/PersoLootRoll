@@ -1,3 +1,6 @@
+Version 21.01
+- Fixed Unit.ConnectedRealm for realms without connections (CurseForge#15)
+
 Version 21
 - Added proper whisper handling across connected realms (#14)
 
