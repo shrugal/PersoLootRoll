@@ -1,3 +1,6 @@
+Version 21.02
+- Updated legacy loot detection for legion dungeons 
+
 Version 21.01
 - Fixed Unit.ConnectedRealm for realms without connections (CurseForge#15)
 

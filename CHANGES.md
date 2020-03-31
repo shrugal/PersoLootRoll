@@ -1,1 +1,1 @@
-- Fixed Unit.ConnectedRealm for realms without connections (CurseForge#15)
+- Updated legacy loot detection for legion dungeons

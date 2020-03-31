@@ -9,8 +9,8 @@ stages:
   - /^\d[\d\.]*(-(debug|alpha|beta|stable)\d+)?$/
 
 build:
-  only: *releases
   stage: build
+  only: *releases
   script:
     - release.sh -d
   artifacts:
@@ -21,12 +21,6 @@ build:
 quicktest:
   stage: test
   except: *releases
-  only:
-    changes:
-      - "*.lua"
-      - "*.xml"
-      - "*.toc"
-      - "*.yml"
   variables:
     GIT_DEPTH: 1
     GIT_SUBMODULE_STRATEGY: normal
@@ -34,8 +28,8 @@ quicktest:
     - lua Test.lua
 
 test:
-  only: *releases
   stage: test
+  only: *releases
   variables:
     GIT_DEPTH: 1
     GIT_SUBMODULE_STRATEGY: normal
@@ -43,8 +37,8 @@ test:
     - lua Test.lua -b
   
 curseforge:
-  only: *releases
   stage: deploy
+  only: *releases
   environment:
     name: CurseForge
     url: https://wow.curseforge.com/projects/persolootroll
@@ -52,8 +46,8 @@ curseforge:
     - release.sh -ocelzWHG
 
 wowinterface:
-  only: *releases
   stage: deploy
+  only: *releases
   environment:
     name: WoWInterface
     url: https://www.wowinterface.com/downloads/info24667-PersoLootRoll.html
@@ -61,8 +55,8 @@ wowinterface:
     - release.sh -ocelzLHG
 
 github:
-  only: *releases
   stage: deploy
+  only: *releases
   environment:
     name: GitHub
     url: https://github.com/shrugal/PersoLootRoll/releases
@@ -70,8 +64,8 @@ github:
     - release.sh -ocelzLWG
 
 gitlab:
-  only: *releases
   stage: deploy
+  only: *releases
   environment:
     name: GitLab
     url: https://gitlab.com/shrugal/PersoLootRoll/releases
