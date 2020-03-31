@@ -33,7 +33,7 @@ Self.EXP_MOP = 5
 Self.EXP_WOD = 6
 Self.EXP_LEGION = 7
 Self.EXP_BFA = 8
-Self.EXP_NEXT = 9
+Self.EXP_SL = 9
 
 -- Check if the current group is a guild group
 ---@return string|boolean
@@ -119,7 +119,8 @@ end
 -- Check if the legacy loot mode is active
 function Self.IsLegacyLoot()
     local iExp = Self.GetInstanceExp()
-    return iExp and GetLootMethod() == "personalloot" and iExp < Unit.Expansion("player") - 1
+    return GetLootMethod() == "personalloot"
+        and iExp and iExp < Unit.Expansion("player") - (iExp == Self.EXP_LEGION and 0 or 1)
 end
 
 -- Check if the current session is a transmog run
