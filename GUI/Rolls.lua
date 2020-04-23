@@ -998,7 +998,7 @@ function Self.TestRoll(roll)
     local startLimit = ml and Addon.db.profile.masterloot.rules.startLimit or 0
 
     return  roll
-        and (Self.filter.all or roll.isOwner or roll.item.isOwner or roll.item:GetEligible("player"))
+        and (Self.filter.all or roll.isOwner or roll.item.isOwner or roll.item:IsLoaded() and roll.item:GetEligible("player"))
         and (Self.filter.done or (roll.status ~= Roll.STATUS_DONE))
         and (Self.filter.awarded or not roll.winner)
         and (Self.filter.traded or not roll.traded)

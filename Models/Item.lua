@@ -874,7 +874,7 @@ end
 
 -- Check against equipped ilvl
 function Self:HasSufficientLevel(unit)
-    return self:GetInfo("realLevel") + self:GetThresholdForLocation(unit) >= self:GetLevelForLocation(unit)
+    return (self:GetInfo("realLevel") or 1) + self:GetThresholdForLocation(unit) >= self:GetLevelForLocation(unit)
 end
 
 -- Check against current character level

@@ -1,3 +1,6 @@
+Version 21.03-beta1
+- Fix filtering for unloaded items (CurseForge#16)
+
 Version 21.02
 - Updated legacy loot detection for legion dungeons 
 

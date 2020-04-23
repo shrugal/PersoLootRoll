@@ -1,1 +1,1 @@
-- Updated legacy loot detection for legion dungeons
+- Fix filtering for unloaded items (CurseForge#16)
