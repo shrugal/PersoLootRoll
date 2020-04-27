@@ -1,5 +1,6 @@
 Version 21.03-beta2
 - Added more detailed info messages to Comm.ShouldInitChat
+- Fixed updating whisper ask option when target or group filter changes
 - Added some unit tests for Util.Comm
 - Fixed Roll.AddTest unit test
 

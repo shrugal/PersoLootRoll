@@ -583,7 +583,7 @@ function Self.RegisterMessages()
                         set = function (_, key, val)
                             local c = Addon.db.profile.messages.whisper
                             c.target[Self.targetKeys[key]] = val
-                            c.ask = Util.Tbl.Find(c.target, true) and c.ask or false
+                            c.ask = Util.Tbl.Find(c.target, true) and Util.Tbl.Find(c.groupType, true)
                         end,
                         get = function (_, key) return Addon.db.profile.messages.whisper.target[Self.targetKeys[key]] end,
                         width = Self.WIDTH_THIRD
@@ -598,7 +598,7 @@ function Self.RegisterMessages()
                         set = function (_, key, val)
                             local c = Addon.db.profile.messages.whisper
                             c.groupType[Self.groupKeys[key]] = val
-                            c.ask = Util.Tbl.Find(c.groupType, true) and c.ask or false
+                            c.ask = Util.Tbl.Find(c.target, true) and Util.Tbl.Find(c.groupType, true)
                         end,
                         get = function (_, key) return Addon.db.profile.messages.whisper.groupType[Self.groupKeys[key]] end,
                         width = Self.WIDTH_THIRD
