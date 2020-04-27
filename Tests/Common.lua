@@ -13,6 +13,7 @@ local Self = Addon.Test
 
 Self.Fn = function () end
 Self.Id = function (v) return v end
+Self.Not = function (v) return not v end
 Self.Const = function (v) return function () return v end end
 Self.Consts = function (...) local args = {...} return function () return unpack(args) end end
 Self.Val = function (v) return function (a) if a then return v end end end
@@ -68,6 +69,12 @@ function Self.ReplaceFunction(obj, key, mock)
     local fn, test = Self.MockFunction(obj[key], mock)
     Replace(obj, key, fn)
     return test
+end
+
+function Self.ReplaceLocale(mock)
+    Replace(LibStub("AceLocale-3.0").apps, Name, mock or setmetatable({}, {
+        __index = function (_, key) return key end
+    }))
 end
 
 -- Apply default replacements to mock up a controlled test environment
@@ -173,8 +180,8 @@ function Self.GetDetailedItemLevelInfo(v)
 end
 
 function Self.GetNumGroupMembers() return Util.Tbl.Count(Self.group) end
-function Self.IsInGroup() return Self.GetNumGroupMembers() > 0 end
-function Self.IsInRaid() return Self.GetNumGroupMembers() > 5 end
+function Self.IsInGroup(type) return not type and Self.GetNumGroupMembers() > 0 end
+function Self.IsInRaid(type) return not type and Self.GetNumGroupMembers() > 5 end
 function Self.UnitInRaid(v) return Self.UnitInParty(v) end
 
 function Self.UnitInParty(v)

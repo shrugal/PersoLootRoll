@@ -84,54 +84,82 @@ function Self.GetDestination(target)
 end
 
 -- Check if initializing chat on given channel and to giver target is enabled
-function Self.ShouldInitChat(target)
+function Self.ShouldInitChat(target, item)
+    local L = item and LibStub("AceLocale-3.0"):GetLocale(Name)
     local c = Addon.db.profile.messages
     local channel, unit = Self.GetDestination(target)
+    local isWhipser = channel == Self.TYPE_WHISPER
 
-    -- Check group
-    if not channel or not IsInGroup() or Addon:GetNumAddonUsers(true) + 1 == GetNumGroupMembers() then
+    -- Check channel and group
+    if not channel or not IsInGroup() then
+        Self.ChatInfo("BID_NO_CHAT", item)
         return false
     end
 
     -- Check whisper options
-    if channel == Self.TYPE_WHISPER then
+    if isWhipser then
         if not c.whisper.ask then
+            Self.ChatInfo("BID_NO_CHAT_ASK", item, target)
             return false
-        elseif UnitIsDND(unit) or Addon:UnitIsTracking(unit) or Unit.IsSelf(unit) then
+        elseif UnitIsDND(unit) then
+            Self.ChatInfo("BID_NO_CHAT_DND", item, target)
+            return false
+        elseif Addon:UnitIsTracking(unit) then
+            Self.ChatInfo("BID_NO_CHAT_TRACKING", item, target)
+            return false
+        elseif Unit.IsSelf(unit) then
+            Self.ChatInfo("BID_NO_CHAT_SELF", item, target)
             return false
         end
 
         -- Check target
-        target = c.whisper.target
+        local byTarget = c.whisper.target
         local isGuild, isCommunity, isFriend = Unit.IsGuildMember(unit), Unit.IsClubMember(unit), Unit.IsFriend(unit)
 
-        if isGuild or isCommunity or isFriend then
-            if isGuild and not target.guild or isCommunity and not target.community or isFriend and not target.friend then
-                return false
-            end
-        elseif not target.other then
+        if isGuild and not byTarget.guild then
+            Self.ChatInfo("BID_NO_CHAT_GUILD", item, target)
+            return false
+        elseif isCommunity and not byTarget.community then
+            Self.ChatInfo("BID_NO_CHAT_CLUB", item, target)
+            return false
+        elseif isFriend and not byTarget.friend then
+            Self.ChatInfo("BID_NO_CHAT_FRIEND", item, target)
+            return false
+        elseif not (isGuild or isCommunity or isFriend or byTarget.other) then
+            Self.ChatInfo("BID_NO_CHAT_OTHER", item, target)
             return false
         end
     -- Check group options
     elseif not c.group.announce then
+        Self.ChatInfo("BID_NO_CHAT_ANNOUNCE", item, target)
+        return false
+    -- Check group addons
+    elseif Addon:GetNumAddonUsers(true) + 1 == GetNumGroupMembers() then
+        Self.ChatInfo("BID_NO_CHAT_ADDONS", item, target)
         return false
     end
 
     -- Check group type options
-    local group = channel == Self.TYPE_WHISPER and c.whisper.groupType or c.group.groupType
+    local byGroup = isWhipser and c.whisper.groupType or c.group.groupType
 
     if IsInRaid(LE_PARTY_CATEGORY_INSTANCE) then
-        return group.lfr
+        if not byGroup.lfr then Self.ChatInfo("BID_NO_CHAT_GRP", item, target, RAID_FINDER_PVEFRAME) end
+        return byGroup.lfr
     elseif IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
-        return group.lfd
+        if not byGroup.lfd then Self.ChatInfo("BID_NO_CHAT_GRP", item, target, LOOKING_FOR_DUNGEON_PVEFRAME) end
+        return byGroup.lfd
     elseif Util.IsGuildGroup(Unit.GuildName("player") or "") then
-        return group.guild
+        if not byGroup.guild then Self.ChatInfo("BID_NO_CHAT_GRP", item, target, GUILD) end
+        return byGroup.guild
     elseif Util.IsCommunityGroup() then
-        return group.community
+        if not byGroup.community then Self.ChatInfo("BID_NO_CHAT_GRP", item, target, CLUB_FINDER_COMMUNITY_TYPE) end
+        return byGroup.community
     elseif IsInRaid() then
-        return group.raid
+        if not byGroup.raid then Self.ChatInfo("BID_NO_CHAT_GRP", item, target, RAID) end
+        return byGroup.raid
     else
-        return group.party
+        if not byGroup.party then Self.ChatInfo("BID_NO_CHAT_GRP", item, target, PARTY) end
+        return byGroup.party
     end
 end
 
@@ -271,9 +299,7 @@ function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport)
                 elseif Addon.db.profile.messages.whisper.ask then
                     if roll.whispers >= Self.MAX_WHISPERS then
                         Addon:Info(L["BID_MAX_WHISPERS"], Self.GetPlayerLink(owner), link, Self.MAX_WHISPERS, Self.GetTradeLink(owner))
-                    elseif not Self.ShouldInitChat(owner) then
-                        Addon:Info(L["BID_NO_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
-                    else
+                    elseif Self.ShouldInitChat(owner, link) then
                         Self.ChatLine("MSG_BID_" .. random(Addon.db.profile.messages.whisper.variants and 5 or 1), owner, link or Locale.GetChatLine('MSG_ITEM', owner))
                         roll.whispers = roll.whispers + 1
 
@@ -413,4 +439,21 @@ end
 
 function Self.UnescapeString(str)
     return str:gsub("@c@", ":"):gsub("@b@", "|")
+end
+
+function Self.ChatInfo(line, item, target, group)
+    if not item then return end
+
+    local L = LibStub("AceLocale-3.0"):GetLocale(Name)
+    local channel, unit = Self.GetDestination(target)
+
+    if not target then
+        Addon:Info(L[line], item)
+    elseif channel ~= Self.TYPE_WHISPER then
+        Addon:Info(L[line], item, group)
+    elseif not group then
+        Addon:Info(L[line], Self.GetPlayerLink(unit), item, Self.GetTradeLink(unit))
+    else
+        Addon:Info(L[line .. "_ASK"], Self.GetPlayerLink(unit), item, group, Self.GetTradeLink(unit))
+    end
 end

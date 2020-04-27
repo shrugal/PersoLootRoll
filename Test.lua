@@ -262,6 +262,7 @@ UnitIsUnit = function (a, b) return a and a == b end
 UnitExists = Val(true)
 UnitInParty = Val(false)
 UnitInRaid = Val(false)
+UnitIsDND = Val(false)
 RegisterAddonMessagePrefix = Fn
 IsInInstance = Const(false)
 IsAddOnLoaded = function (n) return n == "WoWUnit" or n == Name end
@@ -272,13 +273,23 @@ IsInGroup = Const(false)
 IsInRaid = Const(false)
 IsEquippableItem = Val(true)
 ChatFrame_AddMessageEventFilter = Fn
+GetGuildInfo = Fn
+GetNumFriends = Const(0)
 
 C_ChallengeMode = Obj
+C_Club = { GetSubscribedClubs = Const({}) }
 C_Timer = { After = function (t, fn) fn() end }
 StaticPopupDialogs = {}
 SlashCmdList = {}
 AlertFrame = CreateFrame()
 
+TRADE = "Trade"
+PARTY = "Party"
+RAID = "Raid"
+GUILD = "Guild"
+RAID_FINDER_PVEFRAME = "Raid Finder"
+LOOKING_FOR_DUNGEON_PVEFRAME = "Dungeon Finder"
+CLUB_FINDER_COMMUNITY_TYPE = "Community"
 LE_UNIT_STAT_STRENGTH = 1
 LE_UNIT_STAT_AGILITY = 2
 LE_UNIT_STAT_INTELLECT = 4
@@ -319,6 +330,7 @@ DIFFICULTY_PRIMARYRAID_NORMAL = 14
 DIFFICULTY_PRIMARYRAID_HEROIC = 15
 DIFFICULTY_PRIMARYRAID_MYTHIC = 16
 DIFFICULTY_PRIMARYRAID_LFR = 17
+LE_PARTY_CATEGORY_INSTANCE = 2
 NUM_GROUP_LOOT_FRAMES = 0
 NUM_CHAT_WINDOWS = 0
 LOOT_ITEM_BONUS_ROLL ="%s receives bonus loot: %s."
@@ -332,6 +344,10 @@ LE_ITEM_QUALITY_LEGENDARY = 5
 MAX_PLAYER_LEVEL = 120
 NUM_BAG_SLOTS = 0
 RAID_CLASS_COLORS = setmetatable({}, {__index = function () return {colorStr = "ffffffff", r = 1, g = 1, b = 1} end})
+
+Enum = {
+    ClubType = { BattleNet = 0, Character = 1, Guild = 2, Other = 3 }
+}
 
 PLR_AwardLootButtonNormalText = CreateFrame()
 

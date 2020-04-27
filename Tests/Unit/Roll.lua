@@ -35,7 +35,7 @@ local GetUpdateData = function (roll, eligible, started, bidPublic, votePublic)
     return data
 end
 
-local AssertRoll = function (roll, id, started)
+local AssertRoll = function (roll, id, started, dump)
     local check = Addon.rolls[id]
     local item = Item.FromLink(roll.item.link, roll.item.owner, nil, nil, roll.item.isTradable)
     local running = roll.status >= Roll.STATUS_RUNNING or nil
@@ -140,14 +140,14 @@ function Tests:AddTest()
     local roll
 
     -- Item owned by the player
-    roll = Util.Tbl.Copy(Test.roll)
+    roll = Util.Tbl.CopyDeep(Test.roll)
     roll.disenchant = false
     Roll.Add(roll.item.link, roll.owner)
-    AssertRoll(roll, 1)
+    AssertRoll(roll, 1, nil, true)
     AssertEvents(1)
 
     -- Item owned by someone else
-    roll = Util.Tbl.Copy(Test.roll)
+    roll = Util.Tbl.CopyDeep(Test.roll)
     roll.owner = Test.units.party1.name
     roll.isOwner = false
     roll.item.owner = roll.owner
@@ -202,7 +202,7 @@ function Tests.UpdateTest()
     AssertEvents(1)
 
     -- Send roll with owner different from item owner
-    roll = Util.Tbl.Copy(Test.rolls[8])
+    roll = Util.Tbl.CopyDeep(Test.rolls[8])
     roll.status = Roll.STATUS_PENDING
     Assert(Roll.Update(GetUpdateData(roll), roll.item.owner))
     AssertRoll(roll, 3)
