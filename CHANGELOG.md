@@ -1,3 +1,8 @@
+Version 21.03-beta2
+- Added more detailed info messages to Comm.ShouldInitChat
+- Added some unit tests for Util.Comm
+- Fixed Roll.AddTest unit test
+
 Version 21.03-beta1
 - Fix filtering for unloaded items (CurseForge#16)
 

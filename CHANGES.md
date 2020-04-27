@@ -1,1 +1,3 @@
-- Fix filtering for unloaded items (CurseForge#16)
+- Added more detailed info messages to Comm.ShouldInitChat
+- Added some unit tests for Util.Comm
+- Fixed Roll.AddTest unit test
