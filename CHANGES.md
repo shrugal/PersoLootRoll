@@ -1,4 +1,4 @@
-- Added more detailed info messages to Comm.ShouldInitChat
+- More detailed info messages when not whispering players
 - Fixed updating whisper ask option when target or group filter changes
-- Added some unit tests for Util.Comm
-- Fixed Roll.AddTest unit test
+- Fixed filtering items before they've been loaded (CurseForge#16)
+- Internal: Added and updated some unit tests

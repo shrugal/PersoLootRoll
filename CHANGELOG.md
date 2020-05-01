@@ -1,11 +1,8 @@
-Version 21.03-beta2
-- Added more detailed info messages to Comm.ShouldInitChat
+Version 21.03
+- More detailed info messages when not whispering players
 - Fixed updating whisper ask option when target or group filter changes
-- Added some unit tests for Util.Comm
-- Fixed Roll.AddTest unit test
-
-Version 21.03-beta1
-- Fix filtering for unloaded items (CurseForge#16)
+- Fixed filtering items before they've been loaded (CurseForge#16)
+- Internal: Added and updated some unit tests
 
 Version 21.02
 - Updated legacy loot detection for legion dungeons 
