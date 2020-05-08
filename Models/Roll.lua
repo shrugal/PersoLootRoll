@@ -1126,7 +1126,7 @@ function Self:ShouldBeConcise()
         and (
                Util.GetNumDroppedItems() <= 1
             or self.item:GetNumEligible(false, true) <= 1
-            or Util.IsLegacyLoot() and GetNumGroupMembers() <= 5
+            or Util.IsLegacyLoot() and GetNumGroupMembers() <= 10
         )
 end
 

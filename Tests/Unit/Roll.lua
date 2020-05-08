@@ -317,7 +317,39 @@ function Tests.ShouldAdvertiseTest()
 end
 
 function Tests.ShouldBeConciseTest()
-    -- TODO
+    local g = Addon.db.profile.messages.group
+    Replace(g, "concise", false)
+    Replace(Util, "GetNumDroppedItems", Test.Const(1))
+    Replace(Util, "IsLegacyLoot", Test.Const(false))
+    Replace("GetNumGroupMembers", Test.Const(1))
+    local roll = {
+        HasMasterlooter = Test.Const(false),
+        item = { GetNumEligible = Test.Const(2) }
+    }
+    local testFn = function () return Roll.ShouldBeConcise(roll) end
+
+    -- Concise setting
+    AssertFalse(testFn())
+    Replace(g, "concise", true)
+    Assert(testFn())
+    -- Masterlooter
+    Replace(roll, "HasMasterlooter", Test.Const(true))
+    AssertFalse(testFn())
+    Replace(roll, "HasMasterlooter", Test.Const(false))
+    -- # of dropped items
+    Replace(Util, "GetNumDroppedItems", Test.Const(2))
+    AssertFalse(testFn())
+    -- # of eligible players
+    Replace(roll.item, "GetNumEligible", Test.Const(1))
+    Assert(testFn())
+    Replace(roll.item, "GetNumEligible", Test.Const(2))
+    -- Legacy loot
+    Replace(Util, "IsLegacyLoot", Test.Const(true))
+    Assert(testFn())
+    for i=2,40 do
+        Replace("GetNumGroupMembers", Test.Const(i))
+        AssertEqual(i <= 10, testFn())
+    end
 end
 
 function Tests.AdvertiseTest()
