@@ -22,6 +22,8 @@ Self.TIMEOUT_PER_ITEM = 5
 Self.TIMEOUT_CHILL_MODE = 2
 -- Seconds after a roll ended when it's still considered "recently" ended
 Self.TIMEOUT_RECENT = 120
+-- Max. # of people in a legacy loot group for concise announcements
+Self.CONCISE_LEGACY_SIZE = 10
 
 -- Status
 Self.STATUS_CANCELED = -1
@@ -1126,7 +1128,7 @@ function Self:ShouldBeConcise()
         and (
                Util.GetNumDroppedItems() <= 1
             or self.item:GetNumEligible(false, true) <= 1
-            or Util.IsLegacyLoot() and GetNumGroupMembers() <= 10
+            or Util.IsLegacyLoot() and GetNumGroupMembers() <= Self.CONCISE_LEGACY_SIZE
         )
 end
 

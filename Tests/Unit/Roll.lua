@@ -348,7 +348,7 @@ function Tests.ShouldBeConciseTest()
     Assert(testFn())
     for i=2,40 do
         Replace("GetNumGroupMembers", Test.Const(i))
-        AssertEqual(i <= 10, testFn())
+        AssertEqual(i <= Roll.CONCISE_LEGACY_SIZE, testFn())
     end
 end
 
