@@ -365,7 +365,7 @@ function Self.Update(data, unit)
         else
             roll.item:OnLoaded(function ()
                 -- Declare our interest if the roll is pending without any eligible players or if we need the transmog
-                if Self.IsActive(data) and roll:ShouldBeBidOn() and ((data.item.eligible or 0) == 0 or (not roll.item.isSoulbound or roll.item:CanBeEquipped()) and roll.item:IsTransmogMissing()) then
+                if Self.IsActive(data) and roll:ShouldBeBidOn() and ((data.item.eligible or 0) == 0 or roll.item:IsCollectibleMissing()) then
                     roll.item:SetEligible("player")
                     Comm.SendData(Comm.EVENT_INTEREST, {ownerId = roll.ownerId}, roll.owner)
                 end
@@ -1081,8 +1081,10 @@ end
 
 -- Show the alert frame for winning an item
 function Self:ShowAlertFrame()
-    -- itemLink, quantity, rollType, roll, specID, isCurrency, showFactionBG, lootSource, lessAwesome, isUpgraded, wonRoll, showRatedBG, plrId
-    GUI.LootAlertSystem:AddAlert(self.item.link, 1, nil, nil, nil, false, false, nil, false, false, true, false, self.id)
+    if self.item:GetLinkInfo().isEquippable then
+        -- itemLink, quantity, rollType, roll, specID, isCurrency, showFactionBG, lootSource, lessAwesome, isUpgraded, wonRoll, showRatedBG, plrId
+        GUI.LootAlertSystem:AddAlert(self.item.link, 1, nil, nil, nil, false, false, nil, false, false, true, false, self.id)
+    end
 end
 
 -- Toggle the rolls visiblity in GUIs

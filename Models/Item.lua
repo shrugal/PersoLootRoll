@@ -15,8 +15,10 @@ Self.LVL_THRESHOLD = 10
 -- Item level threshold
 Self.ILVL_THRESHOLD = 15
 
+-- Link pattern
+Self.PATTERN_LINK = "(|?c?f?f?%x*|H[^:]+:[^|]*|?h?[^|]*|?h?|?r?)"
+
 -- Tooltip search patterns
-Self.PATTERN_LINK = "(|?c?f?f?%x*|?H?item:[^|]*|?h?[^|]*|?h?|?r?)"
 ---@type string
 Self.PATTERN_ILVL = ITEM_LEVEL:gsub("%%d", "(%%d+)")
 ---@type string
@@ -47,6 +49,8 @@ Self.PATTERN_APPEARANCE_KNOWN = TRANSMOGRIFY_TOOLTIP_APPEARANCE_KNOWN
 Self.PATTERN_APPEARANCE_UNKNOWN = TRANSMOGRIFY_TOOLTIP_APPEARANCE_UNKNOWN
 ---@type string
 Self.PATTERN_APPEARANCE_UNKNOWN_ITEM = TRANSMOGRIFY_TOOLTIP_ITEM_UNKNOWN_APPEARANCE_KNOWN
+---@type string
+Self.PATTERN_PET_KNOWN = ITEM_PET_KNOWN:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%d", "(%%d+)")
 
 -- Item loading status
 Self.INFO_NONE = 0
@@ -58,6 +62,7 @@ Self.INFO_FULL = 3
 Self.INFO = {
     link = {
         color = "%|cff(%x+)",
+        itemType = "%|H([^:]+)",
         name = "%|h%[([^%]]+)%]%|h",
         id = 1,
         -- enchantId = 2,
@@ -103,7 +108,8 @@ Self.INFO = {
         fromLevel = true,
         toLevel = true,
         attributes = true,
-        isTransmogKnown = true
+        isTransmogKnown = true,
+        isPetKnown = true
     }
 }
 
@@ -232,6 +238,11 @@ local fullScanFn = function (i, line, lines, attr)
             return true
         elseif line:match(Self.PATTERN_APPEARANCE_UNKNOWN) then
             return false
+        end
+    elseif attr == "isPetKnown" then
+        local num = select(3, line:match(Self.PATTERN_PET_KNOWN))
+        if num then
+            return num > 0
         end
     end
 end
@@ -609,9 +620,9 @@ end
 
 -- Get number of slots for a given equipment location
 function Self:GetSlotCountForLocation()
-    -- No point in doing this if we don't have the info yet
-    local _, success = self:GetBasicInfo()
-    if not success then return 0 end
+    if not self:GetLinkInfo().isEquippable or not select(2, self:GetBasicInfo()) then
+        return 0
+    end
 
     if self.isRelic then
         self:GetFullInfo()
@@ -660,6 +671,8 @@ end
 -- Get the reference level for equipment location
 ---@param unit string
 function Self:GetLevelForLocation(unit)
+    if not self:GetLinkInfo().isEquippable then return 0 end
+
     unit = Unit(unit or "player")
     local loc = self:GetLocation()
 
@@ -841,7 +854,7 @@ function Self:HasSufficientQuality(loot)
 
     if not quality or quality >= LE_ITEM_QUALITY_LEGENDARY then
         return false
-    elseif loot and Util.IsTransmogRun() then
+    elseif loot and Util.IsCollectiblesRun() then
         return quality >= LE_ITEM_QUALITY_COMMON
     elseif IsInRaid() then
         return quality >= LE_ITEM_QUALITY_EPIC
@@ -937,13 +950,29 @@ end
 -- Check if the unit might need the transmog appearance
 ---@param unit string
 function Self:IsTransmogMissing(unit)
-    if Util.In(self.equipLoc, Self.TYPES_NO_TRANSMOG) then
+    if Util.In(self.equipLoc, Self.TYPES_NO_TRANSMOG) or self.isSoulbound and not self:CanBeEquipped(unit) then
         return false
     elseif Unit.IsSelf(unit or "player") then
         return Addon.db.profile.filter.transmog and self:GetFullInfo().isTransmogKnown == false
     else
-        return not Addon:UnitIsTracking(unit) and Util.IsTransmogRun()
+        return not Addon:UnitIsTracking(unit) and Util.IsCollectiblesRun()
     end
+end
+
+-- Check if the unit might need the pet
+---@param unit string
+function Self:IsPetMissing(unit)
+    if self.itemType ~= "battlepet" then
+        return false
+    elseif Unit.IsSelf(unit or "player") then
+        return Addon.db.profile.filter.pets and self:GetFullInfo().isPetKnown == false
+    else
+        return not Addon:UnitIsTracking(unit) and Util.IsCollectiblesRun()
+    end
+end
+
+function Self:IsCollectibleMissing(unit)
+    return self:IsTransmogMissing(unit) or self:IsPetMissing(unit)
 end
 
 -- Register an eligible unit's interest
@@ -958,10 +987,10 @@ end
 function Self:GetEligible(unit)
     if not self.eligible then
         if unit then
-            if self.isSoulbound and not self:CanBeEquipped(unit) then
-                return nil
-            elseif self:IsTransmogMissing(unit) then
+            if self:IsCollectibleMissing(unit) then
                 return true
+            elseif not self:GetLinkInfo().isEquippable or self.isSoulbound and not self:CanBeEquipped(unit) then
+                return nil
             elseif not self:HasSufficientLevel(unit) then
                 return false
             else
@@ -1019,12 +1048,22 @@ end
 function Self:ShouldBeChecked(owner)
     owner = owner or type(self) == "table" and self.owner
     local item = type(self) == "table" and self.link or self
-    return item and owner and not (Addon.db.profile.dontShare and not Unit.IsSelf(owner)) and IsEquippableItem(item) and Self.HasSufficientQuality(item, true)
+    return item and owner
+        and (not Addon.db.profile.dontShare or Unit.IsSelf(owner))
+        and (
+            Self.GetInfo(item, "itemType") == "battlepet"
+            or IsEquippableItem(item) and Self.HasSufficientQuality(item, true)
+        )
+
 end
 
 -- Check if the item should be handled by the addon
 function Self:ShouldBeConsidered()
-    return self:HasSufficientQuality() and self:GetBasicInfo().isEquippable and self:GetFullInfo().isTradable
+    return
+        (
+            self:GetLinkInfo().itemType == "battlepet"
+            or self:HasSufficientQuality() and self:GetBasicInfo().isEquippable
+        ) and self:GetFullInfo().isTradable
 end
 
 -- Check if the addon should offer to bid on an item
@@ -1114,11 +1153,6 @@ function Self.IsTradable(selfOrBag, slot)
         elseif not self.owner then
             return true, false, false
         elseif not self.isOwner then
-            -- Check for azerite gear (will be tradable after build 27404)
-            if tonumber((select(2, GetBuildInfo()))) <= 27404 and self:IsAzeriteGear() then
-                return false, true, false
-            end
-
             -- Check ilvl
             local level = self:GetLevelForLocation(self.owner)
             local isTradable = level == 0 or level + self:GetThresholdForLocation(self.owner, true) >= self.level

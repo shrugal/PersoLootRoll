@@ -41,8 +41,9 @@ Self.DEFAULTS = {
             ilvlThresholdTrinkets = true,
             ilvlThresholdRings = true,
             pawn = false,
+            disenchant = false,
             transmog = false,
-            disenchant = false
+            pets = false
         },
 
         -- Messages
@@ -450,15 +451,6 @@ function Self.RegisterGeneral()
                 width = Self.WIDTH_THIRD,
                 disabled = function () return not IsAddOnLoaded("Pawn") end
             },
-            transmog = {
-                name = L["OPT_TRANSMOG"],
-                desc = L["OPT_TRANSMOG_DESC"],
-                type = "toggle",
-                order = it(),
-                set = function (_, val) Addon.db.profile.filter.transmog = val end,
-                get = function () return Addon.db.profile.filter.transmog end,
-                width = Self.WIDTH_THIRD
-            },
             disenchant = {
                 name = L["OPT_DISENCHANT"],
                 desc = L["OPT_DISENCHANT_DESC"],
@@ -467,7 +459,20 @@ function Self.RegisterGeneral()
                 set = function (_, val) Addon.db.profile.filter.disenchant = val end,
                 get = function () return Addon.db.profile.filter.disenchant end,
                 width = Self.WIDTH_THIRD
-            }
+            },
+            other = {
+                name = L["OPT_FILTER_OTHER"],
+                type = "multiselect",
+                control = "Dropdown",
+                order = it(),
+                values = {
+                    transmog = L["OPT_MISSING_TRANSMOG"],
+                    pets = L["OPT_MISSING_PETS"]
+                },
+                set = function (_, key, val) Addon.db.profile.filter[key] = val end,
+                get = function (_, key) return Addon.db.profile.filter[key] end,
+                width = Self.WIDTH_THIRD
+            },
         }
     }
 

@@ -308,6 +308,7 @@ BIND_TRADE_TIME_REMAINING = "You may trade this item with players that were also
 TRANSMOGRIFY_TOOLTIP_APPEARANCE_KNOWN = "You've collected this appearance"
 TRANSMOGRIFY_TOOLTIP_APPEARANCE_UNKNOWN = "You haven't collected this appearance"
 TRANSMOGRIFY_TOOLTIP_ITEM_UNKNOWN_APPEARANCE_KNOWN = "You've collected this appearance, but not from this item"
+ITEM_PET_KNOWN = "Collected (%d/%d)"
 ERR_JOINED_GROUP_S = "%s joins the party."
 ERR_INSTANCE_GROUP_ADDED_S = "%s has joined the instance group."
 ERR_RAID_MEMBER_ADDED_S = "%s has joined the raid group."

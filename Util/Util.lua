@@ -124,7 +124,7 @@ function Self.IsLegacyLoot()
 end
 
 -- Check if the current session is a transmog run
-function Self.IsTransmogRun()
+function Self.IsCollectiblesRun()
     local iExp = Self.GetInstanceExp()
     return iExp and GetLootMethod() == "personalloot" and iExp < Unit.Expansion("player")
 end

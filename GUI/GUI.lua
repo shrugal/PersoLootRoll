@@ -526,7 +526,7 @@ end
 ---@param self Widget
 function Self.TooltipItemLink(self)
     local link = self:GetUserData("link")
-    if link then
+    if link and Item.GetInfo(link, "isEquippable") then
         GameTooltip:SetOwner(self.frame, self:GetUserData("anchor") or "ANCHOR_RIGHT")
         GameTooltip:SetHyperlink(link)
         GameTooltip:Show()
