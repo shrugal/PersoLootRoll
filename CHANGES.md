@@ -1,4 +1,3 @@
-- More detailed info messages when not whispering players
-- Fixed updating whisper ask option when target or group filter changes
-- Fixed filtering items before they've been loaded (CurseForge#16)
-- Internal: Added and updated some unit tests
+- Use concise announcements for groups up to 10 players in legacy runs (was 5).
+- French translation completed, big thanks to Llathala (EU-Hyjal)!
+- Some esES and zhCN translation updates.
