@@ -255,7 +255,7 @@ end
 -- BID
 
 -- Messages when bidding on a roll
-function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport)
+function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport, silent)
     local L = LibStub("AceLocale-3.0"):GetLocale(Name)
     local fromSelf = Unit.IsSelf(fromUnit)
 
@@ -296,7 +296,7 @@ function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport)
                         RandomRoll("1", floor(bid) == Roll.BID_GREED and "50" or "100")
                     end
                 -- Whisper the owner
-                elseif Addon.db.profile.messages.whisper.ask then
+                elseif not silent and Addon.db.profile.messages.whisper.ask then
                     if roll.whispers >= Self.MAX_WHISPERS then
                         Addon:Info(L["BID_MAX_WHISPERS"], Self.GetPlayerLink(owner), link, Self.MAX_WHISPERS, Self.GetTradeLink(owner))
                     elseif Self.ShouldInitChat(owner, link) then

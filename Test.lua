@@ -275,6 +275,7 @@ IsEquippableItem = Val(true)
 ChatFrame_AddMessageEventFilter = Fn
 GetGuildInfo = Fn
 GetNumFriends = Const(0)
+IsShiftKeyDown = Const(false)
 
 C_ChallengeMode = Obj
 C_Club = { GetSubscribedClubs = Const({}) }

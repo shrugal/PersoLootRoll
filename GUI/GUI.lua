@@ -622,7 +622,7 @@ function Self.RollBid(roll, bid)
     if bid < Roll.BID_PASS and not roll:GetOwnerAddon() and not Addon.db.profile.messages.whisper.askPrompted then
         StaticPopup_Show(Self.DIALOG_ROLL_WHISPER_ASK, nil, nil, Util.Tbl.New(roll, bid))
     elseif roll:UnitCanBid("player", bid) then
-        roll:Bid(bid)
+        roll:Bid(bid, nil, nil, nil, IsShiftKeyDown())
     else
         roll:HideRollFrame()
     end
