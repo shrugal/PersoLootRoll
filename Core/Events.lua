@@ -41,10 +41,11 @@ function Self.RegisterEvents()
     ---@type string
     Self.PATTERN_ROLL_RESULT = RANDOM_ROLL_RESULT:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%%d%$", "%%"):gsub("%%s", "(.+)"):gsub("%%d", "(%%d+)")
 
-    -- Roster
-    Self:RegisterEvent("GROUP_JOINED")
-    Self:RegisterEvent("GROUP_LEFT")
-    Self:RegisterEvent("RAID_ROSTER_UPDATE")
+    -- Roster and zone
+    Self:RegisterEvent("GROUP_JOINED", "GROUP_CHANGED")
+    Self:RegisterEvent("GROUP_LEFT", "GROUP_CHANGED")
+    Self:RegisterEvent("RAID_ROSTER_UPDATE", "GROUP_CHANGED")
+    Self:RegisterEvent("PLAYER_ENTERING_WORLD")
     -- Chat
     Self:RegisterEvent("CHAT_MSG_SYSTEM")
     Self:RegisterEvent("CHAT_MSG_LOOT")
@@ -67,10 +68,11 @@ function Self.RegisterEvents()
 end
 
 function Self.UnregisterEvents()
-    -- Roster
+    -- Roster and zone
     Self:UnregisterEvent("GROUP_JOINED")
     Self:UnregisterEvent("GROUP_LEFT")
     Self:UnregisterEvent("RAID_ROSTER_UPDATE")
+    Self:RegisterEvent("PLAYER_ENTERING_WORLD")
     -- Chat
     Self:UnregisterEvent("CHAT_MSG_SYSTEM")
     Self:UnregisterEvent("CHAT_MSG_LOOT")
@@ -93,18 +95,14 @@ function Self.UnregisterEvents()
 end
 
 -------------------------------------------------------
---                      Roster                       --
+--                  Roster and zone                  --
 -------------------------------------------------------
 
-function Self.GROUP_JOINED()
+function Self.GROUP_CHANGED()
     Self:CheckState(true)
 end
 
-function Self.GROUP_LEFT()
-    Self:CheckState(true)
-end
-
-function Self.RAID_ROSTER_UPDATE()
+function Self.PLAYER_ENTERING_WORLD()
     Self:CheckState(true)
 end
 
@@ -215,11 +213,6 @@ function Self.CHAT_MSG_LOOT(_, _, msg, _, _, _, sender)
 
     -- Check for bonus roll or crafting
     if msg:match(Self.PATTERN_BONUS_LOOT) or msg:match(Self.PATTERN_CRAFTING) or msg:match(Self.PATTERN_CRAFTING_SELF) then
-        return
-    end
-
-    -- Check zone (e.g. horrific visions)
-    if Util.In(C_Map.GetBestMapForUnit("player"), 1469, 1470) then
         return
     end
 
