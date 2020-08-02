@@ -629,8 +629,9 @@ end
 ---@param fromUnit string
 ---@param roll integer
 ---@param isImport boolean
+---@param silent boolean
 ---@return Roll
-function Self:Bid(bid, fromUnit, roll, isImport)
+function Self:Bid(bid, fromUnit, roll, isImport, silent)
     Addon:Debug("Roll.Bid", self.id, bid, fromUnit, roll, isImport)
 
     bid = bid or Self.BID_NEED
@@ -661,7 +662,7 @@ function Self:Bid(bid, fromUnit, roll, isImport)
         Addon:SendMessage(Self.EVENT_BID, self, bid, fromUnit, roll, isImport)
 
         -- Let everyone know
-        Comm.RollBid(self, bid, fromUnit, roll, isImport)
+        Comm.RollBid(self, bid, fromUnit, roll, isImport, silent)
 
         -- Check if we should end the roll
         if not (self:ShouldEnd() and self:End()) and self.isOwner then

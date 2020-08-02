@@ -218,6 +218,11 @@ function Self.CHAT_MSG_LOOT(_, _, msg, _, _, _, sender)
         return
     end
 
+    -- Check zone (e.g. horrific visions)
+    if Util.In(C_Map.GetBestMapForUnit("player"), 1469, 1470) then
+        return
+    end
+
     local item = Item.GetLink(msg)
     if Item.ShouldBeChecked(item, unit) then
         Self:Debug("Event.Loot", item, unit, Unit.IsSelf(unit), msg)
