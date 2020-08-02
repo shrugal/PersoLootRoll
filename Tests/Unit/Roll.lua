@@ -321,6 +321,7 @@ function Tests.ShouldBeConciseTest()
     Replace(g, "concise", false)
     Replace(Util, "GetNumDroppedItems", Test.Const(1))
     Replace(Util, "IsLegacyLoot", Test.Const(false))
+    Replace(Util, "IsLegacyRun", Test.Const(false))
     Replace("GetNumGroupMembers", Test.Const(1))
     local roll = {
         HasMasterlooter = Test.Const(false),
@@ -345,6 +346,7 @@ function Tests.ShouldBeConciseTest()
     Replace(roll.item, "GetNumEligible", Test.Const(2))
     -- Legacy loot
     Replace(Util, "IsLegacyLoot", Test.Const(true))
+    Replace(Util, "IsLegacyRun", Test.Const(true))
     Assert(testFn())
     for i=2,40 do
         Replace("GetNumGroupMembers", Test.Const(i))
