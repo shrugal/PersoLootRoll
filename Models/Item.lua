@@ -1114,11 +1114,6 @@ function Self.IsTradable(selfOrBag, slot)
         elseif not self.owner then
             return true, false, false
         elseif not self.isOwner then
-            -- Check for azerite gear (will be tradable after build 27404)
-            if tonumber((select(2, GetBuildInfo()))) <= 27404 and self:IsAzeriteGear() then
-                return false, true, false
-            end
-
             -- Check ilvl
             local level = self:GetLevelForLocation(self.owner)
             local isTradable = level == 0 or level + self:GetThresholdForLocation(self.owner, true) >= self.level
