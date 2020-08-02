@@ -309,22 +309,23 @@ function Self:CheckState(refresh)
         local state = self.state or Self.STATE_DISABLED
         local group, p = self.db.profile.activeGroups, Util.Push
 
-        if not self.db.profile.enabled then
+        if not self.db.profile.enabled then                                                         -- Disabled
             self.state = Self.STATE_DISABLED
-        elseif not IsInGroup() then
+        elseif not IsInGroup()                                                                      -- Not in a group
+            or Util.In(C_Map.GetBestMapForUnit("player"), 1469, 1470)                               -- Horrific visions
+            or not Util.In(GetLootMethod(), "freeforall", "roundrobin", "personalloot", "group")    -- Can't trade items
+        then
             self.state = Self.STATE_ENABLED
-        elseif not (
-            (not self.db.profile.onlyMasterloot or Session.GetMasterlooter())
-            and Util.In(GetLootMethod(), "freeforall", "roundrobin", "personalloot", "group")
-            and (
-                IsInRaid(LE_PARTY_CATEGORY_INSTANCE)                 and p(group.lfr)
-                or IsInGroup(LE_PARTY_CATEGORY_INSTANCE)             and p(group.lfd)
-                or Util.IsGuildGroup(Unit.GuildName("player") or "") and p(group.guild)
-                or Util.IsCommunityGroup()                           and p(group.community)
-                or IsInRaid()                                        and p(group.raid)
-                or p(group.party)
+        elseif self.db.profile.onlyMasterloot and not Session.GetMasterlooter()                     -- Only Masterloot
+            or not (
+                IsInRaid(LE_PARTY_CATEGORY_INSTANCE)                 and p(group.lfr)               -- Disabled in LFR
+                or IsInGroup(LE_PARTY_CATEGORY_INSTANCE)             and p(group.lfd)               -- Disabled in LFD
+                or Util.IsGuildGroup(Unit.GuildName("player") or "") and p(group.guild)             -- Disabled in guild groups
+                or Util.IsCommunityGroup()                           and p(group.community)         -- Disabled in community groups
+                or IsInRaid()                                        and p(group.raid)              -- Disabled in raids
+                or p(group.party)                                                                   -- Disabled in dungeons
             ).Pop()
-        ) then 
+        then
             self.state = Self.STATE_ACTIVE
         else
             self.state = Self.STATE_TRACKING
