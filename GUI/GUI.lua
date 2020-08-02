@@ -526,10 +526,15 @@ end
 ---@param self Widget
 function Self.TooltipItemLink(self)
     local link = self:GetUserData("link")
-    if link and Item.GetInfo(link, "isEquippable") then
+    if link then
         GameTooltip:SetOwner(self.frame, self:GetUserData("anchor") or "ANCHOR_RIGHT")
-        GameTooltip:SetHyperlink(link)
-        GameTooltip:Show()
+
+        if Item.GetInfo(link, "itemType") == "battlepet" then
+            BattlePetToolTip_ShowLink(link)
+        else
+            GameTooltip:SetHyperlink(link)
+            GameTooltip:Show()
+        end
     end
 end
 
@@ -551,6 +556,7 @@ end
 -- Hide the tooltip
 function Self.TooltipHide()
     GameTooltip:Hide()
+    BattlePetTooltip:Hide()
 end
 
 -- Handle clicks on unit labels

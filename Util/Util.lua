@@ -1,6 +1,6 @@
 ---@type Addon
 local Addon = select(2, ...)
-local Unit = Addon.Unit
+local Item, Unit = Addon.Item, Addon.Unit
 ---@class Util
 local Self = Addon.Util
 setmetatable(Self, LibStub:GetLibrary("LibUtil"))
@@ -109,7 +109,7 @@ function Self.GetClubRanks(clubId)
 end
 
 -- Get the expansion for the current instance
-function Self.GetInstanceExp()
+function Self.GetInstanceExpansion()
     if IsInInstance() then
         local mapID = C_Map.GetBestMapForUnit("player")
         return mapID and Self.INSTANCES[EJ_GetInstanceForMap(mapID)] or nil
@@ -118,14 +118,13 @@ end
 
 -- Check if the legacy loot mode is active
 function Self.IsLegacyLoot()
-    local iExp = Self.GetInstanceExp()
-    return GetLootMethod() == "personalloot"
-        and iExp and iExp < Unit.Expansion("player") - (iExp == Self.EXP_LEGION and 0 or 1)
+    local iExp = Self.GetInstanceExpansion()
+    return iExp and GetLootMethod() == "personalloot" and iExp < Unit.Expansion("player") - (iExp == Self.EXP_LEGION and 0 or 1)
 end
 
--- Check if the current session is a transmog run
-function Self.IsCollectiblesRun()
-    local iExp = Self.GetInstanceExp()
+-- Check if the current session is below the player's current expansion
+function Self.IsLegacyRun()
+    local iExp = Self.GetInstanceExpansion()
     return iExp and GetLootMethod() == "personalloot" and iExp < Unit.Expansion("player")
 end
 
@@ -170,10 +169,12 @@ function Self.ScanTooltip(fn, linkOrBag, slot, ...)
     local tooltip = Self.GetHiddenTooltip()
     tooltip:ClearLines()
 
-    if not slot then
+    if slot then
+        tooltip:SetBagItem(linkOrBag, slot)
+    elseif Item.GetInfo(linkOrBag, "itemType") == "item" then
         tooltip:SetHyperlink(linkOrBag)
     else
-        tooltip:SetBagItem(linkOrBag, slot)
+        return
     end
 
     local lines = tooltip:NumLines()

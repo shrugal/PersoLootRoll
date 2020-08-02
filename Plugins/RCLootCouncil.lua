@@ -274,7 +274,7 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
                     ack.diff[sId] = (roll.item:GetBasicInfo().level or 0) - max(Item.GetInfo(gear[1], "level") or 0, Item.GetInfo(gear[2], "level") or 0) -- TODO: This is wrong when slots are not filled
                     ack.response[sId] = not roll.item:GetEligible("player") or nil
 
-                    if not roll.item.isRelic then Util.Tbl.Release(gear) end
+                    if not roll.item:IsRelic() then Util.Tbl.Release(gear) end
                 end
             end
 

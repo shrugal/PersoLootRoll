@@ -4,7 +4,7 @@ local Name = ...
 local Addon = select(2, ...)
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local Comm, GUI, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+local Comm, GUI, Item, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Item, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
 local Self = Addon
 
 function Self.EnableHooks()
@@ -209,6 +209,13 @@ function Self.EnableGroupLootRollHook()
             Self:RawHookScript(frame.GreedButton, "OnClick", onButtonClick)
             frame.GreedButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
         end
+
+        -- OnLeave
+        if not Self:IsHooked(frame.IconFrame, "OnLeave") then
+            Self:HookScript(frame.IconFrame, "OnLeave", function ()
+                BattlePetTooltip:Hide()
+            end)
+        end
     end
 
     --GroupLootContainer:RemoveFrame
@@ -229,7 +236,11 @@ function Self.EnableGroupLootRollHook()
             if Roll.IsPlrId(id) then
                 local roll = Roll.Get(id)
                 if roll then
-                    self:SetHyperlink(roll.item.link)
+                    if Item.GetInfo(roll.item, "itemType") == "battlepet" then
+                        BattlePetToolTip_ShowLink(roll.item.link)
+                    else
+                        self:SetHyperlink(roll.item.link)
+                    end
                 end
             else
                 return Self.hooks[self].SetLootRollItem(self, id)
@@ -246,7 +257,9 @@ function Self.DisableGroupLootRoll()
     for i=1, NUM_GROUP_LOOT_FRAMES do
         Self:Unhook(_G["GroupLootFrame" .. i], "OnShow")
         Self:Unhook(_G["GroupLootFrame" .. i], "OnHide")
-        Self:Unhook(_G["GroupLootFrame" .. i], "OnClick")
+        Self:Unhook(_G["GroupLootFrame" .. i].NeedButton, "OnClick")
+        Self:Unhook(_G["GroupLootFrame" .. i].GreedButton, "OnClick")
+        Self:Unhook(_G["GroupLootFrame" .. i].IconFrame, "OnLeave")
     end
     Self:Unhook("GroupLootContainer_RemoveFrame")
     Self:Unhook(GameTooltip, "SetLootRollItem")

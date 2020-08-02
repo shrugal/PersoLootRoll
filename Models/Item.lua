@@ -49,8 +49,6 @@ Self.PATTERN_APPEARANCE_KNOWN = TRANSMOGRIFY_TOOLTIP_APPEARANCE_KNOWN
 Self.PATTERN_APPEARANCE_UNKNOWN = TRANSMOGRIFY_TOOLTIP_APPEARANCE_UNKNOWN
 ---@type string
 Self.PATTERN_APPEARANCE_UNKNOWN_ITEM = TRANSMOGRIFY_TOOLTIP_ITEM_UNKNOWN_APPEARANCE_KNOWN
----@type string
-Self.PATTERN_PET_KNOWN = ITEM_PET_KNOWN:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%d", "(%%d+)")
 
 -- Item loading status
 Self.INFO_NONE = 0
@@ -108,8 +106,7 @@ Self.INFO = {
         fromLevel = true,
         toLevel = true,
         attributes = true,
-        isTransmogKnown = true,
-        isPetKnown = true
+        isTransmogKnown = true
     }
 }
 
@@ -239,11 +236,6 @@ local fullScanFn = function (i, line, lines, attr)
         elseif line:match(Self.PATTERN_APPEARANCE_UNKNOWN) then
             return false
         end
-    elseif attr == "isPetKnown" then
-        local num = select(3, line:match(Self.PATTERN_PET_KNOWN))
-        if num then
-            return num > 0
-        end
     end
 end
 
@@ -285,12 +277,9 @@ function Self.GetInfo(item, attr, ...)
         else
             return Self.GetInfo(item, "realLevel", ...)
         end
-    -- isRelic
-    elseif attr == "isRelic" then
-        return Self.GetInfo(item, "subType") == "Artifact Relic"
     -- isEquippable
     elseif attr == "isEquippable" then
-        return IsEquippableItem(link or id) or Self.GetInfo(item, "isRelic")
+        return IsEquippableItem(link or id) or Self.IsRelic(item)
     -- From link
     elseif Self.INFO.link[attr] then
         if isInstance then
@@ -426,7 +415,7 @@ function Self:GetLinkInfo()
         local i, attr = 0
         for v in self.link:gmatch(":(%-?%d*)") do
             i = i + 1
-   
+
             if info.bonusIds and Util.Num.In(i - info.numBonusIds, 1, self.numBonusIds or 0) then
                 Util.Tbl.Set(self, "bonusIds", i - info.numBonusIds, tonumber(v))
             else
@@ -435,8 +424,12 @@ function Self:GetLinkInfo()
                     self[attr] = tonumber(v)
                 end
             end
+
+            if i == 1 and self.itemType and self.itemType ~= "item" then
+                break
+            end
         end
-        
+
         -- Some extra infos TODO: This is a workaround for epic item links having color "a335ee", but ITEM_QUALITY_COLORS has "a334ee"
         self.quality = self.color == "a335ee" and 4 or self.color and Util.Tbl.FindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. self.color) or 1
         self.infoLevel = Self.INFO_LINK
@@ -448,26 +441,41 @@ end
 -- Get info from GetItemInfo()
 function Self:GetBasicInfo()
     self:GetLinkInfo()
-    
-    if self.infoLevel == Self.INFO_LINK then
-        local data = Util.Tbl.New(GetItemInfo(self.link))
-        if next(data) then
-            -- Get correct level
-            local level, _, baseLevel = GetDetailedItemLevelInfo(self.link)
 
-            -- Set data
-            for attr,pos in pairs(Self.INFO.basic) do
-                self[attr] = data[pos]
+    if self.infoLevel == Self.INFO_LINK then
+        local data
+        if self.itemType == "battlepet" then
+            data = Util.Tbl.New(C_PetJournal.GetPetInfoBySpeciesID(self.id))
+            if next(data) then
+                self.texture = data[2]
+                self.isTradable = data[9]
+                self.isPetKnown = C_PetJournal.GetOwnedBattlePetString(self.id) ~= nil
+                self.infoLevel = Self.INFO_BASIC
             end
-            
-            -- Some extra data
-            self.level = level or self.level
-            self.baseLevel = baseLevel or self.level
-            self.isRelic = self.subType == "Artifact Relic"
-            self.isEquippable = IsEquippableItem(self.link) or self.isRelic
-            self.isSoulbound = self.bindType == LE_ITEM_BIND_ON_ACQUIRE or self.isEquipped and self.bindType == LE_ITEM_BIND_ON_EQUIP
-            self.isTradable = Util.Default(self.isTradable, not self.isSoulbound or nil)
-            self.infoLevel = Self.INFO_BASIC
+        else
+            data = Util.Tbl.New(GetItemInfo(self.link))
+            if next(data) then
+                -- Get correct level
+                local level, _, baseLevel = GetDetailedItemLevelInfo(self.link)
+
+                -- Set data
+                for attr,pos in pairs(Self.INFO.basic) do
+                    self[attr] = data[pos]
+                end
+
+                -- Some extra data
+                self.level = level or self.level
+                self.baseLevel = baseLevel or self.level
+                self.isEquippable = IsEquippableItem(self.link) or self:IsRelic()
+                self.isSoulbound = self.bindType == LE_ITEM_BIND_ON_ACQUIRE or self.isEquipped and self.bindType == LE_ITEM_BIND_ON_EQUIP
+                self.isTradable = Util.Default(self.isTradable, not self.isSoulbound or nil)
+                self.infoLevel = Self.INFO_BASIC
+
+                if self.subType == "Companion Pets" then
+                    local tradable, _, _, _, speciesId = select(9, C_PetJournal.GetPetInfoByItemID(self.id))
+                    self.isTradable, self.isPetKnown = tradable, C_PetJournal.GetOwnedBattlePetString(speciesId) ~= nil
+                end
+            end
         end
         Util.Tbl.Release(data)
     end
@@ -518,7 +526,7 @@ end
 -- Get the equipment location or relic type
 ---@return string
 function Self:GetLocation()
-    return self:GetBasicInfo().isRelic and self:GetFullInfo().relicType or self.equipLoc
+    return self:IsRelic() and self:GetFullInfo().relicType or self.equipLoc
 end
 
 -- Determine if two items belong to the same location
@@ -560,7 +568,7 @@ function Self.GetOwnedForLocation(loc, allWeapons)
 
     local isRelic
     if type(loc) == "table" then
-        isRelic = loc:GetBasicInfo().isRelic
+        isRelic = loc:IsRelic()
         loc = isRelic and loc:GetFullInfo().relicType or loc.equipLoc
     else
         isRelic = loc:sub(1, 7) ~= "INVTYPE"
@@ -590,7 +598,7 @@ function Self.GetOwnedForLocation(loc, allWeapons)
 
             if link and Self.GetInfo(link, "isEquippable") then
                 if isRelic then
-                    if Self.GetInfo(link, "isRelic") then
+                    if Self.IsRelic(link) then
                         -- It's a relic
                         if Self.GetInfo(link, "relicType") == loc then
                             tinsert(items, link)
@@ -624,7 +632,7 @@ function Self:GetSlotCountForLocation()
         return 0
     end
 
-    if self.isRelic then
+    if self:IsRelic() then
         self:GetFullInfo()
         local n, classId = 0, Unit.ClassId("player")
 
@@ -648,7 +656,7 @@ function Self:GetThresholdForLocation(unit, upper)
     local f = Addon.db.profile.filter
 
     -- Relics have a lower threshold of -1, meaning they have to be higher in ilvl to be worth considering
-    if not upper and self:GetBasicInfo().isRelic then
+    if not upper and self:IsRelic() then
         return -1
     end
 
@@ -719,7 +727,7 @@ function Self:GetEquippedForLocation(unit)
     unit = Unit(unit or "player")
     local isSelf = Unit.IsSelf(unit)
 
-    if self:GetBasicInfo().isRelic then
+    if self:IsRelic() then
         return Inspect.GetLink(unit, self:GetFullInfo().relicType)
     elseif self.isEquippable then
         local links = Util.Tbl.New()
@@ -829,7 +837,7 @@ function Self:CanBeEquipped(unit, ...)
     end
 
     -- Check relic type
-    if self.isRelic then
+    if self:IsRelic() then
         for i,spec in pairs(Self.CLASSES[classId].specs) do
             if (not isSelf or Addon.db.char.specs[i]) and Util.In(self.relicType, spec.artifact.relics) then
                 return true
@@ -854,7 +862,7 @@ function Self:HasSufficientQuality(loot)
 
     if not quality or quality >= LE_ITEM_QUALITY_LEGENDARY then
         return false
-    elseif loot and Util.IsCollectiblesRun() then
+    elseif loot and Util.IsLegacyRun() then
         return quality >= LE_ITEM_QUALITY_COMMON
     elseif IsInRaid() then
         return quality >= LE_ITEM_QUALITY_EPIC
@@ -955,19 +963,19 @@ function Self:IsTransmogMissing(unit)
     elseif Unit.IsSelf(unit or "player") then
         return Addon.db.profile.filter.transmog and self:GetFullInfo().isTransmogKnown == false
     else
-        return not Addon:UnitIsTracking(unit) and Util.IsCollectiblesRun()
+        return not Addon:UnitIsTracking(unit) and Util.IsLegacyRun()
     end
 end
 
 -- Check if the unit might need the pet
 ---@param unit string
 function Self:IsPetMissing(unit)
-    if self.itemType ~= "battlepet" then
+    if not self:IsPet() then
         return false
     elseif Unit.IsSelf(unit or "player") then
-        return Addon.db.profile.filter.pets and self:GetFullInfo().isPetKnown == false
+        return Addon.db.profile.filter.pets and self:GetBasicInfo().isPetKnown == false
     else
-        return not Addon:UnitIsTracking(unit) and Util.IsCollectiblesRun()
+        return not Addon:UnitIsTracking(unit) and Util.IsLegacyRun()
     end
 end
 
@@ -989,7 +997,9 @@ function Self:GetEligible(unit)
         if unit then
             if self:IsCollectibleMissing(unit) then
                 return true
-            elseif not self:GetLinkInfo().isEquippable or self.isSoulbound and not self:CanBeEquipped(unit) then
+            elseif not self:GetLinkInfo().isEquippable then
+                return false
+            elseif self.isSoulbound and not self:CanBeEquipped(unit) then
                 return nil
             elseif not self:HasSufficientLevel(unit) then
                 return false
@@ -1016,7 +1026,7 @@ function Self:GetEligible(unit)
             if Addon.DEBUG and self.isOwner and eligible[UnitName("player")] == nil then
                 eligible[UnitName("player")] = self:GetEligible("player")
             end
-            
+
             self.eligible = eligible
         end
     end
@@ -1030,10 +1040,12 @@ end
 
 -- Get the # of eligible players
 ---@param othersOnly boolean
-function Self:GetNumEligible(checkIlvl, othersOnly)
+function Self:GetNumEligible(checkInterest, othersOnly)
     local n = 0
     for unit,v in pairs(self:GetEligible()) do
-        n = n + ((not checkIlvl or v) and not (othersOnly and Unit.IsSelf(unit)) and 1 or 0)
+        if (not checkInterest or v) and not (othersOnly and Unit.IsSelf(unit)) then
+            n = n + 1
+        end
     end
     return n
 end
@@ -1043,27 +1055,18 @@ end
 -------------------------------------------------------
 
 -- Check if a looted item should be checked further
----@param self Item|string
+---@param item string
 ---@param owner string
-function Self:ShouldBeChecked(owner)
-    owner = owner or type(self) == "table" and self.owner
-    local item = type(self) == "table" and self.link or self
+function Self.ShouldBeChecked(item, owner)
     return item and owner
         and (not Addon.db.profile.dontShare or Unit.IsSelf(owner))
-        and (
-            Self.GetInfo(item, "itemType") == "battlepet"
-            or IsEquippableItem(item) and Self.HasSufficientQuality(item, true)
-        )
+        and (Self.IsPet(item) or IsEquippableItem(item) and Self.HasSufficientQuality(item, true))
 
 end
 
 -- Check if the item should be handled by the addon
 function Self:ShouldBeConsidered()
-    return
-        (
-            self:GetLinkInfo().itemType == "battlepet"
-            or self:HasSufficientQuality() and self:GetBasicInfo().isEquippable
-        ) and self:GetFullInfo().isTradable
+    return self:IsPet() or self:HasSufficientQuality() and self:GetBasicInfo().isEquippable and self:GetFullInfo().isTradable
 end
 
 -- Check if the addon should offer to bid on an item
@@ -1218,7 +1221,7 @@ function Self:GetPosition(refresh)
     end
 
     -- Check equipment
-    if select(2, self:GetBasicInfo()) and not self.isRelic then
+    if select(2, self:GetBasicInfo()) and not self:IsRelic() then
         for _, equipSlot in pairs(Self.SLOTS[self.equipLoc]) do
             if self.link == GetInventoryItemLink(self.owner, equipSlot) then
                 return equipSlot, nil, false
@@ -1357,7 +1360,7 @@ end
 
 -- Check if the item should get special treatment for being a weapon
 function Self:IsWeapon()
-    return Util.In(self:GetBasicInfo().equipLoc, Self.TYPES_WEAPON)
+    return Util.In(Self.GetInfo(self, "equipLoc"), Self.TYPES_WEAPON)
 end
 
 -- Check if the item is a Legion legendary
@@ -1372,5 +1375,15 @@ end
 
 -- Check if the item has azerite traits
 function Self:IsAzeriteGear()
-    return self:GetBasicInfo().expacId == Self.EXPAC_BFA and self.quality >= LE_ITEM_QUALITY_RARE and Util.In(self.equipLoc, Self.TYPE_HEAD, Self.TYPE_SHOULDER, Self.TYPE_CHEST, Self.TYPE_ROBE)
+    return Self.GetInfo(self, "expacId") == Self.EXPAC_BFA
+        and Self.GetInfo(self, "quality") >= LE_ITEM_QUALITY_RARE
+        and Util.In(Self.GetInfo(self, "equipLoc"), Self.TYPE_HEAD, Self.TYPE_SHOULDER, Self.TYPE_CHEST, Self.TYPE_ROBE)
+end
+
+function Self:IsPet()
+    return Self.GetInfo(self, "itemType") == "battlepet" or Self.GetInfo(self, "subType") == "Companion Pets"
+end
+
+function Self:IsRelic()
+    return Self.GetInfo(self, "subType") == "Artifact Relic"
 end

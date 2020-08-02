@@ -602,11 +602,15 @@ function Self:RegisterErrorHandler()
     end
 end
 
+local function cleanFilePaths(msg)
+    return strtrim(tostring(msg or ""), "\n"):gsub("@?Interface\\AddOns\\", "")
+end
+
 -- Check for PLR errors and log them
 function Self:HandleError(msg, stack)
     if self:ShouldHandleError() then
-        msg = "\"" .. strtrim(tostring(msg), "\n"):gsub("^Interface\\", ""):gsub("^AddOns\\", "") .. "\""
-        stack = ("\n" .. strtrim(tostring(stack), "\n")):gsub("\nInterface\\", "\n"):gsub("\nAddOns\\", "\n")
+        msg = "\"" .. cleanFilePaths(msg) .. "\""
+        stack = cleanFilePaths(stack)
 
         -- Just print the error message if HandleError or LogExport caused it
         local file = Name .. "\\Core\\Addon.lua[^\n]*"
@@ -618,17 +622,17 @@ function Self:HandleError(msg, stack)
             self.errorRate = max(0, self.errorRate - Self.LOG_MAX_ERROR_RATE * (GetTime() - self.errorPrev)) + 1
             self.errorPrev = GetTime()
 
-            local txt = strtrim(msg .. stack, "\n")
-            
-            for v in txt:gmatch(Name .. "\\([^\\]+)") do
-                if v ~= "Libs" then
+            for match in stack:gmatch(Name .. "\\([^\n]+)") do
+                if match and (not Util.Str.StartsWith(match, "Libs") or Util.Str.StartsWith(match, "Libs\\LibUtil")) then
                     self.errors = self.errors + 1
 
-                    self:Log(Self.ECHO_ERROR, txt)
+                    self:Log(Self.ECHO_ERROR, msg .. "\n" .. stack)
 
                     if self.errors == 1 and (not self.db or self.db.profile.messages.echo >= Self.ECHO_ERROR) then
                         self:Print("|cffff0000[ERROR]|r " .. msg .. "\n\nPlease type in |cffbbbbbb/plr log|r, create a new ticket on Curse, WoWInterface or GitLab, copy & paste the log in there and add any additional info you might have. Thank you! =)")
                     end
+
+                    break
                 end
             end
         end

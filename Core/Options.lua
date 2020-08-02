@@ -324,6 +324,7 @@ function Self.RegisterGeneral()
                 get = function () return Addon.db.profile.allowDisenchant end,
                 width = Self.WIDTH_HALF
             },
+            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             ui = {type = "header", order = it(), name = L["OPT_UI"]},
             uiDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_UI_DESC"]:format(Name) .. "\n"},
             minimapIcon = {
@@ -340,7 +341,7 @@ function Self.RegisterGeneral()
                     end
                 end,
                 get = function (_) return not PersoLootRollIconDB.hide end,
-                width = Self.WIDTH_FULL
+                width = Self.WIDTH_THIRD
             },
             showRollFrames = {
                 name = L["OPT_ROLL_FRAMES"],
@@ -349,7 +350,7 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.ui.showRollFrames = val end,
                 get = function (_) return Addon.db.profile.ui.showRollFrames end,
-                width = Self.WIDTH_HALF
+                width = Self.WIDTH_THIRD
             },
             showRollsWindow = {
                 name = L["OPT_ROLLS_WINDOW"],
@@ -358,7 +359,7 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.ui.showRollsWindow = val end,
                 get = function (_) return Addon.db.profile.ui.showRollsWindow end,
-                width = Self.WIDTH_HALF
+                width = Self.WIDTH_THIRD
             },
             showActionsWindow = {
                 name = L["OPT_ACTIONS_WINDOW"],
@@ -367,7 +368,7 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.ui.showActionsWindow = val end,
                 get = function (_) return Addon.db.profile.ui.showActionsWindow end,
-                width = Self.WIDTH_HALF
+                width = Self.WIDTH_THIRD
             },
             moveActionsWindow = {
                 name = L["OPT_ACTIONS_WINDOW_MOVE"],
@@ -378,8 +379,10 @@ function Self.RegisterGeneral()
                     HideUIPanel(InterfaceOptionsFrame)
                     HideUIPanel(GameMenuFrame)
                     GUI.Actions.Show(true)
-                end
+                end,
+                width = Self.WIDTH_THIRD
             },
+            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             itemFilter = {type = "header", order = it(), name = L["OPT_ITEM_FILTER"]},
             itemFilterDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_ITEM_FILTER_DESC"] .. "\n"},
             lvlThreshold = {
@@ -427,6 +430,7 @@ function Self.RegisterGeneral()
                 name = L["OPT_SPECS"],
                 desc = L["OPT_SPECS_DESC"],
                 type = "multiselect",
+                control = "Dropdown",
                 order = it(),
                 values = function ()
                     if not Self.specs then
@@ -438,30 +442,11 @@ function Self.RegisterGeneral()
                     Addon.db.char.specs[key] = val
                     wipe(Item.playerCache)
                 end,
-                get = function (_, key) return Addon.db.char.specs[key] end
+                get = function (_, key) return Addon.db.char.specs[key] end,
+                width = Self.WIDTH_HALF
             },
-            ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
-            pawn = {
-                name = L["OPT_PAWN"],
-                desc = L["OPT_PAWN_DESC"],
-                type = "toggle",
-                order = it(),
-                set = function (_, val) Addon.db.profile.filter.pawn = val end,
-                get = function () return Addon.db.profile.filter.pawn end,
-                width = Self.WIDTH_THIRD,
-                disabled = function () return not IsAddOnLoaded("Pawn") end
-            },
-            disenchant = {
-                name = L["OPT_DISENCHANT"],
-                desc = L["OPT_DISENCHANT_DESC"],
-                type = "toggle",
-                order = it(),
-                set = function (_, val) Addon.db.profile.filter.disenchant = val end,
-                get = function () return Addon.db.profile.filter.disenchant end,
-                width = Self.WIDTH_THIRD
-            },
-            other = {
-                name = L["OPT_FILTER_OTHER"],
+            collections = {
+                name = COLLECTIONS,
                 type = "multiselect",
                 control = "Dropdown",
                 order = it(),
@@ -471,8 +456,28 @@ function Self.RegisterGeneral()
                 },
                 set = function (_, key, val) Addon.db.profile.filter[key] = val end,
                 get = function (_, key) return Addon.db.profile.filter[key] end,
-                width = Self.WIDTH_THIRD
+                width = Self.WIDTH_HALF
             },
+            -- ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
+            pawn = {
+                name = L["OPT_PAWN"],
+                desc = L["OPT_PAWN_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.filter.pawn = val end,
+                get = function () return Addon.db.profile.filter.pawn end,
+                disabled = function () return not IsAddOnLoaded("Pawn") end,
+                width = Self.WIDTH_HALF
+            },
+            disenchant = {
+                name = L["OPT_DISENCHANT"],
+                desc = L["OPT_DISENCHANT_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.filter.disenchant = val end,
+                get = function () return Addon.db.profile.filter.disenchant end,
+                width = Self.WIDTH_HALF
+            }
         }
     }
 
@@ -1035,7 +1040,8 @@ function Self.RegisterMasterloot()
                         type = "toggle",
                         order = it(),
                         set = function (_, val) Addon.db.profile.masterloot.rules.allowDisenchant = val end,
-                        get = function () return Addon.db.profile.masterloot.rules.allowDisenchant end
+                        get = function () return Addon.db.profile.masterloot.rules.allowDisenchant end,
+                        width = Self.WIDTH_FULL
                     },
                     disenchanter = {
                         name = L["OPT_MASTERLOOT_RULES_DISENCHANTER"],

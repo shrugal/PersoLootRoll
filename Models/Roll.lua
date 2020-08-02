@@ -364,7 +364,7 @@ function Self.Update(data, unit)
             roll:Cancel()
         else
             roll.item:OnLoaded(function ()
-                -- Declare our interest if the roll is pending without any eligible players or if we need the transmog
+                -- Declare our interest if the roll is pending without any eligible players or if we need the collectible
                 if Self.IsActive(data) and roll:ShouldBeBidOn() and ((data.item.eligible or 0) == 0 or roll.item:IsCollectibleMissing()) then
                     roll.item:SetEligible("player")
                     Comm.SendData(Comm.EVENT_INTEREST, {ownerId = roll.ownerId}, roll.owner)
@@ -1131,7 +1131,7 @@ function Self:ShouldBeConcise()
         and (
                Util.GetNumDroppedItems() <= 1
             or self.item:GetNumEligible(false, true) <= 1
-            or Util.IsLegacyLoot() and GetNumGroupMembers() <= Self.CONCISE_LEGACY_SIZE
+            or Util.IsLegacyRun() and GetNumGroupMembers() <= Self.CONCISE_LEGACY_SIZE
         )
 end
 
@@ -1299,14 +1299,14 @@ end
 
 -- Check if the given unit is eligible
 ---@param unit string
----@param checkIlvl boolean
+---@param checkInterest boolean
 ---@return boolean
-function Self:UnitIsEligible(unit, checkIlvl)
-    if not checkIlvl and not self:HasMasterlooter() and Unit.IsUnit(unit, self.owner) then
+function Self:UnitIsEligible(unit, checkInterest)
+    if not checkInterest and not self:HasMasterlooter() and Unit.IsUnit(unit, self.owner) then
         return true
     else
         local val = self.item:GetEligible(unit or "player")
-        if checkIlvl then return val else return val ~= nil end
+        if checkInterest then return val else return val ~= nil end
     end
 end
 
@@ -1317,8 +1317,8 @@ end
 
 -- Check if the given unit can win this roll
 ---@param unit string
-function Self:UnitCanWin(unit, includeDone, checkIlvl)
-    return self:CanBeWon(includeDone) and self:UnitIsEligible(unit, checkIlvl)
+function Self:UnitCanWin(unit, includeDone, checkInterest)
+    return self:CanBeWon(includeDone) and self:UnitIsEligible(unit, checkInterest)
 end
 
 -- Check if we can still award the roll
@@ -1328,9 +1328,9 @@ end
 
 -- Check if we can still award the roll to the given unit
 ---@param unit string
----@param checkIlvl boolean
-function Self:CanBeAwardedTo(unit, includeDone, checkIlvl)
-    return self.isOwner and self:UnitCanWin(unit, includeDone, checkIlvl)
+---@param checkInterest boolean
+function Self:CanBeAwardedTo(unit, includeDone, checkInterest)
+    return self.isOwner and self:UnitCanWin(unit, includeDone, checkInterest)
 end
 
 -- Check if we can give the item to the given unit, now or in the future
@@ -1359,8 +1359,8 @@ end
 
 -- Check if the given unit can bid on this roll
 ---@param unit string
----@param checkIlvl boolean
-function Self:UnitCanBid(unit, bid, checkIlvl)
+---@param checkInterest boolean
+function Self:UnitCanBid(unit, bid, checkInterest)
     unit = Unit.Name(unit or "player")
 
     -- Obvious stuff
@@ -1379,7 +1379,7 @@ function Self:UnitCanBid(unit, bid, checkIlvl)
     elseif bid == Self.BID_PASS and not Util.In(self.bids[unit], nil, Self.BID_PASS) then
         return true
     -- Hasn't bid but could win
-    elseif not self.bids[unit] and self:UnitCanWin(unit, true, checkIlvl) then
+    elseif not self.bids[unit] and self:UnitCanWin(unit, true, checkInterest) then
         if self.status == Self.STATUS_DONE then
             -- Only non-pass bids on done rolls, and only if there are no non-pass bids
             return bid ~= Self.BID_PASS and Util.Tbl.CountExcept(self.rolls, Self.BID_PASS) == 0

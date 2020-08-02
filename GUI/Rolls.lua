@@ -861,7 +861,7 @@ function Self.UpdateDetails(details, roll)
             end
         end
 
-        if not roll.item.isRelic then Util.Tbl.Release(links) end
+        if not roll.item:IsRelic() then Util.Tbl.Release(links) end
 
         -- Custom columns
         for i,col in GUI.PlayerColumns:Iter() do

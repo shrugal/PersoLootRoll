@@ -147,6 +147,7 @@ L["ERROR_ROLL_STATUS_NOT_1"] = "The roll is not running."
 L["ERROR_ROLL_UNKNOWN"] = "That roll doesn't exist."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_OTHER"] = "%s has send a vote for %s but is not allowed to do so right now."
 L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"] = "You cannot vote on that item right now."
+L["ERROR_COLLECTION_FILTERS_DISABLED"] = "All collection filters are disabled. If you want to roll on missing collection items make sure to enable them in the item filter options."
 
 -- GUI
 L["DIALOG_MASTERLOOT_ASK"] = "<%s> wants to become your masterlooter."
@@ -246,7 +247,6 @@ L["OPT_ROLLS_WINDOW_DESC"] = "Always show the rolls window (with all rolls on it
 L["OPT_SPECS"] = "Specializations"
 L["OPT_SPECS_DESC"] = "Only suggest loot for these class specializations."
 L["OPT_TRANSLATION"] = "|cffffd100Translation:|r Shrugal (EU-Mal'Ganis)"
-L["OPT_FILTER_OTHER"] = "Also roll on ..."
 L["OPT_MISSING_TRANSMOG"] = "Missing transmog appearances"
 L["OPT_MISSING_PETS"] = "Missing pets"
 L["OPT_UI"] = "User interface"

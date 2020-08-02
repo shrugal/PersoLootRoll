@@ -27,6 +27,8 @@ Self.suppressBelow = nil
 Self.lastLocked = {}
 -- Remember the bag of the last looted item
 Self.lastLootedBag = nil
+-- Notice about disabled collection filters when starting legacy runs
+Self.collectionFilterNoticeShown = false
 
 -- (Un)Register
 
@@ -45,7 +47,8 @@ function Self.RegisterEvents()
     Self:RegisterEvent("GROUP_JOINED", "GROUP_CHANGED")
     Self:RegisterEvent("GROUP_LEFT", "GROUP_CHANGED")
     Self:RegisterEvent("RAID_ROSTER_UPDATE", "GROUP_CHANGED")
-    Self:RegisterEvent("PLAYER_ENTERING_WORLD")
+    Self:RegisterEvent("PLAYER_ENTERING_WORLD", "ZONE_CHANGED")
+    Self:RegisterEvent("ZONE_CHANGED_NEW_AREA", "ZONE_CHANGED")
     -- Chat
     Self:RegisterEvent("CHAT_MSG_SYSTEM")
     Self:RegisterEvent("CHAT_MSG_LOOT")
@@ -73,6 +76,7 @@ function Self.UnregisterEvents()
     Self:UnregisterEvent("GROUP_LEFT")
     Self:UnregisterEvent("RAID_ROSTER_UPDATE")
     Self:RegisterEvent("PLAYER_ENTERING_WORLD")
+    Self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
     -- Chat
     Self:UnregisterEvent("CHAT_MSG_SYSTEM")
     Self:UnregisterEvent("CHAT_MSG_LOOT")
@@ -102,8 +106,14 @@ function Self.GROUP_CHANGED()
     Self:CheckState(true)
 end
 
-function Self.PLAYER_ENTERING_WORLD()
+function Self.ZONE_CHANGED()
     Self:CheckState(true)
+
+    local f = Self.db.profile.filter
+    if not Self.collectionFilterNoticeShown and not (f.transmog or f.pets) and Self:IsTracking() and Util.IsLegacyRun() then
+        Self.collectionFilterNoticeShown = true
+        Self:Info(L["ERROR_COLLECTION_FILTERS_DISABLED"])
+    end
 end
 
 -------------------------------------------------------
