@@ -25,7 +25,8 @@ quicktest:
     GIT_DEPTH: 1
     GIT_SUBMODULE_STRATEGY: normal
   script:
-    - lua Test.lua
+    - echo TAG $CI_COMMIT_TAG
+    - echo BRANCH $CI_COMMIT_BRANCH
 
 test:
   stage: test
