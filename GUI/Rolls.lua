@@ -371,7 +371,7 @@ function Self.UpdateRolls()
             GUI("Label").SetFontObject(GameFontNormal).SetText(L[v]).SetColor(1, 0.82, 0).AddTo(scroll)
         end
 
-        local actions = GUI("SimpleGroup")
+        local actions = GUI("SimpleGroupWithBackdrop")
             .SetLayout(nil)
             .SetHeight(16).SetWidth(17)
             .SetUserData("cell", {alignH = "end"})
@@ -436,7 +436,7 @@ function Self.UpdateRolls()
             GUI.CreateUnitLabel(scroll)
 
             -- Actions
-            f = GUI("SimpleGroup")
+            f = GUI("SimpleGroupWithBackdrop")
                 .SetLayout(nil)
                 .SetHeight(16)
                 .SetUserData("cell", {alignH = "end"})
@@ -780,7 +780,7 @@ function Self.UpdateDetails(details, roll)
             GUI("Label").SetFontObject(GameFontNormal).AddTo(details)
 
             -- Items
-            local grp = GUI("SimpleGroup")
+            local grp = GUI("SimpleGroupWithBackdrop")
                 .SetLayout(nil)
                 .SetWidth(34).SetHeight(16)
                 .SetBackdropColor(0, 0, 0, 0)

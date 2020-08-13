@@ -140,7 +140,7 @@ function Self.Update()
             GUI.CreateUnitLabel(parent)
 
             -- Actions
-            local actions = GUI("SimpleGroup")
+            local actions = GUI("SimpleGroupWithBackdrop")
                 .SetLayout(nil)
                 .SetHeight(16)
                 .SetUserData("cell", {alignH = "end"})
