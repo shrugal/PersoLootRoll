@@ -1,6 +1,3 @@
-- Added support for rolling on and checking for missing pets
-- Added suppress whisper message when bidding by shift-clicking the need/greed button
-- Disable addon in horrific visions
-- Reordered item filter options
-- Added info message when entering old instances with all collectible filters turned off
-- Cleaned up error messages in log
+- Updated TOC version to 9.0.1
+- Updated Ace3 to latest alpha version
+- Fixed frames with missing backdrops

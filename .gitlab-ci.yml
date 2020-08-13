@@ -6,7 +6,7 @@ stages:
   - deploy
 
 .releases: &releases
-  - /^\d[\d\.]*(-(debug|alpha|beta|stable)\d+)?$/
+  - /^\d(\.?\d+)*((-(next|ptr|live))?(-(debug|alpha|beta|stable))?\d+)?$/
 
 build:
   stage: build
@@ -52,7 +52,7 @@ wowinterface:
     name: WoWInterface
     url: https://www.wowinterface.com/downloads/info24667-PersoLootRoll.html
   variables:
-    WOWI_ID: $(case $CI_COMMIT_TAG in *next*|*ptr*) echo $WOWI_ID_NEXT;; *alpha*|*beta*|*debug*|"") echo $WOWI_ID_TEST;; *) echo $WOWI_ID;; esac)
+    WOWI_ID: $(case $CI_COMMIT_TAG in *next*|*ptr*) echo $WOWI_ID_NEXT;; ""|*debug*|*alpha*|*beta*) echo $WOWI_ID_TEST;; *) echo $WOWI_ID;; esac)
   script:
     - release.sh -ocelzLHG
 
