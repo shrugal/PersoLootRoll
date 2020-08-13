@@ -202,8 +202,8 @@ CreateFrame(nil, "DEFAULT_CHAT_FRAME")
 
 local xpcallOrig = xpcall
 xpcall = function (func, err, ...)
-    func = type(func) == "string" and _G[func] or func
     local args =  {...}
+    if type(func) == "string" then func = _G[func] end
     return xpcallOrig(function () func(unpack(args)) end, err)
 end
 
