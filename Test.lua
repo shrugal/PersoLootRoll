@@ -161,8 +161,9 @@ local Obj = setmetatable({}, Meta)
 
 CreateFrame = function (_, name, parent)
     parent = parent or UIParent
-    local scripts, events, points, lastUpdate, f = {}, {}, {}, 0
+    local scripts, events, points, textures, lastUpdate, f = {}, {}, {}, {}, 0
     local CreateChild = function () return CreateFrame(nil, nil, f) end
+    local GetTexture = function (name) return function () if not textures[name] then textures[name] = CreateChild() end return textures[name] end end
     f = setmetatable({
         SetScript = function (_, k, v) scripts[k] = v end,
         GetScript = function (_, k) return scripts[k] end,
@@ -185,6 +186,9 @@ CreateFrame = function (_, name, parent)
         NumLines = Const(0),
         CreateTexture = CreateChild,
         CreateFontString = CreateChild,
+        GetNormalTexture = GetTexture("Normal"),
+        GetPushedTexture = GetTexture("Pushed"),
+        GetHighlightTexture = GetTexture("Highlight"),
         FireEvent = function (_, e, ...) if scripts.OnEvent and events[e] then scripts.OnEvent(f, e, ...) end end,
         FireUpdate = function () if scripts.OnUpdate then scripts.OnUpdate(f, os.clock() - lastUpdate) lastUpdate = os.clock() end end
     }, Meta)
@@ -195,6 +199,13 @@ end
 
 CreateFrame(nil, "UIParent")
 CreateFrame(nil, "DEFAULT_CHAT_FRAME")
+
+local xpcallOrig = xpcall
+xpcall = function (func, err, ...)
+    func = type(func) == "string" and _G[func] or func
+    local args =  {...}
+    return xpcallOrig(function () func(unpack(args)) end, err)
+end
 
 loadstring = loadstring or load
 geterrorhandler = Const(Fn)
