@@ -26,7 +26,7 @@ quicktest:
     GIT_SUBMODULE_STRATEGY: normal
   script:
     - echo TAG $CI_COMMIT_TAG
-    - echo BRANCH $CI_COMMIT_BRANCH
+    - echo BRANCH $(git rev-parse --abbrev-ref HEAD)
 
 test:
   stage: test
