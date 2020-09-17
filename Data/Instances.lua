@@ -182,4 +182,14 @@ Self.INSTANCES = {
     [1177] = 8, -- Crucible of Storms
     [1179] = 8, -- The Eternal Palace
     [1180] = 8, -- Ny'alotha, the Waking City
+    [1188] = 9, -- De Other Side
+    [1185] = 9, -- Halls of Atonement
+    [1184] = 9, -- Mists of Tirna Scithe
+    [1183] = 9, -- Plaguefall
+    [1189] = 9, -- Sanguine Depths
+    [1186] = 9, -- Spires of Ascension
+    [1182] = 9, -- The Necrotic Wake
+    [1187] = 9, -- Theater of Pain
+    [1192] = 9, -- Shadowlands
+    [1190] = 9, -- Castle Nathria
 }

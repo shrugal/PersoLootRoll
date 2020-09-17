@@ -112,20 +112,16 @@ end
 function Self.GetInstanceExpansion()
     if IsInInstance() then
         local mapID = C_Map.GetBestMapForUnit("player")
-        return mapID and Self.INSTANCES[EJ_GetInstanceForMap(mapID)] or nil
+        return mapID and Self.INSTANCES[EJ_GetInstanceForMap(mapID)] or 0
     end
-end
-
--- Check if the legacy loot mode is active
-function Self.IsLegacyLoot()
-    local iExp = Self.GetInstanceExpansion()
-    return iExp and GetLootMethod() == "personalloot" and iExp < Unit.Expansion("player") - (iExp == Self.EXP_LEGION and 0 or 1)
+    return 0
 end
 
 -- Check if the current session is below the player's current expansion
 function Self.IsLegacyRun()
-    local iExp = Self.GetInstanceExpansion()
-    return iExp and GetLootMethod() == "personalloot" and iExp < Unit.Expansion("player")
+    local isCurrExpPlayer = UnitLevel("player") > MAX_PLAYER_LEVEL - 10
+    local isCurrExpInstance = Self.GetInstanceExpansion() == GetExpansionLevel() + 1
+    return isCurrExpPlayer and not isCurrExpInstance
 end
 
 -- Check if currently in a timewalking dungeon
@@ -146,7 +142,7 @@ function Self.GetNumDroppedItems()
         local players = GetNumGroupMembers()
         if difficulty == DIFFICULTY_PRIMARYRAID_MYTHIC then
             players = 20
-        elseif Self.IsLegacyLoot() then
+        elseif C_Loot.IsLegacyLootModeEnabled() then
             players = Self.In(difficulty, DIFFICULTY_RAID_LFR, DIFFICULTY_PRIMARYRAID_LFR, DIFFICULTY_PRIMARYRAID_NORMAL, DIFFICULTY_PRIMARYRAID_HEROIC) and max(players, 20) or maxPlayers
         end
         return math.ceil(players / 5)

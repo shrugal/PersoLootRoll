@@ -12,7 +12,6 @@ local VERSION = "0-dev0"
 local FACTION = "Horde"
 local RACE = 8
 local CLASS = 8
-local LEVEL = 120
 local GUID = "Player-1612-054E4E80"
 
 local CLASSES = {"Warrior", "Paladin", "Hunter", "Rogue", "Priest", "Death Knight", "Shaman", "Mage", "Warlock", "Monk", "Druid", "Demon Hunter"}
@@ -159,6 +158,10 @@ local Obj = setmetatable({}, Meta)
 --                      WoW mocks                    --
 -------------------------------------------------------
 
+-- Changes with expansions
+MAX_PLAYER_LEVEL = 50
+GetExpansionLevel = Const(7)
+
 CreateFrame = function (_, name, parent)
     parent = parent or UIParent
     local scripts, events, points, textures, lastUpdate, f = {}, {}, {}, {}, 0
@@ -268,7 +271,7 @@ UnitClass = Vals(GetClassInfo(CLASS))
 UnitRace = Vals(RACES[RACE], RACES[RACE], RACE)
 UnitFactionGroup = Vals(FACTION, FACTION)
 UnitGUID = Val(GUID)
-UnitLevel = Val(LEVEL)
+UnitLevel = Val(MAX_PLAYER_LEVEL)
 UnitIsUnit = function (a, b) return a and a == b end
 UnitExists = Val(true)
 UnitInParty = Val(false)
@@ -291,6 +294,7 @@ IsShiftKeyDown = Const(false)
 C_ChallengeMode = Obj
 C_Club = { GetSubscribedClubs = Const({}) }
 C_Timer = { After = function (t, fn) fn() end }
+C_Loot = { IsLegacyLootModeEnabled = Const(false) }
 StaticPopupDialogs = {}
 SlashCmdList = {}
 AlertFrame = CreateFrame()
@@ -354,7 +358,6 @@ LE_ITEM_QUALITY_COMMON = 2
 LE_ITEM_QUALITY_RARE = 3
 LE_ITEM_QUALITY_EPIC = 4
 LE_ITEM_QUALITY_LEGENDARY = 5
-MAX_PLAYER_LEVEL = 120
 NUM_BAG_SLOTS = 0
 RAID_CLASS_COLORS = setmetatable({}, {__index = function () return {colorStr = "ffffffff", r = 1, g = 1, b = 1} end})
 

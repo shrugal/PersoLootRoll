@@ -320,7 +320,7 @@ function Tests.ShouldBeConciseTest()
     local g = Addon.db.profile.messages.group
     Replace(g, "concise", false)
     Replace(Util, "GetNumDroppedItems", Test.Const(1))
-    Replace(Util, "IsLegacyLoot", Test.Const(false))
+    Replace(C_Loot, "IsLegacyLootModeEnabled", Test.Const(false))
     Replace(Util, "IsLegacyRun", Test.Const(false))
     Replace("GetNumGroupMembers", Test.Const(1))
     local roll = {
@@ -345,7 +345,7 @@ function Tests.ShouldBeConciseTest()
     Assert(testFn())
     Replace(roll.item, "GetNumEligible", Test.Const(2))
     -- Legacy loot
-    Replace(Util, "IsLegacyLoot", Test.Const(true))
+    Replace(C_Loot, "IsLegacyLootModeEnabled", Test.Const(true))
     Replace(Util, "IsLegacyRun", Test.Const(true))
     Assert(testFn())
     for i=2,40 do

@@ -1,3 +1,5 @@
-- Updated TOC version to 9.0.1
-- Updated Ace3 to latest alpha version
-- Fixed frames with missing backdrops
+- Updated instance and trinket lists for Shadowlands
+- Use the build-in legacy loot detection instead of a custom implementation
+- Updated legacy-run detection for new player levels
+- Fixed trinket list generation
+- Some small player level related fixes

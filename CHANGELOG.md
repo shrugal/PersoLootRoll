@@ -1,3 +1,8 @@
+Version 22-next1
+- Updated TOC version to 9.0.1
+- Updated Ace3 to latest alpha version
+- Fixed frames with missing backdrops
+
 Version 22-beta1
 - Added support for rolling on and checking for missing pets
 - Added suppress whisper message when bidding by shift-clicking the need/greed button
