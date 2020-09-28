@@ -43,6 +43,7 @@ Self.DEFAULTS = {
             pawn = false,
             disenchant = false,
             transmog = false,
+            transmogItem = false,
             pets = false
         },
 
@@ -458,7 +459,6 @@ function Self.RegisterGeneral()
                 get = function (_, key) return Addon.db.profile.filter[key] end,
                 width = Self.WIDTH_HALF
             },
-            -- ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             pawn = {
                 name = L["OPT_PAWN"],
                 desc = L["OPT_PAWN_DESC"],
@@ -467,7 +467,17 @@ function Self.RegisterGeneral()
                 set = function (_, val) Addon.db.profile.filter.pawn = val end,
                 get = function () return Addon.db.profile.filter.pawn end,
                 disabled = function () return not IsAddOnLoaded("Pawn") end,
-                width = Self.WIDTH_HALF
+                width = Self.WIDTH_THIRD
+            },
+            transmogItem = {
+                name = L["OPT_MISSING_TRANSMOG_ITEM"],
+                desc = L["OPT_MISSING_TRANSMOG_ITEM_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.filter.transmogItem = val end,
+                get = function () return Addon.db.profile.filter.transmogItem end,
+                disabled = function () return not Addon.db.profile.filter.transmog end,
+                width = Self.WIDTH_THIRD
             },
             disenchant = {
                 name = L["OPT_DISENCHANT"],
@@ -476,7 +486,7 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.filter.disenchant = val end,
                 get = function () return Addon.db.profile.filter.disenchant end,
-                width = Self.WIDTH_HALF
+                width = Self.WIDTH_THIRD
             }
         }
     }

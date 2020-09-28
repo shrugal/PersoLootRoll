@@ -1,3 +1,11 @@
+Version 22 Beta 1
+- Added support for rolling on and checking for missing pets
+- Added suppress whisper message when bidding by shift-clicking the need/greed button
+- Disable addon in horrific visions
+- Reordered item filter options
+- Added info message when entering old instances with all collectible filters turned off
+- Cleaned up error messages in log
+
 Version 21.04
 - Use concise announcements for groups up to 10 players in legacy runs (was 5).
 - French translation completed, big thanks to Llathala (EU-Hyjal)!

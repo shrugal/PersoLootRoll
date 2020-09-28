@@ -273,7 +273,7 @@ function Self.CHAT_MSG_GROUP(_, _, msg, sender)
 
     local link = Item.GetLink(msg)
     if link then
-        link = Item.GetInfo(link, "link") or link
+        link = select(2, GetItemInfo(link)) or link
         Self.lastPostedRoll = nil
 
         local roll = Roll.Find(nil, unit, link, nil, nil, Roll.STATUS_RUNNING) or Roll.Find(nil, unit, link)
@@ -291,7 +291,7 @@ function Self.CHAT_MSG_GROUP(_, _, msg, sender)
                 roll.posted = roll.posted or true
             end
         end
-    elseif Self.db.profile.messages.group.concise and Util.GetNumDroppedItems() <= 1 then
+    elseif Self.db.profile.messages.group.concise then
         local roll = Roll.FindWhere("isOwner", true, "item.isOwner", true, "status", Roll.STATUS_RUNNING, "posted", 0)
         if roll and roll:UnitCanBid(unit, Roll.BID_NEED) then
             local L, D = Locale.GetCommLocale(unit), Locale.GetCommLocale()
