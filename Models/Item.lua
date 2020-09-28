@@ -106,7 +106,8 @@ Self.INFO = {
         fromLevel = true,
         toLevel = true,
         attributes = true,
-        isTransmogKnown = true
+        isTransmogKnown = true,
+        isItemCollected = true
     }
 }
 
@@ -238,9 +239,7 @@ local fullScanFn = function (i, line, lines, attr)
         end
     -- isItemCollected
     elseif attr == "isItemCollected" then
-        if line:match(Self.PATTERN_APPEARANCE_KNOWN) then
-            return true
-        elseif line:match(Self.PATTERN_APPEARANCE_UNKNOWN) or line:match(Self.PATTERN_APPEARANCE_UNKNOWN_ITEM) then
+        if line:match(Self.PATTERN_APPEARANCE_UNKNOWN) or line:match(Self.PATTERN_APPEARANCE_UNKNOWN_ITEM) then
             return false
         end
     end
@@ -329,6 +328,7 @@ function Self.GetInfo(item, attr, ...)
             return val
                 or attr == "realLevel" and Self.GetInfo(item, "level")
                 or attr == "realMinLevel" and Self.GetInfo(item, "minLevel")
+                or attr == "isItemCollected" and val ~= false and Self.GetInfo(item, "isTransmogKnown")
                 or val
         end
     end
@@ -504,6 +504,9 @@ function Self:GetFullInfo()
                 end
             end
         end, self.link)
+
+        -- Item collected
+        self.isItemCollected = self.isTransmogKnown and self.isItemCollected ~= false
 
         -- Effective and max level
         self.realLevel = self.realLevel or self.level
@@ -965,7 +968,7 @@ end
 
 function Self:IsCollectibleMissing(unit)
     local isPet = self:IsPet()
-    local isTransmogable = self:IsTransmogable(unit)
+    local isTransmogable = self:IsTransmoggable(unit)
 
     if not isPet and not isTransmogable then
         return false
@@ -1377,7 +1380,7 @@ function Self:IsAzeriteGear()
         and Util.In(Self.GetInfo(self, "equipLoc"), Self.TYPE_HEAD, Self.TYPE_SHOULDER, Self.TYPE_CHEST, Self.TYPE_ROBE)
 end
 
-function Self:IsTransmogable(unit)
+function Self:IsTransmoggable(unit)
     return not (Util.In(self.equipLoc, Self.TYPES_NO_TRANSMOG) or self.isSoulbound and not self:CanBeEquipped(unit))
 end
 
