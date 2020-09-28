@@ -1,3 +1,1 @@
-- Added option to roll on missing transmog items, not just missing appearances
-- Improved battle pet handling
-- Improved handling of item links in difference languages
+- Bugfixes to collected item detection

@@ -1,3 +1,8 @@
+Version 22 Beta 2
+- Added option to roll on missing transmog items, not just missing appearances
+- Improved battle pet handling
+- Improved handling of item links in difference languages
+
 Version 22 Beta 1
 - Added support for rolling on and checking for missing pets
 - Added suppress whisper message when bidding by shift-clicking the need/greed button
