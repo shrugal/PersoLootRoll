@@ -937,7 +937,11 @@ function Self:IsUseful(unit, ...)
             end
             return false
         end
-    elseif not self:CanBeEquipped(unit, ...) or not self:HasMatchingAttributes(unit, ...) then
+    elseif not self:CanBeEquipped(unit, ...) then
+        return false
+    elseif self:IsRelic() and UnitLevel(unit) > MAX_PLAYER_LEVEL - 10 then
+        return false
+    elseif not self:HasMatchingAttributes(unit, ...) then
         return false
     elseif self:IsWeapon() and ... then
         for i,v in Util.Each(...) do
@@ -1380,15 +1384,21 @@ function Self:IsAzeriteGear()
         and Util.In(Self.GetInfo(self, "equipLoc"), Self.TYPE_HEAD, Self.TYPE_SHOULDER, Self.TYPE_CHEST, Self.TYPE_ROBE)
 end
 
+-- Check if the item has a collectible appearance that can be unlocked
 function Self:IsTransmoggable(unit)
-    return not (Util.In(self.equipLoc, Self.TYPES_NO_TRANSMOG) or self.isSoulbound and not self:CanBeEquipped(unit))
+    return self.isEquippable
+        and not Util.In(self.equipLoc, Self.TYPES_NO_TRANSMOG)
+        and not self:IsRelic()
+        and (not self.isSoulbound or self:CanBeEquipped(unit))
 end
 
+-- Check if the item is a battlepet
 function Self:IsPet()
     return Self.GetInfo(self, "itemType") == "battlepet"
         or Self.GetInfo(self, "subClassId") == LE_ITEM_MISCELLANEOUS_COMPANION_PET
 end
 
+-- Check if the item is an artifact relic
 function Self:IsRelic()
     return Self.GetInfo(self, "subType") == "Artifact Relic"
 end

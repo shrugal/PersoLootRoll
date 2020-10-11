@@ -188,6 +188,7 @@ L["TIP_MINIMAP_ICON"] = [=[|cffffff78Left-Click:|r Toggle rolls window
 |cffffff78Right-Click:|r Show Options]=]
 L["TIP_TEST"] = "Show a test roll"
 L["TIP_VOTES"] = "Votes from:"
+L["TIP_SUPPRESS_CHAT"] = "|cffffff78Tip:|r You can suppress a single chat message by shift-clicking the bid/pass button."
 
 -- Options - Home
 L["OPT_ACTIONS_WINDOW"] = "Show actions window"

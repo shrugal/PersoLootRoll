@@ -352,9 +352,10 @@ function Self.CHAT_MSG_WHISPER(_, msg, sender, _, _, _, _, _, _, _, _, lineId)
                 if roll and roll.status < Roll.STATUS_DONE then
                     ---@type function
                     local action = Util.Select(roll.status, Roll.STATUS_CANCELED, Roll.Restart, Roll.STATUS_PENDING, Roll.Start)
-                    roll:Adopt(not not action)
-                    roll.item.isTradable = true
-                    if action then action(roll) end
+                    roll:Adopt(action ~= nil)
+                    if action then
+                        action(roll)
+                    end
                 else
                     roll = Roll.Add(Item.FromLink(link, unit, nil, nil, true)):Schedule()
                 end

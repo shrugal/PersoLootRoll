@@ -488,7 +488,7 @@ function Self.FromPlrId(id) return -id end
 
 -- Start a roll
 ---@param startedOrManually integer|boolean
-function Self:Start(startedOrManually)
+function Self:Start(startedOrManually, silent)
     Addon:Verbose(L["ROLL_START"], self.item.link, Comm.GetPlayerLink(self.item.owner))
 
     local started, manually = type(startedOrManually) == "number" and startedOrManually, type(startedOrManually) == "boolean" and startedOrManually
@@ -523,7 +523,7 @@ function Self:Start(startedOrManually)
                     end
 
                     -- Let everyone know
-                    self:Advertise(false, true)
+                    self:Advertise(Util.Check(silent, false, nil), true)
                 end
             end
 
@@ -614,10 +614,11 @@ function Self:Restart(started, pending)
 end
 
 -- Adopt a roll
-function Self:Adopt(silent)
-    self.owner, self.ownerId, self.isOwner = UnitName("player"), self.id, true
+function Self:Adopt(noStatus)
+    self.owner, self.ownerId, self.isOwner, self.posted = UnitName("player"), self.id, true, nil
+    self.item.isTradable = true
 
-    if not silent then
+    if not noStatus then
         self:SendStatus()
     end
 
@@ -668,10 +669,10 @@ function Self:Bid(bid, fromUnit, roll, isImport, silent)
         if not (self:ShouldEnd() and self:End()) and self.isOwner then
             -- or start if in chill mode
             if self.status == Self.STATUS_PENDING then
-                self:Start()
+                self:Start(false, silent)
             -- or advertise to chat
             elseif self.status == Self.STATUS_RUNNING then
-                self:Advertise()
+                self:Advertise(Util.Check(silent, false, nil))
             -- or if the winner just passed on the item
             elseif self.winner == fromUnit and bid == Self.BID_PASS and not self.traded then
                 self:End(nil, false, true)
@@ -1120,9 +1121,10 @@ end
 
 -- Check if we should advertise the roll to group chat.
 function Self:ShouldAdvertise(manually)
-    return not self.posted and self:CanBeAwarded() and not self:ShouldEnd() and (
-        manually or Comm.ShouldInitChat() and (self.bid or Session.GetMasterlooter())
-    )
+    return (not self.posted or manually and self.posted == -1)
+        and self:CanBeAwarded()
+        and not self:ShouldEnd()
+        and (manually or Comm.ShouldInitChat() and (self.bid or Session.GetMasterlooter()))
 end
 
 -- Check if we should use concise messages
@@ -1136,7 +1138,15 @@ function Self:ShouldBeConcise()
 end
 
 -- Advertise the roll to the group
-function Self:Advertise(manually, silent)
+function Self:Advertise(force, noStatus)
+    local manually, silent = force == true, force == false
+
+    if manually and self.posted == -1 then
+        self.posted = nil
+    elseif silent and not self.posted then
+        self.posted = -1
+    end
+
     if not self:ShouldAdvertise(manually) then
         return false
     end
@@ -1155,11 +1165,11 @@ function Self:Advertise(manually, silent)
         self.posted = slot
         Comm.RollAdvertise(self)
 
-        if not silent then
+        if not noStatus then
             self:SendStatus()
         end
 
-        Addon:SendMessage(Self.EVENT_ADVERTISE, self, manually, silent)
+        Addon:SendMessage(Self.EVENT_ADVERTISE, self, force, noStatus)
 
         return true
     else
