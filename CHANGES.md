@@ -1,1 +1,5 @@
-- Bugfixes to collected item detection
+- Added option to enable/disable chat messages in legacy runs
+- Added suppressing announces by shift-clicking bid button
+- Removed PLR prefix from concise announcements
+- Fixed considering some non-equippable items transmoggable
+- Fixed considering legion relics useful for players above legion max level

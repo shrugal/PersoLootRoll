@@ -1,3 +1,6 @@
+Version 22 Beta 3
+- Bugfixes to collected item detection
+
 Version 22 Beta 2
 - Added option to roll on missing transmog items, not just missing appearances
 - Improved battle pet handling
