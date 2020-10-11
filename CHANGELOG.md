@@ -1,9 +1,14 @@
-Version 22-next1
+Version 22 Next 1
 - Updated TOC version to 9.0.1
 - Updated Ace3 to latest alpha version
 - Fixed frames with missing backdrops
 
-Version 22-beta1
+Version 22 Beta 2
+- Added option to roll on missing transmog items, not just missing appearances
+- Improved battle pet handling
+- Improved handling of item links in difference languages
+
+Version 22 Beta 1
 - Added support for rolling on and checking for missing pets
 - Added suppress whisper message when bidding by shift-clicking the need/greed button
 - Disable addon in horrific visions

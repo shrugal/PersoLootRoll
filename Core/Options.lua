@@ -43,6 +43,7 @@ Self.DEFAULTS = {
             pawn = false,
             disenchant = false,
             transmog = false,
+            transmogItem = false,
             pets = false
         },
 
@@ -51,14 +52,14 @@ Self.DEFAULTS = {
             echo = Addon.ECHO_INFO,
             group = {
                 announce = true,
-                groupType = {lfd = true, party = true, lfr = true, raid = true, guild = true, community = true},
+                groupType = {lfd = true, party = true, lfr = true, raid = true, legacy = true, guild = true, community = true},
                 concise = true,
                 roll = true
             },
             whisper = {
                 ask = false,
                 askPrompted = false,
-                groupType = {lfd = true, party = true, lfr = true, raid = true, guild = false, community = false},
+                groupType = {lfd = true, party = true, lfr = true, raid = true, legacy = true, guild = false, community = false},
                 target = {friend = false, guild = false, community = false, other = true},
                 answer = true,
                 suppress = false,
@@ -131,8 +132,8 @@ Self.WIDTH_FIFTH_SCROLL = Self.WIDTH_FIFTH - (0.2/5)
 Self.DIVIDER = "------ PersoLootRoll ------"
 
 -- Keys+values for multiselects/dropdowns
-Self.groupKeys = {"party", "raid", "lfd", "lfr", "guild", "community"}
-Self.groupValues = {PARTY, RAID, LOOKING_FOR_DUNGEON_PVEFRAME, RAID_FINDER_PVEFRAME, GUILD_GROUP, L["COMMUNITY_GROUP"]}
+Self.groupKeys = {"party", "raid", "lfd", "lfr", "legacy", "guild", "community"}
+Self.groupValues = {PARTY, RAID, LOOKING_FOR_DUNGEON_PVEFRAME, RAID_FINDER_PVEFRAME, LFG_LIST_LEGACY, GUILD_GROUP, L["COMMUNITY_GROUP"]}
 
 Self.targetKeys = {"friend", "guild", "community", "other"}
 Self.targetValues = {FRIEND, GUILD, L["COMMUNITY_MEMBER"], OTHER}
@@ -458,7 +459,6 @@ function Self.RegisterGeneral()
                 get = function (_, key) return Addon.db.profile.filter[key] end,
                 width = Self.WIDTH_HALF
             },
-            -- ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             pawn = {
                 name = L["OPT_PAWN"],
                 desc = L["OPT_PAWN_DESC"],
@@ -467,7 +467,17 @@ function Self.RegisterGeneral()
                 set = function (_, val) Addon.db.profile.filter.pawn = val end,
                 get = function () return Addon.db.profile.filter.pawn end,
                 disabled = function () return not IsAddOnLoaded("Pawn") end,
-                width = Self.WIDTH_HALF
+                width = Self.WIDTH_THIRD
+            },
+            transmogItem = {
+                name = L["OPT_MISSING_TRANSMOG_ITEM"],
+                desc = L["OPT_MISSING_TRANSMOG_ITEM_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.filter.transmogItem = val end,
+                get = function () return Addon.db.profile.filter.transmogItem end,
+                disabled = function () return not Addon.db.profile.filter.transmog end,
+                width = Self.WIDTH_THIRD
             },
             disenchant = {
                 name = L["OPT_DISENCHANT"],
@@ -476,7 +486,7 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.filter.disenchant = val end,
                 get = function () return Addon.db.profile.filter.disenchant end,
-                width = Self.WIDTH_HALF
+                width = Self.WIDTH_THIRD
             }
         }
     }
@@ -524,7 +534,7 @@ function Self.RegisterMessages()
                     group = {type = "header", order = it(), name = L["OPT_GROUPCHAT"]},
                     groupAnnounce = {
                         name = L["OPT_GROUPCHAT_ANNOUNCE"],
-                        desc = L["OPT_GROUPCHAT_ANNOUNCE_DESC"],
+                        desc = L["OPT_GROUPCHAT_ANNOUNCE_DESC"]  .. "\n\n" .. L["TIP_SUPPRESS_CHAT"],
                         type = "toggle",
                         order = it(),
                         set = function (_, val)
@@ -571,7 +581,7 @@ function Self.RegisterMessages()
                     whisper = {type = "header", order = it(), name = L["OPT_WHISPER"]},
                     whisperAsk = {
                         name = L["OPT_WHISPER_ASK"],
-                        desc = L["OPT_WHISPER_ASK_DESC"],
+                        desc = L["OPT_WHISPER_ASK_DESC"]  .. "\n\n" .. L["TIP_SUPPRESS_CHAT"],
                         type = "toggle",
                         order = it(),
                         set = function (_, val)
@@ -1458,9 +1468,14 @@ function Self.Migrate()
         end
         if p.version < 8 then
             p.messages.whisper.askPrompted = p.messages.whisper.ask
+            p.version = 8
+        end
+        if p.version < 9 then
+            p.messages.group.groupType.legacy = p.messages.group.groupType.raid
+            p.messages.whisper.groupType.legacy = p.messages.whisper.groupType.raid
         end
     end
-    p.version = 8
+    p.version = 9
 
     -- Factionrealm
     if f.version then

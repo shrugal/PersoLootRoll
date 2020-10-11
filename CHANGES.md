@@ -1,5 +1,1 @@
-- Updated instance and trinket lists for Shadowlands
-- Use the build-in legacy loot detection instead of a custom implementation
-- Updated legacy-run detection for new player levels
-- Fixed trinket list generation
-- Some small player level related fixes
+- Bugfixes to collected item detection

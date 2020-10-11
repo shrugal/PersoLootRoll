@@ -188,6 +188,7 @@ L["TIP_MINIMAP_ICON"] = [=[|cffffff78Left-Click:|r Toggle rolls window
 |cffffff78Right-Click:|r Show Options]=]
 L["TIP_TEST"] = "Show a test roll"
 L["TIP_VOTES"] = "Votes from:"
+L["TIP_SUPPRESS_CHAT"] = "|cffffff78Tip:|r You can suppress a single chat message by shift-clicking the bid/pass button."
 
 -- Options - Home
 L["OPT_ACTIONS_WINDOW"] = "Show actions window"
@@ -248,6 +249,8 @@ L["OPT_SPECS"] = "Specializations"
 L["OPT_SPECS_DESC"] = "Only suggest loot for these class specializations."
 L["OPT_TRANSLATION"] = "|cffffd100Translation:|r Shrugal (EU-Mal'Ganis)"
 L["OPT_MISSING_TRANSMOG"] = "Missing transmog appearances"
+L["OPT_MISSING_TRANSMOG_ITEM"] = "Check transmog item"
+L["OPT_MISSING_TRANSMOG_ITEM_DESC"] = "Check if you've collected a specific item, and not just its appearance"
 L["OPT_MISSING_PETS"] = "Missing pets"
 L["OPT_UI"] = "User interface"
 L["OPT_UI_DESC"] = "Customize %s's look and feel to your liking."

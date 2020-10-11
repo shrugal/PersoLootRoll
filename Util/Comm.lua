@@ -142,7 +142,10 @@ function Self.ShouldInitChat(target, item)
     -- Check group type options
     local byGroup = isWhipser and c.whisper.groupType or c.group.groupType
 
-    if IsInRaid(LE_PARTY_CATEGORY_INSTANCE) then
+    if Util.IsLegacyRun() then
+        if not byGroup.legacy then Self.ChatInfo("BID_NO_CHAT_GRP", item, target, LFG_LIST_LEGACY) end
+        return byGroup.legacy
+    elseif IsInRaid(LE_PARTY_CATEGORY_INSTANCE) then
         if not byGroup.lfr then Self.ChatInfo("BID_NO_CHAT_GRP", item, target, RAID_FINDER_PVEFRAME) end
         return byGroup.lfr
     elseif IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
@@ -164,20 +167,20 @@ function Self.ShouldInitChat(target, item)
 end
 
 -- Send a chat line
-function Self.Chat(msg, target)
+function Self.Chat(msg, target, concise)
     local channel, player = Self.GetDestination(target)
 
-    if not channel then
+    Addon:Debug("Comm.Chat", channel, player, msg, concise)
+
+    if not channel or Util.Str.IsEmpty(msg) then
         return
-    elseif channel ~= Self.TYPE_WHISPER then
+    elseif concise or channel ~= Self.TYPE_WHISPER then
         msg = Util.Str.Prefix(msg, Self.PREFIX_CHAT)
     end
 
     if player then
         Self.lastWhispered = msg
     end
-
-    Addon:Debug("Comm.Chat", channel, player, msg)
 
     SendChatMessage(msg, channel, nil, player)
 end
@@ -189,7 +192,7 @@ function Self.GetChatLine(line, target, ...)
 end
 
 function Self.ChatLine(line, target, ...)
-    Self.Chat(Self.GetChatLine(line, target, ...), target)
+    Self.Chat(Self.GetChatLine(line, target, ...), target, Util.Str.EndsWith(line, "_CONCISE"))
 end
 
 -- Send an addon message
@@ -368,8 +371,8 @@ function Self.RollEnd(roll)
 
         if roll.isOwner and not roll.isTest then
             local line = roll.bids[roll.winner] == Roll.BID_DISENCHANT and "DISENCHANT" or "WINNER"
-            local concise = line == "WINNER" and roll.posted == 0
-            local toGroup = roll.posted and Self.ShouldInitChat()
+            local concise = line == "WINNER" and roll:ShouldBeConcise()
+            local toGroup = (roll.posted or -1) > -1 and Self.ShouldInitChat()
 
             -- Announce to chat
             if toGroup then

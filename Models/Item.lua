@@ -106,7 +106,8 @@ Self.INFO = {
         fromLevel = true,
         toLevel = true,
         attributes = true,
-        isTransmogKnown = true
+        isTransmogKnown = true,
+        isItemCollected = true
     }
 }
 
@@ -236,6 +237,11 @@ local fullScanFn = function (i, line, lines, attr)
         elseif line:match(Self.PATTERN_APPEARANCE_UNKNOWN) then
             return false
         end
+    -- isItemCollected
+    elseif attr == "isItemCollected" then
+        if line:match(Self.PATTERN_APPEARANCE_UNKNOWN) or line:match(Self.PATTERN_APPEARANCE_UNKNOWN_ITEM) then
+            return false
+        end
     end
 end
 
@@ -322,6 +328,7 @@ function Self.GetInfo(item, attr, ...)
             return val
                 or attr == "realLevel" and Self.GetInfo(item, "level")
                 or attr == "realMinLevel" and Self.GetInfo(item, "minLevel")
+                or attr == "isItemCollected" and val ~= false and Self.GetInfo(item, "isTransmogKnown")
                 or val
         end
     end
@@ -497,6 +504,9 @@ function Self:GetFullInfo()
                 end
             end
         end, self.link)
+
+        -- Item collected
+        self.isItemCollected = self.isTransmogKnown and self.isItemCollected ~= false
 
         -- Effective and max level
         self.realLevel = self.realLevel or self.level
@@ -810,7 +820,7 @@ function Self:CanBeEquipped(unit, ...)
     if not self:GetBasicInfo().isEquippable then
         return false
     end
-    
+
     self:GetFullInfo()
 
     unit = unit or "player"
@@ -856,13 +866,14 @@ function Self:CanBeEquipped(unit, ...)
 end
 
 -- Check the item quality
----@param loot boolean
-function Self:HasSufficientQuality(loot)
+function Self:HasSufficientQuality(isLootEvent)
     local quality = Self.GetInfo(self, "quality")
 
     if not quality or quality >= LE_ITEM_QUALITY_LEGENDARY then
         return false
-    elseif loot and Util.IsLegacyRun() then
+    elseif not IsEquippableItem(self.link or self) then
+        return quality >= LE_ITEM_QUALITY_UNCOMMON
+    elseif isLootEvent or Addon.db.profile.filter.transmog or Util.IsLegacyRun() then
         return quality >= LE_ITEM_QUALITY_COMMON
     elseif IsInRaid() then
         return quality >= LE_ITEM_QUALITY_EPIC
@@ -926,7 +937,11 @@ function Self:IsUseful(unit, ...)
             end
             return false
         end
-    elseif not self:CanBeEquipped(unit, ...) or not self:HasMatchingAttributes(unit, ...) then
+    elseif not self:CanBeEquipped(unit, ...) then
+        return false
+    elseif self:IsRelic() and UnitLevel(unit) > MAX_PLAYER_LEVEL - 10 then
+        return false
+    elseif not self:HasMatchingAttributes(unit, ...) then
         return false
     elseif self:IsWeapon() and ... then
         for i,v in Util.Each(...) do
@@ -955,32 +970,22 @@ function Self:IsPawnUpgrade(unit, ...)
     end
 end
 
--- Check if the unit might need the transmog appearance
----@param unit string
-function Self:IsTransmogMissing(unit)
-    if Util.In(self.equipLoc, Self.TYPES_NO_TRANSMOG) or self.isSoulbound and not self:CanBeEquipped(unit) then
-        return false
-    elseif Unit.IsSelf(unit or "player") then
-        return Addon.db.profile.filter.transmog and self:GetFullInfo().isTransmogKnown == false
-    else
-        return not Addon:UnitIsTracking(unit) and Util.IsLegacyRun()
-    end
-end
+function Self:IsCollectibleMissing(unit)
+    local isPet = self:IsPet()
+    local isTransmogable = self:IsTransmoggable(unit)
 
--- Check if the unit might need the pet
----@param unit string
-function Self:IsPetMissing(unit)
-    if not self:IsPet() then
+    if not isPet and not isTransmogable then
         return false
-    elseif Unit.IsSelf(unit or "player") then
+    elseif not Unit.IsSelf(unit or "player") then
+        return not Addon:UnitIsTracking(unit) and Util.IsLegacyRun()
+    elseif isPet then
         return Addon.db.profile.filter.pets and self:GetBasicInfo().isPetKnown == false
     else
-        return not Addon:UnitIsTracking(unit) and Util.IsLegacyRun()
+        return Addon.db.profile.filter.transmog and (
+            self:GetFullInfo().isTransmogKnown == false
+            or Addon.db.profile.filter.transmogItem and self.isItemCollected == false
+        )
     end
-end
-
-function Self:IsCollectibleMissing(unit)
-    return self:IsTransmogMissing(unit) or self:IsPetMissing(unit)
 end
 
 -- Register an eligible unit's interest
@@ -1054,14 +1059,13 @@ end
 --                     Decisions                     --
 -------------------------------------------------------
 
--- Check if a looted item should be checked further
+-- Check if a looted item should be checked further, only accessing link info
 ---@param item string
 ---@param owner string
 function Self.ShouldBeChecked(item, owner)
     return item and owner
         and (not Addon.db.profile.dontShare or Unit.IsSelf(owner))
-        and (Self.IsPet(item) or IsEquippableItem(item) and Self.HasSufficientQuality(item, true))
-
+        and Self.HasSufficientQuality(item, true)
 end
 
 -- Check if the item should be handled by the addon
@@ -1076,7 +1080,7 @@ end
 
 -- Check if the addon should start a roll for an item
 function Self:ShouldBeRolledFor()
-    return not (self.isOwner and Addon.db.profile.dontShare) and self:ShouldBeConsidered() and self:GetNumEligible(true, self.isOwner) > 0
+    return not (Addon.db.profile.dontShare and self.isOwner) and self:ShouldBeConsidered() and self:GetNumEligible(true, self.isOwner) > 0
 end
 
 -------------------------------------------------------
@@ -1380,10 +1384,21 @@ function Self:IsAzeriteGear()
         and Util.In(Self.GetInfo(self, "equipLoc"), Self.TYPE_HEAD, Self.TYPE_SHOULDER, Self.TYPE_CHEST, Self.TYPE_ROBE)
 end
 
-function Self:IsPet()
-    return Self.GetInfo(self, "itemType") == "battlepet" or Self.GetInfo(self, "subType") == "Companion Pets"
+-- Check if the item has a collectible appearance that can be unlocked
+function Self:IsTransmoggable(unit)
+    return self.isEquippable
+        and not Util.In(self.equipLoc, Self.TYPES_NO_TRANSMOG)
+        and not self:IsRelic()
+        and (not self.isSoulbound or self:CanBeEquipped(unit))
 end
 
+-- Check if the item is a battlepet
+function Self:IsPet()
+    return Self.GetInfo(self, "itemType") == "battlepet"
+        or Self.GetInfo(self, "subClassId") == LE_ITEM_MISCELLANEOUS_COMPANION_PET
+end
+
+-- Check if the item is an artifact relic
 function Self:IsRelic()
     return Self.GetInfo(self, "subType") == "Artifact Relic"
 end
