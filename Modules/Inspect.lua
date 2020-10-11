@@ -72,7 +72,7 @@ function Self.Update(unit)
                     if link then
                         info.links[slot] = link
                         if slotMin ~= false then
-                            local lvl = Item.GetInfo(link, "quality") == LE_ITEM_QUALITY_LEGENDARY and 0 or Item.GetInfo(link, "maxLevel", unit)
+                            local lvl = Item.GetInfo(link, "quality") == Enum.ItemQuality.Legendary and 0 or Item.GetInfo(link, "maxLevel", unit)
                             slotMin = lvl and min(slotMin or lvl, lvl) or false
                         end
                     else

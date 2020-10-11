@@ -13,9 +13,13 @@ local FACTION = "Horde"
 local RACE = 8
 local CLASS = 8
 local GUID = "Player-1612-054E4E80"
-
 local CLASSES = {"Warrior", "Paladin", "Hunter", "Rogue", "Priest", "Death Knight", "Shaman", "Mage", "Warlock", "Monk", "Druid", "Demon Hunter"}
 local RACES = {"Human", "Orc", "Dwarf", "Night Elf", "Undead", "Tauren", "Gnome", "Troll", "Goblin", "Blood Elf", "Draenei", "Fel Orc", "Naga", "Broken", "Skeleton", "Vrykul", "Tuskarr", "Forest Troll", "Taunka", "Northrend Skeleton", "Ice Troll", "Worgen", "Gilnean", "Pandaren", "Pandaren", "Pandaren", "Nightborne", "Highmountain Tauren", "Void Elf", "Lightforged Draenei", "Zandalari Troll", "Kul Tiran", "Human", "Dark Iron Dwarf", "Vulpera", "Mag'har Orc", "Mechagnome"}
+
+-- Changes with expansions
+local EXPANSION = 7
+local MAX_LEVEL = 50
+local INSTANCE = 1180 -- Ny'alotha, the Waking City
 
 -- Options
 local options = {
@@ -158,10 +162,7 @@ local Obj = setmetatable({}, Meta)
 --                      WoW mocks                    --
 -------------------------------------------------------
 
--- Changes with expansions
-MAX_PLAYER_LEVEL = 50
-GetExpansionLevel = Const(7)
-
+-- Frames
 CreateFrame = function (_, name, parent)
     parent = parent or UIParent
     local scripts, events, points, textures, lastUpdate, f = {}, {}, {}, {}, 0
@@ -200,16 +201,19 @@ CreateFrame = function (_, name, parent)
     return f
 end
 
-CreateFrame(nil, "UIParent")
-CreateFrame(nil, "DEFAULT_CHAT_FRAME")
+UIParent = CreateFrame()
+DEFAULT_CHAT_FRAME = CreateFrame()
+AlertFrame = CreateFrame()
+StaticPopupDialogs = {}
+SlashCmdList = {}
 
+-- Functions
 local xpcallOrig = xpcall
 xpcall = function (func, err, ...)
     local args =  {...}
     if type(func) == "string" then func = _G[func] end
     return xpcallOrig(function () func(unpack(args)) end, err)
 end
-
 loadstring = loadstring or load
 geterrorhandler = Const(Fn)
 seterrorhandler = Fn
@@ -244,11 +248,7 @@ max = math.max
 min = math.min
 ceil = math.ceil
 floor = math.floor
-
-GetClassInfo = function (i)
-    local c = CLASSES[i]
-    return c, c:upper():gsub(" ", "_"), i
-end
+GetClassInfo = function (i) local c = CLASSES[i] return c, c:upper():gsub(" ", "_"), i end
 GetLocale = Const(LOCALE)
 GetRealmName = Const(REALM)
 GetAutoCompleteRealms = Const(REALM_CONNECTED)
@@ -260,6 +260,7 @@ GetInstanceInfo = Fn
 GetLootRollTimeLeft = Val(0)
 GetLootRollItemInfo = Fn
 GetLootRollItemLink = Fn
+GetExpansionLevel = Const(EXPANSION)
 RollOnLoot = Fn
 GroupLootContainer_RemoveFrame = Fn
 SetLootRollItem = Fn
@@ -271,14 +272,14 @@ UnitClass = Vals(GetClassInfo(CLASS))
 UnitRace = Vals(RACES[RACE], RACES[RACE], RACE)
 UnitFactionGroup = Vals(FACTION, FACTION)
 UnitGUID = Val(GUID)
-UnitLevel = Val(MAX_PLAYER_LEVEL)
+UnitLevel = Val(MAX_LEVEL)
 UnitIsUnit = function (a, b) return a and a == b end
 UnitExists = Val(true)
 UnitInParty = Val(false)
 UnitInRaid = Val(false)
 UnitIsDND = Val(false)
 RegisterAddonMessagePrefix = Fn
-IsInInstance = Const(false)
+IsInInstance = Const(true)
 IsAddOnLoaded = function (n) return n == "WoWUnit" or n == Name end
 InterfaceOptions_AddCategory = Fn
 IsLoggedIn = Const(false)
@@ -290,15 +291,10 @@ ChatFrame_AddMessageEventFilter = Fn
 GetGuildInfo = Fn
 GetNumFriends = Const(0)
 IsShiftKeyDown = Const(false)
+EJ_GetInstanceForMap = Val(INSTANCE)
 
-C_ChallengeMode = Obj
-C_Club = { GetSubscribedClubs = Const({}) }
-C_Timer = { After = function (t, fn) fn() end }
-C_Loot = { IsLegacyLootModeEnabled = Const(false) }
-StaticPopupDialogs = {}
-SlashCmdList = {}
-AlertFrame = CreateFrame()
-
+-- Constants
+MAX_PLAYER_LEVEL = MAX_LEVEL
 TRADE = "Trade"
 PARTY = "Party"
 RAID = "Raid"
@@ -334,19 +330,6 @@ ERR_RAID_MEMBER_REMOVED_S = "%s has left the raid group."
 AUTOFOLLOWSTART = "Following %s."
 HIGHLIGHT_FONT_COLOR_CODE = ""
 FONT_COLOR_CODE_CLOSE = ""
-DIFFICULTY_DUNGEON_NORMAL = 1
-DIFFICULTY_DUNGEON_HEROIC = 2
-DIFFICULTY_RAID10_NORMAL = 3
-DIFFICULTY_RAID25_NORMAL = 4
-DIFFICULTY_RAID10_HEROIC = 5
-DIFFICULTY_RAID25_HEROIC = 6
-DIFFICULTY_RAID_LFR = 7
-DIFFICULTY_DUNGEON_CHALLENGE = 8
-DIFFICULTY_RAID40 = 9
-DIFFICULTY_PRIMARYRAID_NORMAL = 14
-DIFFICULTY_PRIMARYRAID_HEROIC = 15
-DIFFICULTY_PRIMARYRAID_MYTHIC = 16
-DIFFICULTY_PRIMARYRAID_LFR = 17
 LE_PARTY_CATEGORY_INSTANCE = 2
 NUM_GROUP_LOOT_FRAMES = 0
 NUM_CHAT_WINDOWS = 0
@@ -354,23 +337,44 @@ LOOT_ITEM_BONUS_ROLL ="%s receives bonus loot: %s."
 CREATED_ITEM ="%s creates: %s."
 LOOT_ITEM_CREATED_SELF ="You create: %s."
 RANDOM_ROLL_RESULT ="%s rolls %d (%d-%d)"
-LE_ITEM_QUALITY_POOR = 0
-LE_ITEM_QUALITY_COMMON = 1
-LE_ITEM_QUALITY_UNCOMMON = 2
-LE_ITEM_QUALITY_RARE = 3
-LE_ITEM_QUALITY_EPIC = 4
-LE_ITEM_QUALITY_LEGENDARY = 5
-LE_ITEM_QUALITY_ARTIFACT = 6
-LE_ITEM_QUALITY_HEIRLOOM = 7
 LE_ITEM_MISCELLANEOUS_COMPANION_PET = 2
-MAX_PLAYER_LEVEL = 120
 NUM_BAG_SLOTS = 0
-RAID_CLASS_COLORS = setmetatable({}, {__index = function () return {colorStr = "ffffffff", r = 1, g = 1, b = 1} end})
 
-Enum = {
-    ClubType = { BattleNet = 0, Character = 1, Guild = 2, Other = 3 }
+RAID_CLASS_COLORS = setmetatable({}, {__index = function () return {colorStr = "ffffffff", r = 1, g = 1, b = 1} end})
+DifficultyUtil = {
+    ID = {
+        DungeonNormal = 1,
+        DungeonHeroic = 2,
+        Raid10Normal = 3,
+        Raid25Normal = 4,
+        Raid10Heroic = 5,
+        Raid25Heroic = 6,
+        RaidLFR = 7,
+        DungeonChallenge = 8,
+        Raid40 = 9,
+        PrimaryRaidNormal = 14,
+        PrimaryRaidHeroic = 15,
+        PrimaryRaidMythic = 16,
+        PrimaryRaidLFR = 17,
+        DungeonMythic = 23,
+        DungeonTimewalker = 24,
+        RaidTimewalker = 33,
+    }
 }
 
+C_ChallengeMode = Obj
+C_Club = { GetSubscribedClubs = Const({}) }
+C_Timer = { After = function (t, fn) fn() end }
+C_Loot = { IsLegacyLootModeEnabled = Const(false) }
+C_Soulbinds = { IsItemConduitByItemInfo = Val(false) }
+C_Map = { GetBestMapForUnit = Val(0) }
+
+Enum = {
+    ClubType = { BattleNet = 0, Character = 1, Guild = 2, Other = 3 },
+    ItemQuality = { Poor = 0, Common = 1, Uncommon = 2, Rare = 3, Epic = 4, Legendary = 5, Artifact = 6, Heirloom = 7, WoWToken = 8 }
+}
+
+-- PLR specific
 PLR_AwardLootButtonNormalText = CreateFrame()
 
 -------------------------------------------------------

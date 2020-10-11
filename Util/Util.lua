@@ -133,17 +133,18 @@ end
 function Self.GetNumDroppedItems()
     local difficulty, _, maxPlayers = select(3, GetInstanceInfo())
 
-    if difficulty == DIFFICULTY_DUNGEON_CHALLENGE then
+    if difficulty == DifficultyUtil.ID.DungeonChallenge then
         -- In M+ we get 2 items at the end of the dungeon, +1 if in time, +0.4 per keystone level above 15
         local _, level, _, onTime = C_ChallengeMode.GetCompletionInfo();
         return 2 + (onTime and 1 or 0) + (level > 15 and math.ceil(0.4 * (level - 15)) or 0)
     else
         -- Normally we get about 1 item per 5 players in the group
         local players = GetNumGroupMembers()
-        if difficulty == DIFFICULTY_PRIMARYRAID_MYTHIC then
+        if difficulty == DifficultyUtil.ID.PrimaryRaidMythic then
             players = 20
         elseif C_Loot.IsLegacyLootModeEnabled() then
-            players = Self.In(difficulty, DIFFICULTY_RAID_LFR, DIFFICULTY_PRIMARYRAID_LFR, DIFFICULTY_PRIMARYRAID_NORMAL, DIFFICULTY_PRIMARYRAID_HEROIC) and max(players, 20) or maxPlayers
+            local d = DifficultyUtil.ID
+            players = Self.In(difficulty, d.RaidLFR, d.PrimaryRaidLFR, d.PrimaryRaidNormal, d.PrimaryRaidHeroic) and max(players, 20) or maxPlayers
         end
         return math.ceil(players / 5)
     end

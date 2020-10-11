@@ -1,0 +1,2 @@
+- Properly handle shadowlands conduits and legendaries
+- Fix access to removed constants

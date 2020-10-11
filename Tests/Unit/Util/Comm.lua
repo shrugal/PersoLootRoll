@@ -56,6 +56,7 @@ function Tests:ShouldInitChatTest()
         lfd = true,
         guild = true,
         community = true,
+        legacy = true,
         raid = true,
         party = true,
         friend = true,

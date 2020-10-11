@@ -13,6 +13,7 @@ Self.EXPAC_MOP = 4
 Self.EXPAC_WOD = 5
 Self.EXPAC_LEGION = 6
 Self.EXPAC_BFA = 7
+Self.EXPAC_SL = 8
 
 -- Armor locations
 Self.TYPE_2HWEAPON = "INVTYPE_2HWEAPON"

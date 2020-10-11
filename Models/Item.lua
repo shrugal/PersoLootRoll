@@ -278,7 +278,7 @@ function Self.GetInfo(item, attr, ...)
         return (select(Self.INFO.basic.minLevel, GetItemInfo(link or id)))
     -- maxLevel
     elseif attr == "maxLevel" then
-        if Self.GetInfo(item, "quality") == LE_ITEM_QUALITY_HEIRLOOM then
+        if Self.GetInfo(item, "quality") == Enum.ItemQuality.Heirloom then
             return Self.GetInfo(Self.GetLinkForLevel(link, Self.GetInfo(item, "toLevel")), "level", ...)
         else
             return Self.GetInfo(item, "realLevel", ...)
@@ -510,7 +510,7 @@ function Self:GetFullInfo()
 
         -- Effective and max level
         self.realLevel = self.realLevel or self.level
-        self.maxLevel = self.quality == LE_ITEM_QUALITY_HEIRLOOM and Self.GetInfo(Self.GetLinkForLevel(self.link, self.toLevel), "level") or self.realLevel
+        self.maxLevel = self.quality == Enum.ItemQuality.Heirloom and Self.GetInfo(Self.GetLinkForLevel(self.link, self.toLevel), "level") or self.realLevel
 
         -- Get item position in bags or equipment
         local bagOrEquip, slot = self:GetPosition()
@@ -595,7 +595,7 @@ function Self.GetOwnedForLocation(loc, allWeapons)
         local slots = Self.SLOTS[allWeapons and Util.In(loc, Self.TYPES_WEAPON) and Self.TYPE_WEAPON or loc]
         for i,slot in pairs(slots) do
             local link = GetInventoryItemLink("player", slot)
-            if link and not Self.IsLegionLegendary(link) and Self.IsSameLocation(link, loc, allWeapons) then
+            if link and not Self.IsLegendary(link) and Self.IsSameLocation(link, loc, allWeapons) then
                 tinsert(items, link)
             end
         end
@@ -626,7 +626,7 @@ function Self.GetOwnedForLocation(loc, allWeapons)
                             end
                         end
                     end
-                elseif not Self.IsLegionLegendary(link) and Self.IsSameLocation(link, loc, allWeapons) then
+                elseif not Self.IsLegendary(link) and Self.IsSameLocation(link, loc, allWeapons) then
                     tinsert(items, link)
                 end
             end
@@ -834,7 +834,7 @@ function Self:CanBeEquipped(unit, ...)
         local found = false
         for i,spec in Util.Each(...) do
             if not (self.spec and self.spec ~= select(2, GetSpecializationInfo(spec))) and
-               not (self:IsLegionArtifact() and self.id ~= Self.CLASSES[classId].specs[spec].artifact.id) then
+               not (self:IsArtifact() and self.id ~= Self.CLASSES[classId].specs[spec].artifact.id) then
                 found = true break
             end
         end
@@ -869,16 +869,16 @@ end
 function Self:HasSufficientQuality(isLootEvent)
     local quality = Self.GetInfo(self, "quality")
 
-    if not quality or quality >= LE_ITEM_QUALITY_LEGENDARY then
+    if not quality or quality >= Enum.ItemQuality.Legendary then
         return false
     elseif not IsEquippableItem(self.link or self) then
-        return quality >= LE_ITEM_QUALITY_UNCOMMON
+        return quality >= Enum.ItemQuality.Uncommon
     elseif isLootEvent or Addon.db.profile.filter.transmog or Util.IsLegacyRun() then
-        return quality >= LE_ITEM_QUALITY_COMMON
+        return quality >= Enum.ItemQuality.Common
     elseif IsInRaid() then
-        return quality >= LE_ITEM_QUALITY_EPIC
+        return quality >= Enum.ItemQuality.Epic
     else
-        return quality >= LE_ITEM_QUALITY_RARE
+        return quality >= Enum.ItemQuality.Rare
     end
 end
 
@@ -1066,6 +1066,7 @@ function Self.ShouldBeChecked(item, owner)
     return item and owner
         and (not Addon.db.profile.dontShare or Unit.IsSelf(owner))
         and Self.HasSufficientQuality(item, true)
+        and not Self.IsConduit(item)
 end
 
 -- Check if the item should be handled by the addon
@@ -1309,7 +1310,7 @@ function Self.UpdatePlayerCacheWeapons()
                             cache.spec = cache.spec or item:GetFullInfo().spec ~= nil
 
                             if item:IsUseful("player", spec) then
-                                if item.equipLoc == Self.TYPE_2HWEAPON or item:IsLegionArtifact() then
+                                if item.equipLoc == Self.TYPE_2HWEAPON or item:IsArtifact() then
                                     twohand = max(twohand, item.maxLevel)
                                 elseif item.equipLoc == Self.TYPE_WEAPONMAINHAND then
                                     main = max(main, item.maxLevel)
@@ -1353,7 +1354,7 @@ end
 
 -- Basically tells us whether GetRealItemLevelInfo doesn't give us the correct ilvl
 function Self:IsScaled()
-    if Self.GetInfo(self, "quality") == LE_ITEM_QUALITY_HEIRLOOM then
+    if Self.GetInfo(self, "quality") == Enum.ItemQuality.Heirloom then
         return true
     end
 
@@ -1367,21 +1368,33 @@ function Self:IsWeapon()
     return Util.In(Self.GetInfo(self, "equipLoc"), Self.TYPES_WEAPON)
 end
 
--- Check if the item is a Legion legendary
-function Self:IsLegionLegendary()
-    return Self.GetInfo(self, "expacId") == Self.EXPAC_LEGION and Self.GetInfo(self, "quality") == LE_ITEM_QUALITY_LEGENDARY
+-- Check if the item is a legendary from Legion or Shadowlands
+function Self:IsLegendary()
+    return Self.GetInfo(self, "quality") == Enum.ItemQuality.Legendary
+        and Util.In(Self.GetInfo(self, "expacId"), Self.EXPAC_LEGION, Self.EXPAC_SL)
 end
 
 -- Check if the item is a Legion artifact
-function Self:IsLegionArtifact()
-    return Self.GetInfo(self, "expacId") == Self.EXPAC_LEGION and Self.GetInfo(self, "quality") == LE_ITEM_QUALITY_ARTIFACT
+function Self:IsArtifact()
+    return Self.GetInfo(self, "quality") == Enum.ItemQuality.Artifact
+        and Self.GetInfo(self, "expacId") == Self.EXPAC_LEGION
 end
 
--- Check if the item has azerite traits
+-- Check if the item is a Legion artifact relic
+function Self:IsRelic()
+    return Self.GetInfo(self, "subType") == "Artifact Relic"
+end
+
+-- Check if the item has BFA azerite traits
 function Self:IsAzeriteGear()
-    return Self.GetInfo(self, "expacId") == Self.EXPAC_BFA
-        and Self.GetInfo(self, "quality") >= LE_ITEM_QUALITY_RARE
+    return Self.GetInfo(self, "quality") >= Enum.ItemQuality.Rare
+        and Self.GetInfo(self, "expacId") == Self.EXPAC_BFA
         and Util.In(Self.GetInfo(self, "equipLoc"), Self.TYPE_HEAD, Self.TYPE_SHOULDER, Self.TYPE_CHEST, Self.TYPE_ROBE)
+end
+
+-- Check if the item is a Shadowlands conduit
+function Self:IsConduit()
+    return C_Soulbinds.IsItemConduitByItemInfo(Self.GetLink(self))
 end
 
 -- Check if the item has a collectible appearance that can be unlocked
@@ -1396,9 +1409,4 @@ end
 function Self:IsPet()
     return Self.GetInfo(self, "itemType") == "battlepet"
         or Self.GetInfo(self, "subClassId") == LE_ITEM_MISCELLANEOUS_COMPANION_PET
-end
-
--- Check if the item is an artifact relic
-function Self:IsRelic()
-    return Self.GetInfo(self, "subType") == "Artifact Relic"
 end
