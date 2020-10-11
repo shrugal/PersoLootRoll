@@ -174,7 +174,7 @@ function Self.Chat(msg, target, concise)
 
     if not channel or Util.Str.IsEmpty(msg) then
         return
-    elseif concise or channel ~= Self.TYPE_WHISPER then
+    elseif not (concise or channel == Self.TYPE_WHISPER) then
         msg = Util.Str.Prefix(msg, Self.PREFIX_CHAT)
     end
 

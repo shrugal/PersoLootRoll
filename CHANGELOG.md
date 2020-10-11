@@ -1,12 +1,29 @@
-Version 22 Next 1
-- Updated TOC version to 9.0.1
-- Updated Ace3 to latest alpha version
-- Fixed frames with missing backdrops
+Version 22 Beta 4
+- Added option to enable/disable chat messages in legacy runs
+- Added suppressing announces by shift-clicking bid button
+- Removed PLR prefix from concise announcements
+- Fixed considering some non-equippable items transmoggable
+- Fixed considering legion relics useful for players above legion max level
+
+Version 22 Beta 3
+- Bugfixes to collected item detection
+
+Version 22 Next 2
+- Updated instance and trinket lists for Shadowlands
+- Use the build-in legacy loot detection instead of a custom implementation
+- Updated legacy-run detection for new player levels
+- Fixed trinket list generation
+- Some small player level related fixes
 
 Version 22 Beta 2
 - Added option to roll on missing transmog items, not just missing appearances
 - Improved battle pet handling
 - Improved handling of item links in difference languages
+
+Version 22 Next 1
+- Updated TOC version to 9.0.1
+- Updated Ace3 to latest alpha version
+- Fixed frames with missing backdrops
 
 Version 22 Beta 1
 - Added support for rolling on and checking for missing pets
