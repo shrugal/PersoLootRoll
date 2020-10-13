@@ -107,7 +107,7 @@ Self.INFO = {
         toLevel = true,
         attributes = true,
         isTransmogKnown = true,
-        isItemCollected = true
+        isTransmogSourceKnown = true
     }
 }
 
@@ -237,9 +237,11 @@ local fullScanFn = function (i, line, lines, attr)
         elseif line:match(Self.PATTERN_APPEARANCE_UNKNOWN) then
             return false
         end
-    -- isItemCollected
-    elseif attr == "isItemCollected" then
-        if line:match(Self.PATTERN_APPEARANCE_UNKNOWN) or line:match(Self.PATTERN_APPEARANCE_UNKNOWN_ITEM) then
+    -- isTransmogSourceKnown
+    elseif attr == "isTransmogSourceKnown" then
+        if line:match(Self.PATTERN_APPEARANCE_KNOWN .. "$") then
+            return true
+        elseif line:match(Self.PATTERN_APPEARANCE_UNKNOWN) or line:match(Self.PATTERN_APPEARANCE_UNKNOWN_ITEM) then
             return false
         end
     end
@@ -286,6 +288,9 @@ function Self.GetInfo(item, attr, ...)
     -- isEquippable
     elseif attr == "isEquippable" then
         return IsEquippableItem(link or id) or Self.IsRelic(item)
+    -- visualId, visualSourceId
+    elseif link and (attr == "visualId" or attr == "visualSourceId") then
+        return (select(attr == "visualId" and 1 or 2, C_TransmogCollection.GetItemInfo(link)))
     -- From link
     elseif Self.INFO.link[attr] then
         if isInstance then
@@ -328,7 +333,8 @@ function Self.GetInfo(item, attr, ...)
             return val
                 or attr == "realLevel" and Self.GetInfo(item, "level")
                 or attr == "realMinLevel" and Self.GetInfo(item, "minLevel")
-                or attr == "isItemCollected" and val ~= false and Self.GetInfo(item, "isTransmogKnown")
+                or attr == "isTransmogKnown" and Self.IsAppearanceKnown(item)
+                or attr == "isTransmogSourceKnown" and Self.IsAppearanceSourceKnown(item)
                 or val
         end
     end
@@ -476,12 +482,14 @@ function Self:GetBasicInfo()
                 self.isEquippable = IsEquippableItem(self.link) or self:IsRelic()
                 self.isSoulbound = self.bindType == LE_ITEM_BIND_ON_ACQUIRE or self.isEquipped and self.bindType == LE_ITEM_BIND_ON_EQUIP
                 self.isTradable = Util.Default(self.isTradable, not self.isSoulbound or nil)
-                self.infoLevel = Self.INFO_BASIC
+                self.visualId, self.visualSourceId = C_TransmogCollection.GetItemInfo(self.link)
 
                 if self.subType == "Companion Pets" then
                     local tradable, _, _, _, speciesId = select(9, C_PetJournal.GetPetInfoByItemID(self.id))
                     self.isTradable, self.isPetKnown = tradable, C_PetJournal.GetOwnedBattlePetString(speciesId) ~= nil
                 end
+
+                self.infoLevel = Self.INFO_BASIC
             end
         end
         Util.Tbl.Release(data)
@@ -505,8 +513,9 @@ function Self:GetFullInfo()
             end
         end, self.link)
 
-        -- Item collected
-        self.isItemCollected = self.isTransmogKnown and self.isItemCollected ~= false
+        -- Lookup transmog collection info
+        self.isTransmogKnown = self.isTransmogKnown or self:IsAppearanceKnown()
+        self.isTransmogSourceKnown = self.isTransmogSourceKnown or self:IsAppearanceSourceKnown()
 
         -- Effective and max level
         self.realLevel = self.realLevel or self.level
@@ -972,7 +981,7 @@ end
 
 function Self:IsCollectibleMissing(unit)
     local isPet = self:IsPet()
-    local isTransmogable = self:IsTransmoggable(unit)
+    local isTransmogable = self:IsTransmogable(unit)
 
     if not isPet and not isTransmogable then
         return false
@@ -982,8 +991,8 @@ function Self:IsCollectibleMissing(unit)
         return Addon.db.profile.filter.pets and self:GetBasicInfo().isPetKnown == false
     else
         return Addon.db.profile.filter.transmog and (
-            self:GetFullInfo().isTransmogKnown == false
-            or Addon.db.profile.filter.transmogItem and self.isItemCollected == false
+            not self:GetFullInfo().isTransmogKnown
+            or Addon.db.profile.filter.transmogItem and not self:GetFullInfo().isTransmogSourceKnown
         )
     end
 end
@@ -1397,16 +1406,39 @@ function Self:IsConduit()
     return C_Soulbinds.IsItemConduitByItemInfo(Self.GetLink(self))
 end
 
--- Check if the item has a collectible appearance that can be unlocked
-function Self:IsTransmoggable(unit)
-    return self.isEquippable
-        and not Util.In(self.equipLoc, Self.TYPES_NO_TRANSMOG)
-        and not self:IsRelic()
-        and (not self.isSoulbound or self:CanBeEquipped(unit))
-end
-
 -- Check if the item is a battlepet
 function Self:IsPet()
     return Self.GetInfo(self, "itemType") == "battlepet"
         or Self.GetInfo(self, "subClassId") == LE_ITEM_MISCELLANEOUS_COMPANION_PET
+end
+
+-- Check if the item has a collectible appearance that can be unlocked
+function Self:IsTransmogable(unit)
+    return IsDressableItem(self.link) and (not self.isSoulbound or self:CanBeEquipped(unit))
+end
+
+-- Check if the visual appearance is known
+function Self:IsAppearanceKnown()
+    if Self.IsAppearanceSourceKnown(self) then
+        return true
+    end
+
+    local visualId = Self.GetInfo(self, "visualId")
+    if visualId then
+        local sources = C_TransmogCollection.GetAllAppearanceSources(visualId)
+        if sources then
+            for _,sourceId in pairs(sources) do
+                if select(5, C_TransmogCollection.GetAppearanceSourceInfo(sourceId)) then
+                    return true
+                end
+            end
+            return false
+        end
+    end
+end
+
+-- Check if the visual appearance is known from the item
+function Self:IsAppearanceSourceKnown()
+    local sourceId = Self.GetInfo(self, "visualSourceId")
+    return sourceId and select(5, C_TransmogCollection.GetAppearanceSourceInfo(sourceId))
 end

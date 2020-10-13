@@ -368,6 +368,11 @@ C_Timer = { After = function (t, fn) fn() end }
 C_Loot = { IsLegacyLootModeEnabled = Const(false) }
 C_Soulbinds = { IsItemConduitByItemInfo = Val(false) }
 C_Map = { GetBestMapForUnit = Val(0) }
+C_TransmogCollection = {
+    GetItemInfo = Val(),
+    GetAppearanceSourceInfo = Val(),
+    GetAllAppearanceSources = Val({})
+}
 
 Enum = {
     ClubType = { BattleNet = 0, Character = 1, Guild = 2, Other = 3 },
