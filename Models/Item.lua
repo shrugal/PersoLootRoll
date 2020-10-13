@@ -1428,7 +1428,7 @@ function Self:IsAppearanceKnown()
         local sources = C_TransmogCollection.GetAllAppearanceSources(visualId)
         if sources then
             for _,sourceId in pairs(sources) do
-                if select(5, C_TransmogCollection.GetAppearanceSourceInfo(sourceId)) then
+                if Self.IsAppearanceSourceKnown(self, sourceId) then
                     return true
                 end
             end
@@ -1438,7 +1438,7 @@ function Self:IsAppearanceKnown()
 end
 
 -- Check if the visual appearance is known from the item
-function Self:IsAppearanceSourceKnown()
-    local sourceId = Self.GetInfo(self, "visualSourceId")
+function Self:IsAppearanceSourceKnown(sourceId)
+    sourceId = sourceId or Self.GetInfo(self, "visualSourceId")
     return sourceId and select(5, C_TransmogCollection.GetAppearanceSourceInfo(sourceId))
 end
