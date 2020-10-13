@@ -909,7 +909,7 @@ function Self:HasMatchingAttributes(unit, ...)
             end
         end
     end
-    
+
     return false
 end
 

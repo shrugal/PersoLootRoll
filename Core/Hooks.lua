@@ -341,7 +341,7 @@ function Self.EnableUnitMenusHook()
             GUI.ToggleAwardUnitDropdown(self.unit, "TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
         end)
         .Hide()()
-    
+
     PLR_AwardLootButtonNormalText:SetPoint("LEFT")
 
     if not Self:IsHooked("UnitPopup_ShowMenu") then

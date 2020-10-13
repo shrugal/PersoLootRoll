@@ -101,7 +101,6 @@ Self.CLASSES = {
             },{ -- Frost
                 role = Self.ROLE_MELEE,
                 attribute = LE_UNIT_STAT_STRENGTH,
-                weapons = Self.TYPES_1HWEAPON,
                 artifact = {id = 128292, relics = {RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_FROST}, twinId = 128293}
             },{ -- Unholy
                 role = Self.ROLE_MELEE,
@@ -194,7 +193,6 @@ Self.CLASSES = {
             {   -- Brewmaster
                 role = Self.ROLE_TANK,
                 attribute = LE_UNIT_STAT_AGILITY,
-                weapons = Self.TYPES_2HWEAPON,
                 artifact = {id = 128938, relics = {RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON}}
             },{ -- Mistweaver
                 role = Self.ROLE_HEAL,
@@ -203,7 +201,6 @@ Self.CLASSES = {
             },{ -- Windwalker
                 role = Self.ROLE_MELEE,
                 attribute = LE_UNIT_STAT_AGILITY,
-                weapons = Self.TYPES_1HWEAPON,
                 artifact = {id = 128940, relics = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_WIND}, twinId = 0}
             }
         }

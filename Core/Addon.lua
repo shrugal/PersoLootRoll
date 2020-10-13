@@ -81,7 +81,7 @@ function Self:OnInitialize()
     -- Debug info
     self:ToggleDebug(PersoLootRollDebug or self.DEBUG)
     self:RegisterErrorHandler()
-    
+
     -- Load DB
     self.db = LibStub("AceDB-3.0"):New(Name .. "DB", Options.DEFAULTS, true)
 
@@ -120,7 +120,7 @@ function Self:OnDisable()
     -- Disable hooks and events
     self:UnregisterEvents()
     self:DisableHooks()
-    
+
     -- Chancel timers
     self:CancelTimer(self.timers.clearRolls)
 
@@ -242,7 +242,7 @@ function Self:HandleChatCommand(msg)
             self:Error(L["ERROR_PLAYER_NOT_FOUND"], args[2])
         else
             local roll = (Roll.Find(nil, owner, item) or Roll.Add(item, owner))
-    
+
             if self.db.profile.messages.echo < Self.ECHO_VERBOSE then
                 self:Info(L["BID_START"], roll:GetBidName(bid), item, Comm.GetPlayerLink(owner))
             end
@@ -378,7 +378,7 @@ function Self:OnActiveChanged(active)
         wipe(self.versions)
         wipe(self.disabled)
         wipe(self.compAddonUsers)
-    
+
         -- Clear lastXYZ stuff
         self.lastPostedRoll = nil
         self.lastVersionCheck = nil
