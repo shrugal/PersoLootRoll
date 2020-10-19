@@ -263,7 +263,6 @@ GetLootRollItemLink = Fn
 GetExpansionLevel = Const(EXPANSION)
 RollOnLoot = Fn
 GroupLootContainer_RemoveFrame = Fn
-SetLootRollItem = Fn
 SetItemRef = Fn
 UnitPopup_ShowMenu = Fn
 UnitName = function (u) local unit, realm = strsplit("-", u) return unit, realm ~= GetRealmName() and realm or nil end
@@ -278,7 +277,6 @@ UnitExists = Val(true)
 UnitInParty = Val(false)
 UnitInRaid = Val(false)
 UnitIsDND = Val(false)
-RegisterAddonMessagePrefix = Fn
 IsInInstance = Const(true)
 IsAddOnLoaded = function (n) return n == "WoWUnit" or n == Name end
 InterfaceOptions_AddCategory = Fn
@@ -289,7 +287,6 @@ IsInRaid = Const(false)
 IsEquippableItem = Val(true)
 ChatFrame_AddMessageEventFilter = Fn
 GetGuildInfo = Fn
-GetNumFriends = Const(0)
 IsShiftKeyDown = Const(false)
 EJ_GetInstanceForMap = Val(INSTANCE)
 
@@ -368,6 +365,8 @@ C_Timer = { After = function (t, fn) fn() end }
 C_Loot = { IsLegacyLootModeEnabled = Const(false) }
 C_Soulbinds = { IsItemConduitByItemInfo = Val(false) }
 C_Map = { GetBestMapForUnit = Val(0) }
+C_FriendList = { GetNumFriends = Const(0), GetFriendInfo = Val(nil), IsFriend = Val(false) }
+C_ChatInfo = { RegisterAddonMessagePrefix = Fn }
 
 Enum = {
     ClubType = { BattleNet = 0, Character = 1, Guild = 2, Other = 3 },

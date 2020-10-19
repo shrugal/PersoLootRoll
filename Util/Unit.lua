@@ -188,9 +188,14 @@ end
 function Self.IsFriend(unit)
     if not unit then return false end
 
-    local unit = Self.Name(unit)
-    for i=1, GetNumFriends() do
-        if GetFriendInfo(i) == unit then
+    local guid = UnitGUID(unit)
+    if guid then
+        return C_FriendList.IsFriend(guid)
+    end
+
+    unit = Self.Name(unit)
+    for i=1, C_FriendList.GetNumFriends() do
+        if C_FriendList.GetFriendInfo(i) == unit then
             return true
         end
     end
