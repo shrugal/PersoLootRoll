@@ -1,1 +1,3 @@
-- Replaced access to removed friend-list functions
+- Fixed starting scheduled rolls without checking them first sometimes
+- Fixed considering some armor items as pets
+- Fixed sometimes not using concise announcements when we should

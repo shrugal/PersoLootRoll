@@ -1408,5 +1408,8 @@ end
 -- Check if the item is a battlepet
 function Self:IsPet()
     return Self.GetInfo(self, "itemType") == "battlepet"
-        or Self.GetInfo(self, "subClassId") == LE_ITEM_MISCELLANEOUS_COMPANION_PET
+        or (
+            Self.GetInfo(self, "classId") == LE_ITEM_CLASS_MISCELLANEOUS
+            and Self.GetInfo(self, "subClassId") == LE_ITEM_MISCELLANEOUS_COMPANION_PET
+        )
 end

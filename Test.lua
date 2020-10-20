@@ -334,6 +334,7 @@ LOOT_ITEM_BONUS_ROLL ="%s receives bonus loot: %s."
 CREATED_ITEM ="%s creates: %s."
 LOOT_ITEM_CREATED_SELF ="You create: %s."
 RANDOM_ROLL_RESULT ="%s rolls %d (%d-%d)"
+LE_ITEM_CLASS_MISCELLANEOUS = 15
 LE_ITEM_MISCELLANEOUS_COMPANION_PET = 2
 NUM_BAG_SLOTS = 0
 

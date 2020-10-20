@@ -1,3 +1,6 @@
+Version 22.01
+- Replaced access to removed friend-list functions
+
 Version 22
 - Updated TOC version to 9.0.1
 - Updated instance and trinket lists for Shadowlands
