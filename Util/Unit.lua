@@ -6,7 +6,7 @@ local Util = Addon.Util
 local Self = Addon.Unit
 
 -- Search patterns
-Self.PATTERN_FOLLOW = AUTOFOLLOWSTART:gsub("%%s", "(.+)")
+Self.PATTERN_FOLLOW = AUTOFOLLOWSTART:gsub("%%%d?%$?s", "(.+)")
 
 -- Classes
 Self.DEATH_KNIGHT = 6

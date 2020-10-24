@@ -662,11 +662,11 @@ end
 -- Get the threshold for the item's slot
 ---@param upper boolean
 function Self:GetThresholdForLocation(unit, upper)
-    local unit = Unit(unit or "player")
+    unit = Unit(unit or "player")
     local f = Addon.db.profile.filter
 
-    -- Relics have a lower threshold of -1, meaning they have to be higher in ilvl to be worth considering
-    if not upper and self:IsRelic() then
+    -- Lower threshold of -1 for relics and legacy runs, so items have to be higher in ilvl to be worth considering
+    if not upper and (self:IsRelic() or Util.IsLegacyRun(unit)) then
         return -1
     end
 
@@ -977,7 +977,7 @@ function Self:IsCollectibleMissing(unit)
     if not isPet and not isTransmogable then
         return false
     elseif not Unit.IsSelf(unit or "player") then
-        return not Addon:UnitIsTracking(unit) and Util.IsLegacyRun()
+        return not Addon:UnitIsTracking(unit) and Util.IsLegacyRun(unit)
     elseif isPet then
         return Addon.db.profile.filter.pets and self:GetBasicInfo().isPetKnown == false
     else
