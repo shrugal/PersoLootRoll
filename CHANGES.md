@@ -1,5 +1,2 @@
-- Require items to have higher item-level than whats currently equipped in legacy runs
-- Fixed starting scheduled rolls without checking them first sometimes
-- Fixed considering some armor items as pets
-- Fixed sometimes not using concise announcements when we should
-- Fixed following detection in German clients
+- Use build-in transmog collection system to detect missing appearances
+- Update weapon restrictions for Deathknights and Monks

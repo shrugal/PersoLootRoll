@@ -283,6 +283,7 @@ IsInInstance = Const(true)
 IsAddOnLoaded = function (n) return n == "WoWUnit" or n == Name end
 InterfaceOptions_AddCategory = Fn
 IsLoggedIn = Const(false)
+IsDressableItem = Val(true)
 GetNumGroupMembers = Const(0)
 IsInGroup = Const(false)
 IsInRaid = Const(false)
