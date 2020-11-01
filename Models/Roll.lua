@@ -549,16 +549,16 @@ end
 
 -- Add a roll now and start it later
 function Self:Schedule()
-    if not self.timers.bid then
+    if not self.timers.schedule then
         self.item:GetBasicInfo()
 
-        self.timers.bid = Addon:ScheduleTimer(function ()
+        self.timers.schedule = Addon:ScheduleTimer(function ()
             Addon:Debug("Roll.Schedule", self)
+
+            self.timers.schedule = nil
 
             -- Only if it's still pending
             if self.status == Self.STATUS_PENDING then
-                self.timers.bid = nil
-
                 -- Maybe adopt the roll if ML
                 if Addon.db.profile.masterloot.rules.startAll and Session.IsMasterlooter() and not (self.ownerId or Addon:UnitIsTracking(self.owner)) then
                     self:Adopt(true)
@@ -750,9 +750,11 @@ function Self:End(winner, cleanup, force)
 
     -- Hide UI elements etc.
     if cleanup then
-        if self.timers.bid then
-            Addon:CancelTimer(self.timers.bid)
-            self.timers.bid = nil
+        for i,timer in Util.Each("schedule", "bid") do
+            if self.timers[timer] then
+                Addon:CancelTimer(self.timers[timer])
+                self.timers[timer] = nil
+            end
         end
 
         self:HideRollFrame()
@@ -1154,7 +1156,7 @@ function Self:Advertise(force, noStatus)
     self:ExtendTimeLeft()
 
     -- Get the next free roll slot
-    local concise, slot = self:ShouldBeConcise() and Util.Tbl.CountFn(Addon.rolls, Self.IsActive) <= 1
+    local concise, slot = self:ShouldBeConcise()
     for i=concise and 0 or 1,49 do
         if not Self.FindWhere("status", Self.STATUS_RUNNING, "posted", i) then
             slot = i break
@@ -1425,6 +1427,8 @@ function Self:CanBeRun(manually)
         return false
     elseif manually then
         return true
+    elseif self.timers.schedule then
+        return false
     end
 
     local ml = Session.GetMasterlooter()

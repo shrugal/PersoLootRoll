@@ -18,6 +18,7 @@ local RACES = {"Human", "Orc", "Dwarf", "Night Elf", "Undead", "Tauren", "Gnome"
 
 -- Changes with expansions
 local EXPANSION = 7
+local PREPATCH = true
 local MAX_LEVEL = 50
 local INSTANCE = 1180 -- Ny'alotha, the Waking City
 
@@ -261,9 +262,9 @@ GetLootRollTimeLeft = Val(0)
 GetLootRollItemInfo = Fn
 GetLootRollItemLink = Fn
 GetExpansionLevel = Const(EXPANSION)
+GetMaximumExpansionLevel = Const(EXPANSION + (PREPATCH and 1 or 0))
 RollOnLoot = Fn
 GroupLootContainer_RemoveFrame = Fn
-SetLootRollItem = Fn
 SetItemRef = Fn
 UnitPopup_ShowMenu = Fn
 UnitName = function (u) local unit, realm = strsplit("-", u) return unit, realm ~= GetRealmName() and realm or nil end
@@ -278,7 +279,6 @@ UnitExists = Val(true)
 UnitInParty = Val(false)
 UnitInRaid = Val(false)
 UnitIsDND = Val(false)
-RegisterAddonMessagePrefix = Fn
 IsInInstance = Const(true)
 IsAddOnLoaded = function (n) return n == "WoWUnit" or n == Name end
 InterfaceOptions_AddCategory = Fn
@@ -289,7 +289,6 @@ IsInRaid = Const(false)
 IsEquippableItem = Val(true)
 ChatFrame_AddMessageEventFilter = Fn
 GetGuildInfo = Fn
-GetNumFriends = Const(0)
 IsShiftKeyDown = Const(false)
 EJ_GetInstanceForMap = Val(INSTANCE)
 
@@ -337,6 +336,7 @@ LOOT_ITEM_BONUS_ROLL ="%s receives bonus loot: %s."
 CREATED_ITEM ="%s creates: %s."
 LOOT_ITEM_CREATED_SELF ="You create: %s."
 RANDOM_ROLL_RESULT ="%s rolls %d (%d-%d)"
+LE_ITEM_CLASS_MISCELLANEOUS = 15
 LE_ITEM_MISCELLANEOUS_COMPANION_PET = 2
 NUM_BAG_SLOTS = 0
 
@@ -373,6 +373,8 @@ C_TransmogCollection = {
     GetAppearanceSourceInfo = Val(),
     GetAllAppearanceSources = Val({})
 }
+C_FriendList = { GetNumFriends = Const(0), GetFriendInfo = Val(nil), IsFriend = Val(false) }
+C_ChatInfo = { RegisterAddonMessagePrefix = Fn }
 
 Enum = {
     ClubType = { BattleNet = 0, Character = 1, Guild = 2, Other = 3 },

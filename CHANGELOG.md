@@ -1,3 +1,30 @@
+Version 22.01
+- Replaced access to removed friend-list functions
+
+Version 22
+- Updated TOC version to 9.0.1
+- Updated instance and trinket lists for Shadowlands
+- Updated Ace3 to latest version
+- Properly handle shadowlands conduits and legendaries
+- Added support for rolling on and checking for missing pets
+- Added option to roll on missing transmog items, not just missing appearances
+- Added info message when entering old instances with all collectible filters turned off
+- Added option to enable/disable chat messages in legacy runs
+- Added suppressing whispers and announcements by shift-clicking the bid button
+- Removed PLR prefix from concise announcements
+- Improved handling of item links in difference languages
+- Use the build-in legacy loot detection instead of a custom implementation
+- Updated legacy-run detection for new player levels
+- Cleaned up error messages in log
+- Reordered item filter options
+- Disable addon in horrific visions (a bit late I guess :/)
+- Fixed trinket list generation
+- Fixed frames with missing backdrops
+- Fixed considering some non-equippable items transmoggable
+- Fixed considering legion relics useful for players above legion max level
+- Fixed access to removed constants
+- Some small player level related fixes
+
 Version 21.04
 - Use concise announcements for groups up to 10 players in legacy runs (was 5).
 - French translation completed, big thanks to Llathala (EU-Hyjal)!
