@@ -112,7 +112,15 @@ end
 ---@return boolean
 function Self.ShouldInitTrade(roll)
     local target = roll:GetActionTarget()
-    return target and (roll:GetOwnerAddon() or roll.chat or IsGuildMember(target) or Unit.IsFriend(target) or Unit.IsClubMember(target))
+    return target and (
+        roll.chat
+        or roll.posted
+        or roll:GetOwnerAddon()
+        or roll.item:GetNumEligible(false, true) == 0
+        or IsGuildMember(target)
+        or Unit.IsFriend(target)
+        or Unit.IsClubMember(target)
+    )
 end
 
 -------------------------------------------------------

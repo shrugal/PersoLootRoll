@@ -1005,7 +1005,7 @@ end
 
 -- Check who in the group could use the item
 ---@param unit string
----@return table|boolean
+---@return table|boolean|nil
 function Self:GetEligible(unit)
     if not self.eligible then
         if unit then
