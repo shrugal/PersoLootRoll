@@ -1,2 +1,3 @@
 - Use build-in transmog collection system to detect missing appearances
 - Update weapon restrictions for Deathknights and Monks
+- Always allow trading if noone else needs the item
