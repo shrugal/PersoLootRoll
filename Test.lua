@@ -18,6 +18,7 @@ local RACES = {"Human", "Orc", "Dwarf", "Night Elf", "Undead", "Tauren", "Gnome"
 
 -- Changes with expansions
 local EXPANSION = 7
+local PREPATCH = true
 local MAX_LEVEL = 50
 local INSTANCE = 1180 -- Ny'alotha, the Waking City
 
@@ -261,6 +262,7 @@ GetLootRollTimeLeft = Val(0)
 GetLootRollItemInfo = Fn
 GetLootRollItemLink = Fn
 GetExpansionLevel = Const(EXPANSION)
+GetMaximumExpansionLevel = Const(EXPANSION + (PREPATCH and 1 or 0))
 RollOnLoot = Fn
 GroupLootContainer_RemoveFrame = Fn
 SetItemRef = Fn

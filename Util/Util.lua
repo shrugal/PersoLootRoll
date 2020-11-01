@@ -119,8 +119,8 @@ end
 
 -- Check if the current session is below the player's current expansion
 function Self.IsLegacyRun(unit)
-    local unitLvl, instanceExp = Self.GetInstanceExpansion(), UnitLevel(unit or "player")
-    local currExp, maxExp = GetExpansionLevel(), GetMaximumExpansionLevel()
+    local unitLvl = UnitLevel(unit or "player")
+    local instanceExp, currExp, maxExp = Self.GetInstanceExpansion(), GetExpansionLevel(), GetMaximumExpansionLevel()
 
     local isCurrExpPlayer = unitLvl > MAX_PLAYER_LEVEL - 10 or currExp < maxExp and unitLvl == MAX_PLAYER_LEVEL - 10
     local isCurrExpInstance = instanceExp == 0 or instanceExp == currExp + 1
