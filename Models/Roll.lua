@@ -10,6 +10,8 @@ local Comm, GUI, Item, Session, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon
 ---@field item Item
 local Self = Addon.Roll
 
+local Meta = { __index = Self }
+
 -- Default schedule delay
 Self.DELAY = 1
 -- Clear rolls older than this
@@ -259,7 +261,7 @@ function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
     local isOwner = Unit.IsSelf(owner)
 
     -- Create the roll entry
-    local roll = {
+    local roll = setmetatable({
         created = time(),
         isOwner = isOwner,
         item = Item.FromLink(item, owner),
@@ -278,8 +280,7 @@ function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
         hidden = nil,
         posted = nil,
         traded = nil
-    }
-    setmetatable(roll, {__index = Self})
+    }, Meta)
 
     -- Add it to the list
     roll.id = Addon.rolls.Add(roll)

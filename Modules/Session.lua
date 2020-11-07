@@ -367,8 +367,8 @@ Comm.ListenData(Comm.EVENT_MASTERLOOT_OFFER, function (event, data, channel, sen
             Self.SetMasterlooter(unit, data.session)
         elseif not data.silent then
             Self.ShowOfferDialog(unit, function ()
-        Self.SetMasterlooter(unit, data.session)
-    end)
+                Self.SetMasterlooter(unit, data.session)
+            end)
         end
     elseif not data.silent and not Self.rejectShown[unit] then
         Self.rejectShown[unit] = true

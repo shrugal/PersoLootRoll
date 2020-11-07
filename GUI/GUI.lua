@@ -84,16 +84,18 @@ StaticPopupDialogs[Self.DIALOG_ROLL_WHISPER_ASK] = {
         local roll, bid = Util.Tbl.Unpack(data)
         Addon:Debug("GUI.Click:RollWhisperAskDialog", true, roll and roll.id, bid)
 
-        Addon.db.profile.messages.whisper.ask = true
-        Addon.db.profile.messages.whisper.askPrompted = true
+        if Util.InstanceOf(roll, Roll) then
+            Addon.db.profile.messages.whisper.ask = true
+            Addon.db.profile.messages.whisper.askPrompted = true
 
-        Self.RollBid(roll, bid)
+            Self.RollBid(roll, bid)
+        end
     end,
     OnCancel = function(_, data, reason)
         local roll, bid = Util.Tbl.Unpack(data)
         Addon:Debug("GUI.Click:RollWhisperAskDialog", reason, roll and roll.id, bid)
 
-        if reason == "clicked" then
+        if Util.InstanceOf(roll, Roll) and reason == "clicked" then
             Addon.db.profile.messages.whisper.ask = false
             Addon.db.profile.messages.whisper.askPrompted = true
 

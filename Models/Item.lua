@@ -6,6 +6,8 @@ local Inspect, Unit, Util = Addon.Inspect, Addon.Unit, Addon.Util
 ---@class Item
 local Self = Addon.Item
 
+local Meta = { __index = Self }
+
 -------------------------------------------------------
 --                     Constants                     --
 -------------------------------------------------------
@@ -353,14 +355,13 @@ end
 function Self.FromLink(item, owner, bagOrEquip, slot, isTradable)
     if type(item) == "string" then
         owner = owner and Unit.Name(owner) or nil
-        item = {
+        item = setmetatable({
             link = item,
             owner = owner,
             isOwner = Unit.IsSelf(owner),
             infoLevel = Self.INFO_NONE,
             isTradable = Util.Default(isTradable, not owner or nil)
-        }
-        setmetatable(item, {__index = Self})
+        }, Meta)
         item:SetPosition(bagOrEquip, slot)
     end
 
