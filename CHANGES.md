@@ -1,3 +1,2 @@
-- Updated TOC version for patch 9.0.2
-- Updated Ace3 libs to latest stable version
-- Updated LibRealmInfo
+- Support for Shadowlands weapon tokens
+- Updated Shadowlands trinket list

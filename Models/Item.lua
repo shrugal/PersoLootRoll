@@ -269,11 +269,6 @@ function Self.GetInfo(item, attr, ...)
     -- link
     elseif attr == "link" and link then
         return link
-    -- quality
-    elseif attr == "quality" then
-        local color = Self.GetInfo(item, "color")
-        -- This is a workaround for epic item links having color "a335ee", but ITEM_QUALITY_COLORS has "a334ee"
-        return color == "a335ee" and 4 or color and Util.Tbl.FindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. color) or 1
     -- level, baseLevel, realLevel
     elseif Util.In(attr, "level", "baseLevel") or attr == "realLevel" and not Self.IsScaled(item) then
         return (select(attr == "baseLevel" and 3 or 1, GetDetailedItemLevelInfo(link or id)))
@@ -289,7 +284,7 @@ function Self.GetInfo(item, attr, ...)
         end
     -- isEquippable
     elseif attr == "isEquippable" then
-        return IsEquippableItem(link or id) or Self.IsRelic(item)
+        return IsEquippableItem(link or id) or Self.IsGearToken(item)
     -- visualId, visualSourceId
     elseif link and (attr == "visualId" or attr == "visualSourceId") then
         return (select(attr == "visualId" and 1 or 2, C_TransmogCollection.GetItemInfo(link)))
@@ -323,8 +318,16 @@ function Self.GetInfo(item, attr, ...)
     elseif Self.INFO.basic[attr] then
         if isInstance then
             return item:GetBasicInfo()[attr]
+        -- quality
+        elseif attr == "quality" then
+            local color = Self.GetInfo(item, "color")
+            -- TODO: This is a workaround for epic item links having color "a335ee", but ITEM_QUALITY_COLORS has "a334ee"
+            return color == "a335ee" and 4 or color and Util.Tbl.FindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. color) or 1
+        -- equipLoc
+        elseif attr == "equipLoc" and Self.IsWeaponToken(item) then
+            return Self.TYPE_WEAPON
         else
-            return (select(Self.INFO.basic[attr], GetItemInfo(link or id)))
+            return (select(Self.INFO.basic[attr], GetItemInfo(item)))
         end
     -- From ScanTooltip()
     elseif Self.INFO.full[attr] then
@@ -444,8 +447,9 @@ function Self:GetLinkInfo()
             end
         end
 
-        -- Some extra infos TODO: This is a workaround for epic item links having color "a335ee", but ITEM_QUALITY_COLORS has "a334ee"
+        -- TODO: This is a workaround for epic item links having color "a335ee", but ITEM_QUALITY_COLORS has "a334ee"
         self.quality = self.color == "a335ee" and 4 or self.color and Util.Tbl.FindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. self.color) or 1
+
         self.infoLevel = Self.INFO_LINK
     end
 
@@ -480,7 +484,8 @@ function Self:GetBasicInfo()
                 -- Some extra data
                 self.level = level or self.level
                 self.baseLevel = baseLevel or self.level
-                self.isEquippable = IsEquippableItem(self.link) or self:IsRelic()
+                self.isEquippable = IsEquippableItem(self.link) or self:IsGearToken()
+                self.equipLoc = Util.Str.IsEmpty(self.equipLoc) and self:IsWeaponToken() and Self.TYPE_WEAPON or self.equipLoc
                 self.isSoulbound = self.bindType == LE_ITEM_BIND_ON_ACQUIRE or self.isEquipped and self.bindType == LE_ITEM_BIND_ON_EQUIP
                 self.isTradable = Util.Default(self.isTradable, not self.isSoulbound or nil)
                 self.visualId, self.visualSourceId = C_TransmogCollection.GetItemInfo(self.link)
@@ -550,32 +555,33 @@ function Self:GetLocation()
 end
 
 -- Determine if two items belong to the same location
----@param item Item|string|integer
-function Self:IsSameLocation(item, weaponsSameLoc)
-    local selfLoc = (type(self) == "table" or Self.IsLink(self)) and Self.GetInfo(self, "equipLoc") or self
-    local itemLoc = (type(item) == "table" or Self.IsLink(item)) and Self.GetInfo(item, "equipLoc") or item
+---@param locA Item|string|integer
+---@param locB Item|string|integer
+function Self.IsSameLocation(locA, locB, allWeapons)
+    locA = (type(locA) == "table" or Self.IsLink(locA)) and Self.GetInfo(locA, "equipLoc") or locA
+    locB = (type(locB) == "table" or Self.IsLink(locB)) and Self.GetInfo(locB, "equipLoc") or locB
 
     -- Artifact relics (and maybe other things without equipLoc)
-    if Util.Str.IsEmpty(selfLoc) then
-        return Util.Str.IsEmpty(itemLoc)
-    elseif Util.Str.IsEmpty(itemLoc) then
+    if Util.Str.IsEmpty(locA) then
+        return Util.Str.IsEmpty(locB)
+    elseif Util.Str.IsEmpty(locB) then
         return false
     end
 
-    local selfWeapon = Util.In(selfLoc, Self.TYPES_WEAPON)
-    local itemWeapon = Util.In(itemLoc, Self.TYPES_WEAPON)
+    local selfWeapon = Util.In(locA, Self.TYPES_WEAPON)
+    local itemWeapon = Util.In(locB, Self.TYPES_WEAPON)
 
     -- Weapons and armor
     if selfWeapon ~= itemWeapon then
         return false
-    elseif selfWeapon and weaponsSameLoc then
+    elseif selfWeapon and allWeapons then
         return true
-    elseif selfLoc == Self.TYPE_WEAPONMAINHAND then
-        return not Util.In(selfLoc, Self.TYPE_WEAPONOFFHAND, Self.TYPE_HOLDABLE)
-    elseif Util.In(selfLoc, Self.TYPE_WEAPONOFFHAND, Self.TYPE_HOLDABLE) then
-        return itemLoc ~= Self.TYPE_WEAPONMAINHAND
+    elseif locA == Self.TYPE_WEAPONMAINHAND then
+        return not Util.In(locB, Self.TYPE_WEAPONOFFHAND, Self.TYPE_HOLDABLE)
+    elseif Util.In(locA, Self.TYPE_WEAPONOFFHAND, Self.TYPE_HOLDABLE) then
+        return locB ~= Self.TYPE_WEAPONMAINHAND
     else
-        return selfWeapon or Util.Tbl.Equals(Self.SLOTS[selfLoc], Self.SLOTS[itemLoc])
+        return selfWeapon or Util.Tbl.Equals(Self.SLOTS[locA], Self.SLOTS[locB])
     end
 end
 
@@ -594,14 +600,11 @@ function Self.GetOwnedForLocation(loc, allWeapons)
         isRelic = loc:sub(1, 7) ~= "INVTYPE"
     end
 
-    -- Only works for equippable items
-    if not isRelic and not Self.SLOTS[loc] then return end
-
     -- Get equipped item(s)
     if isRelic then
         local weapon = Self.GetEquippedArtifact()
         items = weapon and weapon:GetRelics(loc) or items
-    else
+    elseif Self.SLOTS[loc] then
         local slots = Self.SLOTS[allWeapons and Util.In(loc, Self.TYPES_WEAPON) and Self.TYPE_WEAPON or loc]
         for i,slot in pairs(slots) do
             local link = GetInventoryItemLink("player", slot)
@@ -609,6 +612,8 @@ function Self.GetOwnedForLocation(loc, allWeapons)
                 tinsert(items, link)
             end
         end
+    else
+        return
     end
 
     -- Get item(s) from bag
@@ -662,6 +667,8 @@ function Self:GetSlotCountForLocation()
             end
         end
         return n
+    elseif self:IsWeaponToken() then
+        return 2
     elseif self.isEquippable then
         return #Self.SLOTS[self.equipLoc]
     else
@@ -856,6 +863,11 @@ function Self:CanBeEquipped(unit, ...)
         return true
     end
 
+    -- Everyone can use weapon tokens for their class
+    if self:IsWeaponToken() then
+        return true
+    end
+
     -- Check relic type
     if self:IsRelic() then
         for i,spec in pairs(Self.CLASSES[classId].specs) do
@@ -951,6 +963,8 @@ function Self:IsUseful(unit, ...)
         return false
     elseif self:IsRelic() and UnitLevel(unit) > MAX_PLAYER_LEVEL - 10 then
         return false
+    elseif self:IsWeaponToken() then
+        return true
     elseif not self:HasMatchingAttributes(unit, ...) then
         return false
     elseif self:IsWeapon() and ... then
@@ -1405,6 +1419,16 @@ end
 -- Check if the item is a Shadowlands conduit
 function Self:IsConduit()
     return C_Soulbinds.IsItemConduitByItemInfo(Self.GetLink(self))
+end
+
+-- Check if the item is a Shadowlands weapon token
+function Self:IsWeaponToken()
+    return Self.GetInfo(self, "expacId") == Self.EXPAC_SL
+        and Self.GetInfo(self, "subType") == "Context Token"
+end
+
+function Self:IsGearToken()
+    return Self.IsRelic(self) or Self.IsWeaponToken(self)
 end
 
 -- Check if the item is a battlepet

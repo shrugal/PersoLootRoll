@@ -466,7 +466,6 @@ end
 function Self.ExportTrinkets(loaded)
     if not loaded and next(Self.TRINKETS) then
         for id in pairs(Self.TRINKETS) do
-            print("ID", id)
             GetItemInfo(id)
         end
         Addon:ScheduleTimer(Self.ExportTrinkets, 1, true)
@@ -1237,20 +1236,20 @@ Self.TRINKETS = {
     [174277] = 32,  -- Lingering Psychic Shell
     [178708] = 148, -- Unbound Changeling
     [178715] = 194, -- Mistcaller Ocarina
-    [178742] = 194, -- Bottled Chimera Toxin
+    [178742] = 194, -- Bottled Flayedwing Toxin
     [178751] = 97,  -- Spare Meat Hook
-    [178769] = 214, -- Infinitely Divisible Ooze
+    [178769] = 134, -- Infinitely Divisible Ooze
     [178770] = 32,  -- Slimy Consumptive Organ
-    [178771] = 227, -- Phial of Putrefaction
+    [178771] = 67,  -- Phial of Putrefaction
     [178772] = 132, -- Satchel of Misbegotten Minions
     [178783] = 20,  -- Siphoning Phylactery Shard
     [178808] = 97,  -- Viscera of Coalesced Hatred
     [178809] = 132, -- Soulletting Ruby
-    [178810] = 20,  -- Vial of Vampiric Essence
-    [178811] = 195, -- Grim Codex
+    [178810] = 20,  -- Vial of Spectral Essence
+    [178811] = 67,  -- Grim Codex
     [178825] = 32,  -- Pulsating Stoneheart
     [178826] = 148, -- Sunblood Amethyst
-    [178849] = 148, -- Overflowing Anima Prison
+    [178849] = 148, -- Overflowing Anima Cage
     [178850] = 20,  -- Lingering Sunmote
     [178861] = 99,  -- Decanter of Anima-Charged Winds
     [178862] = 32,  -- Bladedancer's Armor Kit
@@ -1258,7 +1257,21 @@ Self.TRINKETS = {
     [179342] = 97,  -- Overwhelming Power Crystal
     [179356] = 194, -- Shadowgrasp Totem
     [180116] = 194, -- Overcharged Anima Battery
-    [180117] = 148, -- Empyreal Ordnance
     [180118] = 97,  -- Anima Field Emitter
-    [180119] = 148, -- Boon of the Archon
+    [180119] = 20,  -- Boon of the Archon
+    [184016] = 67,  -- Skulker's Wing
+    [184017] = 32,  -- Bargast's Leash
+    [184018] = 32,  -- Splintered Heart of Al'ar
+    [184019] = 132, -- Soul Igniter
+    [184020] = 20,  -- Tuft of Smoldering Plumage
+    [184021] = 132, -- Glyph of Assimilation
+    [184022] = 20,  -- Consumptive Infusion
+    [184023] = 97,  -- Gluttonous Spike
+    [184025] = 195, -- Memory of Past Sins
+    [184026] = 194, -- Hateful Chain
+    [184027] = 227, -- Stone Legion Heraldry
+    [184028] = 148, -- Cabalist's Hymnal
+    [184029] = 20,  -- Manabound Mirror
+    [184030] = 192, -- Dreadfire Vessel
+    [184031] = 32,  -- Sanguine Vintage
 }

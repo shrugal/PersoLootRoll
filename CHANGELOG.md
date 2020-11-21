@@ -1,3 +1,8 @@
+Version 22.04
+- Updated TOC version for patch 9.0.2
+- Updated Ace3 libs to latest stable version
+- Updated LibRealmInfo
+
 Version 22.03
 - Use build-in transmog collection system to detect missing appearances
 - Update weapon restrictions for Deathknights and Monks
