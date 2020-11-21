@@ -1,4 +1,4 @@
-## Interface: 90001
+## Interface: 90002
 ## Title: PersoLootRoll
 ## Notes: A loot roll addon for personal loot.
 ## Notes-deDE: Ein Beute Vergabe Addon für Persönlichen Loot.

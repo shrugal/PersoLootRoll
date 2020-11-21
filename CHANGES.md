@@ -1,4 +1,3 @@
-- Use build-in transmog collection system to detect missing appearances
-- Update weapon restrictions for Deathknights and Monks
-- Always allow trading if noone else needs the item
-- Check popup data before using it to prevent conflicts with other popups
+- Updated TOC version for patch 9.0.2
+- Updated Ace3 libs to latest stable version
+- Updated LibRealmInfo

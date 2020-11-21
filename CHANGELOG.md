@@ -1,3 +1,9 @@
+Version 22.03
+- Use build-in transmog collection system to detect missing appearances
+- Update weapon restrictions for Deathknights and Monks
+- Always allow trading if noone else needs the item
+- Check popup data before using it to prevent conflicts with other popups
+
 Version 22.02
 - Require items to have higher item-level than whats currently equipped in legacy runs
 - Fixed starting scheduled rolls without checking them first sometimes

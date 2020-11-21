@@ -18,5 +18,5 @@ externals:
     url: https://github.com/tekkub/libdatabroker-1-1
     tag: v1.1.4
   Libs/LibRealmInfo:
-    url: https://github.com/phanx-wow/LibRealmInfo
-    tag: 14
+    url: https://github.com/janekjl/LibRealmInfo.git
+    tag: 17
