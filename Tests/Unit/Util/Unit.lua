@@ -25,7 +25,7 @@ function Tests:ConnectedRealmTest()
     -- A normal connected realm
     AssertEqual("Aggramar-Hellscream", Unit.ConnectedRealm("Unit-Aggramar"))
     -- A realm with spaces
-    AssertEqual("Todeswache-ZirkeldesCenarius", Unit.ConnectedRealm("Unit-ZirkeldesCenarius"))
+    AssertEqual("Todeswache-Forscherliga-ZirkeldesCenarius-DerRatvonDalaran-DerMithrilorden-DieNachtwache", Unit.ConnectedRealm("Unit-ZirkeldesCenarius"))
     -- A realm without connections
     AssertEqual("Archimonde", Unit.ConnectedRealm("Unit-Archimonde"))
     -- A realm that doesn't exist
