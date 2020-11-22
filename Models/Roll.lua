@@ -368,10 +368,10 @@ function Self.Update(data, unit)
                 -- Declare our interest if the roll is pending and our interest might have been missed
                 if Self.IsActive(data) and roll:ShouldBeBidOn() and (
                     (data.item.eligible or 0) == 0
-                    or roll.item:IsCollectibleMissing()
-                    or not roll.item:GetEligible("player")
+                    or not roll.declaredInterest and (roll.item:IsCollectibleMissing() or not roll.item:GetEligible("player"))
                 ) then
-                    roll.item:SetEligible("player")
+                    roll.declaredInterest = true
+                    roll.item:SetEligible("player", roll.item:GetEligible("player") or false)
                     Comm.SendData(Comm.EVENT_INTEREST, {ownerId = roll.ownerId}, roll.owner)
                 end
 

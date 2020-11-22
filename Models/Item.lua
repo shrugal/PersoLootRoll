@@ -1043,9 +1043,9 @@ function Self:IsUpgrade(unit)
 end
 
 -- Register an eligible unit's interest
-function Self:SetEligible(unit)
+function Self:SetEligible(unit, to)
     self:GetEligible()
-    self.eligible[Unit.Name(unit)] = true
+    self.eligible[Unit.Name(unit)] = to == nil and true or to
 end
 
 -- Check who in the group could use the item, either for one unit or all units in the group.
