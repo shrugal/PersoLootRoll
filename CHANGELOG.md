@@ -1,3 +1,7 @@
+Version 22.05
+- Support for Shadowlands weapon tokens
+- Updated Shadowlands trinket list
+
 Version 22.04
 - Updated TOC version for patch 9.0.2
 - Updated Ace3 libs to latest stable version

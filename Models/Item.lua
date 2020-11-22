@@ -827,7 +827,7 @@ function Self:GetRelicSlots(unique)
 end
 
 -------------------------------------------------------
---                    Properties                     --
+--                       Tests                       --
 -------------------------------------------------------
 
 -- Check if an item can be equipped
@@ -928,13 +928,27 @@ end
 
 -- Check against equipped ilvl
 function Self:HasSufficientLevel(unit)
+    unit = unit or "player"
+
+    if Unit.IsSelf(unit) and not Addon.db.profile.filter.enabled then
+        return true
+    end
+
     return (self:GetInfo("realLevel") or 1) + self:GetThresholdForLocation(unit) >= self:GetLevelForLocation(unit)
 end
 
 -- Check against current character level
-function Self:HasSufficientCharacterLevel(unit)
+function Self:HasSufficientCharacterLevel(unit, fixedThreshold)
     unit = unit or "player"
-    local threshold = Unit.IsSelf(unit) and Addon.db.profile.filter.lvlThreshold or -1
+
+    local threshold = Self.LVL_THRESHOLD
+    if not fixedThreshold and Unit.IsSelf(unit) then
+        if not Addon.db.profile.filter.enabled then
+            return true
+        end
+        threshold = Addon.db.profile.filter.lvlThreshold
+    end
+    
     return threshold == -1 or (UnitLevel(unit) or 1) + threshold >= (self:GetInfo("realMinLevel") or 1)
 end
 
@@ -943,9 +957,7 @@ function Self:IsUseful(unit, ...)
     unit = unit or "player"
     self:GetBasicInfo()
 
-    if not self:HasSufficientCharacterLevel(unit) then
-        return false
-    elseif self.equipLoc == Self.TYPE_TRINKET then
+    if self.equipLoc == Self.TYPE_TRINKET then
         if not Self.TRINKETS[self.id] then
             return true
         else
@@ -980,9 +992,7 @@ end
 
 -- Check if the item is an upgrade according to Pawn
 function Self:IsPawnUpgrade(unit, ...)
-    if unit and not Unit.IsSelf(unit) or not (IsAddOnLoaded("Pawn") and PawnGetItemData and PawnIsItemAnUpgrade and PawnCommon and PawnCommon.Scales) then
-        return false
-    else
+    if unit and Unit.IsSelf(unit) and IsAddOnLoaded("Pawn") and PawnGetItemData and PawnIsItemAnUpgrade and PawnCommon and PawnCommon.Scales then
         local data = PawnGetItemData(self.link)
         if data then
             for i,scale in pairs(PawnIsItemAnUpgrade(data) or Util.Tbl.EMPTY) do
@@ -991,8 +1001,13 @@ function Self:IsPawnUpgrade(unit, ...)
                 end
             end
         end
+        return false
     end
 end
+
+-------------------------------------------------------
+--                      Eligible                     --
+-------------------------------------------------------
 
 function Self:IsCollectibleMissing(unit)
     local isPet = self:IsPet()
@@ -1012,13 +1027,38 @@ function Self:IsCollectibleMissing(unit)
     end
 end
 
+function Self:IsUpgrade(unit)
+    if not self:HasSufficientLevel(unit) then
+        return false
+    elseif not self:HasSufficientCharacterLevel(unit) then
+        return false
+    elseif Unit.IsSelf(unit) and Addon.db.profile.filter.enabled then
+        local specs = Util(Addon.db.char.specs):CopyOnly(true, true):Keys()()
+        local isUseful = true
+
+        if not self:IsUseful(unit, specs) then
+            isUseful = false
+        elseif Addon.db.profile.filter.pawn and IsAddOnLoaded("Pawn") and self.equipLoc ~= Self.TYPE_TRINKET then
+            isUseful = self:IsPawnUpgrade(unit, specs) ~= false
+        end
+
+        Util.Tbl.Release(specs)
+        return isUseful
+    else
+        return self:IsUseful(unit)
+    end
+end
+
 -- Register an eligible unit's interest
 function Self:SetEligible(unit)
     self:GetEligible()
     self.eligible[Unit.Name(unit)] = true
 end
 
--- Check who in the group could use the item
+-- Check who in the group could use the item, either for one unit or all units in the group.
+-- - nil: A unit can't reasonably use the item (they can' wear it or send it to and alt)
+-- - false: They probably don't want it (e.g. ilvl too low)
+-- - true: It might be an upgrade of some sort (e.g. ilvl high enough or collectible)
 ---@param unit string
 ---@return table|boolean|nil
 function Self:GetEligible(unit)
@@ -1030,25 +1070,15 @@ function Self:GetEligible(unit)
                 return false
             elseif self.isSoulbound and not self:CanBeEquipped(unit) then
                 return nil
-            elseif not self:HasSufficientLevel(unit) then
-                return false
             else
-                local isSelf = Unit.IsSelf(unit)
-                local specs = isSelf and Util(Addon.db.char.specs):CopyOnly(true, true):Keys()() or nil
-                local isUseful = self:IsUseful(unit, specs)
-
-                if isUseful and isSelf and Addon.db.profile.filter.pawn and IsAddOnLoaded("Pawn") and self.equipLoc ~= Self.TYPE_TRINKET then
-                    isUseful = self:IsPawnUpgrade(unit, specs)
-                end
-
-                return isUseful or false, Util.Tbl.Release(specs)
+                return self:IsUpgrade(unit)
             end
         else
             local eligible = Util.Tbl.New()
             for i=1,GetNumGroupMembers() do
-                local unit = GetRaidRosterInfo(i)
-                if unit then
-                    eligible[unit] = self:GetEligible(unit)
+                local u = GetRaidRosterInfo(i)
+                if u then
+                    eligible[u] = self:GetEligible(u)
                 end
             end
 
@@ -1333,7 +1363,7 @@ function Self.UpdatePlayerCacheWeapons()
                         if item:IsWeapon() then
                             cache.spec = cache.spec or item:GetFullInfo().spec ~= nil
 
-                            if item:IsUseful("player", spec) then
+                            if item:HasSufficientCharacterLevel("player", true) and item:IsUseful("player", spec) then
                                 if item.equipLoc == Self.TYPE_2HWEAPON or item:IsArtifact() then
                                     twohand = max(twohand, item.maxLevel)
                                 elseif item.equipLoc == Self.TYPE_WEAPONMAINHAND then

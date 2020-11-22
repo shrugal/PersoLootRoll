@@ -36,6 +36,7 @@ Self.DEFAULTS = {
 
         -- Item filter
         filter = {
+            enabled = true,
             lvlThreshold = Item.LVL_THRESHOLD,
             ilvlThreshold = Item.ILVL_THRESHOLD,
             ilvlThresholdTrinkets = true,
@@ -386,6 +387,24 @@ function Self.RegisterGeneral()
             ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
             itemFilter = {type = "header", order = it(), name = L["OPT_ITEM_FILTER"]},
             itemFilterDesc = {type = "description", fontSize = "medium", order = it(), name = L["OPT_ITEM_FILTER_DESC"] .. "\n"},
+            itemFilterEnable = {
+                name = L["OPT_ITEM_FILTER_ENABLE"],
+                desc = L["OPT_ITEM_FILTER_ENABLE_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.filter.enabled = val end,
+                get = function () return Addon.db.profile.filter.enabled end,
+                width = Self.WIDTH_HALF
+            },
+            disenchant = {
+                name = L["OPT_DISENCHANT"],
+                desc = L["OPT_DISENCHANT_DESC"],
+                type = "toggle",
+                order = it(),
+                set = function (_, val) Addon.db.profile.filter.disenchant = val end,
+                get = function () return Addon.db.profile.filter.disenchant end,
+                width = Self.WIDTH_HALF
+            },
             lvlThreshold = {
                 name = L["OPT_LVL_THRESHOLD"],
                 desc = L["OPT_LVL_THRESHOLD_DESC"],
@@ -398,6 +417,10 @@ function Self.RegisterGeneral()
                 step = 1,
                 set = function (_, val) Addon.db.profile.filter.lvlThreshold = val end,
                 get = function () return Addon.db.profile.filter.lvlThreshold end,
+                disabled = function ()
+                    return not Addon.db.profile.filter.enabled
+                        or (UnitLevel("player") >= MAX_PLAYER_LEVEL and GetExpansionLevel() == GetMaximumExpansionLevel())
+                end,
                 width = Self.WIDTH_THIRD
             },
             ilvlThreshold = {
@@ -410,6 +433,7 @@ function Self.RegisterGeneral()
                 step = 5,
                 set = function (_, val) Addon.db.profile.filter.ilvlThreshold = -val end,
                 get = function () return -Addon.db.profile.filter.ilvlThreshold end,
+                disabled = function () return not Addon.db.profile.filter.enabled end,
                 width = Self.WIDTH_THIRD
             },
             ilvlThresholdDouble = {
@@ -424,6 +448,7 @@ function Self.RegisterGeneral()
                 },
                 set = function (_, key, val) Addon.db.profile.filter["ilvlThreshold" .. Util.Str.UcFirst(key)] = val end,
                 get = function (_, key) return Addon.db.profile.filter["ilvlThreshold" .. Util.Str.UcFirst(key)] end,
+                disabled = function () return not Addon.db.profile.filter.enabled end,
                 width = Self.WIDTH_THIRD
             },
             ["space" .. it()] = {type = "description", fontSize = "medium", order = it(0), name = " ", cmdHidden = true, dropdownHidden = true},
@@ -444,10 +469,12 @@ function Self.RegisterGeneral()
                     wipe(Item.playerCache)
                 end,
                 get = function (_, key) return Addon.db.char.specs[key] end,
+                disabled = function () return not Addon.db.profile.filter.enabled end,
                 width = Self.WIDTH_HALF
             },
             collections = {
                 name = COLLECTIONS,
+                desc = L["OPT_COLLECTIONS"],
                 type = "multiselect",
                 control = "Dropdown",
                 order = it(),
@@ -457,6 +484,7 @@ function Self.RegisterGeneral()
                 },
                 set = function (_, key, val) Addon.db.profile.filter[key] = val end,
                 get = function (_, key) return Addon.db.profile.filter[key] end,
+                disabled = function () return not Addon.db.profile.filter.enabled end,
                 width = Self.WIDTH_HALF
             },
             pawn = {
@@ -466,8 +494,8 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.filter.pawn = val end,
                 get = function () return Addon.db.profile.filter.pawn end,
-                disabled = function () return not IsAddOnLoaded("Pawn") end,
-                width = Self.WIDTH_THIRD
+                disabled = function () return not Addon.db.profile.filter.enabled or not IsAddOnLoaded("Pawn") end,
+                width = Self.WIDTH_HALF
             },
             transmogItem = {
                 name = L["OPT_MISSING_TRANSMOG_ITEM"],
@@ -476,17 +504,8 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.filter.transmogItem = val end,
                 get = function () return Addon.db.profile.filter.transmogItem end,
-                disabled = function () return not Addon.db.profile.filter.transmog end,
-                width = Self.WIDTH_THIRD
-            },
-            disenchant = {
-                name = L["OPT_DISENCHANT"],
-                desc = L["OPT_DISENCHANT_DESC"],
-                type = "toggle",
-                order = it(),
-                set = function (_, val) Addon.db.profile.filter.disenchant = val end,
-                get = function () return Addon.db.profile.filter.disenchant end,
-                width = Self.WIDTH_THIRD
+                disabled = function () return not Addon.db.profile.filter.enabled or not Addon.db.profile.filter.transmog end,
+                width = Self.WIDTH_HALF
             }
         }
     }

@@ -1,2 +1,2 @@
-- Support for Shadowlands weapon tokens
-- Updated Shadowlands trinket list
+- Added option to show all usable loot, regardless of other filteres such as ilvl
+- Improved calculating min ilvl for a slot when leveling
