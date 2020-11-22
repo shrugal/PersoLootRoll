@@ -365,8 +365,12 @@ function Self.Update(data, unit)
             roll:Cancel()
         else
             roll.item:OnLoaded(function ()
-                -- Declare our interest if the roll is pending without any eligible players or if we need the collectible
-                if Self.IsActive(data) and roll:ShouldBeBidOn() and ((data.item.eligible or 0) == 0 or roll.item:IsCollectibleMissing()) then
+                -- Declare our interest if the roll is pending and our interest might have been missed
+                if Self.IsActive(data) and roll:ShouldBeBidOn() and (
+                    (data.item.eligible or 0) == 0
+                    or roll.item:IsCollectibleMissing()
+                    or not roll.item:GetEligible("player")
+                ) then
                     roll.item:SetEligible("player")
                     Comm.SendData(Comm.EVENT_INTEREST, {ownerId = roll.ownerId}, roll.owner)
                 end
@@ -731,8 +735,8 @@ function Self:ShouldEnd()
     end
 
     -- Check if all eligible players have bid
-    for unit,ilvl in pairs(self.item:GetEligible()) do
-        if not self.bids[unit] and (ilvl or ml or Addon.db.profile.awardSelf) then
+    for unit,interest in pairs(self.item:GetEligible()) do
+        if not self.bids[unit] and (interest or ml or Addon.db.profile.awardSelf) then
             return false
         end
     end

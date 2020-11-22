@@ -929,11 +929,6 @@ end
 -- Check against equipped ilvl
 function Self:HasSufficientLevel(unit)
     unit = unit or "player"
-
-    if Unit.IsSelf(unit) and not Addon.db.profile.filter.enabled then
-        return true
-    end
-
     return (self:GetInfo("realLevel") or 1) + self:GetThresholdForLocation(unit) >= self:GetLevelForLocation(unit)
 end
 
@@ -941,14 +936,9 @@ end
 function Self:HasSufficientCharacterLevel(unit, fixedThreshold)
     unit = unit or "player"
 
-    local threshold = Self.LVL_THRESHOLD
-    if not fixedThreshold and Unit.IsSelf(unit) then
-        if not Addon.db.profile.filter.enabled then
-            return true
-        end
-        threshold = Addon.db.profile.filter.lvlThreshold
-    end
-    
+    local threshold = (fixedThreshold or not Unit.IsSelf(unit)) and Self.LVL_THRESHOLD
+        or Addon.db.profile.filter.lvlThreshold
+
     return threshold == -1 or (UnitLevel(unit) or 1) + threshold >= (self:GetInfo("realMinLevel") or 1)
 end
 
@@ -1012,33 +1002,36 @@ end
 function Self:IsCollectibleMissing(unit)
     local isPet = self:IsPet()
     local isTransmogable = self:IsTransmogable(unit)
+    local f = Addon.db.profile.filter
 
     if not isPet and not isTransmogable then
         return false
     elseif not Unit.IsSelf(unit or "player") then
         return not Addon:UnitIsTracking(unit) and Util.IsLegacyRun(unit)
     elseif isPet then
-        return Addon.db.profile.filter.pets and self:GetBasicInfo().isPetKnown == false
+        return (not f.enabled or f.pets) and self:GetBasicInfo().isPetKnown == false
     else
-        return Addon.db.profile.filter.transmog and (
+        return (not f.enabled or f.transmog) and (
             not self:GetFullInfo().isTransmogKnown
-            or Addon.db.profile.filter.transmogItem and not self:GetFullInfo().isTransmogSourceKnown
+            or f.enabled and f.transmogItem and not self:GetFullInfo().isTransmogSourceKnown
         )
     end
 end
 
 function Self:IsUpgrade(unit)
+    local f = Addon.db.profile.filter
+
     if not self:HasSufficientLevel(unit) then
         return false
     elseif not self:HasSufficientCharacterLevel(unit) then
         return false
-    elseif Unit.IsSelf(unit) and Addon.db.profile.filter.enabled then
+    elseif Unit.IsSelf(unit) and f.enabled then
         local specs = Util(Addon.db.char.specs):CopyOnly(true, true):Keys()()
         local isUseful = true
 
         if not self:IsUseful(unit, specs) then
             isUseful = false
-        elseif Addon.db.profile.filter.pawn and IsAddOnLoaded("Pawn") and self.equipLoc ~= Self.TYPE_TRINKET then
+        elseif f.pawn and self.equipLoc ~= Self.TYPE_TRINKET and not self:IsWeaponToken() then
             isUseful = self:IsPawnUpgrade(unit, specs) ~= false
         end
 
@@ -1071,7 +1064,7 @@ function Self:GetEligible(unit)
             elseif self.isSoulbound and not self:CanBeEquipped(unit) then
                 return nil
             else
-                return self:IsUpgrade(unit)
+                return self:IsUpgrade(unit) or false
             end
         else
             local eligible = Util.Tbl.New()
@@ -1130,7 +1123,12 @@ end
 
 -- Check if the addon should offer to bid on an item
 function Self:ShouldBeBidOn()
-    return not Addon.db.profile.dontShare and self:ShouldBeConsidered() and self:GetEligible("player")
+    if Addon.db.profile.dontShare or not self:ShouldBeConsidered() then
+        return false
+    end
+
+    local eligible = self:GetEligible("player")
+    return eligible or not Addon.db.profile.filter.enabled and eligible ~= nil
 end
 
 -- Check if the addon should start a roll for an item

@@ -110,7 +110,10 @@ function Self.ZONE_CHANGED()
     Self:CheckState(true)
 
     local f = Self.db.profile.filter
-    if not Self.collectionFilterNoticeShown and not (f.transmog or f.pets) and Self:IsTracking() and Util.IsLegacyRun() then
+    if not Self.collectionFilterNoticeShown
+        and f.enabled and not (f.transmog or f.pets)
+        and Self:IsTracking() and Util.IsLegacyRun()
+    then
         Self.collectionFilterNoticeShown = true
         Self:Info(L["ERROR_COLLECTION_FILTERS_DISABLED"])
     end
