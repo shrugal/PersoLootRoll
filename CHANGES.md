@@ -1,2 +1,2 @@
-- Added option to show all usable loot, regardless of other filteres such as ilvl
+- Added option to disable all filters and show all usable loot
 - Improved calculating min ilvl for a slot when leveling
