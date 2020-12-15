@@ -1,3 +1,7 @@
+Version 22.06-beta1
+- Added option to disable all filters and show all usable loot
+- Improved calculating min ilvl for a slot when leveling
+
 Version 22.05
 - Support for Shadowlands weapon tokens
 - Updated Shadowlands trinket list

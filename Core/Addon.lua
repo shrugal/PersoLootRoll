@@ -318,7 +318,8 @@ function Self:CheckState(refresh)
             self.state = Self.STATE_ENABLED
         elseif self.db.profile.onlyMasterloot and not Session.GetMasterlooter()                     -- Only Masterloot
             or not (
-                IsInRaid(LE_PARTY_CATEGORY_INSTANCE)                 and p(group.lfr)               -- Disabled in LFR
+                not IsInInstance()                                   and p(group.outdoor)           -- Disabed outdoors
+                or IsInRaid(LE_PARTY_CATEGORY_INSTANCE)              and p(group.lfr)               -- Disabled in LFR
                 or IsInGroup(LE_PARTY_CATEGORY_INSTANCE)             and p(group.lfd)               -- Disabled in LFD
                 or Util.IsGuildGroup(Unit.GuildName("player") or "") and p(group.guild)             -- Disabled in guild groups
                 or Util.IsCommunityGroup()                           and p(group.community)         -- Disabled in community groups

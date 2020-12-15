@@ -60,8 +60,8 @@ Self.DEFAULTS = {
             whisper = {
                 ask = false,
                 askPrompted = false,
-                groupType = {lfd = true, party = true, lfr = true, raid = true, legacy = true, guild = false, community = false},
-                target = {friend = false, guild = false, community = false, other = true},
+                groupType = {lfd = true, party = true, lfr = true, raid = true, legacy = true},
+                target = {friend = false, other = true},
                 answer = true,
                 suppress = false,
                 variants = true
@@ -133,8 +133,8 @@ Self.WIDTH_FIFTH_SCROLL = Self.WIDTH_FIFTH - (0.2/5)
 Self.DIVIDER = "------ PersoLootRoll ------"
 
 -- Keys+values for multiselects/dropdowns
-Self.groupKeys = {"party", "raid", "lfd", "lfr", "legacy", "guild", "community"}
-Self.groupValues = {PARTY, RAID, LOOKING_FOR_DUNGEON_PVEFRAME, RAID_FINDER_PVEFRAME, LFG_LIST_LEGACY, GUILD_GROUP, L["COMMUNITY_GROUP"]}
+Self.groupKeys = {"party", "raid", "lfd", "lfr", "legacy", "guild", "community", "outdoor"}
+Self.groupValues = {PARTY, RAID, LOOKING_FOR_DUNGEON_PVEFRAME, RAID_FINDER_PVEFRAME, LFG_LIST_LEGACY, GUILD_GROUP, L["COMMUNITY_GROUP"], BUG_CATEGORY2}
 
 Self.targetKeys = {"friend", "guild", "community", "other"}
 Self.targetValues = {FRIEND, GUILD, L["COMMUNITY_MEMBER"], OTHER}

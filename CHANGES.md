@@ -1,2 +1,1 @@
-- Added option to disable all filters and show all usable loot
-- Improved calculating min ilvl for a slot when leveling
+- Added options to enable addon and chat messages in outdoor zones, disabled by default

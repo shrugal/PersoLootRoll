@@ -142,7 +142,10 @@ function Self.ShouldInitChat(target, item)
     -- Check group type options
     local byGroup = isWhipser and c.whisper.groupType or c.group.groupType
 
-    if Util.IsLegacyRun() then
+    if not IsInInstance() then
+        if not byGroup.outdoor then Self.ChatInfo("BID_NO_CHAT_GRP", item, target, BUG_CATEGORY2) end
+        return byGroup.legacy
+    elseif Util.IsLegacyRun() then
         if not byGroup.legacy then Self.ChatInfo("BID_NO_CHAT_GRP", item, target, LFG_LIST_LEGACY) end
         return byGroup.legacy
     elseif IsInRaid(LE_PARTY_CATEGORY_INSTANCE) then
