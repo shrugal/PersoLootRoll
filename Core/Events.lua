@@ -231,7 +231,7 @@ function Self.CHAT_MSG_LOOT(_, _, msg, _, _, _, sender)
 
     local item = Item.GetLink(msg)
     if Item.ShouldBeChecked(item, unit) then
-        Self:Debug("Event.Loot", item, unit, Unit.IsSelf(unit), msg)
+        Self:Debug("Events.Loot", item, unit, Unit.IsSelf(unit), msg)
 
         item = Item.FromLink(item, unit)
 

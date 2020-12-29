@@ -910,15 +910,16 @@ function Self:SetStatus(status)
 end
 
 -- Check if we can start other pending rolls after status updates
-Addon:RegisterMessage(Self.EVENT_STATUS, Util.Fn.Debounce(function (_, roll)
-    if roll.isOwner then
-        for i,roll in pairs(Addon.rolls) do
-            if roll.isOwner and roll:CanBeRun() and roll:Validate() then
-                roll:Start()
-            end
+local fn = Util.Fn.Debounce(function ()
+    for i,roll in pairs(Addon.rolls) do
+        if roll.isOwner and roll:CanBeRun() and roll:Validate() then
+            roll:Start()
         end
     end
-end, 0))
+end, 0)
+Addon:RegisterMessage(Self.EVENT_STATUS, function (_, roll)
+    if roll.isOwner then fn() end
+end)
 
 -------------------------------------------------------
 --                     Awarding                      --

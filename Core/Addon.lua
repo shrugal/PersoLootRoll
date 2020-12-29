@@ -398,7 +398,7 @@ function Self:OnTrackingChanged(tracking)
         Comm.Send(Comm.EVENT_SYNC)
     end
 end
-Self.OnTrackingChanged = Util.Fn.Debounce(Self.OnTrackingChanged, 0.1)
+Self.OnTrackingChanged = Util.Fn.Debounce(Self.OnTrackingChanged, 0.1, false, true)
 
 -- Check if the given unit is tracking
 function Self:UnitIsTracking(unit, inclCompAddons)

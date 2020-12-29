@@ -1,3 +1,6 @@
+Version 22.06-beta2
+- Added options to enable addon and chat messages in outdoor zones, disabled by default
+
 Version 22.06-beta1
 - Added option to disable all filters and show all usable loot
 - Improved calculating min ilvl for a slot when leveling

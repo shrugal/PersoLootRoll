@@ -1,1 +1,1 @@
-- Added options to enable addon and chat messages in outdoor zones, disabled by default
+- Fixed showing rolls twice in a groups with other PLR users
