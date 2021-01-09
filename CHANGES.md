@@ -3,3 +3,4 @@
 - Fixed sometimes showing rolls twice in groups with other PLR users
 - Fixed handling of some ranged weapons
 - Fixed offering melee weapons to BM and MM hunters
+- Fixed error when disabling addon
