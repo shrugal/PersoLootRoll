@@ -27,6 +27,7 @@ Self.TYPE_HEAD = "INVTYPE_HEAD"
 Self.TYPE_HOLDABLE = "INVTYPE_HOLDABLE"
 Self.TYPE_LEGS = "INVTYPE_LEGS"
 Self.TYPE_NECK = "INVTYPE_NECK"
+Self.TYPE_RANGED = "INVTYPE_RANGED"
 Self.TYPE_RANGEDRIGHT = "INVTYPE_RANGEDRIGHT"
 Self.TYPE_ROBE = "INVTYPE_ROBE"
 Self.TYPE_SHIELD = "INVTYPE_SHIELD"
@@ -41,9 +42,11 @@ Self.TYPE_WEAPONOFFHAND = "INVTYPE_WEAPONOFFHAND"
 Self.TYPE_WRIST = "INVTYPE_WRIST"
 
 -- All types that get special treatment
-Self.TYPES_WEAPON = {Self.TYPE_WEAPON, Self.TYPE_2HWEAPON, Self.TYPE_WEAPONMAINHAND, Self.TYPE_WEAPONOFFHAND, Self.TYPE_HOLDABLE}
+Self.TYPES_WEAPON = {Self.TYPE_WEAPON, Self.TYPE_WEAPONMAINHAND, Self.TYPE_WEAPONOFFHAND, Self.TYPE_HOLDABLE, Self.TYPE_2HWEAPON, Self.TYPE_RANGED, Self.TYPE_RANGEDRIGHT, Self.TYPE_THROWN}
+Self.TYPES_OFFHAND = {Self.TYPE_WEAPONOFFHAND, Self.TYPE_HOLDABLE}
 Self.TYPES_1HWEAPON = {Self.TYPE_WEAPON, Self.TYPE_WEAPONMAINHAND, Self.TYPE_WEAPONOFFHAND, Self.TYPE_HOLDABLE}
 Self.TYPES_2HWEAPON = {Self.TYPE_2HWEAPON}
+Self.TYPES_RANGED = {Self.TYPE_RANGED, Self.TYPE_RANGEDRIGHT, Self.TYPE_THROWN}
 Self.TYPES_NO_TRANSMOG = {Self.TYPE_NECK, Self.TYPE_FINGER, Self.TYPE_TRINKET}
 
 -- Armor inventory slots
@@ -59,12 +62,13 @@ Self.SLOTS = {
     [Self.TYPE_HOLDABLE] = {INVSLOT_OFFHAND},
     [Self.TYPE_LEGS] = {INVSLOT_LEGS},
     [Self.TYPE_NECK] = {INVSLOT_NECK},
-    [Self.TYPE_RANGEDRIGHT] = {INVSLOT_RANGED},
+    [Self.TYPE_RANGED] = {INVSLOT_MAINHAND},
+    [Self.TYPE_RANGEDRIGHT] = {INVSLOT_MAINHAND},
     [Self.TYPE_ROBE] = {INVSLOT_CHEST},
     [Self.TYPE_SHIELD] = {INVSLOT_OFFHAND},
     [Self.TYPE_SHOULDER] = {INVSLOT_SHOULDER},
     [Self.TYPE_TABARD] = {INVSLOT_TABARD},
-    [Self.TYPE_THROWN] = {INVSLOT_RANGED},
+    [Self.TYPE_THROWN] = {INVSLOT_MAINHAND},
     [Self.TYPE_TRINKET] = {INVSLOT_TRINKET1, INVSLOT_TRINKET2},
     [Self.TYPE_WAIST] = {INVSLOT_WAIST},
     [Self.TYPE_WEAPON] = {INVSLOT_MAINHAND, INVSLOT_OFFHAND},
@@ -101,6 +105,7 @@ Self.CLASSES = {
             },{ -- Frost
                 role = Self.ROLE_MELEE,
                 attribute = LE_UNIT_STAT_STRENGTH,
+                dualWield = true,
                 artifact = {id = 128292, relics = {RELIC_SLOT_TYPE_FROST, RELIC_SLOT_TYPE_SHADOW, RELIC_SLOT_TYPE_FROST}, twinId = 128293}
             },{ -- Unholy
                 role = Self.ROLE_MELEE,
@@ -155,14 +160,17 @@ Self.CLASSES = {
             {   -- Beast Mastery
                 role = Self.ROLE_RANGED,
                 attribute = LE_UNIT_STAT_AGILITY,
+                weapons = Self.TYPES_RANGED,
                 artifact = {id = 128861, relics = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_ARCANE, RELIC_SLOT_TYPE_IRON}}
             },{ -- Marksmanship
                 role = Self.ROLE_RANGED,
                 attribute = LE_UNIT_STAT_AGILITY,
+                weapons = Self.TYPES_RANGED,
                 artifact = {id = 128826, relics = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_LIFE}}
             },{ -- Survival
                 role = Self.ROLE_MELEE,
                 attribute = LE_UNIT_STAT_AGILITY,
+                dualWield = true,
                 artifact = {id = 128808, relics = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_BLOOD}}
             }
         }
@@ -193,6 +201,7 @@ Self.CLASSES = {
             {   -- Brewmaster
                 role = Self.ROLE_TANK,
                 attribute = LE_UNIT_STAT_AGILITY,
+                dualWield = true,
                 artifact = {id = 128938, relics = {RELIC_SLOT_TYPE_LIFE, RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON}}
             },{ -- Mistweaver
                 role = Self.ROLE_HEAL,
@@ -201,6 +210,7 @@ Self.CLASSES = {
             },{ -- Windwalker
                 role = Self.ROLE_MELEE,
                 attribute = LE_UNIT_STAT_AGILITY,
+                dualWield = true,
                 artifact = {id = 128940, relics = {RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_WIND}, twinId = 0}
             }
         }
@@ -248,6 +258,7 @@ Self.CLASSES = {
     [Unit.ROGUE] = {
         armor = {LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_LEATHER},
         weapons = {LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_UNARMED, LE_ITEM_WEAPON_THROWN},
+        dualWield = true,
         specs = {
             {   -- Assassination
                 role = Self.ROLE_MELEE,
@@ -276,6 +287,7 @@ Self.CLASSES = {
                 role = Self.ROLE_MELEE,
                 attribute = LE_UNIT_STAT_AGILITY,
                 weapons = Self.TYPES_1HWEAPON,
+                dualWield = true,
                 artifact = {id = 128819, relics = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_WIND}}
             },{ -- Restoration
                 role = Self.ROLE_HEAL,
@@ -311,11 +323,13 @@ Self.CLASSES = {
                 role = Self.ROLE_MELEE,
                 attribute = LE_UNIT_STAT_STRENGTH,
                 weapons = Self.TYPES_2HWEAPON,
+                dualWield = true,
                 artifact = {id = 128910, relics = {RELIC_SLOT_TYPE_IRON, RELIC_SLOT_TYPE_BLOOD, RELIC_SLOT_TYPE_SHADOW}}
             },{ -- Fury
                 role = Self.ROLE_MELEE,
                 attribute = LE_UNIT_STAT_STRENGTH,
                 weapons = Self.TYPES_2HWEAPON,
+                dualWield = true,
                 artifact = {id = 128908, relics = {RELIC_SLOT_TYPE_FIRE, RELIC_SLOT_TYPE_WIND, RELIC_SLOT_TYPE_IRON}}
             },{ -- Protection
                 role = Self.ROLE_TANK,

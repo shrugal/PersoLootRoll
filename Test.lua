@@ -261,6 +261,7 @@ GetInstanceInfo = Fn
 GetLootRollTimeLeft = Val(0)
 GetLootRollItemInfo = Fn
 GetLootRollItemLink = Fn
+GetContainerNumSlots = Val(0)
 GetExpansionLevel = Const(EXPANSION)
 GetMaximumExpansionLevel = Const(EXPANSION + (PREPATCH and 1 or 0))
 RollOnLoot = Fn

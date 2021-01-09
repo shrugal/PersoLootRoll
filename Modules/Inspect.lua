@@ -15,7 +15,7 @@ Self.INSPECT_DELAY = 2
 -- How many tries per char
 Self.MAX_PER_CHAR = 10
 -- We are not interested in those slots
-Self.IGNORE = {Item.TYPE_BODY, Item.TYPE_HOLDABLE, Item.TYPE_TABARD, Item.TYPE_THROWN}
+Self.IGNORE = {Item.TYPE_BODY, Item.TYPE_HOLDABLE, Item.TYPE_TABARD, Item.TYPE_RANGEDRIGHT, Item.TYPE_THROWN}
 
 Self.cache = {}
 Self.queue = {}
@@ -31,7 +31,7 @@ Self.lastQueued = 0
 ---@param location string
 ---@return integer
 function Self.GetLevel(unit, location)
-    return Self.cache[unit] and Self.cache[unit].levels[location] or 0
+    return Self.cache[unit] and Self.cache[unit].levels[Item.GetCacheLocation(location)] or 0
 end
 
 -- Get link(s) for given unit and slot
@@ -86,6 +86,7 @@ function Self.Update(unit)
             end
 
             -- Only set it if we got links for all slots
+            equipLoc = Item.GetCacheLocation(equipLoc)
             if slotMin then
                 info.levels[equipLoc] = max(0, info.levels[equipLoc] or 0, slotMin)
             elseif not (isValid and info.levels[equipLoc]) then
