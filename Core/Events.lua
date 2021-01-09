@@ -347,9 +347,7 @@ function Self.CHAT_MSG_WHISPER(_, msg, sender, _, _, _, _, _, _, _, _, lineId)
         local reqLc = req:lower()
 
         local patterns = Util.Str.Join(",", "roll", Locale.GetCommLine("MSG_ROLL", unit), Locale.GetCommLine("MSG_ROLL"))
-        print(patterns)
         for p in patterns:gmatch("[^,]+") do
-            print(p, req:match(p))
             if req:match(p) or reqLc:match(p) then
                 roll = Roll.Find(nil, nil, link, nil, unit)
                 if roll and roll.status < Roll.STATUS_DONE then
