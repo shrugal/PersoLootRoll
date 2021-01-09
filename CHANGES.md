@@ -1,1 +1,5 @@
-- Fixed showing rolls twice in a groups with other PLR users
+- Improved calculating min ilvl for weapon slots
+- Take dual-wiedling into account for appropriate classes and specs
+- Fixed sometimes showing rolls twice in groups with other PLR users
+- Fixed handling of some ranged weapons
+- Fixed offering melee weapons to BM and MM hunters
