@@ -1,6 +1,10 @@
+- Added option to disable all filters and show all usable loot
+- Added options to enable addon and chat messages in outdoor zones, disabled by default
+- Improved calculating min ilvl for a slot during leveling
 - Improved calculating min ilvl for weapon slots
 - Take dual-wiedling into account for appropriate classes and specs
 - Fixed sometimes showing rolls twice in groups with other PLR users
 - Fixed handling of some ranged weapons
 - Fixed offering melee weapons to BM and MM hunters
 - Fixed error when disabling addon
+- Fixed not taking items in the main bag into account
