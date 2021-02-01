@@ -6,6 +6,7 @@
 ## Notes-esES: Un addon de tiradas de dados por objetos para el loot personal.
 ## Notes-zhTW: 一個用於個人拾取的戰利品分配插件。
 ## Notes-frFR: Un addon de gestion du butin personnel.
+## Notes-ruRU: Аддон для распределения персональной добычи.
 ## Version: @project-version@
 ## SavedVariables: PersoLootRollDB, PersoLootRollIconDB, PersoLootRollML, PersoLootRollDebug
 ## OptionalDeps: Pawn, EPGPNext, WoWUnit
