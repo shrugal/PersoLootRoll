@@ -1,6 +1,6 @@
 [submodule "Libs/LibRealmInfo"]
 	path = Libs/LibRealmInfo
-	url = https://github.com/phanx-wow/LibRealmInfo
+	url = https://github.com/janekjl/LibRealmInfo
 [submodule "Libs/LibDataBroker-1.1"]
 	path = Libs/LibDataBroker-1.1
 	url = https://github.com/tekkub/libdatabroker-1-1
