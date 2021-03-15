@@ -1,2 +1,3 @@
-- Updated russion translation (Thanks Voopie!)
-- Updated italian translation (Thanks Wildlord!)
+- Updated toc version for patch 9.0.5
+- Updated russion and italian translation (Thanks Voopie and Wildlord!)
+- Updated trinket list
