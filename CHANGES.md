@@ -1,4 +1,2 @@
-- Updated toc version for patch 9.0.5
-- Updated russion and italian translation (Thanks Voopie and Wildlord!)
-- Updated trinket list
-- Updated LibRealmInfo
+- Updated ToC version for patch 9.1
+- Updated instance and trinket lists

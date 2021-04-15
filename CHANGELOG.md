@@ -1,3 +1,9 @@
+Version 22.07
+- Updated toc version for patch 9.0.5
+- Updated russion and italian translation (Thanks Voopie and Wildlord!)
+- Updated trinket list
+- Updated LibRealmInfo
+
 Version 22.06
 - Added option to disable all filters and show all usable loot
 - Added options to enable addon and chat messages in outdoor zones, disabled by default

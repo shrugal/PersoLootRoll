@@ -187,4 +187,6 @@ Self.INSTANCES = {
     [1189] = 9, -- Sanguine Depths
     [1190] = 9, -- Castle Nathria
     [1192] = 9, -- Shadowlands
+    [1193] = 9, -- Sanctum of Domination
+    [1194] = 9, -- Tazavesh, the Veiled Market
 }
