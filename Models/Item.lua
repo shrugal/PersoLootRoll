@@ -1470,6 +1470,10 @@ function Self:IsPet()
         )
 end
 
+function Self:IsGem()
+    return Self.GetInfo(self, "itemType") == "Gem" and not Self:IsRelic(self)
+end
+
 -- Check if the item has a collectible appearance that can be unlocked
 function Self:IsTransmogable(unit)
     return IsDressableItem(self.link) and (not self.isSoulbound or self:CanBeEquipped(unit))

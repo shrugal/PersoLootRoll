@@ -1,3 +1,7 @@
+Version 23 Beta 1
+- Updated ToC version for patch 9.1
+- Updated instance and trinket lists
+
 Version 22.07
 - Updated toc version for patch 9.0.5
 - Updated russion and italian translation (Thanks Voopie and Wildlord!)
