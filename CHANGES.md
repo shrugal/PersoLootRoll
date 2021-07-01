@@ -1,1 +1,2 @@
-- Updated trinket list
+- Updated ToC version for patch 9.1
+- Updated instance and trinket lists
