@@ -1,10 +1,17 @@
+Version 23
+
+- Updated ToC version for patch 9.1
+- Updated instance and trinket lists
+
 Version 22.07
+
 - Updated toc version for patch 9.0.5
 - Updated russion and italian translation (Thanks Voopie and Wildlord!)
 - Updated trinket list
 - Updated LibRealmInfo
 
 Version 22.06
+
 - Added option to disable all filters and show all usable loot
 - Added options to enable addon and chat messages in outdoor zones, disabled by default
 - Improved calculating min ilvl for a slot during leveling
@@ -17,21 +24,25 @@ Version 22.06
 - Fixed not taking items in the main bag into account
 
 Version 22.05
+
 - Support for Shadowlands weapon tokens
 - Updated Shadowlands trinket list
 
 Version 22.04
+
 - Updated TOC version for patch 9.0.2
 - Updated Ace3 libs to latest stable version
 - Updated LibRealmInfo
 
 Version 22.03
+
 - Use build-in transmog collection system to detect missing appearances
 - Update weapon restrictions for Deathknights and Monks
 - Always allow trading if noone else needs the item
 - Check popup data before using it to prevent conflicts with other popups
 
 Version 22.02
+
 - Require items to have higher item-level than whats currently equipped in legacy runs
 - Fixed starting scheduled rolls without checking them first sometimes
 - Fixed considering some armor items as pets
@@ -39,9 +50,11 @@ Version 22.02
 - Fixed following detection in German clients
 
 Version 22.01
+
 - Replaced access to removed friend-list functions
 
 Version 22
+
 - Updated TOC version to 9.0.1
 - Updated instance and trinket lists for Shadowlands
 - Updated Ace3 to latest version
@@ -66,30 +79,37 @@ Version 22
 - Some small player level related fixes
 
 Version 21.04
+
 - Use concise announcements for groups up to 10 players in legacy runs (was 5).
 - French translation completed, big thanks to Llathala (EU-Hyjal)!
 - Some esES and zhCN translation updates.
 
 Version 21.03
+
 - More detailed info messages when not whispering players
 - Fixed updating whisper ask option when target or group filter changes
 - Fixed filtering items before they've been loaded (CurseForge#16)
 - Internal: Added and updated some unit tests
 
 Version 21.02
-- Updated legacy loot detection for legion dungeons 
+
+- Updated legacy loot detection for legion dungeons
 
 Version 21.01
+
 - Fixed Unit.ConnectedRealm for realms without connections (CurseForge#15)
 
 Version 21
+
 - Added proper whisper handling across connected realms (#14)
 
 Version 20.01
+
 - Fixed wrong Util.In references in Util.Str (#13)
 - Internal: Added unit tests for Util.Str
 
 Version 20
+
 - Updated interface version for 8.3
 - Updated instance and trinket lists for 8.3
 - Reduced default extra timeout per item from 10 to 5
@@ -99,15 +119,18 @@ Version 20
 - Internal: Some more unit tests
 
 Version 19
+
 - Added item filter on the left side of the roll overview window
 - Added unit testing, they won't be included in releases but should help detect bugs early
 - Updated readme
 - Includes updated translations
 
 Version 18.06
+
 - Updated interface version for 8.2.5
 
 Version 18.05
+
 - Added prompt asking whether to enable automatic whispering on first bid
 - Added info message when masterloot offers are rejected due to missing permission
 - Added warning about freezing screen when showing the log
@@ -116,22 +139,27 @@ Version 18.05
 - Moved chat message pattern generation to `RegisterEvents()` to take modifications by other addons into account
 
 Version 18.04
+
 - Fixed error when mousing over entries in the rolls window since 8.2
 
 Version 18.03
+
 - Updated TOC version to 8.2
 - Updated instance and trinket lists
 
 Version 18.02
+
 - Fixed answering whispers when not using ML mode or "allow keep" ML option is enabled
 - Fixed whisper handler when giving away multiple items
 
 Version 18.01
+
 - Fixed processing and showing whispers and answers multiple times
 - Answer bids from the same player and for the same roll just once
 - Includes updated zhTW translations
 
 Version 18
+
 - Added ML option to only start rolls manually
 - Added ML option to run rolls in-order (one by one)
 - Added roll start button to rolls window and moved some other buttons around
@@ -144,16 +172,19 @@ Version 18
 - Fixed item column overflowing in rolls window
 
 Version 17.03
+
 - Fixed trying to import/export ML settings without guild/community selected
 - Added missing language files for esMX, itIT, frFR and ptBR (though most of them don't have translations yet)
 - Includes updated zhCN and frFR translations
 
 Version 17.02
+
 - Added ignoring crafted loot
 - Fixed Unit.IsUnit for non-string parameters (CurseForge#11)
 - Fixed Locale.GetLanguageName for missing language code translations (CurseForge#12)
 
 Version 17.01
+
 - Added some more debug messages for UI interactions
 - Added handler to log LUA errors caused by the addon
 - Reduced LOG_MAX_ENTRIES from 1000 to 500, because showing the log takes a lot of time with many entries
@@ -161,6 +192,7 @@ Version 17.01
 - Some cleanup
 
 Version 17
+
 - Replaced multiselect message options with dropdowns to free up some space
 - When awarding loot in the rolls window the button text now turns to "Confirm" on the 1st click and then actually awards the item on the 2nd click
 - Added option to make group announcements concise when there are just a few items and eligible players (e.g. in 5-mans)
@@ -189,9 +221,11 @@ Version 17
 - Up to date localizations are now downloaded when packaging
 
 Version 16.05
+
 - Fixed trying to send group messages when not in a group
 
 Version 16.04
+
 - Fixed rolls window now updating when scroll bar is shown or hidden
 - Fixed actions window not showing when loot has been awarded
 - Fixed roll duplication in ML mode
@@ -200,41 +234,45 @@ Version 16.04
 - Updated esES and zhCN translations
 
 Version 16.03
+
 - Fixed Util.TblRandomKey for empty tables
 - Fixed Util.TblCopyXYZ methods not producing a continually indexed list when k is false
 
 Version 16.02
+
 - Fixed Roll.Find for when owner is nil
 - Fixed Roll awarding methods
 - Fixed rolls not showing up on the rolls window
 - Fixed updating status after trading when in ML mode
 
 Version 16.01
+
 - Updated translations
 - Fixed Addon.UnitIsTracking not using the new Addon.GetCompAddonUser function
 - Fixed Rolls.ROLL_START function parameters
 - Changed module event handlers to always implicitly accept the self parameter
 
 Version 16
+
 - Major internal refactoring:
-    - Moved non-core functionality (Session, Inspect, Trade and GUI) into separate Ace3 modules with their own lifecyles and event-handling
-    - Moved PLH integration into separate Ace3 plugin module
-    - Moved config to separate Options file
-    - Changed PLH user checks and version storage to a generic system for compatible addons
-    - Files in subfolders are now loaded using xml files
-    - Internal events now use the AceEvent messaging API instead of a separate event bus for every class
-    - Added documentation for internal events
-    - Updated addon lifecycle to use use proper Ace3 enable/disable events and go through different states (disabled, enabled, active, tracking) one after the other
-    - Events and Hooks now use the Addon namespace and are unregistered when disabling the addon
+  - Moved non-core functionality (Session, Inspect, Trade and GUI) into separate Ace3 modules with their own lifecyles and event-handling
+  - Moved PLH integration into separate Ace3 plugin module
+  - Moved config to separate Options file
+  - Changed PLH user checks and version storage to a generic system for compatible addons
+  - Files in subfolders are now loaded using xml files
+  - Internal events now use the AceEvent messaging API instead of a separate event bus for every class
+  - Added documentation for internal events
+  - Updated addon lifecycle to use use proper Ace3 enable/disable events and go through different states (disabled, enabled, active, tracking) one after the other
+  - Events and Hooks now use the Addon namespace and are unregistered when disabling the addon
 - Extensibility:
-    - Added ability for plugins to register custom player columns in the rolls window
-    - Added ability for plugins to register custom options
-    - Added ability for plugins to register custom roll award methods
+  - Added ability for plugins to register custom player columns in the rolls window
+  - Added ability for plugins to register custom options
+  - Added ability for plugins to register custom roll award methods
 - Added EPGP plugin:
-    - Added EP, GP and PR columns to rolls window, as well as sorting eligible players by PR value
-    - Added awarding by PR value
-    - Added crediting GP when awarding loot in ML mode
-    - Added tab to masterloot options to enable/disable EPGP integration and set GP weights for different bids
+  - Added EP, GP and PR columns to rolls window, as well as sorting eligible players by PR value
+  - Added awarding by PR value
+  - Added crediting GP when awarding loot in ML mode
+  - Added tab to masterloot options to enable/disable EPGP integration and set GP weights for different bids
 - Added work-in-progress version of RCLootCouncil integration plugin (disabled for now)
 - Added ability to start test rolls (/plr test or button at the top right corner of the rolls window)
 - Added row backgrounds to rolls in the rolls window
@@ -245,15 +283,18 @@ Version 16
 - Updated TOC version for 8.1
 
 Version 15.04
+
 - Fixed isTradable overwrite in Item:GetBasicInfo
 - Item owners can now always roll on their own items (without ML)
 
 Version 15.03
+
 - Fixed bug in Util.TblList (#8)
 - Prefer running rolls when matching links posted in grp chat to rolls (#8)
 - Added some debug messages to roll methods
 
 Version 15.02
+
 - Fixed disabled state not being send on version check
 - Fixed roll status validation for chill-mode rolls
 - Updated debug log formatting
@@ -262,28 +303,30 @@ Version 15.02
 - Removed whisper message content in debug calls
 
 Version 15.01
+
 - Fixed chill-mode not working for loot from non-users
 - Fixed rolls popping up while addon is disabled
 
 Version 15
+
 - Added enabling/disabling based on group type
 - Added Spanish and Simplified Chinese translations
 - Added partial Russian translation (~80%)
 - Added option to disable ask variants
 - Added an optional "chill mode": Removes the countdown while deciding to share loot, items show up for others only after that decision, and own rolls have double the normal timeout once they started
 - Increased timeouts:
-    - Increased base roll timeout from 15 to 20
-    - Increased roll timeout per item from 5 to 10
-    - Increased roll clear timeout from 600 to 1200
-    - Increased max base timeout in ML mode from 120 to 300
-    - Increased max timeout per item in ML mode from 30 to 60
+  - Increased base roll timeout from 15 to 20
+  - Increased roll timeout per item from 5 to 10
+  - Increased roll clear timeout from 600 to 1200
+  - Increased max base timeout in ML mode from 120 to 300
+  - Increased max timeout per item in ML mode from 30 to 60
 - Added Disenchant support:
-    - Added support for rolling disenchant on items
-    - Added option to allow disenchant bids on own items or when masterlooting
-    - Added disenchanter list in masterloot options
-    - Added option to automatically roll disenchant on unusable items if allowed
-    - Added new message lines for disenchanting
-    - Added proper reason messages for the roll window
+  - Added support for rolling disenchant on items
+  - Added option to allow disenchant bids on own items or when masterlooting
+  - Added disenchanter list in masterloot options
+  - Added option to automatically roll disenchant on unusable items if allowed
+  - Added new message lines for disenchanting
+  - Added proper reason messages for the roll window
 - The order of arguments for the "roll" command doesn't matter anymore
 - Added error messages to the "roll" command for wrong timeout or owner
 - Updated "roll" command logic to prevent creating rolls that will be rejected by others
@@ -303,6 +346,7 @@ Version 15
 - Minor fixes
 
 Version 14
+
 - Added visible random roll results to every non-pass bid
 - Session.RefreshRules is now debounced by 1 sec
 - Readded refreshing the session when changing relevant options
@@ -314,6 +358,7 @@ Version 14
 - Minor refactoring
 
 Version 13
+
 - Announce and whisper settings can now be based on whether or not the player is in a WoW-Community group or the target is in one of the player's WoW-Communities
 - The need button is now changed into a keep button when rolling on our own loot without masterlooter
 - The pass button is now changed into a give-away button when rolling on our own loot without masterlooter
@@ -336,15 +381,18 @@ Version 13
 - As always: Updated translations, bugfixes and minor tweaks
 
 Version 12.04
+
 - Fixed roll message matching for some locales
 - Fixed taint when clicking chat links while in combat (#4)
 - Fixed missing function param in SetLootRollItem hook (#5)
 
 Version 12.01
+
 - Fixed debug state not being preserved through reload/logout
 - Fixed bug caused by string version number
 
 Version 12
+
 - Added separate options to en/disable asking for loot and announcing rolls
 - Asking for loot is enabled by default for now, but will be disabled in the next version, except when updating from a prior version
 - Added texture checking to inspection and fixed some bugs with it
@@ -365,6 +413,7 @@ Version 12
 - Bugfixes and translation updates
 
 Version 11
+
 - Updated Ace3 libs to latest stable version
 - Added "Apocalypse Drive" to trinket list
 - Added support for more complex version strings (e.g. "11-beta3"), but won't use them on the wire until everybody had time to update
@@ -376,6 +425,7 @@ Version 11
 - Minor bugfixes
 
 Version 10
+
 - Updated interface version to 80000
 - Updated Ace3 libs to r1175-alpha
 - Added workaroud for SendAddonMessage's diconnect bug
@@ -396,6 +446,7 @@ Version 10
 - Fixed timewalking detection and removed it from the item scaling check
 
 Version 9
+
 - Updated interface version to 70300
 - Added an actions window to show pending actions such as trade or whisper
 - Added recording of whisper chats with winner/owner of items
@@ -424,6 +475,7 @@ Version 9
 - Minor bugfixes
 
 Version 8
+
 - Added whisper message suppression while giving away loot
 - Added a group-wide whisper limit of 2 per item to prevent spamming players not using the addon
 - Added an empty message to the rolls window
@@ -438,6 +490,7 @@ Version 8
 - Minor bugfixes and translation updates
 
 Version 7
+
 - Add a hide/show button to hide specific rolls in the list
 - Changed "Canceled" to "Hidden" filter, filtering in/out canceled, pending and hidden rolls.
 - Embedded CallbackHandler into Roll and Masterloot
@@ -446,6 +499,7 @@ Version 7
 - Changed table layout slightly to be more in-line with the upcoming AceGUI version
 
 Beta 6
+
 - Fixed bug where players could be added, but not removed from the masterlooter whitelist.
 - Updated the version tooltip to better distinguish between players with/without the addon
 - Fixed workaround for ElvUI bug causing group loot frames to appear on top of each other
@@ -459,16 +513,19 @@ Beta 6
 - Some translation updates
 
 Beta 5
+
 - Moved some options around, made more use of tabbed UI (for masterloot+masterlooter and messages options)
 - Added options to customize the messages the addon sends to other players
 - Added toggle to enable/disable the double ilvl threshold for trinkets
 - Bugfixes and translation updates
 
 Beta 4
+
 - Fixed options migration bug causing the options page to throw an error once after updating
 - Added time remaining to rolls list and chat roll result to bids list in the overview window
 
 Beta 3
+
 - Custom answers for 'need' and 'greed' can now be specified in the 'Masterlooter' options and accessed with a right-click on the corresponding roll button
 - Bids are now color-coded in the rolls overview window
 - Fixed rolls overview window frama strata, so it's no longer above everything else
@@ -478,6 +535,7 @@ Beta 3
 - Updated trinkets list
 
 Beta 2
+
 - Masterlooting is now tracked for all players with the addon
 - Added ilvl threshold option
 - Added custom timeout option when masterlooting
@@ -489,4 +547,5 @@ Beta 2
 - Translation updates and bugfixes
 
 Beta 1
+
 - First beta release
