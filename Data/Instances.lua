@@ -189,4 +189,5 @@ Self.INSTANCES = {
     [1192] = 9, -- Shadowlands
     [1193] = 9, -- Sanctum of Domination
     [1194] = 9, -- Tazavesh, the Veiled Market
+    [1195] = 9, -- Sepulcher of the First Ones
 }
