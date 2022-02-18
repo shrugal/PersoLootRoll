@@ -1,26 +1,25 @@
-
 local Name = debug.getinfo(1).source:gsub("\\", "/"):match("([^/]+)/[^/]+$") or (os.getenv("PWD") or ""):match("[^/]+$")
 local Addon = {}
 
 -- Static info
-local BUILD = {"8.2.5", "32028", "Sep 30 2019", 80205}
+local BUILD = { "8.2.5", "32028", "Sep 30 2019", 80205 }
 local LOCALE = "enUS"
 local REGION = 3
 local REALM = "Mal'Ganis"
-local REALM_CONNECTED = {"Blackhand", "Mal'Ganis", "Taerar", "Echsenkessel"}
+local REALM_CONNECTED = { "Blackhand", "Mal'Ganis", "Taerar", "Echsenkessel" }
 local VERSION = "0-dev0"
 local FACTION = "Horde"
 local RACE = 8
 local CLASS = 8
 local GUID = "Player-1612-054E4E80"
-local CLASSES = {"Warrior", "Paladin", "Hunter", "Rogue", "Priest", "Death Knight", "Shaman", "Mage", "Warlock", "Monk", "Druid", "Demon Hunter"}
-local RACES = {"Human", "Orc", "Dwarf", "Night Elf", "Undead", "Tauren", "Gnome", "Troll", "Goblin", "Blood Elf", "Draenei", "Fel Orc", "Naga", "Broken", "Skeleton", "Vrykul", "Tuskarr", "Forest Troll", "Taunka", "Northrend Skeleton", "Ice Troll", "Worgen", "Gilnean", "Pandaren", "Pandaren", "Pandaren", "Nightborne", "Highmountain Tauren", "Void Elf", "Lightforged Draenei", "Zandalari Troll", "Kul Tiran", "Human", "Dark Iron Dwarf", "Vulpera", "Mag'har Orc", "Mechagnome"}
+local CLASSES = { "Warrior", "Paladin", "Hunter", "Rogue", "Priest", "Death Knight", "Shaman", "Mage", "Warlock", "Monk", "Druid", "Demon Hunter" }
+local RACES = { "Human", "Orc", "Dwarf", "Night Elf", "Undead", "Tauren", "Gnome", "Troll", "Goblin", "Blood Elf", "Draenei", "Fel Orc", "Naga", "Broken", "Skeleton", "Vrykul", "Tuskarr", "Forest Troll", "Taunka", "Northrend Skeleton", "Ice Troll", "Worgen", "Gilnean", "Pandaren", "Pandaren", "Pandaren", "Nightborne", "Highmountain Tauren", "Void Elf", "Lightforged Draenei", "Zandalari Troll", "Kul Tiran", "Human", "Dark Iron Dwarf", "Vulpera", "Mag'har Orc", "Mechagnome" }
 
 -- Changes with expansions
-local EXPANSION = 7
-local PREPATCH = true
-local MAX_LEVEL = 50
-local INSTANCE = 1180 -- Ny'alotha, the Waking City
+local EXPANSION = 8
+local PREPATCH = false
+local MAX_LEVEL = 60
+local INSTANCE = 1195 -- Sepulcher of the First Ones
 
 -- Options
 local options = {
@@ -29,7 +28,7 @@ local options = {
 }
 
 local key
-for i=1,select("#", ...) do
+for i = 1, select("#", ...) do
     local arg = select(i, ...)
     if arg:match("^%-%-") then
         key = arg:gsub("^%-%-", "")
@@ -81,14 +80,14 @@ local function xml(s)
     local i, j = 1, 1
     while true do
         ni, j, c, label, xarg, empty = string.find(s,
-                                                   "<(%/?)([%w:]+)(.-)(%/?)>", i)
+            "<(%/?)([%w:]+)(.-)(%/?)>", i)
         if not ni then break end
         local text = string.sub(s, i, ni - 1)
         if not string.find(text, "^%s*$") then table.insert(top, text) end
         if empty == "/" then -- empty element tag
-            table.insert(top, {label = label, xarg = parseargs(xarg), empty = 1})
+            table.insert(top, { label = label, xarg = parseargs(xarg), empty = 1 })
         elseif c == "" then -- start tag
-            top = {label = label, xarg = parseargs(xarg)}
+            top = { label = label, xarg = parseargs(xarg) }
             table.insert(stack, top) -- new level
         else -- end tag
             local toclose = table.remove(stack) -- remove top
@@ -109,7 +108,7 @@ local function xml(s)
     return stack[1]
 end
 
-local extensions = {lua = true, xml = true, toc = true}
+local extensions = { lua = true, xml = true, toc = true }
 local function import(file)
     local path, ext = file:gsub("\\", "/"):match("^(.-)%.?([^.]+)$")
 
@@ -130,7 +129,7 @@ local function import(file)
     if ext == "lua" then
         return loadfile(path)(Name, Addon)
     elseif ext == "xml" then
-        for _,node in ipairs(xml(readfile(path))[1] or {}) do
+        for _, node in ipairs(xml(readfile(path))[1] or {}) do
             if node.label == "Script" or node.label == "Include" then
                 import(dir .. node.xarg.file)
             end
@@ -147,16 +146,16 @@ local function import(file)
 end
 
 local frames = {}
-local fire = function (...) for _,f in ipairs(frames) do f:FireEvent(...) end end
-local update = function () for _,f in ipairs(frames) do f:FireUpdate() end end
+local fire = function(...) for _, f in ipairs(frames) do f:FireEvent(...) end end
+local update = function() for _, f in ipairs(frames) do f:FireUpdate() end end
 
-local Fn = function () end
-local Id = function (v) return v end
-local Const = function (v) return function () return v end end
-local Consts = function (...) local args = {...} return function () return unpack(args) end end
-local Val = function (v) return function (a) if a then return v end end end
-local Vals = function (...) local args = {...} return function (...) if ... then return unpack(args) end end end
-local Meta = { __index = function (_, k) if k.match and k:match("^[A-Z]") and k:match("[^A-Z_]") then return Fn end end }
+local Fn = function() end
+local Id = function(v) return v end
+local Const = function(v) return function() return v end end
+local Consts = function(...) local args = { ... } return function() return unpack(args) end end
+local Val = function(v) return function(a) if a then return v end end end
+local Vals = function(...) local args = { ... } return function(...) if ... then return unpack(args) end end end
+local Meta = { __index = function(_, k) if k.match and k:match("^[A-Z]") and k:match("[^A-Z_]") then return Fn end end }
 local Obj = setmetatable({}, Meta)
 
 -------------------------------------------------------
@@ -164,38 +163,38 @@ local Obj = setmetatable({}, Meta)
 -------------------------------------------------------
 
 -- Frames
-CreateFrame = function (_, name, parent)
+CreateFrame = function(_, name, parent)
     parent = parent or UIParent
     local scripts, events, points, textures, lastUpdate, f = {}, {}, {}, {}, 0
-    local CreateChild = function () return CreateFrame(nil, nil, f) end
-    local GetTexture = function (name) return function () if not textures[name] then textures[name] = CreateChild() end return textures[name] end end
+    local CreateChild = function() return CreateFrame(nil, nil, f) end
+    local GetTexture = function(name) return function() if not textures[name] then textures[name] = CreateChild() end return textures[name] end end
     f = setmetatable({
-        SetScript = function (_, k, v) scripts[k] = v end,
-        GetScript = function (_, k) return scripts[k] end,
-        HasScript = function (_, k) return not not scripts[k] end,
-        RegisterEvent = function (_, k) events[k] = true end,
-        UnregisterEvent = function (_, k) events[k] = nil end,
-        UnregisterAllEvents = function () wipe(events) end,
-        SetParent = function (v) parent = v end,
-        GetParent = function () return parent end,
-        SetPoint = function (_, ...)
+        SetScript = function(_, k, v) scripts[k] = v end,
+        GetScript = function(_, k) return scripts[k] end,
+        HasScript = function(_, k) return not not scripts[k] end,
+        RegisterEvent = function(_, k) events[k] = true end,
+        UnregisterEvent = function(_, k) events[k] = nil end,
+        UnregisterAllEvents = function() wipe(events) end,
+        SetParent = function(v) parent = v end,
+        GetParent = function() return parent end,
+        SetPoint = function(_, ...)
             local n, point, rel, relPoint, x, y = select("#", ...), ...
             if n == 1 then rel, relPoint, x, y = parent, point, 0, 0 end
             if n == 3 and type(rel) == "table" then x, y = 0, 0 end
             if n == 3 and type(rel) == "number" then x, y, rel, relPoint = rel, relPoint, parent, point end
-            table.insert(points, {point, rel, relPoint, x, y})
+            table.insert(points, { point, rel, relPoint, x, y })
         end,
-        GetPoint = function (_, k) return unpack(points[k]) end,
-        GetNumPoints = function () return #points end,
-        ClearAllPoints = function () wipe(points) end,
+        GetPoint = function(_, k) return unpack(points[k]) end,
+        GetNumPoints = function() return #points end,
+        ClearAllPoints = function() wipe(points) end,
         NumLines = Const(0),
         CreateTexture = CreateChild,
         CreateFontString = CreateChild,
         GetNormalTexture = GetTexture("Normal"),
         GetPushedTexture = GetTexture("Pushed"),
         GetHighlightTexture = GetTexture("Highlight"),
-        FireEvent = function (_, e, ...) if scripts.OnEvent and events[e] then scripts.OnEvent(f, e, ...) end end,
-        FireUpdate = function () if scripts.OnUpdate then scripts.OnUpdate(f, os.clock() - lastUpdate) lastUpdate = os.clock() end end
+        FireEvent = function(_, e, ...) if scripts.OnEvent and events[e] then scripts.OnEvent(f, e, ...) end end,
+        FireUpdate = function() if scripts.OnUpdate then scripts.OnUpdate(f, os.clock() - lastUpdate) lastUpdate = os.clock() end end
     }, Meta)
     table.insert(frames, f)
     if name then _G[name] = f end
@@ -210,24 +209,24 @@ SlashCmdList = {}
 
 -- Functions
 local xpcallOrig = xpcall
-xpcall = function (func, err, ...)
-    local args =  {...}
+xpcall = function(func, err, ...)
+    local args = { ... }
     if type(func) == "string" then func = _G[func] end
-    return xpcallOrig(function () func(unpack(args)) end, err)
+    return xpcallOrig(function() func(unpack(args)) end, err)
 end
 loadstring = loadstring or load
 geterrorhandler = Const(Fn)
 seterrorhandler = Fn
-wipe = function (t) for i in pairs(t) do t[i] = nil end end
+wipe = function(t) for i in pairs(t) do t[i] = nil end end
 issecurevariable = Const(false)
-hooksecurefunc = function (tbl, name, fn)
+hooksecurefunc = function(tbl, name, fn)
     if not fn then tbl, name, fn = _G, tbl, name end
     local orig = tbl[name]
-    tbl[name] = function (...) local r = {orig(...)} fn(...) return unpack(r) end
+    tbl[name] = function(...) local r = { orig(...) } fn(...) return unpack(r) end
 end
-string.split = function (del, str, n)
+string.split = function(del, str, n)
     local t, i = {}, 0
-    local push = function (v) i = i + 1 if n and i > n then t[n] = t[n] .. del .. v else table.insert(t, v) end end
+    local push = function(v) i = i + 1 if n and i > n then t[n] = t[n] .. del .. v else table.insert(t, v) end end
     for a, b in string.gmatch(str, "([^" .. del .. "]*)" .. del .. "([^" .. del .. "]*)") do
         if i == 0 or a:len() > 0 or b:len() == 0 then push(a) end
         if i == 1 or b:len() > 0 then push(b) end
@@ -235,7 +234,7 @@ string.split = function (del, str, n)
     if i == 0 then table.insert(t, str) end
     return unpack(t)
 end
-string.trim = function (s) return s:match("^%s*(.-)%s*$") end
+string.trim = function(s) return s:match("^%s*(.-)%s*$") end
 strsplit = string.split
 strmatch = string.match
 strtrim = string.trim
@@ -244,19 +243,19 @@ format = string.format
 tinsert = table.insert
 tremove = table.remove
 unpack = unpack or table.unpack
-time = function (...) return math.floor(os.time(...)) end
+time = function(...) return math.floor(os.time(...)) end
 max = math.max
 min = math.min
 ceil = math.ceil
 floor = math.floor
-GetClassInfo = function (i) local c = CLASSES[i] return c, c:upper():gsub(" ", "_"), i end
+GetClassInfo = function(i) local c = CLASSES[i] return c, c:upper():gsub(" ", "_"), i end
 GetLocale = Const(LOCALE)
 GetRealmName = Const(REALM)
 GetAutoCompleteRealms = Const(REALM_CONNECTED)
 GetCurrentRegion = Const(REGION)
 GetBuildInfo = Consts(unpack(BUILD))
 GetAddOnMetadata = Val(VERSION)
-GetTime = function (...) return math.floor(os.clock(...)) end
+GetTime = function(...) return math.floor(os.clock(...)) end
 GetInstanceInfo = Fn
 GetLootRollTimeLeft = Val(0)
 GetLootRollItemInfo = Fn
@@ -268,20 +267,20 @@ RollOnLoot = Fn
 GroupLootContainer_RemoveFrame = Fn
 SetItemRef = Fn
 UnitPopup_ShowMenu = Fn
-UnitName = function (u) local unit, realm = strsplit("-", u) return unit, realm ~= GetRealmName() and realm or nil end
+UnitName = function(u) local unit, realm = strsplit("-", u) return unit, realm ~= GetRealmName() and realm or nil end
 UnitFullName = UnitName
 UnitClass = Vals(GetClassInfo(CLASS))
 UnitRace = Vals(RACES[RACE], RACES[RACE], RACE)
 UnitFactionGroup = Vals(FACTION, FACTION)
 UnitGUID = Val(GUID)
 UnitLevel = Val(MAX_LEVEL)
-UnitIsUnit = function (a, b) return a and a == b end
+UnitIsUnit = function(a, b) return a and a == b end
 UnitExists = Val(true)
 UnitInParty = Val(false)
 UnitInRaid = Val(false)
 UnitIsDND = Val(false)
 IsInInstance = Const(true)
-IsAddOnLoaded = function (n) return n == "WoWUnit" or n == Name end
+IsAddOnLoaded = function(n) return n == "WoWUnit" or n == Name end
 InterfaceOptions_AddCategory = Fn
 IsLoggedIn = Const(false)
 IsDressableItem = Val(true)
@@ -334,15 +333,15 @@ FONT_COLOR_CODE_CLOSE = ""
 LE_PARTY_CATEGORY_INSTANCE = 2
 NUM_GROUP_LOOT_FRAMES = 0
 NUM_CHAT_WINDOWS = 0
-LOOT_ITEM_BONUS_ROLL ="%s receives bonus loot: %s."
-CREATED_ITEM ="%s creates: %s."
-LOOT_ITEM_CREATED_SELF ="You create: %s."
-RANDOM_ROLL_RESULT ="%s rolls %d (%d-%d)"
+LOOT_ITEM_BONUS_ROLL = "%s receives bonus loot: %s."
+CREATED_ITEM = "%s creates: %s."
+LOOT_ITEM_CREATED_SELF = "You create: %s."
+RANDOM_ROLL_RESULT = "%s rolls %d (%d-%d)"
 LE_ITEM_CLASS_MISCELLANEOUS = 15
 LE_ITEM_MISCELLANEOUS_COMPANION_PET = 2
 NUM_BAG_SLOTS = 0
 
-RAID_CLASS_COLORS = setmetatable({}, {__index = function () return {colorStr = "ffffffff", r = 1, g = 1, b = 1} end})
+RAID_CLASS_COLORS = setmetatable({}, { __index = function() return { colorStr = "ffffffff", r = 1, g = 1, b = 1 } end })
 DifficultyUtil = {
     ID = {
         DungeonNormal = 1,
@@ -366,7 +365,7 @@ DifficultyUtil = {
 
 C_ChallengeMode = Obj
 C_Club = { GetSubscribedClubs = Const({}) }
-C_Timer = { After = function (t, fn) fn() end }
+C_Timer = { After = function(t, fn) fn() end }
 C_Loot = { IsLegacyLootModeEnabled = Const(false) }
 C_Soulbinds = { IsItemConduitByItemInfo = Val(false) }
 C_Map = { GetBestMapForUnit = Val(0) }
@@ -419,15 +418,15 @@ WoWUnit:RunTests("PLAYER_LOGIN")
 
 -- Gather results
 local passedGroups = 0
-for _,group in ipairs(WoWUnit.children) do
+for _, group in ipairs(WoWUnit.children) do
     local failed = {}
-    for i,test in ipairs(group.children) do
+    for i, test in ipairs(group.children) do
         if test.numOk ~= 1 then table.insert(failed, i) end
     end
 
     print(group.name .. ": " .. (#failed == 0 and "Passed" or "FAILED") .. " (" .. (#group.children - #failed) .. "/" .. #group.children .. ")")
 
-    for _,i in ipairs(failed) do
+    for _, i in ipairs(failed) do
         local test = group.children[i]
         print(" - " .. test.name .. " (" .. i .. "): " .. table.concat(test.errors, ", "):gsub("|n|n", ""):gsub("|n", " "))
     end

@@ -139,7 +139,7 @@ end
 ---@param level integer
 function Self.GetLinkForLevel(link, level)
     local i = 0
-    return link:gsub(":[^:]*", function (s)
+    return link:gsub(":[^:]*", function(s)
         i = i + 1
         if i == Self.INFO.link.linkLevel then
             return ":" .. (level or MAX_PLAYER_LEVEL)
@@ -151,15 +151,15 @@ end
 ---@param link string
 ---@param level integer
 function Self.GetLinkScaled(link, level)
-   local i, numBonusIds = 0, 1
-   return link:gsub(":([^:]*)", function (s)
-         i = i + 1
-         if i == Self.INFO.link.numBonusIds then
+    local i, numBonusIds = 0, 1
+    return link:gsub(":([^:]*)", function(s)
+        i = i + 1
+        if i == Self.INFO.link.numBonusIds then
             numBonusIds = tonumber(s) or 0
-         elseif i == Self.INFO.link.upgradeLevel - 1 + numBonusIds then
+        elseif i == Self.INFO.link.upgradeLevel - 1 + numBonusIds then
             return ":" .. (level or MAX_PLAYER_LEVEL)
-         end
-   end)
+        end
+    end)
 end
 
 -- Check if string is an item link
@@ -189,41 +189,41 @@ end
 ---@param lines table
 ---@param attr string
 ---@return any
-local fullScanFn = function (i, line, lines, attr)
+local fullScanFn = function(i, line, lines, attr)
     -- classes
     if attr == "classes" then
         local classes = line:match(Self.PATTERN_CLASSES)
         return classes and Util.Str.Split(classes, ", ") or nil
-    -- spec
+        -- spec
     elseif attr == "spec" then
         local spec = line:match(Self.PATTERN_SPEC)
         return spec and Util.In(spec, Unit.Specs()) and spec or nil
-    -- relicType
+        -- relicType
     elseif attr == "relicType" then
         return line:match(Self.PATTERN_RELIC_TYPE) or nil
-    -- realLevel
+        -- realLevel
     elseif attr == "realLevel" then
         return tonumber(select(2, line:match(Self.PATTERN_ILVL_SCALED)) or line:match(Self.PATTERN_ILVL))
-    -- realMinLevel
+        -- realMinLevel
     elseif attr == "realMinLevel" then
         return tonumber(line:match(Self.PATTERN_MIN_LEVEL))
-    -- fromlevel, toLevel
+        -- fromlevel, toLevel
     elseif Util.In(attr, "fromLevel", "toLevel") then
         local from, to = line:match(Self.PATTERN_HEIRLOOM_LEVEL)
         return from and to and tonumber(attr == "fromLevel" and from or to) or nil
-    -- attributes
+        -- attributes
     elseif attr == "attributes" then
         local match
-        for _,a in pairs(Self.ATTRIBUTES) do
+        for _, a in pairs(Self.ATTRIBUTES) do
             match = line:match(Self["PATTERN_" .. Util.Select(a, LE_UNIT_STAT_STRENGTH, "STRENGTH", LE_UNIT_STAT_INTELLECT, "INTELLECT", "AGILITY")])
             if match then break end
         end
 
         if match then
             local attrs = Util.Tbl.New()
-            for j=i,min(lines, i + 3) do
-                line = _G[Addon.ABBR .."_HiddenTooltipTextLeft" .. j]:GetText()
-                for _,a in pairs(Self.ATTRIBUTES) do
+            for j = i, min(lines, i + 3) do
+                line = _G[Addon.ABBR .. "_HiddenTooltipTextLeft" .. j]:GetText()
+                for _, a in pairs(Self.ATTRIBUTES) do
                     if not attrs[a] then
                         match = line:match(Self["PATTERN_" .. Util.Select(a, LE_UNIT_STAT_STRENGTH, "STRENGTH", LE_UNIT_STAT_INTELLECT, "INTELLECT", "AGILITY")])
                         attrs[a] = match and tonumber((match:gsub(",", ""):gsub("\\.", ""))) or nil
@@ -232,14 +232,14 @@ local fullScanFn = function (i, line, lines, attr)
             end
             return attrs
         end
-    -- isTransmogKnown
+        -- isTransmogKnown
     elseif attr == "isTransmogKnown" then
         if line:match(Self.PATTERN_APPEARANCE_KNOWN) or line:match(Self.PATTERN_APPEARANCE_UNKNOWN_ITEM) then
             return true
         elseif line:match(Self.PATTERN_APPEARANCE_UNKNOWN) then
             return false
         end
-    -- isTransmogSourceKnown
+        -- isTransmogSourceKnown
     elseif attr == "isTransmogSourceKnown" then
         if line:match(Self.PATTERN_APPEARANCE_KNOWN .. "$") then
             return true
@@ -260,35 +260,35 @@ function Self.GetInfo(item, attr, ...)
 
     if not item then
         return
-    -- Already known
+        -- Already known
     elseif isInstance and item[attr] ~= nil then
         return item[attr]
-    -- id
+        -- id
     elseif attr == "id" and id then
         return id
-    -- link
+        -- link
     elseif attr == "link" and link then
         return link
-    -- level, baseLevel, realLevel
+        -- level, baseLevel, realLevel
     elseif Util.In(attr, "level", "baseLevel") or attr == "realLevel" and not Self.IsScaled(item) then
         return (select(attr == "baseLevel" and 3 or 1, GetDetailedItemLevelInfo(link or id)))
-    -- realMinLevel
+        -- realMinLevel
     elseif attr == "realMinLevel" and not Self.IsScaled(item) then
         return (select(Self.INFO.basic.minLevel, GetItemInfo(link or id)))
-    -- maxLevel
+        -- maxLevel
     elseif attr == "maxLevel" then
         if Self.GetInfo(item, "quality") == Enum.ItemQuality.Heirloom then
             return Self.GetInfo(Self.GetLinkForLevel(link, Self.GetInfo(item, "toLevel")), "level", ...)
         else
             return Self.GetInfo(item, "realLevel", ...)
         end
-    -- isEquippable
+        -- isEquippable
     elseif attr == "isEquippable" then
-        return IsEquippableItem(link or id) or Self.IsGearToken(item)
-    -- visualId, visualSourceId
+        return IsEquippableItem(link or id) or Self.IsGearToken(item) or Self.IsRelic(item)
+        -- visualId, visualSourceId
     elseif link and (attr == "visualId" or attr == "visualSourceId") then
         return (select(attr == "visualId" and 1 or 2, C_TransmogCollection.GetItemInfo(link)))
-    -- From link
+        -- From link
     elseif Self.INFO.link[attr] then
         if isInstance then
             return item:GetLinkInfo()[attr]
@@ -314,22 +314,22 @@ function Self.GetInfo(item, attr, ...)
                 end
             end
         end
-    -- From GetItemInfo()
+        -- From GetItemInfo()
     elseif Self.INFO.basic[attr] then
         if isInstance then
             return item:GetBasicInfo()[attr]
-        -- quality
+            -- quality
         elseif attr == "quality" then
             local color = Self.GetInfo(item, "color")
             -- TODO: This is a workaround for epic item links having color "a335ee", but ITEM_QUALITY_COLORS has "a334ee"
             return color == "a335ee" and 4 or color and Util.Tbl.FindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. color) or 1
-        -- equipLoc
-        elseif attr == "equipLoc" and Self.IsWeaponToken(item) then
-            return Self.TYPE_WEAPON
+            -- equipLoc
+        elseif attr == "equipLoc" and Self.IsGearToken(item) then
+            return Self.GetGearTokenEquipLoc(item)
         else
             return (select(Self.INFO.basic[attr], GetItemInfo(item)))
         end
-    -- From ScanTooltip()
+        -- From ScanTooltip()
     elseif Self.INFO.full[attr] then
         if isInstance then
             return item:GetFullInfo()[attr]
@@ -399,10 +399,10 @@ function Self.GetEquippedArtifact(unit)
     unit = unit or "player"
     local classId = Unit.ClassId(unit)
 
-    for _,slot in pairs(Self.SLOTS[Self.TYPE_WEAPON]) do
+    for _, slot in pairs(Self.SLOTS[Self.TYPE_WEAPON]) do
         local id = GetInventoryItemID(unit, slot) or Self.GetInfo(GetInventoryItemLink(unit, slot), "id")
         if id then
-            for i,spec in pairs(Self.CLASSES[classId].specs) do
+            for i, spec in pairs(Self.CLASSES[classId].specs) do
                 if id == spec.artifact.id then
                     return Self.FromSlot(slot, unit, false)
                 end
@@ -422,7 +422,7 @@ function Self:GetLinkInfo()
         local info = Self.INFO.link
 
         -- Extract string data
-        for attr,p in pairs(info) do
+        for attr, p in pairs(info) do
             if type(p) == "string" then
                 self[attr] = select(3, self.link:find(p))
             end
@@ -477,15 +477,15 @@ function Self:GetBasicInfo()
                 local level, _, baseLevel = GetDetailedItemLevelInfo(self.link)
 
                 -- Set data
-                for attr,pos in pairs(Self.INFO.basic) do
+                for attr, pos in pairs(Self.INFO.basic) do
                     self[attr] = data[pos]
                 end
 
                 -- Some extra data
                 self.level = level or self.level
                 self.baseLevel = baseLevel or self.level
-                self.isEquippable = IsEquippableItem(self.link) or self:IsGearToken()
-                self.equipLoc = Util.Str.IsEmpty(self.equipLoc) and self:IsWeaponToken() and Self.TYPE_WEAPON or self.equipLoc
+                self.isEquippable = IsEquippableItem(self.link) or self:IsGearToken() or Self.IsRelic(self)
+                self.equipLoc = Util.Str.IsEmpty(self.equipLoc) and self:GetGearTokenEquipLoc() or self.equipLoc
                 self.isSoulbound = self.bindType == LE_ITEM_BIND_ON_ACQUIRE or self.isEquipped and self.bindType == LE_ITEM_BIND_ON_EQUIP
                 self.isTradable = Util.Default(self.isTradable, not self.isSoulbound or nil)
                 self.visualId, self.visualSourceId = C_TransmogCollection.GetItemInfo(self.link)
@@ -509,7 +509,7 @@ function Self:GetFullInfo()
     self:GetBasicInfo()
 
     if self.infoLevel == Self.INFO_BASIC and self.isEquippable then
-        Util.ScanTooltip(function (i, line, lines)
+        Util.ScanTooltip(function(i, line, lines)
             self.infoLevel = Self.INFO_FULL
 
             for attr in pairs(Self.INFO.full) do
@@ -608,7 +608,7 @@ function Self.GetOwnedForLocation(loc, allWeapons)
         items = weapon and weapon:GetRelics(loc) or items
     elseif Self.SLOTS[loc] then
         local slots = Self.SLOTS[allWeapons and Util.In(loc, Self.TYPES_WEAPON) and Self.TYPE_WEAPON or loc]
-        for i,slot in pairs(slots) do
+        for i, slot in pairs(slots) do
             local link = GetInventoryItemLink("player", slot)
             if link and not Self.IsLegendary(link) and Self.IsSameLocation(link, loc, allWeapons) then
                 tinsert(items, link)
@@ -619,8 +619,8 @@ function Self.GetOwnedForLocation(loc, allWeapons)
     end
 
     -- Get item(s) from bag
-    for bag=0,NUM_BAG_SLOTS do
-        for slot=1, GetContainerNumSlots(bag) do
+    for bag = 0, NUM_BAG_SLOTS do
+        for slot = 1, GetContainerNumSlots(bag) do
             local link = GetContainerItemLink(bag, slot)
 
             if link and Self.GetInfo(link, "isEquippable") then
@@ -633,9 +633,9 @@ function Self.GetOwnedForLocation(loc, allWeapons)
                     elseif Self.GetInfo(link, "classId") == LE_ITEM_CLASS_WEAPON then
                         -- It might be an artifact weapon
                         local id = Self.GetInfo(link, "id")
-                        for i,spec in pairs(Self.CLASSES[classId].specs) do
+                        for i, spec in pairs(Self.CLASSES[classId].specs) do
                             if id == spec.artifact.id and Addon.db.char.specs[i] then
-                                for slot,relicType in pairs(spec.artifact.relics) do
+                                for slot, relicType in pairs(spec.artifact.relics) do
                                     if relicType == loc then
                                         tinsert(items, (select(2, GetItemGem(link, slot))))
                                     end
@@ -655,7 +655,7 @@ end
 
 -- Get number of slots for a given equipment location
 function Self:GetSlotCountForLocation(unit)
-    if not self:GetLinkInfo().isEquippable or not select(2, self:GetBasicInfo()) then
+    if not self:GetBasicInfo().isEquippable or not select(2, self:GetBasicInfo()) then
         return 0
     end
 
@@ -664,7 +664,7 @@ function Self:GetSlotCountForLocation(unit)
     if self:IsRelic() then
         self:GetFullInfo()
         local n = 0
-        for i,spec in pairs(class.specs) do
+        for i, spec in pairs(class.specs) do
             if Addon.db.char.specs[i] then
                 n = n + Util.Tbl.CountOnly(spec.artifact.relics, self.relicType)
             end
@@ -673,7 +673,7 @@ function Self:GetSlotCountForLocation(unit)
     elseif self:IsWeaponToken() then
         return 2
     elseif self.equipLoc == Self.TYPE_WEAPON then
-        for i,spec in pairs(class.specs) do
+        for i, spec in pairs(class.specs) do
             if Addon.db.char.specs[i] and spec.dualWield then
                 return 2
             end
@@ -717,7 +717,7 @@ end
 -- Get the reference level for equipment location
 ---@param unit string
 function Self:GetLevelForLocation(unit)
-    if not self:GetLinkInfo().isEquippable then return 0 end
+    if not self:GetBasicInfo().isEquippable then return 0 end
 
     unit = Unit(unit or "player")
     local loc = self:GetLocation()
@@ -768,7 +768,7 @@ function Self:GetEquippedForLocation(unit)
         return Inspect.GetLink(unit, self:GetFullInfo().relicType)
     elseif self.isEquippable then
         local links = Util.Tbl.New()
-        for i,slot in pairs(Self.SLOTS[self.equipLoc]) do
+        for i, slot in pairs(Self.SLOTS[self.equipLoc]) do
             tinsert(links, isSelf and GetInventoryItemLink(unit, slot) or Inspect.GetLink(unit, slot) or nil)
         end
         return links
@@ -789,11 +789,11 @@ end
 function Self:GetRelics(relicTypes)
     local id = self:GetBasicInfo().id
 
-    for _,class in pairs(Self.CLASSES) do
-        for i,spec in pairs(class.specs) do
+    for _, class in pairs(Self.CLASSES) do
+        for i, spec in pairs(class.specs) do
             if spec.artifact.id == id then
                 local relics = {}
-                for slot,relicType in pairs(spec.artifact.relics) do
+                for slot, relicType in pairs(spec.artifact.relics) do
                     if not relicTypes or Util.In(relicType, relicTypes) then
                         tinsert(relics, self:GetGem(slot))
                     end
@@ -808,20 +808,21 @@ end
 function Self:GetRelicSlots(unique)
     local id = self:GetBasicInfo().id
 
-    for _,class in pairs(Self.CLASSES) do
-        for i,spec in pairs(class.specs) do
+    for _, class in pairs(Self.CLASSES) do
+        for i, spec in pairs(class.specs) do
             if spec.artifact.id == id then
                 local relics = spec.artifact.relics
 
                 -- Remove all relicTypes that occur in other weapons
                 if unique then
                     relics = Util.Tbl.Copy(relics)
-                    for slot,relicType in pairs(relics) do
-                        for i,spec in pairs(class.specs) do
+                    for slot, relicType in pairs(relics) do
+                        for i, spec in pairs(class.specs) do
                             if spec.artifact.id ~= id then
-                                for _,otherRelicType in pairs(spec.artifact.relics) do
+                                for _, otherRelicType in pairs(spec.artifact.relics) do
                                     if otherRelicType == relicType then
-                                        relics[slot] = nil break
+                                        relics[slot] = nil
+                                        break
                                     end
                                 end
                             end
@@ -860,10 +861,11 @@ function Self:CanBeEquipped(unit, ...)
         return false
     elseif ... then
         local found = false
-        for i,spec in Util.Each(...) do
+        for i, spec in Util.Each(...) do
             if not (self.spec and self.spec ~= select(2, GetSpecializationInfo(spec))) and
-               not (self:IsArtifact() and self.id ~= class.specs[spec].artifact.id) then
-                found = true break
+                not (self:IsArtifact() and self.id ~= class.specs[spec].artifact.id) then
+                found = true
+                break
             end
         end
         if not found then return false end
@@ -873,12 +875,12 @@ function Self:CanBeEquipped(unit, ...)
     if Util.In(self.classId, LE_ITEM_CLASS_ARMOR, LE_ITEM_CLASS_WEAPON) then
         return self.equipLoc == Self.TYPE_CLOAK
             or Util.In(self.subClassId, class[self.classId == LE_ITEM_CLASS_ARMOR and "armor" or "weapons"])
-    -- Everyone can use weapon tokens for their class
-    elseif self:IsWeaponToken() then
+        -- Everyone can use weapon tokens for their class
+    elseif self:IsGearToken() then
         return true
-    -- Check relic type
+        -- Check relic type
     elseif self:IsRelic() then
-        for i,spec in pairs(class.specs) do
+        for i, spec in pairs(class.specs) do
             if (not isSelf or Addon.db.char.specs[i]) and Util.In(self.relicType, spec.artifact.relics) then
                 return true
             end
@@ -913,11 +915,11 @@ function Self:HasMatchingAttributes(unit, ...)
     -- Item has no primary attributes
     if not self.attributes or not next(self.attributes) then
         return true
-    -- Check if item has a primary attribute that the class/spec can use
+        -- Check if item has a primary attribute that the class/spec can use
     else
         local isSelf, classId = Unit.IsSelf(unit), Unit.ClassId(unit)
 
-        for i,info in pairs(Self.CLASSES[classId].specs) do
+        for i, info in pairs(Self.CLASSES[classId].specs) do
             if not isSelf or Util.Check(..., Util.In(i, ...), true) then
                 if self.attributes[info.attribute] then return true end
             end
@@ -953,8 +955,8 @@ function Self:IsUseful(unit, ...)
             return true
         else
             local cat = Self.TRINKETS[self.id]
-            for i,spec in pairs(Self.CLASSES[Unit.ClassId(unit)].specs) do
-                if  (not ... or Util.In(i, ...))
+            for i, spec in pairs(Self.CLASSES[Unit.ClassId(unit)].specs) do
+                if (not ... or Util.In(i, ...))
                     and (bit.band(cat, Self.MASK_ATTR) == 0 or bit.band(cat, spec.attribute) > 0)
                     and (bit.band(cat, Self.MASK_ROLE) == 0 or bit.band(cat, spec.role) > 0) then
                     return true
@@ -966,12 +968,12 @@ function Self:IsUseful(unit, ...)
         return false
     elseif self:IsRelic() and UnitLevel(unit) > MAX_PLAYER_LEVEL - 10 then
         return false
-    elseif self:IsWeaponToken() then
+    elseif self:IsGearToken() then
         return true
     elseif not self:HasMatchingAttributes(unit, ...) then
         return false
     elseif self:IsWeapon() and ... then
-        for i,v in Util.Each(...) do
+        for i, v in Util.Each(...) do
             local spec = Self.CLASSES[Unit.ClassId(unit)].specs[v]
             if not spec.weapons or Util.In(self.equipLoc, spec.weapons) then return true end
         end
@@ -986,7 +988,7 @@ function Self:IsPawnUpgrade(unit, ...)
     if unit and Unit.IsSelf(unit) and IsAddOnLoaded("Pawn") and PawnGetItemData and PawnIsItemAnUpgrade and PawnCommon and PawnCommon.Scales then
         local data = PawnGetItemData(self.link)
         if data then
-            for i,scale in pairs(PawnIsItemAnUpgrade(data) or Util.Tbl.EMPTY) do
+            for i, scale in pairs(PawnIsItemAnUpgrade(data) or Util.Tbl.EMPTY) do
                 if not ... or Util.In(PawnCommon.Scales[scale.ScaleName].specID, ...) then
                     return true
                 end
@@ -1014,8 +1016,8 @@ function Self:IsCollectibleMissing(unit)
     else
         return (not f.enabled or f.transmog) and (
             not self:GetFullInfo().isTransmogKnown
-            or f.enabled and f.transmogItem and not self:GetFullInfo().isTransmogSourceKnown
-        )
+                or f.enabled and f.transmogItem and not self:GetFullInfo().isTransmogSourceKnown
+            )
     end
 end
 
@@ -1032,7 +1034,7 @@ function Self:IsUpgrade(unit)
 
         if not self:IsUseful(unit, specs) then
             isUseful = false
-        elseif f.pawn and self.equipLoc ~= Self.TYPE_TRINKET and not self:IsWeaponToken() then
+        elseif f.pawn and self.equipLoc ~= Self.TYPE_TRINKET and not self:IsGearToken() then
             isUseful = self:IsPawnUpgrade(unit, specs) ~= false
         end
 
@@ -1060,7 +1062,7 @@ function Self:GetEligible(unit)
         if unit then
             if self:IsCollectibleMissing(unit) then
                 return true
-            elseif not self:GetLinkInfo().isEquippable then
+            elseif not self:GetBasicInfo().isEquippable then
                 return false
             elseif self.isSoulbound and not self:CanBeEquipped(unit) then
                 return nil
@@ -1069,7 +1071,7 @@ function Self:GetEligible(unit)
             end
         else
             local eligible = Util.Tbl.New()
-            for i=1,GetNumGroupMembers() do
+            for i = 1, GetNumGroupMembers() do
                 local u = GetRaidRosterInfo(i)
                 if u then
                     eligible[u] = self:GetEligible(u)
@@ -1095,7 +1097,7 @@ end
 ---@param othersOnly boolean
 function Self:GetNumEligible(checkInterest, othersOnly)
     local n = 0
-    for unit,v in pairs(self:GetEligible()) do
+    for unit, v in pairs(self:GetEligible()) do
         if (not checkInterest or v) and not (othersOnly and Unit.IsSelf(unit)) then
             n = n + 1
         end
@@ -1148,12 +1150,12 @@ end
 
 -- Run a function when item data is loaded
 function Self:OnLoaded(fn, ...)
-    local args, try = {...}
-    try = function (n)
+    local args, try = { ... }
+    try = function(n)
         if self:IsLoaded() then
             fn(unpack(args))
         elseif n > 0 then
-            Addon:ScheduleTimer(try, 0.1, n-1)
+            Addon:ScheduleTimer(try, 0.1, n - 1)
         end
     end
     try(10)
@@ -1171,15 +1173,15 @@ function Self:OnFullyLoaded(fn, ...)
     if not self.isOwner then
         self:OnLoaded(fn, ...)
     else
-        local entry, try = {fn = fn, args = {...}}
-        try = function (n)
+        local entry, try = { fn = fn, args = { ... } }
+        try = function(n)
             local i = Util.Tbl.Find(Self.queue, entry)
             if i then
                 if self:IsFullyLoaded(n >= 5) then
                     tremove(Self.queue, i)
                     fn(unpack(entry.args))
                 elseif n > 0 then
-                    entry.timer = Addon:ScheduleTimer(try, 0.1, n-1)
+                    entry.timer = Addon:ScheduleTimer(try, 0.1, n - 1)
                 else
                     tremove(Self.queue, i)
                 end
@@ -1232,7 +1234,7 @@ function Self.IsTradable(selfOrBag, slot)
         return nil, isSoulbound, bindTimeout
     end
 
-    Util.ScanTooltip(function (i, line)
+    Util.ScanTooltip(function(i, line)
         -- Soulbound
         if not isSoulbound then
             isSoulbound = line:match(Self.PATTERN_SOULBOUND) ~= nil
@@ -1258,7 +1260,7 @@ function Self:GetPosition(refresh)
     -- Check bags
     local bag, slot, isTradable
     for b = self.slot == 0 and self.bagOrEquip or 0, self.slot == 0 and self.bagOrEquip or NUM_BAG_SLOTS do
-        for s=1,GetContainerNumSlots(b) do
+        for s = 1, GetContainerNumSlots(b) do
             local link = GetContainerItemLink(b, s)
             if link == self.link then
                 isTradable = Self.IsTradable(b, s)
@@ -1296,7 +1298,7 @@ function Self:SetPosition(bagOrEquip, slot)
 
     self.bagOrEquip = bagOrEquip
     self.slot = slot
-    self.position = {bagOrEquip, slot}
+    self.position = { bagOrEquip, slot }
 
     self.isEquipped = bagOrEquip and slot == nil
     self.isSoulbound = self.isSoulbound or self.isEquipped
@@ -1342,10 +1344,10 @@ end
 function Self.UpdatePlayerCacheWeapons()
     local class = Self.CLASSES[Unit.ClassId("player")]
 
-    for _,loc in pairs(Self.TYPES_WEAPON) do
+    for _, loc in pairs(Self.TYPES_WEAPON) do
         local owned
 
-        for i,spec in pairs(class.specs) do
+        for i, spec in pairs(class.specs) do
             if not spec.weapons or Util.In(loc, spec.weapons) then
                 local cache = Self.GetPlayerCache(loc, i) or Util.Tbl.New()
 
@@ -1357,7 +1359,7 @@ function Self.UpdatePlayerCacheWeapons()
                     local dualWield = class.dualWield or spec.dualWield
 
                     -- Go through all owned weapons and find highest ilvl for each type
-                    for j,item in pairs(owned) do
+                    for j, item in pairs(owned) do
                         owned[j] = Self.FromLink(item, "player"):GetBasicInfo()
                         item = owned[j]
 
@@ -1451,21 +1453,31 @@ function Self:IsConduit()
     return C_Soulbinds.IsItemConduitByItemInfo(Self.GetLink(self))
 end
 
--- Check if the item is a Shadowlands weapon token
+function Self:IsArmorToken()
+    return Self.GetArmorTokenEquipLoc(self) ~= nil
+end
+
 function Self:IsWeaponToken()
-    return Self.GetInfo(self, "expacId") == Self.EXPAC_SL
-        and Self.GetInfo(self, "subType") == "Context Token"
+    return Self.GetInfo(self, "expacId") == Self.EXPAC_SL and Self.GetInfo(self, "subType") == "Context Token" -- T28
 end
 
 function Self:IsGearToken()
-    return Self.IsRelic(self) or Self.IsWeaponToken(self)
+    return Self.IsArmorToken(self) or Self.IsWeaponToken(self)
+end
+
+function Self:GetArmorTokenEquipLoc()
+    return Self.GEAR_TOKENS[Self.GetInfo(self, "id")]
+end
+
+function Self:GetGearTokenEquipLoc()
+    return Self.GetArmorTokenEquipLoc(self) or Self.IsWeaponToken(self) and Self.TYPE_WEAPON
 end
 
 -- Check if the item is a battlepet
 function Self:IsPet()
     return Self.GetInfo(self, "itemType") == "battlepet"
         or (
-            Self.GetInfo(self, "classId") == LE_ITEM_CLASS_MISCELLANEOUS
+        Self.GetInfo(self, "classId") == LE_ITEM_CLASS_MISCELLANEOUS
             and Self.GetInfo(self, "subClassId") == LE_ITEM_MISCELLANEOUS_COMPANION_PET
         )
 end
@@ -1489,7 +1501,7 @@ function Self:IsAppearanceKnown()
     if visualId then
         local sources = C_TransmogCollection.GetAllAppearanceSources(visualId)
         if sources then
-            for _,sourceId in pairs(sources) do
+            for _, sourceId in pairs(sources) do
                 if Self.IsAppearanceSourceKnown(self, sourceId) then
                     return true
                 end

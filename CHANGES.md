@@ -1,2 +1,2 @@
-- Updated ToC version for patch 9.2
-- Updated instance and tricket lists
+- Added support for T29 armor tokens
+- Updated trinket list
