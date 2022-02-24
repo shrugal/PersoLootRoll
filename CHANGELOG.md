@@ -1,8 +1,3 @@
-Version 23.02-beta1
-
-- Updated ToC version for patch 9.2
-- Updated instance and tricket lists
-
 Version 23.01
 
 - Updated ToC version for patch 9.1.5
