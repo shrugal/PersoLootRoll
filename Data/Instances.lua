@@ -190,4 +190,14 @@ Self.INSTANCES = {
     [1193] = 9, -- Sanctum of Domination
     [1194] = 9, -- Tazavesh, the Veiled Market
     [1195] = 9, -- Sepulcher of the First Ones
+    [1196] = 10, -- Brackenhide Hollow
+    [1197] = 10, -- Uldaman: Legacy of Tyr
+    [1198] = 10, -- The Nokhud Offensive
+    [1199] = 10, -- Neltharus
+    [1200] = 10, -- Vault of the Incarnates
+    [1201] = 10, -- Algeth'ar Academy
+    [1202] = 10, -- Ruby Life Pools
+    [1203] = 10, -- The Azure Vault
+    [1204] = 10, -- Halls of Infusion
+    [1205] = 10, -- Dragon Isles
 }

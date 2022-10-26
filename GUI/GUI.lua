@@ -1060,6 +1060,7 @@ local Fn = function (...)
             or f.image and f.image[k] and f.image
             or f.label and f.label[k] and f.label
             or f.content and f.content[k] and f.content
+
         obj[k](obj, ...)
 
         -- Fix Label's stupid image anchoring

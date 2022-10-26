@@ -1,1 +1,4 @@
-- Updated ToC version for patch 9.2.5
+- Updated ToC version for patch 10.0
+- Update Ace3 libraries
+- Fix GUI bugs from 10.0 changes
+- Update instance and trinket lists
