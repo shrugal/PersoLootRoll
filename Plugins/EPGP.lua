@@ -51,7 +51,7 @@ end
 
 -- Get a unit's PR
 ---@param unit string
----@return number
+---@return number?
 function Self.UnitPR(unit)
     local ep, gp = EPGP:GetEPGP(Unit.FullName(unit))
     return ep and gp and gp ~= 0 and Util.Num.Round(ep/gp, 2) or nil
@@ -90,8 +90,11 @@ function Self.DetermineWinner(_, candidates)
 end
 
 -- Add EP to the unit's account
----@param undo boolean
----@param trys integer
+---@param roll Roll
+---@param unit string
+---@param amount integer
+---@param undo boolean?
+---@param trys integer?
 function Self.CreditGP(roll, unit, amount, undo, trys)
     local link, gp = roll.item.link, undo and -amount or amount
 

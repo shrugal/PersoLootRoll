@@ -49,8 +49,9 @@ Self.rejectShown = {}
 -------------------------------------------------------
 
 -- Set (or reset) the masterlooter
----@param rules table
----@param silent boolean
+---@param unit string?
+---@param rules table?
+---@param silent boolean?
 function Self.SetMasterlooter(unit, rules, silent)
     unit = unit and Unit.Name(unit)
 
@@ -95,7 +96,7 @@ function Self.SetMasterlooter(unit, rules, silent)
 end
 
 -- Check if the unit (or the player) is our masterlooter
----@param unit string
+---@param unit string?
 function Self.GetMasterlooter(unit)
     unit = Unit.Name(unit or "player")
     if Unit.IsSelf(unit) then
@@ -106,15 +107,15 @@ function Self.GetMasterlooter(unit)
 end
 
 -- Check if the unit (or the player) is our masterlooter
----@param unit string
----@return boolean
+---@param unit string?
+---@return boolean?
 function Self.IsMasterlooter(unit)
     return Self.masterlooter and UnitIsUnit(Self.masterlooter, unit or "player")
 end
 
 -- Set a unit's masterlooting status
 ---@param unit string
----@param ml string
+---@param ml string?
 function Self.SetMasterlooting(unit, ml)
     unit, ml = unit and Unit.Name(unit), ml and Unit.Name(ml)
     Self.masterlooting[unit] = ml
@@ -214,7 +215,8 @@ function Self.Restore()
 end
 
 -- Set the session rules
----@param silent boolean
+---@param rules table?
+---@param silent boolean?
 function Self.SetRules(rules, silent)
     if Self.IsMasterlooter() then
         local c = Addon.db.profile.masterloot
@@ -262,8 +264,9 @@ end
 Self.RefreshRules = Util.Fn.Debounce(Self.RefreshRules, 0.1, true)
 
 -- Check if the unit is on the loot council
----@param refresh boolean
----@param groupRank integer
+---@param unit string?
+---@param refresh boolean?
+---@param groupRank integer?
 function Self.IsOnCouncil(unit, refresh, groupRank)
     unit = Unit(unit or "player")
     local fullName = Unit.FullName(unit)
@@ -325,7 +328,8 @@ function Self.SendRequest(target)
 end
 
 -- Send masterlooter offer to unit
----@param silent boolean
+---@param target string?
+---@param silent boolean?
 function Self.SendOffer(target, silent)
     if Self.IsMasterlooter() then
         Comm.SendData(Comm.EVENT_MASTERLOOT_OFFER, {session = Self.rules, silent = silent}, target)
@@ -333,7 +337,7 @@ function Self.SendOffer(target, silent)
 end
 
 -- Confirm unit as your masterlooter
----@param target string
+---@param target string?
 function Self.SendConfirmation(target)
     Comm.Send(Comm.EVENT_MASTERLOOT_ACK, Unit.FullName(Self.masterlooter), target)
 end

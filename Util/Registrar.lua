@@ -41,6 +41,7 @@ end
 -- Get an entry by key
 ---@param key any
 ---@return any
+---@return any
 function Self:Get(key)
     if self.idKey then
         local i, v = Util.Tbl.FindWhere(self.register, self.idKey, key)

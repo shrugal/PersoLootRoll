@@ -647,6 +647,7 @@ end
 ---@param timer table
 ---@param to number
 ---@return table
+---@return boolean
 function Self:ExtendTimerTo(timer, to, ...)
     if not timer.canceled and (select("#", ...) > 0 or timer.ends - GetTime() < to) then
         self:CancelTimer(timer)

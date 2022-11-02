@@ -13,7 +13,7 @@ Self.DEFAULT = Util.Select(RI:GetCurrentRegion(), "KR", "koKR", "TW", "zhTW", "C
 Self.FALLBACK = "enUS"
 
 -- Get language for the given realm
----@param realm string
+---@param realm string?
 ---@return string
 function Self.GetRealmLanguage(realm)
     local lang = select(5, RI:GetRealmInfo(realm or GetRealmName())) or Self.DEFAULT

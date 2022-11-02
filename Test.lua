@@ -1,8 +1,9 @@
-local Name = debug.getinfo(1).source:gsub("\\", "/"):match("([^/]+)/[^/]+$") or (os.getenv("PWD") or ""):match("[^/]+$")
 local Addon = {}
+local Name = (debug.getinfo(1).source or ""):match("([^/\\]+)/[^/\\]+$")
+    or (os.getenv("PWD") or os.getenv("CD") or io.popen("cd"):read() or ""):match("[^/\\]+$")
 
 -- Static info
-local BUILD = { "8.2.5", "32028", "Sep 30 2019", 80205 }
+local BUILD = { "10.0.0", "46366", "Oct 27 2022", 100000 }
 local LOCALE = "enUS"
 local REGION = 3
 local REALM = "Mal'Ganis"
@@ -59,13 +60,14 @@ local function checkfile(path)
 end
 
 local function readfile(path)
-    local file = io.open(path) or error("File " .. path .. " not found")
+    local file = io.open(path) or error("File " .. path .. " not found") --[[@as file*]]
     return file:read("*all"), file:close()
 end
 
 local function xml(s)
     local function parseargs(s)
         local arg = {}
+        ---@diagnostic disable-next-line: discard-returns
         string.gsub(s, "([%-%w]+)=([\"'])(.-)%2", function(w, _, a) arg[w] = a end)
         return arg
     end
@@ -163,11 +165,19 @@ local Obj = setmetatable({}, Meta)
 -------------------------------------------------------
 
 -- Frames
-CreateFrame = function(_, name, parent)
+---@param frameType string?
+---@param name string?
+---@param parent Frame?
+---@param template string?
+---@param id string?
+---@return Frame
+CreateFrame = function(frameType, name, parent, template, id)
     parent = parent or UIParent
     local scripts, events, points, textures, lastUpdate, f = {}, {}, {}, {}, 0
     local CreateChild = function() return CreateFrame(nil, nil, f) end
     local GetTexture = function(name) return function() if not textures[name] then textures[name] = CreateChild() end return textures[name] end end
+
+    ---@class Frame
     f = setmetatable({
         SetScript = function(_, k, v) scripts[k] = v end,
         GetScript = function(_, k) return scripts[k] end,
@@ -216,8 +226,8 @@ xpcall = function(func, err, ...)
 end
 loadstring = loadstring or load
 geterrorhandler = Const(Fn)
-seterrorhandler = Fn
-wipe = function(t) for i in pairs(t) do t[i] = nil end end
+seterrorhandler = Fn --[[@as fun(fn: fun(msg: string, lvl: integer))]]
+wipe = (function(t) for i in pairs(t) do t[i] = nil end end) --[[@as function(t: table): table]]
 issecurevariable = Const(false)
 hooksecurefunc = function(tbl, name, fn)
     if not fn then tbl, name, fn = _G, tbl, name end
@@ -234,7 +244,7 @@ string.split = function(del, str, n)
     if i == 0 then table.insert(t, str) end
     return unpack(t)
 end
-string.trim = function(s) return s:match("^%s*(.-)%s*$") end
+string.trim = (function(str) return str:match("^%s*(.-)%s*$") end) --[[@as fun(str: string, chars: string?): string]]
 strsplit = string.split
 strmatch = string.match
 strtrim = string.trim
@@ -254,7 +264,7 @@ GetRealmName = Const(REALM)
 GetAutoCompleteRealms = Const(REALM_CONNECTED)
 GetCurrentRegion = Const(REGION)
 GetBuildInfo = Consts(unpack(BUILD))
-GetAddOnMetadata = Val(VERSION)
+GetAddOnMetadata = Val(VERSION) --[[@as fun(name: string, field: string?): string]]
 GetTime = function(...) return math.floor(os.clock(...)) end
 GetInstanceInfo = Fn
 GetLootRollTimeLeft = Val(0)
@@ -285,11 +295,11 @@ InterfaceOptions_AddCategory = Fn
 IsLoggedIn = Const(false)
 IsDressableItem = Val(true)
 GetNumGroupMembers = Const(0)
-IsInGroup = Const(false)
-IsInRaid = Const(false)
+IsInGroup = Const(false) --[[@as fun(category: integer?): boolean]]
+IsInRaid = Const(false) --[[@as fun(category: integer?): boolean]]
 IsEquippableItem = Val(true)
-ChatFrame_AddMessageEventFilter = Fn
-GetGuildInfo = Fn
+ChatFrame_AddMessageEventFilter = Fn --[[@as fun(event: string, filterFunc: function): table]]
+GetGuildInfo = Fn --[[@as fun(unit: string): table]]
 IsShiftKeyDown = Const(false)
 EJ_GetInstanceForMap = Val(INSTANCE)
 

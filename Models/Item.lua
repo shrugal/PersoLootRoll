@@ -8,6 +8,8 @@ local Self = Addon.Item
 
 local Meta = { __index = Self }
 
+---@alias ItemRef Item|string|integer
+
 -------------------------------------------------------
 --                     Constants                     --
 -------------------------------------------------------
@@ -124,8 +126,8 @@ Self.queue = {}
 -------------------------------------------------------
 
 -- Get the item link from a string
----@param str string|table
----@return string
+---@param str string|Item
+---@return string?
 function Self.GetLink(str)
     if type(str) == "table" then
         return str.link
@@ -253,9 +255,9 @@ end
 ---@param attr string
 ---@return any
 function Self.GetInfo(item, attr, ...)
-    local isInstance = type(item) == "table" and item.link and true
+    local isInstance = type(item) == "table" and item.link and true --[[@as boolean]]
     local id = isInstance and item.id or tonumber(item)
-    local link = isInstance and item.link or Self.IsLink(item) and item
+    local link = isInstance and item.link or Self.IsLink(item) and item --[[@as string]]
     item = isInstance and item or link or id
 
     if not item then
@@ -294,7 +296,7 @@ function Self.GetInfo(item, attr, ...)
             return item:GetLinkInfo()[attr]
         else
             if type(Self.INFO.link[attr]) == "string" then
-                return select(3, link:find(Self.INFO.link[attr]))
+                return select(3, link:find(Self.INFO.link[attr] --[[@as string]]))
             else
                 local info, i, numBonusIds, bonusIds = Self.INFO.link, 0, 1
                 for v in link:gmatch(":(%-?%d*)") do
@@ -351,9 +353,10 @@ end
 
 -- Create an item instance from a link
 ---@param item Item|string
----@param owner string
----@param bagOrEquip integer
----@param slot integer
+---@param owner string?
+---@param bagOrEquip integer?
+---@param slot integer?
+---@param isTradable boolean?
 ---@return Item
 function Self.FromLink(item, owner, bagOrEquip, slot, isTradable)
     if type(item) == "string" then
@@ -394,7 +397,7 @@ function Self.FromBagSlot(bag, slot, isTradable)
 end
 
 -- Get the currently equipped artifact weapon
----@param unit string
+---@param unit string?
 function Self.GetEquippedArtifact(unit)
     unit = unit or "player"
     local classId = Unit.ClassId(unit)
@@ -589,7 +592,7 @@ end
 
 -- Get a list of owned items by equipment location
 ---@param loc Item|string
----@param allWeapons boolean
+---@param allWeapons boolean?
 function Self.GetOwnedForLocation(loc, allWeapons)
     local items = Util.Tbl.New()
     local classId = Unit.ClassId("player")
@@ -688,7 +691,8 @@ function Self:GetSlotCountForLocation(unit)
 end
 
 -- Get the threshold for the item's slot
----@param upper boolean
+---@param unit string?
+---@param upper boolean?
 function Self:GetThresholdForLocation(unit, upper)
     unit = Unit(unit or "player")
     local f = Addon.db.profile.filter
@@ -785,7 +789,7 @@ function Self:GetGem(slot)
 end
 
 -- Get artifact relics in the item
----@param relicTypes table
+---@param relicTypes string|table?
 function Self:GetRelics(relicTypes)
     local id = self:GetBasicInfo().id
 
@@ -891,6 +895,7 @@ function Self:CanBeEquipped(unit, ...)
 end
 
 -- Check the item quality
+---@param self ItemRef
 function Self:HasSufficientQuality(isLootEvent)
     local quality = Self.GetInfo(self, "quality")
 
@@ -1055,7 +1060,7 @@ end
 -- - nil: A unit can't reasonably use the item (they can' wear it or send it to and alt)
 -- - false: They probably don't want it (e.g. ilvl too low)
 -- - true: It might be an upgrade of some sort (e.g. ilvl high enough or collectible)
----@param unit string
+---@param unit string?
 ---@return table|boolean|nil
 function Self:GetEligible(unit)
     if not self.eligible then
@@ -1094,7 +1099,8 @@ function Self:GetEligible(unit)
 end
 
 -- Get the # of eligible players
----@param othersOnly boolean
+---@param checkInterest boolean?
+---@param othersOnly boolean?
 function Self:GetNumEligible(checkInterest, othersOnly)
     local n = 0
     for unit, v in pairs(self:GetEligible()) do
@@ -1125,12 +1131,13 @@ function Self:ShouldBeConsidered()
 end
 
 -- Check if the addon should offer to bid on an item
+---@return boolean
 function Self:ShouldBeBidOn()
     if Addon.db.profile.dontShare or not self:ShouldBeConsidered() then
         return false
     end
 
-    local eligible = self:GetEligible("player")
+    local eligible = self:GetEligible("player") --[[@as boolean]]
     return eligible or not Addon.db.profile.filter.enabled and eligible ~= nil
 end
 
@@ -1197,9 +1204,9 @@ end
 -------------------------------------------------------
 
 -- Check if the item (given by self or bag+slot) is tradable
----@param selfOrBag Item|integer
----@param slot integer
----@return boolean
+---@param selfOrBag Item|integer?
+---@param slot integer?
+---@return boolean?
 ---@return boolean
 ---@return boolean
 function Self.IsTradable(selfOrBag, slot)
@@ -1251,7 +1258,7 @@ function Self.IsTradable(selfOrBag, slot)
 end
 
 -- Get the item's position
----@param refresh boolean
+---@param refresh boolean?
 function Self:GetPosition(refresh)
     if not self.isOwner or not refresh and self.bagOrEquip and self.slot ~= 0 then
         return self.bagOrEquip, self.slot, self.isTradable
@@ -1291,6 +1298,8 @@ function Self:GetPosition(refresh)
 end
 
 -- Set the item's position
+---@param bagOrEquip table|integer?
+---@param slot integer?
 function Self:SetPosition(bagOrEquip, slot)
     if type(bagOrEquip) == "table" then
         bagOrEquip, slot = unpack(bagOrEquip)
@@ -1314,7 +1323,7 @@ end
 
 -- Get an entry from the player level cache
 ---@param loc string
----@param spec integer
+---@param spec integer?
 function Self.GetPlayerCache(loc, spec)
     loc = Self.GetCacheLocation(loc)
 
@@ -1324,10 +1333,11 @@ end
 -- Set an entry ont he player level cache
 ---@param loc string
 ---@param specOrCache integer|table
----@param cache table
+---@param cache table?
 function Self.SetPlayerCache(loc, specOrCache, cache)
     loc = Self.GetCacheLocation(loc)
     local spec = cache and specOrCache
+    ---@cast cache table
     cache = cache or specOrCache
 
     Self.playerCache[spec and loc .. spec or loc] = cache
@@ -1345,6 +1355,7 @@ function Self.UpdatePlayerCacheWeapons()
     local class = Self.CLASSES[Unit.ClassId("player")]
 
     for _, loc in pairs(Self.TYPES_WEAPON) do
+        ---@type { [string]: Item }
         local owned
 
         for i, spec in pairs(class.specs) do
@@ -1405,6 +1416,7 @@ end
 -------------------------------------------------------
 
 -- Basically tells us whether GetRealItemLevelInfo doesn't give us the correct ilvl
+---@param self ItemRef
 function Self:IsScaled()
     if Self.GetInfo(self, "quality") == Enum.ItemQuality.Heirloom then
         return true
@@ -1437,11 +1449,13 @@ function Self:IsArtifact()
 end
 
 -- Check if the item is a Legion artifact relic
+---@param self ItemRef
 function Self:IsRelic()
     return Self.GetInfo(self, "subType") == "Artifact Relic"
 end
 
 -- Check if the item has BFA azerite traits
+---@param self ItemRef
 function Self:IsAzeriteGear()
     return Self.GetInfo(self, "quality") >= Enum.ItemQuality.Rare
         and Self.GetInfo(self, "expacId") == Self.EXPAC_BFA
@@ -1449,31 +1463,38 @@ function Self:IsAzeriteGear()
 end
 
 -- Check if the item is a Shadowlands conduit
+---@param self Item|string
 function Self:IsConduit()
     return C_Soulbinds.IsItemConduitByItemInfo(Self.GetLink(self))
 end
 
+---@param self ItemRef
 function Self:IsArmorToken()
     return Self.GetArmorTokenEquipLoc(self) ~= nil
 end
 
+---@param self ItemRef
 function Self:IsWeaponToken()
     return Self.GetInfo(self, "expacId") == Self.EXPAC_SL and Self.GetInfo(self, "subType") == "Context Token" -- T28
 end
 
+---@param self ItemRef
 function Self:IsGearToken()
     return Self.IsArmorToken(self) or Self.IsWeaponToken(self)
 end
 
+---@param self ItemRef
 function Self:GetArmorTokenEquipLoc()
     return Self.GEAR_TOKENS[Self.GetInfo(self, "id")]
 end
 
+---@param self ItemRef
 function Self:GetGearTokenEquipLoc()
     return Self.GetArmorTokenEquipLoc(self) or Self.IsWeaponToken(self) and Self.TYPE_WEAPON
 end
 
 -- Check if the item is a battlepet
+---@param self ItemRef
 function Self:IsPet()
     return Self.GetInfo(self, "itemType") == "battlepet"
         or (
@@ -1482,8 +1503,9 @@ function Self:IsPet()
         )
 end
 
+---@param self ItemRef
 function Self:IsGem()
-    return Self.GetInfo(self, "itemType") == "Gem" and not Self:IsRelic(self)
+    return Self.GetInfo(self, "itemType") == "Gem" and not Self.IsRelic(self)
 end
 
 -- Check if the item has a collectible appearance that can be unlocked
@@ -1492,6 +1514,7 @@ function Self:IsTransmogable(unit)
 end
 
 -- Check if the visual appearance is known
+---@param self ItemRef
 function Self:IsAppearanceKnown()
     if Self.IsAppearanceSourceKnown(self) then
         return true
@@ -1512,6 +1535,8 @@ function Self:IsAppearanceKnown()
 end
 
 -- Check if the visual appearance is known from the item
+---@param self ItemRef
+---@param sourceId integer?
 function Self:IsAppearanceSourceKnown(sourceId)
     sourceId = sourceId or Self.GetInfo(self, "visualSourceId")
     return sourceId and select(5, C_TransmogCollection.GetAppearanceSourceInfo(sourceId))

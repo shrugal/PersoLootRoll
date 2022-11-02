@@ -159,6 +159,22 @@ Self.CLASSES = {
             }
         }
     },
+    [Unit.EVOKER] = {
+        armor = { LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_MAIL },
+        weapons = { LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_UNARMED, LE_ITEM_WEAPON_POLEARM, LE_ITEM_WEAPON_STAFF },
+        specs = {
+            { -- Devastation
+              role = Self.ROLE_RANGED,
+              attribute = LE_UNIT_STAT_INTELLECT,
+              artifact = { id = 0, relics = {} }
+            },
+            { -- Preservation
+              role = Self.ROLE_HEAL,
+              attribute = LE_UNIT_STAT_INTELLECT,
+              artifact = { id = 0, relics = {} }
+            },
+        }
+    },
     [Unit.HUNTER] = {
         armor = { LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_MAIL },
         weapons = { LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_UNARMED, LE_ITEM_WEAPON_POLEARM, LE_ITEM_WEAPON_STAFF, LE_ITEM_WEAPON_BOWS, LE_ITEM_WEAPON_CROSSBOW, LE_ITEM_WEAPON_GUNS },
@@ -444,6 +460,7 @@ function Self.UpdateTrinkets(tier, isRaid, instance, difficulty)
     -- Go through all tiers, dungeon/raid, instances and difficulties
     for t = tier, EJ_GetNumTiers() do
         EJ_SelectTier(t)
+        ---@diagnostic disable-next-line: count-down-loop
         for r = isRaid, 1 do
             while EJ_GetInstanceByIndex(instance, r == 1) do
                 local i, name = EJ_GetInstanceByIndex(instance, r == 1)
@@ -478,7 +495,7 @@ end
 ---@param tier integer
 ---@param instance integer
 ---@param difficulty integer
----@param timeLeft number
+---@param timeLeft number?
 function Self.UpdateInstanceTrinkets(tier, instance, difficulty, timeLeft)
     timeLeft = timeLeft or Self.TRINKET_UPDATE_TRIES * Self.TRINKET_UPDATE_PER_TRY
     if timeLeft < Self.TRINKET_UPDATE_PER_TRY then return end
@@ -528,7 +545,7 @@ function Self.UpdateInstanceTrinkets(tier, instance, difficulty, timeLeft)
 end
 
 -- Export the trinkets list
----@param loaded boolean
+---@param loaded boolean?
 function Self.ExportTrinkets(loaded)
     if not loaded and next(Self.TRINKETS) then
         for id in pairs(Self.TRINKETS) do
@@ -538,8 +555,8 @@ function Self.ExportTrinkets(loaded)
     else
         local txt = "Self.TRINKETS = {"
         for id, cat in pairs(Self.TRINKETS) do
-            local idPad = ("0"):rep(6 - strlen(id))
-            local catPad = ("0"):rep(3 - strlen(cat))
+            local idPad = ("0"):rep(6 - strlen(tostring(id)))
+            local catPad = ("0"):rep(3 - strlen(tostring(cat)))
             txt = txt .. ("\n    [%s%d] = %s%d, -- %s"):format(idPad, id, catPad, cat, GetItemInfo(id) or "?")
         end
 

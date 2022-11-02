@@ -12,6 +12,7 @@ Self.PATTERN_FOLLOW = AUTOFOLLOWSTART:gsub("%%%d?%$?s", "(.+)")
 Self.DEATH_KNIGHT = 6
 Self.DEMON_HUNTER = 12
 Self.DRUID = 11
+Self.EVOKER = 13
 Self.HUNTER = 3
 Self.MAGE = 8
 Self.MONK = 10
@@ -27,6 +28,7 @@ Self.SPECS = {
     250, 251, 252,      -- Death Knight
     577, 581,           -- Demon Hunter
     102, 103, 104, 105, -- Druid
+    1467, 1468,         -- Evoker
     253, 254, 255,      -- Hunter
     62, 63, 64,         -- Mage
     268, 270, 269,      -- Monk
@@ -121,7 +123,7 @@ end
 
 -- Get a unit's short name with a (*) at the end if the unit is from another realm
 ---@param unit string
----@return string
+---@return string?
 function Self.ShortenedName(unit)
     unit = Self(unit)
     local name, realm = UnitFullName(unit)
