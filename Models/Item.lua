@@ -623,7 +623,7 @@ function Self.GetOwnedForLocation(loc, allWeapons)
 
     -- Get item(s) from bag
     for bag = 0, NUM_BAG_SLOTS do
-        for slot = 1, GetContainerNumSlots(bag) do
+        for slot = 1, C_Container.GetContainerNumSlots(bag) do
             local link = GetContainerItemLink(bag, slot)
 
             if link and Self.GetInfo(link, "isEquippable") then
@@ -1267,7 +1267,7 @@ function Self:GetPosition(refresh)
     -- Check bags
     local bag, slot, isTradable
     for b = self.slot == 0 and self.bagOrEquip or 0, self.slot == 0 and self.bagOrEquip or NUM_BAG_SLOTS do
-        for s = 1, GetContainerNumSlots(b) do
+        for s = 1, C_Container.GetContainerNumSlots(b) do
             local link = GetContainerItemLink(b, s)
             if link == self.link then
                 isTradable = Self.IsTradable(b, s)
@@ -1510,7 +1510,7 @@ end
 
 -- Check if the item has a collectible appearance that can be unlocked
 function Self:IsTransmogable(unit)
-    return IsDressableItem(self.link) and (not self.isSoulbound or self:CanBeEquipped(unit))
+    return C_Item.IsDressableItemByID(self.link) and (not self.isSoulbound or self:CanBeEquipped(unit))
 end
 
 -- Check if the visual appearance is known

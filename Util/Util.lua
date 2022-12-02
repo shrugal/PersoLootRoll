@@ -194,7 +194,7 @@ end
 ---@return integer
 ---@return integer
 function Self.GetBagPosition(bag, slot)
-    local numSlots = GetContainerNumSlots(bag)
+    local numSlots = C_Container.GetContainerNumSlots(bag)
     if bag < 0 or bag > NUM_BAG_SLOTS or not numSlots or numSlots == 0 then
         return nil, nil
     elseif slot > numSlots then

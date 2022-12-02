@@ -153,8 +153,8 @@ local update = function() for _, f in ipairs(frames) do f:FireUpdate() end end
 
 local Fn = function() end
 local Id = function(v) return v end
-local Const = function(v) return function() return v end end
-local Consts = function(...) local args = { ... } return function() return unpack(args) end end
+local Const = function(v) return function(...) return v end end
+local Consts = function(...) local args = { ... } return function(...) return unpack(args) end end
 local Val = function(v) return function(a) if a then return v end end end
 local Vals = function(...) local args = { ... } return function(...) if ... then return unpack(args) end end end
 local Meta = { __index = function(_, k) if k.match and k:match("^[A-Z]") and k:match("[^A-Z_]") then return Fn end end }
@@ -270,7 +270,6 @@ GetInstanceInfo = Fn
 GetLootRollTimeLeft = Val(0)
 GetLootRollItemInfo = Fn
 GetLootRollItemLink = Fn
-GetContainerNumSlots = Val(0)
 GetExpansionLevel = Const(EXPANSION)
 GetMaximumExpansionLevel = Const(EXPANSION + (PREPATCH and 1 or 0))
 RollOnLoot = Fn
@@ -293,7 +292,6 @@ IsInInstance = Const(true)
 IsAddOnLoaded = function(n) return n == "WoWUnit" or n == Name end
 InterfaceOptions_AddCategory = Fn
 IsLoggedIn = Const(false)
-IsDressableItem = Val(true)
 GetNumGroupMembers = Const(0)
 IsInGroup = Const(false) --[[@as fun(category: integer?): boolean]]
 IsInRaid = Const(false) --[[@as fun(category: integer?): boolean]]
@@ -374,18 +372,40 @@ DifficultyUtil = {
 }
 
 C_ChallengeMode = Obj
-C_Club = { GetSubscribedClubs = Const({}) }
-C_Timer = { After = function(t, fn) fn() end }
-C_Loot = { IsLegacyLootModeEnabled = Const(false) }
-C_Soulbinds = { IsItemConduitByItemInfo = Val(false) }
-C_Map = { GetBestMapForUnit = Val(0) }
+C_Club = {
+    GetSubscribedClubs = Const({})
+}
+C_Timer = {
+    After = function(t, fn) fn() end
+}
+C_Loot = {
+    IsLegacyLootModeEnabled = Const(false)
+}
+C_Soulbinds = {
+    IsItemConduitByItemInfo = Val(false)
+}
+C_Map = {
+    GetBestMapForUnit = Val(0)
+}
 C_TransmogCollection = {
     GetItemInfo = Val(),
     GetAppearanceSourceInfo = Val(),
     GetAllAppearanceSources = Val({})
 }
-C_FriendList = { GetNumFriends = Const(0), GetFriendInfo = Val(nil), IsFriend = Val(false) }
-C_ChatInfo = { RegisterAddonMessagePrefix = Fn }
+C_FriendList = {
+    GetNumFriends = Const(0),
+    GetFriendInfo = Val(nil),
+    IsFriend = Val(false)
+}
+C_ChatInfo = {
+    RegisterAddonMessagePrefix = Fn
+}
+C_Item = {
+    IsDressableItemByID = Val(true)
+}
+C_Container = {
+    GetContainerNumSlots = Const(0)
+}
 
 Enum = {
     ClubType = { BattleNet = 0, Character = 1, Guild = 2, Other = 3 },
