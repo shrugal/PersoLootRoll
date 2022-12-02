@@ -1,1 +1,4 @@
 - Add evoker class info
+- Fix usages of some removed global methods
+- Update ToC version
+- Updated instance and trinket lists

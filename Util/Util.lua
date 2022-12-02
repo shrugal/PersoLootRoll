@@ -110,11 +110,12 @@ end
 
 -- Get the expansion for the current instance
 function Self.GetInstanceExpansion()
-    if IsInInstance() then
-        local mapID = C_Map.GetBestMapForUnit("player")
-        return mapID and Self.INSTANCES[EJ_GetInstanceForMap(mapID)] or 0
-    end
-    return 0
+    if not IsInInstance() then return 0 end
+    if Self.IsMythicPlus() then return GetMaximumExpansionLevel() end
+
+    local mapID = C_Map.GetBestMapForUnit("player")
+    
+    return mapID and Self.INSTANCES[EJ_GetInstanceForMap(mapID)] or 0
 end
 
 -- Check if the current session is below the player's current expansion
@@ -128,9 +129,14 @@ function Self.IsLegacyRun(unit)
     return isCurrExpPlayer and not isCurrExpInstance
 end
 
+-- Check if currently in a M+ dungeon
+function Self.IsMythicPlus()
+    return select(3, GetInstanceInfo()) == DifficultyUtil.ID.DungeonChallenge
+end
+
 -- Check if currently in a timewalking dungeon
 function Self.IsTimewalking()
-    return Self.In(select(3, GetInstanceInfo()), 24, 33)
+    return Self.In(select(3, GetInstanceInfo()), DifficultyUtil.ID.DungeonTimewalker, DifficultyUtil.ID.RaidTimewalker)
 end
 
 -- Get the usual # of dropped items in the current instance and group setting

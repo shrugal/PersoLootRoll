@@ -155,7 +155,7 @@ local Fn = function() end
 local Id = function(v) return v end
 local Const = function(v) return function(...) return v end end
 local Consts = function(...) local args = { ... } return function(...) return unpack(args) end end
-local Val = function(v) return function(a) if a then return v end end end
+local Val = function(v) return function(a, ...) if a then return v end end end
 local Vals = function(...) local args = { ... } return function(...) if ... then return unpack(args) end end end
 local Meta = { __index = function(_, k) if k.match and k:match("^[A-Z]") and k:match("[^A-Z_]") then return Fn end end }
 local Obj = setmetatable({}, Meta)
@@ -404,7 +404,8 @@ C_Item = {
     IsDressableItemByID = Val(true)
 }
 C_Container = {
-    GetContainerNumSlots = Const(0)
+    GetContainerNumSlots = Const(0),
+    GetContainerItemLink = Val("|Hitem:1::::::::")
 }
 
 Enum = {

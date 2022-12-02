@@ -272,7 +272,7 @@ function Self:HandleChatCommand(msg)
         else
             self:Info("Updating trinket list from Dungeon Journal")
 
-            local tier = tonumber(args[1]) or args[1] == "full" and 1 or EJ_GetNumTiers()
+            local tier = tonumber(args[1]) or args[1] == "full" and 1 or EJ_GetNumTiers() - 1
             if tier == 1 then
                 wipe(Item.TRINKETS)
                 Util.Tbl.Inspect(Item.TRINKETS)

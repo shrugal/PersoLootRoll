@@ -390,7 +390,7 @@ end
 ---@param slot integer
 ---@param isTradable boolean
 function Self.FromBagSlot(bag, slot, isTradable)
-    local link = GetContainerItemLink(bag, slot)
+    local link = C_Container.GetContainerItemLink(bag, slot)
     if link then
         return Self.FromLink(link, "player", bag, slot, isTradable)
     end
@@ -624,7 +624,7 @@ function Self.GetOwnedForLocation(loc, allWeapons)
     -- Get item(s) from bag
     for bag = 0, NUM_BAG_SLOTS do
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
-            local link = GetContainerItemLink(bag, slot)
+            local link = C_Container.GetContainerItemLink(bag, slot)
 
             if link and Self.GetInfo(link, "isEquippable") then
                 if isRelic then
@@ -1268,7 +1268,7 @@ function Self:GetPosition(refresh)
     local bag, slot, isTradable
     for b = self.slot == 0 and self.bagOrEquip or 0, self.slot == 0 and self.bagOrEquip or NUM_BAG_SLOTS do
         for s = 1, C_Container.GetContainerNumSlots(b) do
-            local link = GetContainerItemLink(b, s)
+            local link = C_Container.GetContainerItemLink(b, s)
             if link == self.link then
                 isTradable = Self.IsTradable(b, s)
                 if isTradable or not (bag and slot) then
