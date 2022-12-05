@@ -38,7 +38,7 @@ PLR is especially smart when it comes to choosing the right items for you. Many 
 e.g. if it is actually tradable, what ilvl you and your party members have equipped, class restrictions, trinket type, and so on. It will only ask you to
 decide when it actually makes sense, while making sure you don't miss any loot you might be interested in.
 
-### <span style="color: red">Works for PUGs, organized groups and even masterlooting</span>
+### <span style="color: red">Works for PUGs, organized groups and even masterlooting (Dragonflight update TBD)</span>
 It works great for randomly giving away loot in PUGs and organized groups, but it also has a masterloot mode where one person decides who should get which
 item. The masterlooter can also configure things like custom answers and a loot council.
 
