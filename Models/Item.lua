@@ -633,7 +633,7 @@ function Self.GetOwnedForLocation(loc, allWeapons)
                         if Self.GetInfo(link, "relicType") == loc then
                             tinsert(items, link)
                         end
-                    elseif Self.GetInfo(link, "classId") == LE_ITEM_CLASS_WEAPON then
+                    elseif Self.GetInfo(link, "classId") == Enum.ItemClass.Weapon then
                         -- It might be an artifact weapon
                         local id = Self.GetInfo(link, "id")
                         for i, spec in pairs(Self.CLASSES[classId].specs) do
@@ -876,9 +876,9 @@ function Self:CanBeEquipped(unit, ...)
     end
 
     -- Check if the armor/weapon type can be equipped
-    if Util.In(self.classId, LE_ITEM_CLASS_ARMOR, LE_ITEM_CLASS_WEAPON) then
+    if Util.In(self.classId, Enum.ItemClass.Armor, Enum.ItemClass.Weapon) then
         return self.equipLoc == Self.TYPE_CLOAK
-            or Util.In(self.subClassId, class[self.classId == LE_ITEM_CLASS_ARMOR and "armor" or "weapons"])
+            or Util.In(self.subClassId, class[self.classId == Enum.ItemClass.Armor and "armor" or "weapons"])
         -- Everyone can use weapon tokens for their class
     elseif self:IsGearToken() then
         return true
@@ -1498,8 +1498,8 @@ end
 function Self:IsPet()
     return Self.GetInfo(self, "itemType") == "battlepet"
         or (
-        Self.GetInfo(self, "classId") == LE_ITEM_CLASS_MISCELLANEOUS
-            and Self.GetInfo(self, "subClassId") == LE_ITEM_MISCELLANEOUS_COMPANION_PET
+        Self.GetInfo(self, "classId") == Enum.ItemClass.Miscellaneous
+            and Self.GetInfo(self, "subClassId") == Enum.ItemMiscellaneousSubclass.CompanionPet
         )
 end
 

@@ -1,3 +1,10 @@
+Version 24.01
+
+- Add evoker class info
+- Fix usages of some removed global methods
+- Update ToC version
+- Updated instance and trinket lists
+
 Version 24
 
 - Updated ToC version for patch 10.0

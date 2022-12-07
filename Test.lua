@@ -345,8 +345,6 @@ LOOT_ITEM_BONUS_ROLL = "%s receives bonus loot: %s."
 CREATED_ITEM = "%s creates: %s."
 LOOT_ITEM_CREATED_SELF = "You create: %s."
 RANDOM_ROLL_RESULT = "%s rolls %d (%d-%d)"
-LE_ITEM_CLASS_MISCELLANEOUS = 15
-LE_ITEM_MISCELLANEOUS_COMPANION_PET = 2
 NUM_BAG_SLOTS = 0
 
 RAID_CLASS_COLORS = setmetatable({}, { __index = function() return { colorStr = "ffffffff", r = 1, g = 1, b = 1 } end })
@@ -410,7 +408,11 @@ C_Container = {
 
 Enum = {
     ClubType = { BattleNet = 0, Character = 1, Guild = 2, Other = 3 },
-    ItemQuality = { Poor = 0, Common = 1, Uncommon = 2, Rare = 3, Epic = 4, Legendary = 5, Artifact = 6, Heirloom = 7, WoWToken = 8 }
+    ItemQuality = { Poor = 0, Common = 1, Uncommon = 2, Rare = 3, Epic = 4, Legendary = 5, Artifact = 6, Heirloom = 7, WoWToken = 8 },
+    ItemClass = { Weapon = 2, Armor = 4, Miscellaneous = 15 },
+    ItemArmorSubclass = { Idol = 8, Cosmetic = 5, Totem = 9, Shield = 6, Leather = 2, Libram = 7, Relic = 11, Mail = 3, Cloth = 1, Plate = 4, Generic = 0, Sigil = 10 },
+    ItemWeaponSubclass = { Mace2H = 5, Thrown = 16, Bearclaw = 11, Catclaw = 12, Mace1H = 4, Polearm = 6, Sword1H = 7, Axe2H = 1, Unarmed = 13, Wand = 19, Bows = 2, Crossbow = 18, Staff = 10, Fishingpole = 20, Generic = 14, Guns = 3, Dagger = 15, Warglaive = 9, Obsolete3 = 17, Axe1H = 0, Sword2H = 8 },
+    ItemMiscellaneousSubclass = { CompanionPet = 2, Reagent = 1, MountEquipment = 6, Mount = 5, Other = 4, Holiday = 3, Junk = 0 }
 }
 
 -- PLR specific

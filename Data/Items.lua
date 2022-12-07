@@ -4,6 +4,9 @@ local GUI, Unit, Util = Addon.GUI, Addon.Unit, Addon.Util
 ---@type Item
 local Self = Addon.Item
 
+local Armor = Enum.ItemArmorSubclass
+local Weapon = Enum.ItemWeaponSubclass
+
 -- Expac IDs
 Self.EXPAC_CLASSIC = 0
 Self.EXPAC_BC = 1
@@ -94,8 +97,8 @@ Self.ROLE_RANGED = 128
 -- Which class/spec can equip what
 Self.CLASSES = {
     [Unit.DEATH_KNIGHT] = {
-        armor = { LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_PLATE },
-        weapons = { LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_AXE2H, LE_ITEM_WEAPON_MACE2H, LE_ITEM_WEAPON_SWORD2H, LE_ITEM_WEAPON_POLEARM },
+        armor = { Armor.Generic, Armor.Plate },
+        weapons = { Weapon.Axe1H, Weapon.Mace1H, Weapon.Sword1H, Weapon.Axe2H, Weapon.Mace2H, Weapon.Sword2H, Weapon.Polearm },
         specs = {
             { -- Blood
               role = Self.ROLE_TANK,
@@ -118,8 +121,8 @@ Self.CLASSES = {
         }
     },
     [Unit.DEMON_HUNTER] = {
-        armor = { LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_LEATHER },
-        weapons = { LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_WARGLAIVE, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_UNARMED },
+        armor = { Armor.Generic, Armor.Leather },
+        weapons = { Weapon.Axe1H, Weapon.Sword1H, Weapon.Warglaive, Weapon.Dagger, Weapon.Unarmed },
         specs = {
             { -- Havoc
               role = Self.ROLE_MELEE,
@@ -134,8 +137,8 @@ Self.CLASSES = {
         }
     },
     [Unit.DRUID] = {
-        armor = { LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_LEATHER },
-        weapons = { LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_UNARMED, LE_ITEM_WEAPON_POLEARM, LE_ITEM_WEAPON_STAFF },
+        armor = { Armor.Generic, Armor.Leather },
+        weapons = { Weapon.Mace1H, Weapon.Dagger, Weapon.Unarmed, Weapon.Polearm, Weapon.Staff },
         specs = {
             { -- Balance
               role = Self.ROLE_RANGED,
@@ -160,8 +163,8 @@ Self.CLASSES = {
         }
     },
     [Unit.EVOKER] = {
-        armor = { LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_MAIL },
-        weapons = { LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_UNARMED, LE_ITEM_WEAPON_POLEARM, LE_ITEM_WEAPON_STAFF },
+        armor = { Armor.Generic, Armor.Mail },
+        weapons = { Weapon.Axe1H, Weapon.Mace1H, Weapon.Sword1H, Weapon.Dagger, Weapon.Unarmed, Weapon.Polearm, Weapon.Staff },
         specs = {
             { -- Devastation
               role = Self.ROLE_RANGED,
@@ -176,8 +179,8 @@ Self.CLASSES = {
         }
     },
     [Unit.HUNTER] = {
-        armor = { LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_MAIL },
-        weapons = { LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_UNARMED, LE_ITEM_WEAPON_POLEARM, LE_ITEM_WEAPON_STAFF, LE_ITEM_WEAPON_BOWS, LE_ITEM_WEAPON_CROSSBOW, LE_ITEM_WEAPON_GUNS },
+        armor = { Armor.Generic, Armor.Mail },
+        weapons = { Weapon.Axe1H, Weapon.Sword1H, Weapon.Dagger, Weapon.Unarmed, Weapon.Polearm, Weapon.Staff, Weapon.Bows, Weapon.Crossbow, Weapon.Guns },
         specs = {
             { -- Beast Mastery
               role = Self.ROLE_RANGED,
@@ -200,8 +203,8 @@ Self.CLASSES = {
         }
     },
     [Unit.MAGE] = {
-        armor = { LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_CLOTH },
-        weapons = { LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_WAND, LE_ITEM_WEAPON_STAFF },
+        armor = { Armor.Generic, Armor.Cloth },
+        weapons = { Weapon.Sword1H, Weapon.Dagger, Weapon.Wand, Weapon.Staff },
         specs = {
             { -- Arcane
               role = Self.ROLE_RANGED,
@@ -221,8 +224,8 @@ Self.CLASSES = {
         }
     },
     [Unit.MONK] = {
-        armor = { LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_LEATHER },
-        weapons = { LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_UNARMED, LE_ITEM_WEAPON_POLEARM, LE_ITEM_WEAPON_STAFF },
+        armor = { Armor.Generic, Armor.Leather },
+        weapons = { Weapon.Axe1H, Weapon.Mace1H, Weapon.Sword1H, Weapon.Unarmed, Weapon.Polearm, Weapon.Staff },
         specs = {
             { -- Brewmaster
               role = Self.ROLE_TANK,
@@ -244,8 +247,8 @@ Self.CLASSES = {
         }
     },
     [Unit.PALADIN] = {
-        armor = { LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_PLATE, LE_ITEM_ARMOR_SHIELD },
-        weapons = { LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_AXE2H, LE_ITEM_WEAPON_MACE2H, LE_ITEM_WEAPON_SWORD2H, LE_ITEM_WEAPON_POLEARM },
+        armor = { Armor.Generic, Armor.Plate, Armor.Shield },
+        weapons = { Weapon.Axe1H, Weapon.Mace1H, Weapon.Sword1H, Weapon.Axe2H, Weapon.Mace2H, Weapon.Sword2H, Weapon.Polearm },
         specs = {
             { -- Holy
               role = Self.ROLE_HEAL,
@@ -267,8 +270,8 @@ Self.CLASSES = {
         }
     },
     [Unit.PRIEST] = {
-        armor = { LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_CLOTH },
-        weapons = { LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_WAND, LE_ITEM_WEAPON_STAFF },
+        armor = { Armor.Generic, Armor.Cloth },
+        weapons = { Weapon.Mace1H, Weapon.Dagger, Weapon.Wand, Weapon.Staff },
         specs = {
             { -- Discipline
               role = Self.ROLE_HEAL,
@@ -288,8 +291,8 @@ Self.CLASSES = {
         }
     },
     [Unit.ROGUE] = {
-        armor = { LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_LEATHER },
-        weapons = { LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_UNARMED, LE_ITEM_WEAPON_THROWN },
+        armor = { Armor.Generic, Armor.Leather },
+        weapons = { Weapon.Axe1H, Weapon.Mace1H, Weapon.Sword1H, Weapon.Dagger, Weapon.Unarmed, Weapon.Thrown },
         dualWield = true,
         specs = {
             { -- Assassination
@@ -310,8 +313,8 @@ Self.CLASSES = {
         }
     },
     [Unit.SHAMAN] = {
-        armor = { LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_MAIL, LE_ITEM_ARMOR_SHIELD },
-        weapons = { LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_UNARMED, LE_ITEM_WEAPON_AXE2H, LE_ITEM_WEAPON_MACE2H, LE_ITEM_WEAPON_STAFF },
+        armor = { Armor.Generic, Armor.Mail, Armor.Shield },
+        weapons = { Weapon.Axe1H, Weapon.Mace1H, Weapon.Dagger, Weapon.Unarmed, Weapon.Axe2H, Weapon.Mace2H, Weapon.Staff },
         specs = {
             { -- Elemental
               role = Self.ROLE_RANGED,
@@ -333,8 +336,8 @@ Self.CLASSES = {
         }
     },
     [Unit.WARLOCK] = {
-        armor = { LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_CLOTH },
-        weapons = { LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_WAND, LE_ITEM_WEAPON_STAFF },
+        armor = { Armor.Generic, Armor.Cloth },
+        weapons = { Weapon.Sword1H, Weapon.Dagger, Weapon.Wand, Weapon.Staff },
         specs = {
             { -- Affliction
               role = Self.ROLE_RANGED,
@@ -354,8 +357,8 @@ Self.CLASSES = {
         }
     },
     [Unit.WARRIOR] = {
-        armor = { LE_ITEM_ARMOR_GENERIC, LE_ITEM_ARMOR_PLATE, LE_ITEM_ARMOR_SHIELD },
-        weapons = { LE_ITEM_WEAPON_AXE1H, LE_ITEM_WEAPON_MACE1H, LE_ITEM_WEAPON_SWORD1H, LE_ITEM_WEAPON_DAGGER, LE_ITEM_WEAPON_UNARMED, LE_ITEM_WEAPON_AXE2H, LE_ITEM_WEAPON_MACE2H, LE_ITEM_WEAPON_SWORD2H, LE_ITEM_WEAPON_POLEARM, LE_ITEM_WEAPON_STAFF, LE_ITEM_WEAPON_BOWS, LE_ITEM_WEAPON_CROSSBOW, LE_ITEM_WEAPON_GUNS, LE_ITEM_WEAPON_THROWN },
+        armor = { Armor.Generic, Armor.Plate, Armor.Shield },
+        weapons = { Weapon.Axe1H, Weapon.Mace1H, Weapon.Sword1H, Weapon.Dagger, Weapon.Unarmed, Weapon.Axe2H, Weapon.Mace2H, Weapon.Sword2H, Weapon.Polearm, Weapon.Staff, Weapon.Bows, Weapon.Crossbow, Weapon.Guns, Weapon.Thrown },
         specs = {
             { -- Arms
               role = Self.ROLE_MELEE,
