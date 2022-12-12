@@ -270,6 +270,7 @@ GetInstanceInfo = Fn
 GetLootRollTimeLeft = Val(0)
 GetLootRollItemInfo = Fn
 GetLootRollItemLink = Fn
+GetLootMethod = Const("personalloot")
 GetExpansionLevel = Const(EXPANSION)
 GetMaximumExpansionLevel = Const(EXPANSION + (PREPATCH and 1 or 0))
 RollOnLoot = Fn
