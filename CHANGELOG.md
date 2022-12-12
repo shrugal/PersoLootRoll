@@ -1,3 +1,7 @@
+Version 24.02
+
+- Fix usages of some removed global constants
+
 Version 24.01
 
 - Add evoker class info
