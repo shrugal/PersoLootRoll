@@ -389,7 +389,7 @@ Self.CLASSES = {
 -------------------------------------------------------
 
 Self.GEAR_TOKENS = {
-    -- T29
+    -- T27: Sepulcher of the First Ones
     [191002] = Self.TYPE_HEAD,
     [191003] = Self.TYPE_HEAD,
     [191004] = Self.TYPE_HEAD,
@@ -409,7 +409,29 @@ Self.GEAR_TOKENS = {
     [191018] = Self.TYPE_LEGS,
     [191019] = Self.TYPE_LEGS,
     [191020] = Self.TYPE_LEGS,
-    [191021] = Self.TYPE_LEGS
+    [191021] = Self.TYPE_LEGS,
+    -- T28: Vault of the Incarnates
+    [196586] = Self.TYPE_CHEST,
+    [196587] = Self.TYPE_HAND,
+    [196588] = Self.TYPE_LEGS,
+    [196589] = Self.TYPE_SHOULDER,
+    [196590] = Self.TYPE_HEAD,
+    [196591] = Self.TYPE_CHEST,
+    [196592] = Self.TYPE_HAND,
+    [196593] = Self.TYPE_LEGS,
+    [196594] = Self.TYPE_SHOULDER,
+    [196595] = Self.TYPE_HEAD,
+    [196596] = Self.TYPE_CHEST,
+    [196597] = Self.TYPE_HAND,
+    [196598] = Self.TYPE_LEGS,
+    [196599] = Self.TYPE_SHOULDER,
+    [196600] = Self.TYPE_HEAD,
+    [196601] = Self.TYPE_CHEST,
+    [196602] = Self.TYPE_HAND,
+    [196603] = Self.TYPE_LEGS,
+    [196604] = Self.TYPE_SHOULDER,
+    [196605] = Self.TYPE_HEAD,
+
 }
 
 -------------------------------------------------------
