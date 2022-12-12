@@ -308,12 +308,16 @@ function Self:CheckState(refresh)
     if self.state == nil or refresh then
         local state = self.state or Self.STATE_DISABLED
         local group, p = self.db.profile.activeGroups, Util.Push
+        local lootMethod = GetLootMethod()
 
         if not self.db.profile.enabled then                                                         -- Disabled
             self.state = Self.STATE_DISABLED
         elseif not IsInGroup()                                                                      -- Not in a group
             or Util.In(C_Map.GetBestMapForUnit("player"), 1469, 1470)                               -- Horrific visions
-            or not Util.In(GetLootMethod(), "freeforall", "roundrobin", "personalloot", "group")    -- Can't trade items
+            or not (
+                lootMethod == "needbeforegreed" and Session.GetMasterlooter()                       -- TODO: Handle NBG with ML like PL for now
+                or Util.In(lootMethod, "freeforall", "roundrobin", "personalloot", "group")         -- Can't trade items
+            )
         then
             self.state = Self.STATE_ENABLED
         elseif self.db.profile.onlyMasterloot and not Session.GetMasterlooter()                     -- Only Masterloot
