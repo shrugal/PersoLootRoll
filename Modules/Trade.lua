@@ -150,7 +150,7 @@ function Self:TRADE_SHOW()
                 local bag, slot, isTradable = roll.item:GetPosition()
                 if bag and slot and isTradable then
                     ClearCursor()
-                    PickupContainerItem(bag, slot)
+                    C_Container.PickupContainerItem(bag, slot)
                     ClickTradeButton(i)
                     i = i + 1
                 end
