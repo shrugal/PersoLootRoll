@@ -579,7 +579,7 @@ function Self.UpdateRolls()
         end
 
         -- ID
-        GUI(children[it()]).SetText(roll.num).Show()
+        GUI(children[it()]).SetText(roll.id).Show()
 
         -- Item
         GUI(children[it()])
