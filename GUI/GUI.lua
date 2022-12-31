@@ -10,17 +10,16 @@ local Comm, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Com
 local Self = Addon.GUI
 
 --- Add a player column entry
----@class PlayerColumns : Registrar
----@field Add function(name: string, value: string|number|function, header: string, desc: string|number|function, width: number, sortBefore: string, sortDefault: any, sortDesc: boolean): table
 ---@param name string       A unique identifier
----@param value string|number|function(unit: string, roll: Roll, listEntity: table):string|number   Value for sorting etc., either a primitive or callback
+---@param value string|number|fun(unit: string, roll: Roll, listEntity: table):string|number   Value for sorting etc., either a primitive or callback
 ---@param header string     Localized title, e.g. for table headers (optional: Column won't be shown)
----@param desc string|number|function(unit: string, roll: Roll, listEntity: table):string|number    Localized value shown to the user (optional: Value will be used)
+---@param desc string|number|fun(unit: string, roll: Roll, listEntity: table):string|number    Localized value shown to the user (optional: Value will be used)
 ---@param width number      Column width, @see table layout for details (optional: Default will be used)
 ---@param sortBefore string Other column name with lower sorting priority, one of "bid", "votes", "roll", "ilvl" or "unit" (optional: Column won't be used for sorting)
 ---@param sortDefault any   Sorting default value (optional)
 ---@param sortDesc boolean  Sort in descending order (optional)
----@return table            The column entry
+---@class PlayerColumns: Registrar
+---@field Add fun(self: self, name: string, value: string|number|function, header?: string, desc?: string|number|function, width?: number, sortBefore?: string, sortDefault?: any, sortDesc?: boolean): table
 Self.PlayerColumns = Util.Registrar.New("GUI_PLAYER_COLUMN", "name", function (name, value, header, desc, width, sortBefore, sortDefault, sortDesc)
     return Util.Tbl.Hash("name", name, "value", value, "header", header, "desc", desc, "width", width, "sortBefore", sortBefore, "sortDefault", sortDefault, "sortDesc", sortDesc)
 end)
