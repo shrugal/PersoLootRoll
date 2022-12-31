@@ -3,7 +3,7 @@ local Locale = Addon.Locale
 local lang = "ptBR"
 
 -- Chat messages
-local L = {lang = lang}
+local L = { lang = lang }
 setmetatable(L, Locale.MT)
 Locale[lang] = L
 

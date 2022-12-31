@@ -1,7 +1,5 @@
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local C = LibStub("AceConfig-3.0")
@@ -10,6 +8,7 @@ local CR = LibStub("AceConfigRegistry-3.0")
 local LDB = LibStub("LibDataBroker-1.1")
 local LDBIcon = LibStub("LibDBIcon-1.0")
 local GUI, Item, Locale, Session, Roll, Unit, Util = Addon.GUI, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
+
 ---@class Options
 local Self = Addon.Options
 
@@ -1215,10 +1214,14 @@ function Self.ImportRules()
     c.rules.disenchanter[GetRealmName()] = Util.Tbl.IsSet(s.disenchanter) and Util(s.disenchanter):Map(Unit.FullName):Flip(true)()
 
     -- Council
-    local ranks = Util.GetClubRanks(clubId)
-    Util.Tbl.Set(c.council.clubs, clubId, "ranks", s.councilRanks and Util(s.councilRanks):Map(function (v) return tonumber(v) or Util.Tbl.Find(ranks, v) end):Flip(true)() or {})
-    c.council.roles = s.councilRoles and Util.Tbl.Flip(s.councilRoles, true) or {}
-    c.council.whitelists[GetRealmName()] = Util.Tbl.IsSet(s.councilWhitelist) and Util(s.councilWhitelist):Map(Unit.FullName):Flip(true)()
+    local clubRanks = assert(Util.GetClubRanks(clubId))
+    local ranks = s.councilRanks and Util(s.councilRanks):Map(function (v) return tonumber(v) or Util.Tbl.Find(clubRanks, v) end):Flip(true)()
+    local roles = s.councilRoles and Util.Tbl.Flip(s.councilRoles, true)
+    local whitelists = Util.Tbl.IsSet(s.councilWhitelist) and Util(s.councilWhitelist):Map(Unit.FullName):Flip(true)()
+
+    Util.Tbl.Set(c.council.clubs, clubId, "ranks", ranks or {})
+    c.council.roles = roles or {}
+    c.council.whitelists[GetRealmName()] = whitelists or {}
 
     -- Custom
     Self.SyncCustomOptions(s, true)
@@ -1231,6 +1234,8 @@ function Self.ExportRules()
     if not clubId then return end
 
     local info = C_Club.GetClubInfo(clubId)
+    if not info then return end
+
     local c = Addon.db.profile.masterloot
     local s = Util.Tbl.New()
 
@@ -1306,7 +1311,7 @@ function Self.ReadFromClub(clubId, key)
 end
 
 -- Check if we can write to the given club
----@param clubId integer
+---@param clubId string
 function Self.CanWriteToClub(clubId)
     local info = C_Club.GetClubInfo(clubId)
     local priv = info and C_Club.GetClubPrivileges(clubId)

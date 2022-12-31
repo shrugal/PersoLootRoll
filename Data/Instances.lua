@@ -1,6 +1,8 @@
 ---@type Addon
 local Addon = select(2, ...)
 local GUI = Addon.GUI
+
+---@class Util
 local Self = Addon.Util
 
 -- Export the instance list

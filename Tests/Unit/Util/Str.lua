@@ -1,9 +1,7 @@
 if not WoWUnit then return end
 
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 local Test, Util = Addon.Test, Addon.Util
 local Assert, AssertEqual, Replace = WoWUnit.IsTrue, WoWUnit.AreEqual, WoWUnit.Replace
 

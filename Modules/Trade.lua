@@ -1,11 +1,10 @@
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Comm, Roll, Unit, Util = Addon.Comm, Addon.Roll, Addon.Unit, Addon.Util
----@class Trade : Module
+
+---@class Trade
 local Self = Addon.Trade
 
 Self.items = {player = {}, target = {}}
@@ -112,7 +111,7 @@ end
 ---@return boolean
 function Self.ShouldInitTrade(roll)
     local target = roll:GetActionTarget()
-    return target and (
+    return Util.Bool(target and (
         roll.chat
         or roll.posted
         or roll:GetOwnerAddon()
@@ -120,7 +119,7 @@ function Self.ShouldInitTrade(roll)
         or IsGuildMember(target)
         or Unit.IsFriend(target)
         or Unit.IsClubMember(target)
-    )
+    ))
 end
 
 -------------------------------------------------------

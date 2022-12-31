@@ -2,7 +2,9 @@
 local Addon = select(2, ...)
 local RI = LibStub("LibRealmInfo")
 local Util = Addon.Util
+
 ---@class Unit
+---@operator call:string
 local Self = Addon.Unit
 
 -- Search patterns
@@ -68,12 +70,12 @@ function Self.ConnectedRealm(unit)
     local realm = Self.Realm(unit)
     local connections = realm and select(9, RI:GetRealmInfo(realm))
 
-    if connections  then
+    if connections then
         local s = ""
         for _,id in ipairs(connections) do
             local name = select(3, RI:GetRealmInfoByID(id))
             if name then
-                s = s .. (s == "" and "" or "-") .. select(3, RI:GetRealmInfoByID(id))
+                s = s .. (s == "" and "" or "-") .. name
             end
         end
         return s
@@ -87,6 +89,9 @@ end
 -------------------------------------------------------
 
 -- Get a unit's name (incl. realm name if from another realm)
+---@generic T string | string?
+---@param unit T
+---@return T
 function Self.Name(unit)
     unit = Self(unit)
     local name, realm = UnitName(unit)
@@ -134,8 +139,8 @@ function Self.ShortenedName(unit)
 end
 
 -- Get a unit's name in class color
----@param name string
----@param unit string
+---@param name? string
+---@param unit? string
 ---@return string
 function Self.ColoredName(name, unit)
     return ("|c%s%s|r"):format(Self.Color(unit or name).colorStr, name)
@@ -161,7 +166,7 @@ end
 
 -- The the unit's rank in our guild
 ---@param unit string
----@return integer
+---@return integer?
 function Self.GuildRank(unit)
     if not unit then return end
 
@@ -178,11 +183,16 @@ function Self.IsGuildMember(unit)
 end
 
 -- Check if given unit or rank has officer privileges
----@param unitOrRank string|integer
+---@param unitOrRank UnitId|number
 ---@return boolean
 function Self.IsGuildOfficer(unitOrRank)
-    local rank = type(unitOrRank) == "number" and unitOrRank or IsGuildMember(unitOrRank) and C_GuildInfo.GetGuildRankOrder(UnitGUID(unitOrRank))
-    local info = rank and C_GuildInfo.GuildControlGetRankFlags(rank)
+    if type(unitOrRank) ~= "number" then
+        local guid = UnitGUID(unitOrRank) --[[@as string]]
+        unitOrRank = C_GuildInfo.GetGuildRankOrder(guid)
+    end
+    if not unitOrRank then return false end
+
+    local info = C_GuildInfo.GuildControlGetRankFlags(unitOrRank)
     return info and info[21]
 end
 
@@ -243,7 +253,7 @@ function Self.ClubMemberInfo(unit, clubId)
     unit = Self.Name(unit)
     for _,memberId in pairs(C_Club.GetClubMembers(clubId)) do
         local info = C_Club.GetMemberInfo(clubId, memberId)
-        if info.name == unit then
+        if info and info.name == unit then
             return info
         end
     end
@@ -261,7 +271,7 @@ function Self.InGroup(unit, onlyOthers)
 end
 
 -- Get a unit's group rank
----@return integer
+---@return integer?
 function Self.GroupRank(unit)
     for i=1,GetNumGroupMembers() do
         local grpUnit, rank = GetRaidRosterInfo(i)
@@ -272,7 +282,7 @@ function Self.GroupRank(unit)
 end
 
 -- Get the current group leader
----@return string
+---@return string?
 function Self.GroupLeader()
     for i=1,GetNumGroupMembers() do
         local unit, rank = GetRaidRosterInfo(i)

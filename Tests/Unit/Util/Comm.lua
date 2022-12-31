@@ -1,9 +1,7 @@
 if not WoWUnit then return end
 
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 local Test, Comm, Unit, Util = Addon.Test, Addon.Comm, Addon.Unit, Addon.Util
 local Assert, AssertEqual, Replace = WoWUnit.IsTrue, WoWUnit.AreEqual, WoWUnit.Replace
 local RI = LibStub("LibRealmInfo")

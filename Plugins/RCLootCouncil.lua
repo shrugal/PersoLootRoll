@@ -1,9 +1,8 @@
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 local Comm, Item, Roll, Session, Unit, Util = Addon.Comm, Addon.Item, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
----@class RCLC : Module
+
+---@class RCLC
 local Self = Addon.RCLC
 
 Self.NAME = "RCLootCouncil"
@@ -190,7 +189,7 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
 
     -- VERSION_CHECK
     if cmd == Self.CMD_VERSION_CHECK then
-        if channel ~= Self.TYPE_WHISPER and Self.timers.version then
+        if channel ~= Comm.TYPE_WHISPER and Self.timers.version then
             Self:CancelTimer(Self.timers.version)
             Self.timers.version = nil
         end
@@ -269,7 +268,7 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
                     local roll = Self.FindOrAddRoll(v.link, v.owner, ml):Start()
                     Self.session[sId] = roll
 
-                    local gear = roll.item:GetEquippedForLocation("player")
+                    local gear = assert(roll.item:GetEquippedForLocation("player"))
                     ack.gear1[sId] = gear[1] or nil
                     ack.gear2[sId] = gear[2] or nil
                     ack.diff[sId] = (roll.item:GetBasicInfo().level or 0) - max(Item.GetInfo(gear[1], "level") or 0, Item.GetInfo(gear[2], "level") or 0) -- TODO: This is wrong when slots are not filled

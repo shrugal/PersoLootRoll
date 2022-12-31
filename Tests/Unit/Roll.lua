@@ -1,9 +1,7 @@
 if not WoWUnit then return end
 
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 local Item, Roll, Session, Test, Util = Addon.Item, Addon.Roll, Addon.Session, Addon.Test, Addon.Util
 local Assert, AssertEqual, AssertFalse, Replace = WoWUnit.IsTrue, WoWUnit.AreEqual, WoWUnit.IsFalse, WoWUnit.Replace
 
@@ -72,15 +70,15 @@ function Tests:FindTest()
     Replace(Addon, "rolls", Test.rolls)
 
     -- Find by id and owner
-    AssertEqual(Test.rolls[1], Roll.Find(1, "player"))
-    AssertEqual(Test.rolls[2], Roll.Find(2, "player"))
-    AssertEqual(Test.rolls[3], Roll.Find(1, "party1"))
-    AssertEqual(Test.rolls[5], Roll.Find(3, "party2"))
-    AssertEqual(Test.rolls[6], Roll.Find(4, "party2"))
-    AssertEqual(Test.rolls[7], Roll.Find(5, "party3"))
-    AssertEqual(Test.rolls[8], Roll.Find(6, "party3"))
-    AssertFalse(Roll.Find(4, "player"))
-    AssertFalse(Roll.Find(2, "party1"))
+    AssertEqual(Test.rolls[1], Roll.Find("1", "player"))
+    AssertEqual(Test.rolls[2], Roll.Find("2", "player"))
+    AssertEqual(Test.rolls[3], Roll.Find("1", "party1"))
+    AssertEqual(Test.rolls[5], Roll.Find("3", "party2"))
+    AssertEqual(Test.rolls[6], Roll.Find("4", "party2"))
+    AssertEqual(Test.rolls[7], Roll.Find("5", "party3"))
+    AssertEqual(Test.rolls[8], Roll.Find("6", "party3"))
+    AssertFalse(Roll.Find("4", "player"))
+    AssertFalse(Roll.Find("2", "party1"))
     -- Find by owner and item
     AssertEqual(Test.rolls[1], Roll.Find(nil, "player", Test.items.item1[2]))
     AssertEqual(Test.rolls[2], Roll.Find(nil, "player", Test.items.item2[2]))
@@ -92,24 +90,24 @@ function Tests:FindTest()
     AssertFalse(Roll.Find(nil, "player", "item7"))
     AssertFalse(Roll.Find(nil, "party1", "item8"))
     -- Find by item owner and item owner id
-    AssertEqual(Test.rolls[1], Roll.Find(nil, nil, nil, 1, "player"))
-    AssertEqual(Test.rolls[2], Roll.Find(nil, nil, nil, 2, "player"))
-    AssertEqual(Test.rolls[3], Roll.Find(nil, nil, nil, 1, "party1"))
-    AssertEqual(Test.rolls[5], Roll.Find(nil, nil, nil, 3, "party2"))
-    AssertEqual(Test.rolls[6], Roll.Find(nil, nil, nil, 4, "party2"))
-    AssertEqual(Test.rolls[7], Roll.Find(nil, nil, nil, 7, "player"))
-    AssertEqual(Test.rolls[8], Roll.Find(nil, nil, nil, 2, "party1"))
-    AssertFalse(Roll.Find(nil, nil, nil, 3, "player"))
-    AssertFalse(Roll.Find(nil, nil, nil, 3, "party1"))
-    AssertFalse(Roll.Find(nil, nil, nil, 7, "party3"))
-    AssertFalse(Roll.Find(nil, nil, nil, 2, "party3"))
+    AssertEqual(Test.rolls[1], Roll.Find(nil, nil, nil, "1", "player"))
+    AssertEqual(Test.rolls[2], Roll.Find(nil, nil, nil, "2", "player"))
+    AssertEqual(Test.rolls[3], Roll.Find(nil, nil, nil, "1", "party1"))
+    AssertEqual(Test.rolls[5], Roll.Find(nil, nil, nil, "3", "party2"))
+    AssertEqual(Test.rolls[6], Roll.Find(nil, nil, nil, "4", "party2"))
+    AssertEqual(Test.rolls[7], Roll.Find(nil, nil, nil, "7", "player"))
+    AssertEqual(Test.rolls[8], Roll.Find(nil, nil, nil, "2", "party1"))
+    AssertFalse(Roll.Find(nil, nil, nil, "3", "player"))
+    AssertFalse(Roll.Find(nil, nil, nil, "3", "party1"))
+    AssertFalse(Roll.Find(nil, nil, nil, "7", "party3"))
+    AssertFalse(Roll.Find(nil, nil, nil, "2", "party3"))
     -- Find by id, owner and status
-    AssertEqual(Test.rolls[1], Roll.Find(1, "player", nil, nil, nil, Roll.STATUS_RUNNING))
-    AssertEqual(Test.rolls[2], Roll.Find(2, "player", nil, nil, nil, Roll.STATUS_DONE))
-    AssertEqual(Test.rolls[3], Roll.Find(1, "party1", nil, nil, nil, Roll.STATUS_RUNNING))
-    AssertFalse(Roll.Find(1, "player", nil, nil, nil, Roll.STATUS_DONE))
-    AssertFalse(Roll.Find(2, "player", nil, nil, nil, Roll.STATUS_CANCELED))
-    AssertFalse(Roll.Find(1, "party1", nil, nil, nil, Roll.STATUS_PENDING))
+    AssertEqual(Test.rolls[1], Roll.Find("1", "player", nil, nil, nil, Roll.STATUS_RUNNING))
+    AssertEqual(Test.rolls[2], Roll.Find("2", "player", nil, nil, nil, Roll.STATUS_DONE))
+    AssertEqual(Test.rolls[3], Roll.Find("1", "party1", nil, nil, nil, Roll.STATUS_RUNNING))
+    AssertFalse(Roll.Find("1", "player", nil, nil, nil, Roll.STATUS_DONE))
+    AssertFalse(Roll.Find("2", "player", nil, nil, nil, Roll.STATUS_CANCELED))
+    AssertFalse(Roll.Find("1", "party1", nil, nil, nil, Roll.STATUS_PENDING))
 end
 
 function Tests:FindWhereTest()
@@ -132,7 +130,7 @@ end
 
 function Tests:AddTest()
     Test.ReplaceDefault()
-    Replace(Addon, "rolls", Util.Counter.New())
+    Replace(Addon, "rolls", {})
     Replace(Roll, "CalculateTimeout", function () return 30 end)
 
     local AssertEvents = Test.ReplaceFunction(Addon, "SendMessage", false)
@@ -152,8 +150,8 @@ function Tests:AddTest()
     roll.isOwner = false
     roll.item.owner = roll.owner
     roll.item.isOwner = false
-    roll.ownerId = 2
-    roll.itemOwnerId = 2
+    roll.ownerId = "2"
+    roll.itemOwnerId = "2"
     roll.timeout = 60
     roll.disenchant = true
     Roll.Add(roll.item.link, roll.owner, roll.ownerId, roll.itemOwnerId, roll.timeout, roll.disenchant)
@@ -165,7 +163,7 @@ end
 
 function Tests.UpdateTest()
     Test.ReplaceDefault()
-    Replace(Addon, "rolls", Util.Counter.New())
+    Replace(Addon, "rolls", {})
     Replace(Addon, "ScheduleTimer", function () return true end)
 
     local ml = nil

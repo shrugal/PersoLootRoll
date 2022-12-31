@@ -1,17 +1,16 @@
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local AceGUI = LibStub("AceGUI-3.0")
 local GUI, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.GUI, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
----@class Rolls : Module
+
+---@class Rolls
 local Self = GUI.Rolls
 
----@type table<Widget>
+---@type table<AceGUIWidget>
 Self.frames = {}
----@type table<Widget>
+---@type table<AceGUIWidget>
 Self.buttons = {}
 Self.filter = {all = false, hidden = false, done = true, awarded = true, traded = false, id = nil}
 Self.status = {width = 700, height = 300}
@@ -456,7 +455,7 @@ function Self.UpdateRolls()
                     if button == "LeftButton" then
                         GUI.RollBid(roll, bid)
                     elseif button == "RightButton" and roll.owner == Session.GetMasterlooter() then
-                        local answers = Session.rules["answers" .. bid]
+                        local answers = Session.rules["answers" .. bid] --[[@as table]]
                         if answers and #answers > 0 then
                             GUI.ToggleAnswersDropdown(roll, bid, answers, "TOPLEFT", self.frame, "CENTER")
                         end
@@ -580,7 +579,7 @@ function Self.UpdateRolls()
         end
 
         -- ID
-        GUI(children[it()]).SetText(roll.id).Show()
+        GUI(children[it()]).SetText(roll.num).Show()
 
         -- Item
         GUI(children[it()])
@@ -730,7 +729,7 @@ end
 -------------------------------------------------------
 
 -- Update the details view of a row
----@param details SimpleGroup
+---@param details AceGUIContainer
 ---@param roll Roll
 function Self.UpdateDetails(details, roll)
     details.frame:Show()
@@ -847,7 +846,8 @@ function Self.UpdateDetails(details, roll)
         GUI(children[it()]).SetText(player.ilvl).Show()
 
         -- Items
-        local f, links = children[it()], roll.item:GetEquippedForLocation(player.unit)
+        local f = children[it()]
+        local links = roll.item:GetEquippedForLocation(player.unit) --[=[@as string[]]=]
 
         for i,child in pairs(f.children) do
             if links and links[i] then
@@ -981,7 +981,7 @@ end
 --                      Helpers                      --
 -------------------------------------------------------
 
----@return Roll[]
+---@return table<integer, Roll>
 function Self.GetRolls(filterById)
     return Util(Addon.rolls):CopyFilter(function (roll)
         if filterById and Self.filter.id then
@@ -1010,7 +1010,7 @@ end
 
 -- Create a filter checkbox
 ---@param key string
----@return CheckBox
+---@return AceGUICheckBox
 function Self.CreateFilterCheckbox(key)
     local parent = Self.frames.filter
 
@@ -1037,6 +1037,7 @@ function Self.CreateFilterCheckbox(key)
     return f
 end
 
+---@param self AceGUIWidget
 function Self.ItemClick(self)
     local id = self:GetUserData("id")
     Self.filter.id = Self.filter.id ~= id and id or nil
@@ -1061,8 +1062,8 @@ function Self.OnStatusUpdate(frame)
     end
 end
 
----@param self Widget
-function Self.UnitConfirmOrVote(self, ...)
+---@param self AceGUIWidget
+function Self.UnitConfirmOrVote(self)
     ---@type Roll
     local roll = self:GetUserData("roll")
     local unit = self:GetUserData("unit")
@@ -1073,7 +1074,7 @@ function Self.UnitConfirmOrVote(self, ...)
         Self.Update()
     else
         wipe(Self.confirm)
-        GUI.UnitAwardOrVote(self, ...)
+        GUI.UnitAwardOrVote(self)
     end
 end
 

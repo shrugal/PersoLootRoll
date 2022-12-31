@@ -1,11 +1,10 @@
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Comm, GUI, Roll, Unit, Util = Addon.Comm, Addon.GUI, Addon.Roll, Addon.Unit, Addon.Util
----@class Session : Module
+
+---@class Session
 local Self = Addon.Session
 
 -- Events
@@ -117,7 +116,8 @@ end
 ---@param unit string
 ---@param ml string?
 function Self.SetMasterlooting(unit, ml)
-    unit, ml = unit and Unit.Name(unit), ml and Unit.Name(ml)
+    unit, ml = Unit.Name(unit), ml and Unit.Name(ml)
+
     Self.masterlooting[unit] = ml
 
     if Self.IsMasterlooter() and Self.IsOnCouncil(unit) ~= Self.IsOnCouncil(unit, true) then

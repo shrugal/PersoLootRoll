@@ -1,7 +1,9 @@
 ---@type Addon
 local Addon = select(2, ...)
+---@type LibRealmInfo
 local RI = LibStub("LibRealmInfo")
 local Util = Addon.Util
+
 ---@class Locale
 local Self = Addon.Locale
 

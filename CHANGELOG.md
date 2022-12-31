@@ -1,3 +1,8 @@
+Version 24.03
+
+- Added Vault of the Incarnates tier set tokens
+- Handle need-before-green with masterlooter like personal loot for now
+
 Version 24.02
 
 - Fix usages of some removed global constants
