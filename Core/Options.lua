@@ -377,7 +377,7 @@ function Self.RegisterGeneral()
                 type = "execute",
                 order = it(),
                 func = function ()
-                    HideUIPanel(InterfaceOptionsFrame)
+                    HideUIPanel(SettingsPanel)
                     HideUIPanel(GameMenuFrame)
                     GUI.Actions.Show(true)
                 end,
