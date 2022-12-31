@@ -1,11 +1,12 @@
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
+---@type AceComm-3.0
 local AceComm = LibStub("AceComm-3.0")
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Comm, Item, Locale, Session, Roll, Unit, Util = Addon.Comm, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
+
+---@class Addon
 local Self = Addon
 
 -- Version check
@@ -68,6 +69,8 @@ function Self.RegisterEvents()
     Self:RegisterEvent("ITEM_LOCKED")
     Self:RegisterEvent("ITEM_UNLOCKED")
     Self:RegisterEvent("BAG_UPDATE_DELAYED")
+    -- Loot
+    Self:RegisterEvent("LOOT_ITEM_AVAILABLE")
 end
 
 function Self.UnregisterEvents()
@@ -96,6 +99,8 @@ function Self.UnregisterEvents()
     Self:UnregisterEvent("ITEM_LOCKED")
     Self:UnregisterEvent("ITEM_UNLOCKED")
     Self:UnregisterEvent("BAG_UPDATE_DELAYED")
+    -- Loot
+    Self:UnregisterEvent("LOOT_ITEM_AVAILABLE")
 end
 
 -------------------------------------------------------
@@ -210,13 +215,19 @@ function Self.CHAT_MSG_SYSTEM(_, _, msg)
             end
 
             -- Clear version and disabled
-            Self:SetVersion(unit, nil)
+            Self:SetVersion(unit)
             return
         end
     end
 end
 
 -- Loot
+
+---@param tooltip string
+---@param handle number
+function Self.LOOT_ITEM_AVAILABLE(_, _, tooltip, handle)
+
+end
 
 ---@param msg string
 ---@param sender string
@@ -229,11 +240,11 @@ function Self.CHAT_MSG_LOOT(_, _, msg, _, _, _, sender)
         return
     end
 
-    local item = Item.GetLink(msg)
-    if Item.ShouldBeChecked(item, unit) then
-        Self:Debug("Events.Loot", item, unit, Unit.IsSelf(unit), msg)
+    local link = Item.GetLink(msg)
+    if Item.ShouldBeChecked(link, unit) then ---@cast link string
+        Self:Debug("Events.Loot", link, unit, Unit.IsSelf(unit), msg)
 
-        item = Item.FromLink(item, unit)
+        local item = Item.FromLink(link, unit)
 
         if item.isOwner then
             item:SetPosition(Self.lastLootedBag, 0)
@@ -663,7 +674,7 @@ function Self.EVENT_BID(_, data, channel, sender, unit)
 
     local roll = Roll.Find(data.ownerId, owner)
     if roll then
-        roll:Bid(data.bid, fromUnit, isImport and data.roll, isImport)
+        roll:Bid(data.bid, fromUnit, isImport and data.roll or nil, isImport)
     end
 end
 Comm.ListenData(Comm.EVENT_BID, Self.EVENT_BID)

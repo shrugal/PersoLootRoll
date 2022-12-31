@@ -2,7 +2,12 @@
 local Addon = select(2, ...)
 local AceEvent = LibStub("AceEvent-3.0")
 local Util = Addon.Util
----@class Registrar
+
+---@class Registrar: LibUtil.Tbl
+---@field idKey any
+---@field register table
+---@field prefix string
+---@field addFn function
 local Self = Util.Registrar
 
 ---
@@ -28,14 +33,17 @@ function Self.New(name, idKey, addFn)
         idKey = idKey,
         register = {},
         prefix = prefix,
+        addFn = addFn,
         EVENT_SET = prefix .. "_" .. Self.EVENT_SET,
         EVENT_UPDATE = prefix .. "_" .. Self.EVENT_UPDATE,
         EVENT_REMOVE = prefix .. "_" .. Self.EVENT_REMOVE,
-        EVENT_CHANGE = prefix .. "_" .. Self.EVENT_CHANGE,
-        Add = addFn and function (self, key, ...)
-            return self:Set(key, addFn(key, ...))
-        end or nil
+        EVENT_CHANGE = prefix .. "_" .. Self.EVENT_CHANGE
     }, {__index = Self})
+end
+
+function Self:Add(key, ...)
+    assert(self.addFn, "Missing addFn")
+    return self:Set(key, self.addFn(key, ...))
 end
 
 -- Get an entry by key

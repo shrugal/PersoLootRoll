@@ -1,18 +1,17 @@
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local GUI, Roll, Trade, Unit, Util = Addon.GUI, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
----@class Actions : Module
+
+---@class Actions
 local Self = GUI.Actions
 
----@type table<Widget>
+---@type table<string, AceGUIWidget>
 Self.frames = {}
 Self.moving = nil
----@type table<string, boolean>
-Self.anchors = Util.Tbl.Flip({"TOPLEFT", "TOP", "TOPRIGHT", "RIGHT", "BOTTOMRIGHT", "BOTTOM", "BOTTOMLEFT", "LEFT", "CENTER"}, false)
+---@type table<string, AceGUIWidget|false>
+Self.anchors = Util.Tbl.Flip({ "TOPLEFT", "TOP", "TOPRIGHT", "RIGHT", "BOTTOMRIGHT", "BOTTOM", "BOTTOMLEFT", "LEFT", "CENTER" }, false)
 
 -------------------------------------------------------
 --                     Show/Hide                     --
@@ -74,7 +73,7 @@ function Self.Show(move)
             end, "LockButton-Unlocked-Up", 0.2, 0.8, 0.2, 0.8)
         end
 
-        GUI.TableRowHighlight(Self.frames.window)
+        GUI.TableRowHighlight(Self.frames.window --[[@as AceGUIContainer]])
     end
 
     if move then
@@ -111,7 +110,7 @@ function Self.Update()
     if not Self.frames.window then return end
 
     local f
-    local parent = Self.frames.window
+    local parent = Self.frames.window --[[@as AceGUIContainer]]
     local children = parent.children
     parent:PauseLayout()
 
@@ -374,7 +373,7 @@ function Self.CreateHeaderIconButton(text, n, onClick, icon, ...)
         .SetPoint("TOPRIGHT", -(n-1)*17 - 3, -2)
         .Show()()
     f.image:SetPoint("TOP")
-    f.OnRelease = Self.ResetIcon
+    f.OnRelease = GUI.ResetIcon
 
     return f
 end

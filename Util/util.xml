@@ -4,6 +4,5 @@
     <Script file="Comm.lua"/>
     <Script file="Locale.lua"/>
     <Script file="Unit.lua"/>
-    <Script file="Counter.lua"/>
     <Script file="Registrar.lua"/>
 </Ui>

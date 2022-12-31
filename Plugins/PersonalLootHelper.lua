@@ -1,9 +1,8 @@
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 local Comm, Item, Roll, Session, Unit, Util = Addon.Comm, Addon.Item, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
----@class PLH : Module
+
+---@class PLH
 local Self = Addon.PLH
 
 Self.NAME = "PersonalLootHelper"
@@ -29,14 +28,20 @@ Self.initialized = false
 
 -- Send a PLH message
 ---@param action string
----@param roll Roll|string
+---@param roll (Roll|string)?
 ---@param param any
 function Self.Send(action, roll, param)
     if Self:IsEnabled() then
-        local msg = not roll and ("%s~ ~%s"):format(action, param)
-            or type(roll) == "string" and ("%s~ ~%s~%s"):format(action, roll, param)
-            or param and ("%s~%d~%s~%s"):format(action, roll.item.id, Unit.FullName(roll.item.owner), param)
-            or ("%s~%d~%s"):format(action, roll.item.id, Unit.FullName(roll.item.owner))
+        local msg
+        if not roll then
+            msg = ("%s~ ~%s"):format(action, param)
+        elseif type(roll) == "string" then
+            msg = ("%s~ ~%s~%s"):format(action, roll, param)
+        elseif param then
+            msg = ("%s~%d~%s~%s"):format(action, roll.item.id, Unit.FullName(roll.item.owner), param)
+        else
+            msg = ("%s~%d~%s"):format(action, roll.item.id, Unit.FullName(roll.item.owner))
+        end
 
         Comm.Send(Self.PREFIX, msg)
     end
@@ -133,7 +138,7 @@ function Self:ROLL_BID(_, roll, bid, fromUnit, _, isImport)
                 -- Send KEEP message
                 Self.Send(Self.ACTION_KEEP, roll)
             end
-        elseif fromSelf and not roll.ownerId and bid ~= Roll.BID_PASS and Addon.GetCompAddonUser(roll.owner, Self.NAME) then
+        elseif fromSelf and not roll.ownerId and bid ~= Roll.BID_PASS and Addon:GetCompAddonUser(roll.owner, Self.NAME) then
             -- Send REQUEST message
             local request = Util.Select(bid, Roll.BID_NEED, Self.BID_NEED, Roll.BID_DISENCHANT, Self.BID_DISENCHANT, Self.BID_GREED)
             Self.Send(Self.ACTION_REQUEST, roll, request)
@@ -143,7 +148,7 @@ end
 
 ---@param roll Roll
 function Self:ROLL_AWARD(_, roll)
-    if roll.winner and not roll.isWinner and roll.isOwner and Addon.GetCompAddonUser(roll.winner, Self.NAME) and not roll.isTest then
+    if roll.winner and not roll.isWinner and roll.isOwner and Addon:GetCompAddonUser(roll.winner, Self.NAME) and not roll.isTest then
         -- Send OFFER message
         Self.Send(Self.ACTION_OFFER, roll, Unit.FullName(roll.winner))
     end

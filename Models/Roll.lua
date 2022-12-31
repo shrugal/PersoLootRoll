@@ -1,13 +1,11 @@
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local CB = LibStub("CallbackHandler-1.0")
 local Comm, GUI, Item, Session, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Item, Addon.Session, Addon.Trade, Addon.Unit, Addon.Util
+
 ---@class Roll
----@field item Item
 local Self = Addon.Roll
 
 local Meta = { __index = Self }
@@ -195,11 +193,11 @@ function Self.Get(id)
 end
 
 -- Find a roll
----@param ownerId integer?
----@param owner string?
----@param item Item|string|number
----@param itemOwnerId integer
----@param itemOwner string
+---@param ownerId string?
+---@param owner (string|true)?
+---@param item (Item|string|number)?
+---@param itemOwnerId string?
+---@param itemOwner (string|true)?
 ---@param status integer?
 function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner, status)
     owner = Unit.Name(owner == true and "player" or owner) or owner
@@ -252,16 +250,22 @@ end
 -- Create and add a roll to the list
 ---@param item Item|string
 ---@param owner string?
----@param ownerId integer?
----@param itemOwnerId integer?
+---@param ownerId string?
+---@param itemOwnerId string?
 ---@param timeout integer?
 ---@param disenchant boolean?
 function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
-    owner = Unit.Name(owner or "player")
+    owner = Unit.Name(owner or "player") --[[@as string]]
     local isOwner = Unit.IsSelf(owner)
 
+    local num = Addon.rollNum + 1
+    Addon.rollNum = num
+
     -- Create the roll entry
+    ---@class Roll
     local roll = setmetatable({
+        num = num,
+        id = Util.Str.Random(16),
         created = time(),
         isOwner = isOwner,
         item = Item.FromLink(item, owner),
@@ -271,9 +275,13 @@ function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
         timeout = timeout or Self.CalculateTimeout(owner, true),
         disenchant = Util.Default(disenchant, isOwner and Util.Check(Session.GetMasterlooter(), Addon.db.profile.masterloot.rules.allowDisenchant, Addon.db.profile.allowDisenchant)),
         status = Self.STATUS_PENDING,
+        ---@type table<string, number>
         bids = {},
+        ---@type table<string, integer>
         rolls = {},
+        ---@type table<string, string>
         votes = {},
+        ---@type table<string, AceTimerObj>
         timers = {},
         whispers = 0,
         shown = nil,
@@ -283,7 +291,7 @@ function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
     }, Meta)
 
     -- Add it to the list
-    roll.id = Addon.rolls.Add(roll)
+    Addon.rolls[roll.id] = roll
 
     -- Set ownerId/itemOwnerId
     if roll.isOwner then
@@ -467,6 +475,7 @@ function Self.Test()
 
     local slot = Util.Tbl.Random(slots)
     if slot then
+        ---@class Roll
         local roll = Self.Add(Item.FromSlot(slot, "player", true), "player")
         roll.isTest = true
 
@@ -483,11 +492,11 @@ function Self.Test()
 end
 
 -- Check for and convert from/to PLR roll id
-function Self.IsPlrId(id) return id < 0 end
+function Self.IsPlrId(id) return type(id) == "string" end
 
-function Self.ToPlrId(id) return -id end
+function Self.ToPlrId(id) return id end
 
-function Self.FromPlrId(id) return -id end
+function Self.FromPlrId(id) return id end
 
 -------------------------------------------------------
 --                     Rolling                       --
@@ -499,6 +508,7 @@ function Self.FromPlrId(id) return -id end
 function Self:Start(startedOrManually, silent)
     Addon:Verbose(L["ROLL_START"], self.item.link, Comm.GetPlayerLink(self.item.owner))
 
+    ---@type integer|false, boolean
     local started, manually = type(startedOrManually) == "number" and startedOrManually, type(startedOrManually) == "boolean" and startedOrManually
     Self.startedManually = Self.startedManually or self.isOwner and Addon.db.profile.masterloot.rules.startManually and manually
 
@@ -623,7 +633,7 @@ end
 
 -- Adopt a roll
 function Self:Adopt(noStatus)
-    self.owner, self.ownerId, self.isOwner, self.posted = UnitName("player"), self.id, true, nil
+    self.owner, self.ownerId, self.isOwner, self.posted = UnitName("player") --[[@as string]], self.id, true, nil
     self.item.isTradable = true
 
     if not noStatus then
@@ -649,7 +659,7 @@ function Self:Bid(bid, fromUnit, roll, isImport, silent)
     local fromSelf = Unit.IsSelf(fromUnit)
 
     -- Handle custom answers
-    local answer, answers = 10 * bid - 10 * floor(bid), Session.rules["answers" .. floor(bid)]
+    local answer, answers = 10 * bid - 10 * floor(bid), Session.rules["answers" .. floor(bid)] --[=[@as string[]]=]
     if bid == floor(bid) and answers and Session.IsMasterlooter(self.owner) then
         local i = Util.Tbl.Find(answers, bid == Self.BID_NEED and Self.ANSWER_NEED or Self.ANSWER_GREED)
         if i then bid, answer = bid + (i / 10), i end
@@ -699,8 +709,8 @@ end
 function Self:Vote(vote, fromUnit, isImport)
     Addon:Debug("Roll.Vote", self.id, vote, fromUnit, isImport)
 
-    vote = Unit.Name(vote)
-    fromUnit = Unit.Name(fromUnit or "player")
+    vote = assert(Unit.Name(vote))
+    fromUnit = assert(Unit.Name(fromUnit or "player"))
 
     if self:ValidateVote(vote, fromUnit, isImport) then
         self.votes[fromUnit] = vote
@@ -738,7 +748,7 @@ function Self:ShouldEnd()
     end
 
     -- Check if all eligible players have bid
-    for unit, interest in pairs(self.item:GetEligible()) do
+    for unit, interest in pairs(self.item:GetEligible() --[[@as table<string, boolean>]]) do
         if not self.bids[unit] and (interest or ml or Addon.db.profile.awardSelf) then
             return false
         end
@@ -814,7 +824,7 @@ function Self:End(winner, cleanup, force)
         local prevWinner = self.winner
 
         -- Set winner
-        if not Util.In(winner, self.winner, true) then
+        if not Util.In(winner, self.winner, true) then ---@cast winner -boolean,-false
             self.winner = winner
             self.isWinner = Unit.IsSelf(self.winner)
 
@@ -1047,8 +1057,8 @@ end
 -------------------------------------------------------
 
 -- Get the loot frame for a loot id
----@return Frame|nil
----@return integer|nil
+---@return GroupRollFrame?
+---@return integer?
 function Self:GetRollFrame()
     local id, frame = self:GetPlrId()
 
@@ -1140,10 +1150,11 @@ end
 ---@param unit string
 function Self:AddChat(msg, unit)
     unit = unit or "player"
-    local c = ChatTypeInfo[Unit.IsSelf(unit) and "WHISPER_INFORM" or "WHISPER"] or Util.Tbl.EMPTY
-    c = Util.Str.Color(c.r, c.g, c.b)
-    msg = ("|c%s[|r%s|c%s]: %s|r"):format(c, Unit.ColoredShortenedName(unit), c, msg)
+    local colorTable = ChatTypeInfo[Unit.IsSelf(unit) and "WHISPER_INFORM" or "WHISPER"] or Util.Tbl.EMPTY
+    local color = Util.Str.Color(colorTable.r, colorTable.g, colorTable.b)
+    msg = ("|c%s[|r%s|c%s]: %s|r"):format(color, Unit.ColoredShortenedName(unit), color, msg)
 
+    ---@type string[]
     self.chat = self.chat or Util.Tbl.New()
     tinsert(self.chat, msg)
 
@@ -1316,7 +1327,7 @@ end
 ---@param selfOrOwner Roll|string
 ---@param real boolean?
 function Self.CalculateTimeout(selfOrOwner, real)
-    local owner = type(selfOrOwner) == "table" and selfOrOwner.owner or selfOrOwner
+    local owner = type(selfOrOwner) == "table" and selfOrOwner.owner or selfOrOwner ---@cast owner string
     local ml = Session.GetMasterlooter()
     local chill = Addon.db.profile.chillMode
     local timeout
@@ -1340,7 +1351,7 @@ end
 -------------------------------------------------------
 
 -- Check if we should bid on the roll
----@return boolean
+---@return boolean?
 function Self:ShouldBeBidOn()
     return self.item:ShouldBeBidOn() or self.disenchant and Addon.db.profile.filter.disenchant and Unit.IsEnchanter()
 end
@@ -1407,7 +1418,7 @@ function Self:CanBeAwardedRandomly()
 end
 
 -- Check if the given unit can bid on this roll
----@param unit string
+---@param unit string?
 ---@param bid integer?
 ---@param checkInterest boolean?
 function Self:UnitCanBid(unit, bid, checkInterest)

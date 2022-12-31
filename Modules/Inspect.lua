@@ -1,9 +1,8 @@
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 local Comm, Item, Unit, Util = Addon.Comm, Addon.Item, Addon.Unit, Addon.Util
----@class Inspect : Module
+
+---@class Inspect
 local Self = Addon.Inspect
 
 -- How long before refreshing cache entries (s)
@@ -36,16 +35,16 @@ end
 
 -- Get link(s) for given unit and slot
 ---@param unit string
----@param slot string
+---@param slot integer | string
 ---@return string?
 function Self.GetLink(unit, slot)
     return Self.cache[unit] and Self.cache[unit].links[slot] or nil
 end
 
 -- Check if an entry exists and isn't out-of-date
----@param unit string
+---@param unit string?
 function Self.IsValid(unit)
-    return Self.cache[unit] and Self.cache[unit].time + Self.REFRESH > GetTime()
+    return unit and Self.cache[unit] and Self.cache[unit].time + Self.REFRESH > GetTime()
 end
 
 -------------------------------------------------------
@@ -53,8 +52,9 @@ end
 -------------------------------------------------------
 
 -- Update the cache entry for the given player
+---@param unit string
 function Self.Update(unit)
-    unit = Unit.Name(unit)
+    unit = Unit.Name(unit) --[[@as string]]
 
     local info = Self.cache[unit] or Util.Tbl.Hash("levels", Util.Tbl.New(), "links", Util.Tbl.New())
     local isValid = Self.IsValid(unit)
@@ -102,6 +102,9 @@ function Self.Update(unit)
 
     if relics and uniqueTypes then
         relics, uniqueTypes = Util.Tbl.GroupKeys(relics), Util.Tbl.Flip(uniqueTypes)
+        
+        ---@cast relics table<string, integer[]>
+        ---@cast uniqueTypes table<string, integer>
 
         for relicType,slots in pairs(relics) do
             local slotMin

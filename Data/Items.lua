@@ -1,7 +1,8 @@
 ---@type Addon
 local Addon = select(2, ...)
 local GUI, Unit, Util = Addon.GUI, Addon.Unit, Addon.Util
----@type Item
+
+---@class Item
 local Self = Addon.Item
 
 local Armor = Enum.ItemArmorSubclass
@@ -53,6 +54,7 @@ Self.TYPES_RANGED = { Self.TYPE_RANGED, Self.TYPE_RANGEDRIGHT, Self.TYPE_THROWN 
 Self.TYPES_NO_TRANSMOG = { Self.TYPE_NECK, Self.TYPE_FINGER, Self.TYPE_TRINKET }
 
 -- Armor inventory slots
+---@table<string, int[]>
 Self.SLOTS = {
     [Self.TYPE_2HWEAPON] = { INVSLOT_MAINHAND },
     [Self.TYPE_BODY] = { INVSLOT_BODY },
@@ -623,7 +625,7 @@ function Self.UpdateInstanceTrinkets(tier, instance, difficulty, timeLeft)
     timeLeft = timeLeft or Self.TRINKET_UPDATE_TRIES * Self.TRINKET_UPDATE_PER_TRY
     if timeLeft < Self.TRINKET_UPDATE_PER_TRY then return end
 
-    -- Prevent the encounter journal to interfere
+    -- Prevent the encounter journal from interfering
     if _G.EncounterJournal then _G.EncounterJournal:UnregisterAllEvents() end
 
     EJ_SelectTier(tier)

@@ -1,9 +1,22 @@
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 local Inspect, Unit, Util = Addon.Inspect, Addon.Unit, Addon.Util
+
 ---@class Item
+---@field id integer
+---@field relicType? string
+---@field numBonusIds? number
+---@field itemType? HyperlinkType
+---@field subType? string
+---@field color? string
+---@field bindType? number
+---@field toLevel? number
+---@field classes? string[]
+---@field spec? string
+---@field classId? Enum.ItemClass
+---@field subClassId? Enum.ItemArmorSubclass|Enum.ItemWeaponSubclass
+---@field attributes? table<number, boolean>
+---@field eligible? table<string, boolean>
 local Self = Addon.Item
 
 local Meta = { __index = Self }
@@ -177,7 +190,7 @@ function Self.IsLink(str)
 end
 
 -- Make item link printable
----@param str string
+---@param str Item|string
 ---@return string
 ---@return integer
 function Self.GetPrintableLink(str)
@@ -188,7 +201,7 @@ end
 -- TODO: Optimize with line number restrictions
 ---@param i integer
 ---@param line string
----@param lines table
+---@param lines integer
 ---@param attr string
 ---@return any
 local fullScanFn = function(i, line, lines, attr)
@@ -251,7 +264,7 @@ local fullScanFn = function(i, line, lines, attr)
     end
 end
 
----@param item Item|string|integer
+---@param item? Item|string|integer
 ---@param attr string
 ---@return any
 function Self.GetInfo(item, attr, ...)
@@ -262,88 +275,84 @@ function Self.GetInfo(item, attr, ...)
 
     if not item then
         return
-        -- Already known
+    -- Already known
     elseif isInstance and item[attr] ~= nil then
         return item[attr]
-        -- id
+    -- id
     elseif attr == "id" and id then
         return id
-        -- link
+    -- link
     elseif attr == "link" and link then
         return link
-        -- level, baseLevel, realLevel
+    -- level, baseLevel, realLevel
     elseif Util.In(attr, "level", "baseLevel") or attr == "realLevel" and not Self.IsScaled(item) then
         return (select(attr == "baseLevel" and 3 or 1, GetDetailedItemLevelInfo(link or id)))
-        -- realMinLevel
+    -- realMinLevel
     elseif attr == "realMinLevel" and not Self.IsScaled(item) then
         return (select(Self.INFO.basic.minLevel, GetItemInfo(link or id)))
-        -- maxLevel
+    -- maxLevel
     elseif attr == "maxLevel" then
         if Self.GetInfo(item, "quality") == Enum.ItemQuality.Heirloom then
             return Self.GetInfo(Self.GetLinkForLevel(link, Self.GetInfo(item, "toLevel")), "level", ...)
         else
             return Self.GetInfo(item, "realLevel", ...)
         end
-        -- isEquippable
+    -- isEquippable
     elseif attr == "isEquippable" then
         return IsEquippableItem(link or id) or Self.IsGearToken(item) or Self.IsRelic(item)
-        -- visualId, visualSourceId
+    -- visualId, visualSourceId
     elseif link and (attr == "visualId" or attr == "visualSourceId") then
         return (select(attr == "visualId" and 1 or 2, C_TransmogCollection.GetItemInfo(link)))
-        -- From link
+    -- From link
     elseif Self.INFO.link[attr] then
-        if isInstance then
-            return item:GetLinkInfo()[attr]
+        if isInstance then return item:GetLinkInfo()[attr] end ---@cast item -Item
+
+        if type(Self.INFO.link[attr]) == "string" then
+            return select(3, link:find(Self.INFO.link[attr] --[[@as string]]))
         else
-            if type(Self.INFO.link[attr]) == "string" then
-                return select(3, link:find(Self.INFO.link[attr] --[[@as string]]))
-            else
-                local info, i, numBonusIds, bonusIds = Self.INFO.link, 0, 1
-                for v in link:gmatch(":(%-?%d*)") do
-                    i = i + 1
-                    if attr == "bonusIds" and i > info.numBonusIds then
-                        if i > info.numBonusIds + numBonusIds then
-                            return bonusIds
-                        else
-                            bonusIds = bonusIds or Util.Tbl.New()
-                            tinsert(bonusIds, tonumber(v))
-                        end
-                    elseif i == info[attr] - 1 + numBonusIds then
-                        return tonumber(v)
-                    elseif i == info.numBonusIds then
-                        numBonusIds = tonumber(v) or 0
+            local info, i, numBonusIds, bonusIds = Self.INFO.link, 0, 1
+            for v in link:gmatch(":(%-?%d*)") do
+                i = i + 1
+                if attr == "bonusIds" and i > info.numBonusIds then
+                    if i > info.numBonusIds + numBonusIds then
+                        return bonusIds
+                    else
+                        bonusIds = bonusIds or Util.Tbl.New()
+                        tinsert(bonusIds, tonumber(v))
                     end
+                elseif i == info[attr] - 1 + numBonusIds then
+                    return tonumber(v)
+                elseif i == info.numBonusIds then
+                    numBonusIds = tonumber(v) or 0
                 end
             end
         end
-        -- From GetItemInfo()
+    -- From GetItemInfo()
     elseif Self.INFO.basic[attr] then
-        if isInstance then
-            return item:GetBasicInfo()[attr]
-            -- quality
-        elseif attr == "quality" then
+        if isInstance then return item:GetBasicInfo()[attr] end ---@cast item -Item
+
+        -- quality
+        if attr == "quality" then
             local color = Self.GetInfo(item, "color")
             -- TODO: This is a workaround for epic item links having color "a335ee", but ITEM_QUALITY_COLORS has "a334ee"
             return color == "a335ee" and 4 or color and Util.Tbl.FindWhere(ITEM_QUALITY_COLORS, "hex", "|cff" .. color) or 1
-            -- equipLoc
+        -- equipLoc
         elseif attr == "equipLoc" and Self.IsGearToken(item) then
             return Self.GetGearTokenEquipLoc(item)
         else
             return (select(Self.INFO.basic[attr], GetItemInfo(item)))
         end
-        -- From ScanTooltip()
+    -- From ScanTooltip()
     elseif Self.INFO.full[attr] then
-        if isInstance then
-            return item:GetFullInfo()[attr]
-        else
-            local val = Util.ScanTooltip(fullScanFn, link, nil, attr)
-            return val
-                or attr == "realLevel" and Self.GetInfo(item, "level")
-                or attr == "realMinLevel" and Self.GetInfo(item, "minLevel")
-                or attr == "isTransmogKnown" and Self.IsAppearanceKnown(item)
-                or attr == "isTransmogSourceKnown" and Self.IsAppearanceSourceKnown(item)
-                or val
-        end
+        if isInstance then return item:GetFullInfo()[attr] end ---@cast item -Item
+
+        local val = Util.ScanTooltip(fullScanFn, link, nil, attr)
+        return val
+            or attr == "realLevel" and Self.GetInfo(item, "level")
+            or attr == "realMinLevel" and Self.GetInfo(item, "minLevel")
+            or attr == "isTransmogKnown" and Self.IsAppearanceKnown(item)
+            or attr == "isTransmogSourceKnown" and Self.IsAppearanceSourceKnown(item)
+            or val
     end
 end
 
@@ -361,6 +370,7 @@ end
 function Self.FromLink(item, owner, bagOrEquip, slot, isTradable)
     if type(item) == "string" then
         owner = owner and Unit.Name(owner) or nil
+        ---@class Item
         item = setmetatable({
             link = item,
             owner = owner,
@@ -397,7 +407,7 @@ function Self.FromBagSlot(bag, slot, isTradable)
 end
 
 -- Get the currently equipped artifact weapon
----@param unit string?
+---@param unit UnitId?
 function Self.GetEquippedArtifact(unit)
     unit = unit or "player"
     local classId = Unit.ClassId(unit)
@@ -494,7 +504,8 @@ function Self:GetBasicInfo()
                 self.visualId, self.visualSourceId = C_TransmogCollection.GetItemInfo(self.link)
 
                 if self.subType == "Companion Pets" then
-                    local tradable, _, _, _, speciesId = select(9, C_PetJournal.GetPetInfoByItemID(self.id))
+                    ---@type boolean, _, _, _, number
+                    local tradable, _, _, _, speciesId = select(9, C_PetJournal.GetPetInfoByItemID(self.id)) --[[@as _]]
                     self.isTradable, self.isPetKnown = tradable, C_PetJournal.GetOwnedBattlePetString(speciesId) ~= nil
                 end
 
@@ -782,12 +793,14 @@ function Self:GetLevelForLocation(unit, loc)
         end
     else
         -- For other players
-        return Inspect.GetLevel(Unit.Name(unit), loc)
+        local name = Unit.Name(unit) --[[@as string]]
+        return Inspect.GetLevel(name, loc)
     end
 end
 
 -- Get equipped item links for the location
 ---@param unit string
+---@return (string|string[])?
 function Self:GetEquippedForLocation(unit, loc)
     unit = Unit(unit or "player")
     loc = loc or self:GetLocation()
@@ -808,7 +821,7 @@ function Self:GetEquippedForLocation(unit, loc)
         return links
     elseif self.isEquippable then
         local links = Util.Tbl.New()
-        for i, slot in pairs(Self.SLOTS[loc]) do
+        for _, slot in pairs(Self.SLOTS[loc]) do
             tinsert(links, isSelf and GetInventoryItemLink(unit, slot) or Inspect.GetLink(unit, slot) or nil)
         end
         return links
@@ -849,7 +862,7 @@ function Self:GetRelicSlots(unique)
     local id = self:GetBasicInfo().id
 
     for _, class in pairs(Self.CLASSES) do
-        for i, spec in pairs(class.specs) do
+        for _, spec in pairs(class.specs) do
             if spec.artifact.id == id then
                 local relics = spec.artifact.relics
 
@@ -857,9 +870,9 @@ function Self:GetRelicSlots(unique)
                 if unique then
                     relics = Util.Tbl.Copy(relics)
                     for slot, relicType in pairs(relics) do
-                        for i, spec in pairs(class.specs) do
-                            if spec.artifact.id ~= id then
-                                for _, otherRelicType in pairs(spec.artifact.relics) do
+                        for _, spec2 in pairs(class.specs) do
+                            if spec2.artifact.id ~= id then
+                                for _, otherRelicType in pairs(spec2.artifact.relics) do
                                     if otherRelicType == relicType then
                                         relics[slot] = nil
                                         break
@@ -1106,8 +1119,9 @@ end
 -- - nil: A unit can't reasonably use the item (they can' wear it or send it to and alt)
 -- - false: They probably don't want it (e.g. ilvl too low)
 -- - true: It might be an upgrade of some sort (e.g. ilvl high enough or collectible)
----@param unit string?
----@return table|boolean|nil
+---@param unit string
+---@return boolean?
+---@overload fun(): table<string, boolean>
 function Self:GetEligible(unit)
     if not self.eligible then
         if unit then
@@ -1149,7 +1163,7 @@ end
 ---@param othersOnly boolean?
 function Self:GetNumEligible(checkInterest, othersOnly)
     local n = 0
-    for unit, v in pairs(self:GetEligible()) do
+    for unit, v in pairs(self:GetEligible() --[[@as table<string, boolean>]]) do
         if (not checkInterest or v) and not (othersOnly and Unit.IsSelf(unit)) then
             n = n + 1
         end
@@ -1162,8 +1176,8 @@ end
 -------------------------------------------------------
 
 -- Check if a looted item should be checked further, only accessing link info
----@param item string
----@param owner string
+---@param item string?
+---@param owner string?
 function Self.ShouldBeChecked(item, owner)
     return item and owner
         and (not Addon.db.profile.dontShare or Unit.IsSelf(owner))
@@ -1253,8 +1267,8 @@ end
 ---@param selfOrBag Item|integer?
 ---@param slot integer?
 ---@return boolean?
----@return boolean
----@return boolean
+---@return boolean?
+---@return boolean?
 function Self.IsTradable(selfOrBag, slot)
     local bag, isSoulbound, bindTimeout
 
@@ -1279,7 +1293,7 @@ function Self.IsTradable(selfOrBag, slot)
             isSoulbound, bindTimeout = self.isSoulbound, self.bindTimeout
         end
     else
-        bag = selfOrBag
+        bag = selfOrBag --[[@as integer]]
     end
 
     -- Can't scan the tooltip if bag or slot is missing
@@ -1384,8 +1398,7 @@ end
 function Self.SetPlayerCache(loc, specOrCache, cache)
     loc = Self.GetCacheLocation(loc)
     local spec = cache and specOrCache
-    ---@cast cache table
-    cache = cache or specOrCache
+    cache = cache or specOrCache --[[@as table]]
 
     Self.playerCache[spec and loc .. spec or loc] = cache
 end
@@ -1448,7 +1461,7 @@ function Self.UpdatePlayerCacheWeapons()
             end
         end
 
-        owned = Util.Tbl.Release(true, owned)
+        Util.Tbl.Release(true, owned)
     end
 end
 
@@ -1484,6 +1497,7 @@ function Self:IsRangedWeapon()
 end
 
 -- Check if the item is a legendary from Legion or Shadowlands
+---@param self ItemRef
 function Self:IsLegendary()
     return Self.GetInfo(self, "quality") == Enum.ItemQuality.Legendary
         and Util.In(Self.GetInfo(self, "expacId"), Self.EXPAC_LEGION, Self.EXPAC_SL)
@@ -1512,7 +1526,8 @@ end
 -- Check if the item is a Shadowlands conduit
 ---@param self Item|string
 function Self:IsConduit()
-    return C_Soulbinds.IsItemConduitByItemInfo(Self.GetLink(self))
+    local link = Self.GetLink(self)
+    return link and C_Soulbinds.IsItemConduitByItemInfo(link)
 end
 
 ---@param self ItemRef

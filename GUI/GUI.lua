@@ -1,12 +1,11 @@
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local AceGUI = LibStub("AceGUI-3.0")
 local CB = LibStub("CallbackHandler-1.0")
 local Comm, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+
 ---@class GUI
 local Self = Addon.GUI
 
@@ -27,10 +26,14 @@ Self.PlayerColumns = Util.Registrar.New("GUI_PLAYER_COLUMN", "name", function (n
 end)
 
 -- Windows
+
+---@class Rolls: Module, AceEvent-3.0, AceTimer-3.0
 Self.Rolls = Self:NewModule("Rolls", nil, "AceEvent-3.0", "AceTimer-3.0")
+---@class Actions: Module, AceEvent-3.0
 Self.Actions = Self:NewModule("Actions", nil, "AceEvent-3.0")
 
 -- Row highlight frame
+
 ---@type Frame
 Self.HIGHLIGHT = CreateFrame("Frame", nil, UIParent)
 Self.HIGHLIGHT:SetFrameStrata("BACKGROUND")
@@ -372,7 +375,7 @@ function Self.ReverseAnchor(anchor)
 end
 
 -- Create an interactive label for a unit, with tooltip, unitmenu and whispering on click
----@param parent Frame|Widget
+---@param parent Frame|AceGUIWidget
 ---@param baseTooltip boolean
 function Self.CreateUnitLabel(parent, baseTooltip)
     return Self("InteractiveLabel")
@@ -384,8 +387,8 @@ function Self.CreateUnitLabel(parent, baseTooltip)
 end
 
 -- Create an interactive label for an item, with tooltip and click support
----@param parent Frame|Widget
----@return InteractiveLabel
+---@param parent Frame|AceGUIWidget
+---@return AceGUIInteractiveLabel
 function Self.CreateItemLabel(parent)
     local f = Self("InteractiveLabel")
         .SetFontObject(GameFontNormal)
@@ -450,12 +453,12 @@ function Self.CreateItemIcon(parent, onClick)
 end
 
 -- Create an icon button
----@param parent Frame|Widget
+---@param parent Frame|AceGUIWidget
 ---@param onClick function
----@param desc string
----@param width number
----@param height number
----@return Icon
+---@param desc? string
+---@param width? number
+---@param height? number
+---@return AceGUIIcon
 function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
     return Self(
         Self.CreateIcon(parent, Self.TooltipText, function (...)
@@ -471,8 +474,10 @@ function Self.CreateIconButton(icon, parent, onClick, desc, width, height)
 end
 
 -- Arrange visible icon buttons
----@param xOff number
----@param yOff number
+---@param parent AceGUIContainer
+---@param margin number?
+---@param xOff number?
+---@param yOff number?
 function Self.ArrangeIconButtons(parent, margin, xOff, yOff)
     margin = margin or 4
     local n, width, prev = 0, 0
@@ -493,7 +498,7 @@ function Self.ArrangeIconButtons(parent, margin, xOff, yOff)
 end
 
 -- Display the given text as tooltip
----@param self Widget
+---@param self AceGUIWidget
 function Self.TooltipText(self)
     local text = self:GetUserData("text")
     if text then
@@ -504,7 +509,7 @@ function Self.TooltipText(self)
 end
 
 -- Display a regular unit tooltip
----@param self Widget
+---@param self AceGUIWidget
 function Self.TooltipUnit(self)
     GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
     GameTooltip:SetUnit(self:GetUserData("unit"))
@@ -512,7 +517,7 @@ function Self.TooltipUnit(self)
 end
 
 -- Display a tooltip showing only the full name of an x-realm player
----@param self Widget
+---@param self AceGUIWidget
 function Self.TooltipUnitFullName(self)
     local unit = self:GetUserData("unit")
     if unit and Unit.Realm(unit) ~= Unit.RealmName() then
@@ -524,7 +529,7 @@ function Self.TooltipUnitFullName(self)
 end
 
 -- Display a tooltip for an item link
----@param self Widget
+---@param self AceGUIWidget
 function Self.TooltipItemLink(self)
     local link = self:GetUserData("link")
     if link then
@@ -540,7 +545,7 @@ function Self.TooltipItemLink(self)
 end
 
 -- Display a tooltip for a chat button
----@param self Widget
+---@param self AceGUIWidget
 function Self.TooltipChat(self)
     local chat = self:GetUserData("roll").chat
     local anchor = chat and self:GetUserData("anchor") or "TOP"
@@ -561,7 +566,7 @@ function Self.TooltipHide()
 end
 
 -- Handle clicks on unit labels
----@param self Widget
+---@param self AceGUIWidget
 ---@param event string
 ---@param button string
 function Self.UnitClick(self, event, button)
@@ -581,7 +586,7 @@ function Self.UnitClick(self, event, button)
 end
 
 -- Handle clicks on chat buttons
----@param self Widget
+---@param self AceGUIWidget
 ---@param event string
 ---@param button string
 function Self.ChatClick(self, event, button)
@@ -595,7 +600,7 @@ function Self.ChatClick(self, event, button)
 end
 
 -- Award loot to or vote for unit
----@param self Widget
+---@param self AceGUIWidget
 function Self.UnitAwardOrVote(self)
     ---@type Roll
     local roll = self:GetUserData("roll")
@@ -610,7 +615,7 @@ function Self.UnitAwardOrVote(self)
 end
 
 -- Handle clicks on item labels/icons
----@param self Widget
+---@param self AceGUIWidget
 function Self.ItemClick(self)
     local link = self:GetUserData("link")
     Addon:Debug("GUI.Click:Item", link)
@@ -654,7 +659,7 @@ function Self.RollBidColor(bid)
 end
 
 -- Reset an icon widget so it can be released
----@param self Icon
+---@param self AceGUIIcon
 function Self.ResetIcon(self)
     self.frame:SetFrameStrata("MEDIUM")
     self.frame:RegisterForClicks("LeftButtonUp")
@@ -663,7 +668,7 @@ function Self.ResetIcon(self)
 end
 
 -- Reset a label widget so it can be released
----@param self Label
+---@param self AceGUILabel
 function Self.ResetLabel(self)
     self.label:SetPoint("TOPLEFT")
     self.frame:SetFrameStrata("MEDIUM")
@@ -671,7 +676,7 @@ function Self.ResetLabel(self)
     self.OnRelease = nil
 end
 
----@return FrameWidget
+---@return AceGUIFrame
 function Self.ShowExportWindow(title, text)
     local f = Self("Frame").SetLayout("Fill").SetTitle(Name .. " - " .. title).Show()()
     Self("MultiLineEditBox").DisableButton(true).SetLabel().SetText(text).AddTo(f)
@@ -679,7 +684,7 @@ function Self.ShowExportWindow(title, text)
 end
 
 -- Add row-highlighting to a table
----@param parent Widget
+---@param parent AceGUIContainer
 ---@param skip integer
 function Self.TableRowHighlight(parent, skip)
     skip = skip or 0
@@ -740,7 +745,7 @@ function Self.TableRowHighlight(parent, skip)
 end
 
 -- Add row-backgrounds to a table
----@param parent Widget
+---@param parent AceGUIContainer
 ---@param colors function|table
 ---@param skip integer
 function Self.TableRowBackground(parent, colors, skip)
@@ -1082,8 +1087,8 @@ setmetatable(Self.C, {
     end
 })
 setmetatable(Self, {
-    __call = function (_, f, ...)
-        Self.C.f = type(f) == "string" and AceGUI:Create(f, ...) or f
+    __call = function (_, f)
+        Self.C.f = type(f) == "string" and AceGUI:Create(f) or f
         Self.C.k = nil
         return Self.C
     end

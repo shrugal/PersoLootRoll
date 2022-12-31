@@ -1,12 +1,10 @@
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 local Locale = Addon.Locale
 local lang = "enUS"
 
 -- Chat messages
-local L = {lang = lang}
+local L = { lang = lang }
 setmetatable(L, Locale.MT)
 Locale[lang] = L
 

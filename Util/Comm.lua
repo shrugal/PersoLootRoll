@@ -1,10 +1,9 @@
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 local AceComm = LibStub("AceComm-3.0")
 local CTL = ChatThrottleLib
 local Locale, Session, Roll, Unit, Util = Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
+
 ---@class Comm
 local Self = Addon.Comm
 
@@ -306,7 +305,7 @@ function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport, silent)
                     if roll.whispers >= Self.MAX_WHISPERS then
                         Addon:Info(L["BID_MAX_WHISPERS"], Self.GetPlayerLink(owner), link, Self.MAX_WHISPERS, Self.GetTradeLink(owner))
                     elseif Self.ShouldInitChat(owner, link) then
-                        Self.ChatLine("MSG_BID_" .. random(Addon.db.profile.messages.whisper.variants and 5 or 1), owner, link or Locale.GetChatLine("MSG_ITEM", owner))
+                        Self.ChatLine("MSG_BID_" .. random(Addon.db.profile.messages.whisper.variants and 5 or 1), owner, link or Self.GetChatLine("MSG_ITEM", owner))
                         roll.whispers = roll.whispers + 1
 
                         Addon:Info(L["BID_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))

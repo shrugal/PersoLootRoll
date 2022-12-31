@@ -1,12 +1,11 @@
 ---@type Addon
 local Addon = select(2, ...)
 local Item, Unit = Addon.Item, Addon.Unit
----@class Util
+
+---@class Util: LibUtil
 local Self = Addon.Util
 setmetatable(Self, LibStub:GetLibrary("LibUtil"))
 
----@type Counter
-Self.Counter = {}
 ---@type Registrar
 Self.Registrar = {}
 
@@ -36,7 +35,7 @@ Self.EXP_BFA = 8
 Self.EXP_SL = 9
 
 -- Check if the current group is a guild group
----@return string|boolean
+---@return string|false
 function Self.IsGuildGroup(guild)
     if not IsInGroup() or guild == "" then
         return false
@@ -49,12 +48,12 @@ function Self.IsGuildGroup(guild)
         if g then
             guilds[g] = (guilds[g] or 0) + 1
             if (not guild or g == guild) and guilds[g] / n > Self.GROUP_THRESHOLD then
-                Self.Tbl.Release(guilds)
-                return g
+                return g, Self.Tbl.Release(guilds)
             end
         end
     end
-    Self.Tbl.Release(guilds)
+
+    return false, Self.Tbl.Release(guilds)
 end
 
 -- Check if the current group is a community group
@@ -72,14 +71,15 @@ function Self.IsCommunityGroup(commId)
             for _,clubId in pairs(c) do
                 comms[clubId] = (comms[clubId] or 0) + 1
                 if (not commId or commId == clubId) and comms[clubId] / n >= Self.GROUP_THRESHOLD then
-                    Self.Tbl.Release(comms, c)
-                    return clubId
+                    return clubId, Self.Tbl.Release(comms, c)
                 end
             end
+
             Self.Tbl.Release(c)
         end
     end
-    Self.Tbl.Release(comms)
+
+    return false, Self.Tbl.Release(comms)
 end
 
 -- Get a list of guild ranks
@@ -94,7 +94,7 @@ function Self.GetGuildRanks()
 end
 
 -- Get a list of club ranks
----@return table<integer,string>
+---@return table<integer,string>?
 function Self.GetClubRanks(clubId)
     if not clubId then return end
 
@@ -154,7 +154,7 @@ end
 
 -- Get the usual # of dropped items in the current instance and group setting
 function Self.GetNumDroppedItems()
-    local difficulty, _, maxPlayers = select(3, GetInstanceInfo())
+    local _, _, difficulty, _, maxPlayers = GetInstanceInfo()
 
     if difficulty == DifficultyUtil.ID.DungeonChallenge then
         -- In M+ we get 2 items at the end of the dungeon, +1 if in time, +0.4 per keystone level above 15
@@ -162,7 +162,7 @@ function Self.GetNumDroppedItems()
         return 2 + (onTime and 1 or 0) + (level > 15 and math.ceil(0.4 * (level - 15)) or 0)
     else
         -- Normally we get about 1 item per 5 players in the group
-        local players = GetNumGroupMembers()
+        local players = GetNumGroupMembers() or 0
         if difficulty == DifficultyUtil.ID.PrimaryRaidMythic then
             players = 20
         elseif C_Loot.IsLegacyLootModeEnabled() then
@@ -184,7 +184,12 @@ function Self.GetHiddenTooltip()
 end
 
 -- Fill a tooltip and scan it line by line
+---@generic A, B, C, V
+---@param fn fun(i: integer, line: string, lines: integer, ...: V): A?, B?, C?
 ---@param linkOrBag string | integer
+---@param slot integer?
+---@vararg V
+---@return A?, B?, C?
 function Self.ScanTooltip(fn, linkOrBag, slot, ...)
     local tooltip = Self.GetHiddenTooltip()
     tooltip:ClearLines()
@@ -197,7 +202,7 @@ function Self.ScanTooltip(fn, linkOrBag, slot, ...)
         return
     end
 
-    local lines = tooltip:NumLines()
+    local lines = tooltip:NumLines() --[[@as integer]]
     for i=2, lines do
         local line = _G[Addon.ABBR .."_HiddenTooltipTextLeft" .. i]:GetText()
         if line then
@@ -210,12 +215,12 @@ function Self.ScanTooltip(fn, linkOrBag, slot, ...)
 end
 
 -- Get the correct bag position, if it exists (e.g. 1, 31 -> 2, 1)
----@return integer
----@return integer
+---@return integer?
+---@return integer?
 function Self.GetBagPosition(bag, slot)
     local numSlots = C_Container.GetContainerNumSlots(bag)
     if bag < 0 or bag > NUM_BAG_SLOTS or not numSlots or numSlots == 0 then
-        return nil, nil
+        return
     elseif slot > numSlots then
         return Self.GetBagPosition(bag + 1, slot - numSlots)
     else

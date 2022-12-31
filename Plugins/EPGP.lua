@@ -1,13 +1,12 @@
----@type string
-local Name = ...
----@type Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
-local EPGP = LibStub("AceAddon-3.0"):GetAddon("EPGP", true)
+local EPGP = LibStub("AceAddon-3.0"):GetAddon("EPGP", true) --[[@as EPGPAddon]]
 local LGP = LibStub("LibGearPoints-1.2", true)
 local GS = LibStub("LibGuildStorage-1.2", true)
 local GUI, Options, Roll, Session, Unit, Util = Addon.GUI, Addon.Options, Addon.Roll, Addon.Session, Addon.Unit, Addon.Util
+
 ---@class EPGP : Module
 local Self = Addon.EPGP
 
@@ -96,12 +95,13 @@ end
 ---@param undo boolean?
 ---@param trys integer?
 function Self.CreditGP(roll, unit, amount, undo, trys)
+    trys = trys or Self.CREDIT_MAX_TRYS
     local link, gp = roll.item.link, undo and -amount or amount
 
     if trys == 0 then
         Addon:Error(L["EPGP_ERROR_CREDIT_GP_FAILED"], gp, unit, link)
     elseif not GS:IsCurrentState() then
-        Self:ScheduleTimer(Self.UnitCreditEP, 0.5, roll, unit, amount, undo, (trys or Self.CREDIT_MAX_TRYS) - 1)
+        Self:ScheduleTimer(Self.CreditGP, 0.5, roll, unit, amount, undo, trys - 1)
     elseif not EPGP:CanIncGPBy(link, gp) then
         Addon:Error(L["EPGP_ERROR_CREDIT_GP_FAILED"], gp, unit, link)
     else
@@ -115,7 +115,7 @@ end
 function Self.UndoGPCredit(roll)
     if Self.credited[roll.id] then
         local prevWinner, gp = (":"):split(Self.credited[roll.id])
-        Self.CreditGP(roll, prevWinner, gp, true)
+        Self.CreditGP(roll, prevWinner, assert(tonumber(gp)), true)
     end
 end
 
@@ -181,7 +181,7 @@ function Self.RegisterOptions()
             args = {
                 desc = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_DESC"] .. "\n"},
                 warningNoAddon = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_WARNING_NO_ADDON"] .. "\n", hidden = function () return IsAddOnLoaded("EPGP") end},
-                warningNoOfficer = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_WARNING_NO_OFFICER"] .. "\n", hidden = CanEditOfficerNote},
+                warningNoOfficer = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_WARNING_NO_OFFICER"] .. "\n", hidden = C_GuildInfo.CanEditOfficerNote},
                 enable = {
                     name = L["OPT_ENABLE"],
                     desc = L["OPT_ENABLE_MODULE_DESC"],

@@ -1,11 +1,11 @@
----@type string
-local Name = ...
----@class Addon
-local Addon = select(2, ...)
+---@type string, Addon
+local Name, Addon = ...
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local RI = LibStub("LibRealmInfo")
 local Comm, GUI, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+
+---@class Addon
 local Self = Addon
 
 -- Logging
@@ -68,8 +68,10 @@ Self.EVENT_ACTIVE_CHANGE = "PLR_STATE_ACTIVE_CHANGE"
 Self.EVENT_TRACKING_CHANGE = "PLR_STATE_TRACKING_CHANGE"
 
 -- Other
----@type Roll[]
-Self.rolls = Util.Counter.New()
+---@type table<string, Roll>
+Self.rolls = {}
+---@type integer
+Self.rollNum = 0
 Self.timers = {}
 
 -------------------------------------------------------
@@ -227,14 +229,15 @@ function Self:HandleChatCommand(msg)
             bid = Roll.BID_GREED
         elseif Session.GetMasterlooter() then
             for i=1,2 do
-                if Util.In(bid, Session.rules["answers" .. i]) then
-                    bid = i + Util.Tbl.Find(Session.rules["answers" .. i], bid) / 10
+                local answers = Session.rules["answers" .. i] --[[@as table]]
+                if Util.In(bid, answers) then
+                    bid = i + Util.Tbl.Find(answers, bid) / 10
                 end
             end
         end
 
         bid = bid or Roll.BID_NEED
-        owner = Unit.Name(owner or "player")
+        owner = Unit.Name(owner or "player") --[[@as string]]
         
         if not Item.IsLink(item) or Item.IsLink(owner) or not tonumber(bid) then
             self:Print(L["USAGE_BID"])
@@ -337,8 +340,6 @@ function Self:CheckState(refresh)
         end
 
         if self.state ~= state then
-            self:SendMessage(Self.STATE_CHANGE, self.state, state)
-
             local cmp = Util.Compare(self.state, state)
 
             for i=max(state, state+cmp), max(self.state, self.state-cmp), cmp do
@@ -405,6 +406,9 @@ end
 Self.OnTrackingChanged = Util.Fn.Debounce(Self.OnTrackingChanged, 0.1, false, true)
 
 -- Check if the given unit is tracking
+---@param unit string?
+---@param inclCompAddons? boolean
+---@return boolean
 function Self:UnitIsTracking(unit, inclCompAddons)
     if Unit.IsSelf(unit or "player") then
         return self:IsTracking()
@@ -420,7 +424,7 @@ end
 
 -- Set a unit's version string
 ---@param unit string
----@param version string|number
+---@param version? string|number
 function Self:SetVersion(unit, version)
     version = tonumber(version) or version
 
@@ -484,7 +488,7 @@ function Self:CompareVersion(versionOrUnit)
     return 0
 end
 
----@param unit string
+---@param unit string?
 ---@param addon string
 ---@param version string|number
 function Self:SetCompAddonUser(unit, addon, version)
@@ -494,8 +498,8 @@ function Self:SetCompAddonUser(unit, addon, version)
     end
 end
 
----@param unit string
----@param addon string
+---@param unit string?
+---@param addon string?
 ---@return string
 function Self:GetCompAddonUser(unit, addon)
     unit = Unit.Name(unit)
@@ -532,7 +536,7 @@ end
 
 -- Write to log and print if lvl is high enough
 ---@param line string
-function Addon:Echo(lvl, line, ...)
+function Self:Echo(lvl, line, ...)
     if lvl == Self.ECHO_DEBUG then
         for i=1, select("#", ...) do
             line = line .. (i == 1 and " - " or ", ") .. Util.Str.ToString((select(i, ...)))
@@ -587,7 +591,7 @@ end
 function Self:RegisterErrorHandler()
     if BugGrabber and BugGrabber.RegisterCallback then
         BugGrabber.RegisterCallback(self, "BugGrabber_BugGrabbed", function (_, err)
-            self:HandleError(err.message, err.stack, err.locals ~= "InCombatSkipped" and err.locals or "")
+            self:HandleError(err.message, err.stack)
         end)
     else
         local origHandler = geterrorhandler()
@@ -599,7 +603,7 @@ function Self:RegisterErrorHandler()
                 local stack = debugstack(2 + lvl)
                 local locals = not (InCombatLockdown() or UnitAffectingCombat("player")) and debuglocals(2 + lvl) or ""
 
-                self:HandleError(msg, stack, locals)
+                self:HandleError(msg, stack)
             end
 
             return r
