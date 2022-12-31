@@ -193,10 +193,10 @@ function Self.Get(id)
 end
 
 -- Find a roll
----@param ownerId string?
+---@param ownerId integer?
 ---@param owner (string|true)?
 ---@param item (Item|string|number)?
----@param itemOwnerId string?
+---@param itemOwnerId integer?
 ---@param itemOwner (string|true)?
 ---@param status integer?
 function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner, status)
@@ -221,21 +221,21 @@ function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner, status)
     for id, roll in pairs(Addon.rolls) do
         if (
             owner and ownerId and owner == roll.owner and ownerId == roll.ownerId and (not itemOwner or not roll.item.owner or itemOwner == roll.item.owner)
-                or itemOwner and itemOwnerId and itemOwner == roll.item.owner and itemOwnerId == roll.itemOwnerId and (not owner or not roll.owner or owner == roll.owner)
-                or (
+            or itemOwner and itemOwnerId and itemOwner == roll.item.owner and itemOwnerId == roll.itemOwnerId and (not owner or not roll.owner or owner == roll.owner)
+            or (
                 (not owner or roll.owner == owner)
-                    and (not ownerId or roll.ownerId == ownerId)
-                    and (not itemOwner or roll.item.owner == itemOwner)
-                    and (not itemOwnerId or roll.itemOwnerId == itemOwnerId)
-                )
+                and (not ownerId or roll.ownerId == ownerId)
+                and (not itemOwner or roll.item.owner == itemOwner)
+                and (not itemOwnerId or roll.itemOwnerId == itemOwnerId)
             )
-            and (not status or roll.status == status)
-            and (
+        )
+        and (not status or roll.status == status)
+        and (
             not item
-                or t == "table" and item.link == roll.item.link
-                or t == "number" and item == roll.item.id
-                or t == "string" and item == roll.item.link
-            ) then
+            or t == "table" and item.link == roll.item.link
+            or t == "number" and item == roll.item.id
+            or t == "string" and item == roll.item.link
+        ) then
             return roll
         end
     end
@@ -250,22 +250,22 @@ end
 -- Create and add a roll to the list
 ---@param item Item|string
 ---@param owner string?
----@param ownerId string?
----@param itemOwnerId string?
+---@param ownerId integer?
+---@param itemOwnerId integer?
 ---@param timeout integer?
 ---@param disenchant boolean?
 function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
     owner = Unit.Name(owner or "player") --[[@as string]]
     local isOwner = Unit.IsSelf(owner)
 
-    local num = Addon.rollNum + 1
-    Addon.rollNum = num
+    local id = Addon.rollNum + 1
+    Addon.rollNum = id
 
     -- Create the roll entry
     ---@class Roll
     local roll = setmetatable({
-        num = num,
-        id = Util.Str.Random(16),
+        id = id,
+        uid = Util.Str.Random(16),
         created = time(),
         isOwner = isOwner,
         item = Item.FromLink(item, owner),
@@ -291,14 +291,14 @@ function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
     }, Meta)
 
     -- Add it to the list
-    Addon.rolls[roll.id] = roll
+    Addon.rolls[id] = roll
 
     -- Set ownerId/itemOwnerId
     if roll.isOwner then
-        roll.ownerId = roll.id
+        roll.ownerId = id
     end
     if roll.item.isOwner then
-        roll.itemOwnerId = roll.id
+        roll.itemOwnerId = id
     end
 
     Addon:Debug("Roll.Add", roll)
@@ -421,9 +421,7 @@ function Self.Update(data, unit)
                 end
             end)
         end
-
-        return true
-        -- The winner can inform us that it has been traded, or the item owner if the winner doesn't have the addon or he traded it to someone else
+    -- The winner can inform us that it has been traded, or the item owner if the winner doesn't have the addon or he traded it to someone else
     elseif roll.winner and (unit == roll.winner or unit == roll.item.owner and not Addon:UnitIsTracking(roll.winner) or data.traded ~= roll.winner) then
         roll.item:OnLoaded(function()
             -- Register when the roll has been traded
@@ -431,11 +429,9 @@ function Self.Update(data, unit)
                 roll:OnTraded(data.traded)
             end
         end)
-
-        return true
-    else
-        return created
     end
+
+    return created, roll
 end
 
 -- Clear old rolls
@@ -492,11 +488,11 @@ function Self.Test()
 end
 
 -- Check for and convert from/to PLR roll id
-function Self.IsPlrId(id) return type(id) == "string" end
+function Self.IsPlrId(id) return type(id) == "number" and id < 0 end
 
-function Self.ToPlrId(id) return id end
+function Self.ToPlrId(id) return -id end
 
-function Self.FromPlrId(id) return id end
+function Self.FromPlrId(id) return -id end
 
 -------------------------------------------------------
 --                     Rolling                       --

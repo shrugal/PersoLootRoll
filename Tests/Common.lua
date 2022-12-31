@@ -6,7 +6,8 @@ local AssertEqual, Replace = WoWUnit.AreEqual, WoWUnit.Replace
 local Roll, Unit, Util = Addon.Roll, Addon.Unit, Addon.Util
 
 ---@class Tests
-local Self = Addon.Test
+local Self = {}
+Addon.Test = Self
 
 Self.Fn = function () end
 Self.Id = function (v) return v end
@@ -110,19 +111,19 @@ Self.items = {
 }
 
 ---@type Roll
-Self.roll = {id = "1", ownerId = "1", owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_PENDING, itemOwnerId = "1", timeout = 30, item = {owner = Self.units.player.name, isOwner = true, infoLevel = 0, link = Self.items.item1[2]}}
+Self.roll = {id = 1, ownerId = 1, owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_PENDING, itemOwnerId = 1, timeout = 30, item = {owner = Self.units.player.name, isOwner = true, infoLevel = 0, link = Self.items.item1[2]}}
 
 ---@type Roll[]
 Self.rolls = {
-    {id = "1", ownerId = "1", owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_RUNNING, itemOwnerId = "1", timeout = 30, item = {id = 1, owner = Self.units.player.name, infoLevel = 1, link = Self.items.item1[2], isTradable = true}},
-    {id = "2", ownerId = "2", owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_DONE,    itemOwnerId = "2", timeout = 30, item = {id = 2, owner = Self.units.player.name, infoLevel = 1, link = Self.items.item2[2], isTradable = true}},
-    {id = "3", ownerId = "1", owner = Self.units.party1.name, isOwner = false, status = Roll.STATUS_RUNNING, itemOwnerId = "1", timeout = 30, item = {id = 3, owner = Self.units.party1.name, infoLevel = 1, link = Self.items.item3[2], isTradable = true}, disenchant = true},
+    {id = 1, ownerId = 1, owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_RUNNING, itemOwnerId = 1, timeout = 30, item = {id = 1, owner = Self.units.player.name, infoLevel = 1, link = Self.items.item1[2], isTradable = true}},
+    {id = 2, ownerId = 2, owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_DONE,    itemOwnerId = 2, timeout = 30, item = {id = 2, owner = Self.units.player.name, infoLevel = 1, link = Self.items.item2[2], isTradable = true}},
+    {id = 3, ownerId = 1, owner = Self.units.party1.name, isOwner = false, status = Roll.STATUS_RUNNING, itemOwnerId = 1, timeout = 30, item = {id = 3, owner = Self.units.party1.name, infoLevel = 1, link = Self.items.item3[2], isTradable = true}, disenchant = true},
     nil,
-    {id = "5", ownerId = "3", owner = Self.units.party2.name, isOwner = false, status = Roll.STATUS_PENDING, itemOwnerId = "3", timeout = 30, item = {id = 5, owner = Self.units.party2.name, infoLevel = 1, link = Self.items.item5[2], isTradable = true}},
-    {id = "6", ownerId = "4", owner = Self.units.party2.name, isOwner = false, status = Roll.STATUS_DONE,    itemOwnerId = "4", timeout = 30, item = {id = 6, owner = Self.units.party2.name, infoLevel = 1, link = Self.items.item6[2], isTradable = true}},
-    {id = "7", ownerId = "5", owner = Self.units.party3.name, isOwner = false, status = Roll.STATUS_DONE,    itemOwnerId = "7", timeout = 30, item = {id = 7, owner = Self.units.player.name, infoLevel = 1, link = Self.items.item7[2], isTradable = true}, disenchant = true},
-    {id = "8", ownerId = "6", owner = Self.units.party3.name, isOwner = false, status = Roll.STATUS_DONE,    itemOwnerId = "2", timeout = 30, item = {id = 8, owner = Self.units.party1.name, infoLevel = 1, link = Self.items.item8[2], isTradable = true}, disenchant = true},
-    {id = "9", ownerId = "9", owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_PENDING, itemOwnerId = "3", timeout = 30, item = {id = 8, owner = Self.units.party3.name, infoLevel = 1, link = Self.items.item8[2], isTradable = true}}
+    {id = 5, ownerId = 3, owner = Self.units.party2.name, isOwner = false, status = Roll.STATUS_PENDING, itemOwnerId = 3, timeout = 30, item = {id = 5, owner = Self.units.party2.name, infoLevel = 1, link = Self.items.item5[2], isTradable = true}},
+    {id = 6, ownerId = 4, owner = Self.units.party2.name, isOwner = false, status = Roll.STATUS_DONE,    itemOwnerId = 4, timeout = 30, item = {id = 6, owner = Self.units.party2.name, infoLevel = 1, link = Self.items.item6[2], isTradable = true}},
+    {id = 7, ownerId = 5, owner = Self.units.party3.name, isOwner = false, status = Roll.STATUS_DONE,    itemOwnerId = 7, timeout = 30, item = {id = 7, owner = Self.units.player.name, infoLevel = 1, link = Self.items.item7[2], isTradable = true}, disenchant = true},
+    {id = 8, ownerId = 6, owner = Self.units.party3.name, isOwner = false, status = Roll.STATUS_DONE,    itemOwnerId = 2, timeout = 30, item = {id = 8, owner = Self.units.party1.name, infoLevel = 1, link = Self.items.item8[2], isTradable = true}, disenchant = true},
+    {id = 9, ownerId = 9, owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_PENDING, itemOwnerId = 3, timeout = 30, item = {id = 8, owner = Self.units.party3.name, infoLevel = 1, link = Self.items.item8[2], isTradable = true}}
 }
 
 Self.group = Util(Self.units):Copy():Pluck("name")()

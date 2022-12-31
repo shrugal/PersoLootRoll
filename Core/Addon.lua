@@ -68,7 +68,7 @@ Self.EVENT_ACTIVE_CHANGE = "PLR_STATE_ACTIVE_CHANGE"
 Self.EVENT_TRACKING_CHANGE = "PLR_STATE_TRACKING_CHANGE"
 
 -- Other
----@type table<string, Roll>
+---@type table<integer, Roll>
 Self.rolls = {}
 ---@type integer
 Self.rollNum = 0

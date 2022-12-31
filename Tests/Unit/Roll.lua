@@ -9,7 +9,7 @@ local Tests = WoWUnit(Name .. ".Unit.Roll")
 
 local GetUpdateData = function (roll, eligible, started, bidPublic, votePublic)
     local data = Util(roll):Copy():Select(
-        "owner", "ownerId", "itemOwnerId", "status", "started",
+        "uid", "owner", "ownerId", "itemOwnerId", "status", "started",
         "timeout", "posted", "winner", "traded"
     )()
 
@@ -33,18 +33,19 @@ local GetUpdateData = function (roll, eligible, started, bidPublic, votePublic)
     return data
 end
 
-local AssertRoll = function (roll, id, started, dump)
+local AssertRoll = function (roll, id, ownerId, num, started)
     local check = Addon.rolls[id]
     local item = Item.FromLink(roll.item.link, roll.item.owner, nil, nil, roll.item.isTradable)
     local running = roll.status >= Roll.STATUS_RUNNING or nil
 
     AssertEqual({
         id = id,
-        ownerId = roll.ownerId,
+        uid = check.uid,
+        ownerId = ownerId or roll.ownerId,
         owner = roll.owner,
         isOwner = roll.isOwner,
         status = roll.status,
-        itemOwnerId = roll.itemOwnerId,
+        itemOwnerId = ownerId or roll.itemOwnerId,
         timeout = roll.timeout,
         disenchant = roll.disenchant,
         item = check.item.infoLevel > 0 and item:GetFullInfo() or item,
@@ -60,7 +61,8 @@ end
 
 function Tests:GetTest()
     local obj = {}
-    Replace(Addon, "rolls", {[1] = obj})
+    Replace(Addon, "rolls", { obj })
+    Replace(Addon, "rollNum", 1)
     AssertEqual(Roll.Get(1), obj)
     AssertFalse(Roll.Get(2))
 end
@@ -68,17 +70,18 @@ end
 function Tests:FindTest()
     Test.ReplaceDefault()
     Replace(Addon, "rolls", Test.rolls)
+    Replace(Addon, "rollNum", 9)
 
     -- Find by id and owner
-    AssertEqual(Test.rolls[1], Roll.Find("1", "player"))
-    AssertEqual(Test.rolls[2], Roll.Find("2", "player"))
-    AssertEqual(Test.rolls[3], Roll.Find("1", "party1"))
-    AssertEqual(Test.rolls[5], Roll.Find("3", "party2"))
-    AssertEqual(Test.rolls[6], Roll.Find("4", "party2"))
-    AssertEqual(Test.rolls[7], Roll.Find("5", "party3"))
-    AssertEqual(Test.rolls[8], Roll.Find("6", "party3"))
-    AssertFalse(Roll.Find("4", "player"))
-    AssertFalse(Roll.Find("2", "party1"))
+    AssertEqual(Test.rolls[1], Roll.Find(1, "player"))
+    AssertEqual(Test.rolls[2], Roll.Find(2, "player"))
+    AssertEqual(Test.rolls[3], Roll.Find(1, "party1"))
+    AssertEqual(Test.rolls[5], Roll.Find(3, "party2"))
+    AssertEqual(Test.rolls[6], Roll.Find(4, "party2"))
+    AssertEqual(Test.rolls[7], Roll.Find(5, "party3"))
+    AssertEqual(Test.rolls[8], Roll.Find(6, "party3"))
+    AssertFalse(Roll.Find(4, "player"))
+    AssertFalse(Roll.Find(2, "party1"))
     -- Find by owner and item
     AssertEqual(Test.rolls[1], Roll.Find(nil, "player", Test.items.item1[2]))
     AssertEqual(Test.rolls[2], Roll.Find(nil, "player", Test.items.item2[2]))
@@ -90,30 +93,31 @@ function Tests:FindTest()
     AssertFalse(Roll.Find(nil, "player", "item7"))
     AssertFalse(Roll.Find(nil, "party1", "item8"))
     -- Find by item owner and item owner id
-    AssertEqual(Test.rolls[1], Roll.Find(nil, nil, nil, "1", "player"))
-    AssertEqual(Test.rolls[2], Roll.Find(nil, nil, nil, "2", "player"))
-    AssertEqual(Test.rolls[3], Roll.Find(nil, nil, nil, "1", "party1"))
-    AssertEqual(Test.rolls[5], Roll.Find(nil, nil, nil, "3", "party2"))
-    AssertEqual(Test.rolls[6], Roll.Find(nil, nil, nil, "4", "party2"))
-    AssertEqual(Test.rolls[7], Roll.Find(nil, nil, nil, "7", "player"))
-    AssertEqual(Test.rolls[8], Roll.Find(nil, nil, nil, "2", "party1"))
-    AssertFalse(Roll.Find(nil, nil, nil, "3", "player"))
-    AssertFalse(Roll.Find(nil, nil, nil, "3", "party1"))
-    AssertFalse(Roll.Find(nil, nil, nil, "7", "party3"))
-    AssertFalse(Roll.Find(nil, nil, nil, "2", "party3"))
+    AssertEqual(Test.rolls[1], Roll.Find(nil, nil, nil, 1, "player"))
+    AssertEqual(Test.rolls[2], Roll.Find(nil, nil, nil, 2, "player"))
+    AssertEqual(Test.rolls[3], Roll.Find(nil, nil, nil, 1, "party1"))
+    AssertEqual(Test.rolls[5], Roll.Find(nil, nil, nil, 3, "party2"))
+    AssertEqual(Test.rolls[6], Roll.Find(nil, nil, nil, 4, "party2"))
+    AssertEqual(Test.rolls[7], Roll.Find(nil, nil, nil, 7, "player"))
+    AssertEqual(Test.rolls[8], Roll.Find(nil, nil, nil, 2, "party1"))
+    AssertFalse(Roll.Find(nil, nil, nil, 3, "player"))
+    AssertFalse(Roll.Find(nil, nil, nil, 3, "party1"))
+    AssertFalse(Roll.Find(nil, nil, nil, 7, "party3"))
+    AssertFalse(Roll.Find(nil, nil, nil, 2, "party3"))
     -- Find by id, owner and status
-    AssertEqual(Test.rolls[1], Roll.Find("1", "player", nil, nil, nil, Roll.STATUS_RUNNING))
-    AssertEqual(Test.rolls[2], Roll.Find("2", "player", nil, nil, nil, Roll.STATUS_DONE))
-    AssertEqual(Test.rolls[3], Roll.Find("1", "party1", nil, nil, nil, Roll.STATUS_RUNNING))
-    AssertFalse(Roll.Find("1", "player", nil, nil, nil, Roll.STATUS_DONE))
-    AssertFalse(Roll.Find("2", "player", nil, nil, nil, Roll.STATUS_CANCELED))
-    AssertFalse(Roll.Find("1", "party1", nil, nil, nil, Roll.STATUS_PENDING))
+    AssertEqual(Test.rolls[1], Roll.Find(1, "player", nil, nil, nil, Roll.STATUS_RUNNING))
+    AssertEqual(Test.rolls[2], Roll.Find(2, "player", nil, nil, nil, Roll.STATUS_DONE))
+    AssertEqual(Test.rolls[3], Roll.Find(1, "party1", nil, nil, nil, Roll.STATUS_RUNNING))
+    AssertFalse(Roll.Find(1, "player", nil, nil, nil, Roll.STATUS_DONE))
+    AssertFalse(Roll.Find(2, "player", nil, nil, nil, Roll.STATUS_CANCELED))
+    AssertFalse(Roll.Find(1, "party1", nil, nil, nil, Roll.STATUS_PENDING))
 end
 
 function Tests:FindWhereTest()
     Replace(Addon, "rolls", Test.rolls)
+    Replace(Addon, "rollNum", 9)
 
-    for _,roll in ipairs(Test.rolls) do
+    for _,roll in pairs(Test.rolls) do
         AssertEqual(roll, Roll.FindWhere(roll))
 
         local args = {}
@@ -131,17 +135,20 @@ end
 function Tests:AddTest()
     Test.ReplaceDefault()
     Replace(Addon, "rolls", {})
+    Replace(Addon, "rollNum", 0)
     Replace(Roll, "CalculateTimeout", function () return 30 end)
 
     local AssertEvents = Test.ReplaceFunction(Addon, "SendMessage", false)
 
-    local roll
+    ---@type Roll, Roll
+    local roll, added
 
     -- Item owned by the player
     roll = Util.Tbl.CopyDeep(Test.roll)
     roll.disenchant = false
-    Roll.Add(roll.item.link, roll.owner)
-    AssertRoll(roll, 1, nil, true)
+    added = Roll.Add(roll.item.link, roll.owner)
+    Assert(added)
+    AssertRoll(roll, added.id, added.id)
     AssertEvents(1)
 
     -- Item owned by someone else
@@ -150,12 +157,13 @@ function Tests:AddTest()
     roll.isOwner = false
     roll.item.owner = roll.owner
     roll.item.isOwner = false
-    roll.ownerId = "2"
-    roll.itemOwnerId = "2"
+    roll.ownerId = 2
+    roll.itemOwnerId = 2
     roll.timeout = 60
     roll.disenchant = true
-    Roll.Add(roll.item.link, roll.owner, roll.ownerId, roll.itemOwnerId, roll.timeout, roll.disenchant)
-    AssertRoll(roll, 2)
+    added = Roll.Add(roll.item.link, roll.owner, roll.ownerId, roll.itemOwnerId, roll.timeout, roll.disenchant)
+    Assert(added)
+    AssertRoll(roll, added.id, nil, 2)
     AssertEvents(1)
 
     -- TODO: Item owned by masterlooter
@@ -164,6 +172,7 @@ end
 function Tests.UpdateTest()
     Test.ReplaceDefault()
     Replace(Addon, "rolls", {})
+    Replace(Addon, "rollNum", 0)
     Replace(Addon, "ScheduleTimer", function () return true end)
 
     local ml = nil
@@ -171,46 +180,65 @@ function Tests.UpdateTest()
 
     local AssertEvents = Test.ReplaceFunction(Addon, "SendMessage", false)
 
-    local roll
+    ---@type Roll, boolean, Roll?
+    local roll, created, added
 
     -- Send roll
     roll = Test.rolls[3]
-    Assert(Roll.Update(GetUpdateData(roll), roll.owner))
-    AssertRoll(roll, 1)
+    created, added = Roll.Update(GetUpdateData(roll), roll.owner)
+    Assert(created)
+    Assert(added) ---@cast added Roll
+    AssertEqual(1, Addon.rollNum)
+    AssertRoll(roll, added.id, added.id)
     AssertEvents(3)
 
     -- Send again
-    Assert(Roll.Update(GetUpdateData(roll), roll.owner))
-    AssertFalse(Addon.rolls[2])
-    AssertRoll(roll, 1)
+    created, added = Roll.Update(GetUpdateData(roll), roll.owner)
+    AssertFalse(created)
+    Assert(added) ---@cast added Roll
+    AssertEqual(1, Addon.rollNum)
+    AssertRoll(roll, added.id)
     AssertEvents(0)
 
     -- Send again with different owner
-    AssertFalse(Roll.Update(GetUpdateData(roll), Test.units.party2.name))
+    created = Roll.Update(GetUpdateData(roll), Test.units.party2.name)
+    AssertFalse(created)
+    AssertEqual(1, Addon.rollNum)
     AssertEvents(0)
 
     -- Send roll with unit different from item owner
     roll = Test.rolls[5]
-    AssertFalse(Roll.Update(GetUpdateData(roll), Test.units.party1.name))
+    created, added = Roll.Update(GetUpdateData(roll), Test.units.party1.name)
+    AssertFalse(created)
+    AssertFalse(added)
+    AssertEqual(1, Addon.rollNum)
     AssertEvents(0)
 
     -- Send again with correct owner
-    Assert(Roll.Update(GetUpdateData(roll), roll.owner))
-    AssertRoll(roll, 2)
+    created, added = Roll.Update(GetUpdateData(roll), roll.owner)
+    Assert(created)
+    Assert(added) ---@cast added Roll
+    AssertRoll(roll, added.id)
+    AssertEqual(2, Addon.rollNum)
     AssertEvents(1)
 
     -- Send roll with owner different from item owner
     roll = Util.Tbl.CopyDeep(Test.rolls[8])
     roll.status = Roll.STATUS_PENDING
-    Assert(Roll.Update(GetUpdateData(roll), roll.item.owner))
-    AssertRoll(roll, 3)
+    created, added = Roll.Update(GetUpdateData(roll), roll.item.owner)
+    Assert(created)
+    Assert(added) ---@cast added Roll
+    AssertRoll(roll, added.id)
+    AssertEqual(3, Addon.rollNum)
     AssertEvents(1)
 
     -- Send update from owner with different ownerId
-    roll.ownerId = 7
-    Assert(Roll.Update(GetUpdateData(roll), roll.owner))
-    AssertRoll(roll, 3)
-    AssertFalse(Addon.rolls[4])
+    roll.ownerId = "7"
+    created, added = Roll.Update(GetUpdateData(roll), roll.owner)
+    AssertFalse(created)
+    Assert(added) ---@cast added Roll
+    AssertRoll(roll, added.id)
+    AssertEqual(3, Addon.rollNum)
     AssertEvents(0)
 
     -- TODO: Send roll from ML

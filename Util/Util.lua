@@ -3,8 +3,7 @@ local Addon = select(2, ...)
 local Item, Unit = Addon.Item, Addon.Unit
 
 ---@class Util: LibUtil
-local Self = Addon.Util
-setmetatable(Self, LibStub:GetLibrary("LibUtil"))
+local Self = setmetatable(Addon.Util, LibStub:GetLibrary("LibUtil"))
 
 ---@type Registrar
 Self.Registrar = {}
