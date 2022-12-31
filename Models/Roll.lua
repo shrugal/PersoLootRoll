@@ -153,6 +153,8 @@ Self.AWARD_METHODS = { Self.AWARD_VOTES, Self.AWARD_BIDS, Self.AWARD_ROLLS, Self
 ---@param key string    A unique identifier
 ---@param fn function   A callback that removes everyone but the possible winners from the candidates list, with parameters: roll, candidates
 ---@param before string The custom method will be applied before this method (optional: defaults to Self.AWARD_RANDOM)
+---@class AwardMethods: Registrar
+---@field Add fun(self: self, key: string, fn: function, before?: string): table
 Self.AwardMethods = Util.Registrar.New("ROLL_AWARD_METHOD", "key", function(key, fn, before)
     return Util.Tbl.Hash("key", key, "fn", fn), select(2, Self.AwardMethods:Get(before or Self.AWARD_RANDOM))
 end)
