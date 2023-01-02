@@ -89,7 +89,7 @@ end
 -------------------------------------------------------
 
 -- Get a unit's name (incl. realm name if from another realm)
----@generic T string | string?
+---@generic T string|string?
 ---@param unit T
 ---@return T
 function Self.Name(unit)

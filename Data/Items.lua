@@ -522,7 +522,7 @@ end
 ---@param tier integer
 ---@param instance integer
 ---@param difficulty integer
----@param timeLeft number?
+---@param timeLeft? number
 function Self.UpdateInstanceTrinkets(tier, instance, difficulty, timeLeft)
     timeLeft = timeLeft or Self.TRINKET_UPDATE_TRIES * Self.TRINKET_UPDATE_PER_TRY
     if timeLeft < Self.TRINKET_UPDATE_PER_TRY then return end
@@ -572,7 +572,7 @@ function Self.UpdateInstanceTrinkets(tier, instance, difficulty, timeLeft)
 end
 
 -- Export the trinkets list
----@param loaded boolean?
+---@param loaded? boolean
 function Self.ExportTrinkets(loaded)
     if not loaded and next(Self.TRINKETS) then
         for id in pairs(Self.TRINKETS) do

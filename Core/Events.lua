@@ -70,6 +70,7 @@ function Self.RegisterEvents()
     Self:RegisterEvent("ITEM_UNLOCKED")
     Self:RegisterEvent("BAG_UPDATE_DELAYED")
     -- Loot
+    Self:RegisterEvent("START_LOOT_ROLL")
     Self:RegisterEvent("LOOT_ITEM_AVAILABLE")
 end
 
@@ -100,6 +101,7 @@ function Self.UnregisterEvents()
     Self:UnregisterEvent("ITEM_UNLOCKED")
     Self:UnregisterEvent("BAG_UPDATE_DELAYED")
     -- Loot
+    Self:UnregisterEvent("START_LOOT_ROLL")
     Self:UnregisterEvent("LOOT_ITEM_AVAILABLE")
 end
 
@@ -222,6 +224,13 @@ function Self.CHAT_MSG_SYSTEM(_, _, msg)
 end
 
 -- Loot
+
+---@param rollId number
+---@param time number
+---@param handle number
+function Self.START_LOOT_ROLL(_, _, rollId, time, handle)
+    
+end
 
 ---@param tooltip string
 ---@param handle number
