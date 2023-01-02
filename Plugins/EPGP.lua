@@ -92,8 +92,8 @@ end
 ---@param roll Roll
 ---@param unit string
 ---@param amount integer
----@param undo boolean?
----@param trys integer?
+---@param undo? boolean
+---@param trys? integer
 function Self.CreditGP(roll, unit, amount, undo, trys)
     trys = trys or Self.CREDIT_MAX_TRYS
     local link, gp = roll.item.link, undo and -amount or amount

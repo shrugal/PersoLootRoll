@@ -18,7 +18,7 @@ Self.anchors = Util.Tbl.Flip({ "TOPLEFT", "TOP", "TOPRIGHT", "RIGHT", "BOTTOMRIG
 -------------------------------------------------------
 
 -- Show the frame
----@param move boolean?
+---@param move? boolean
 function Self.Show(move)
     if Self.frames.window then
         Self.frames.window.frame:Show()

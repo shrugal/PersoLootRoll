@@ -474,9 +474,9 @@ end
 
 -- Arrange visible icon buttons
 ---@param parent AceGUIContainer
----@param margin number?
----@param xOff number?
----@param yOff number?
+---@param margin? number
+---@param xOff? number
+---@param yOff? number
 function Self.ArrangeIconButtons(parent, margin, xOff, yOff)
     margin = margin or 4
     local n, width, prev = 0, 0

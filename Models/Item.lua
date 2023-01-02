@@ -362,10 +362,10 @@ end
 
 -- Create an item instance from a link
 ---@param item Item|string
----@param owner string?
----@param bagOrEquip integer?
----@param slot integer?
----@param isTradable boolean?
+---@param owner? string
+---@param bagOrEquip? integer
+---@param slot? integer
+---@param isTradable? boolean
 ---@return Item
 function Self.FromLink(item, owner, bagOrEquip, slot, isTradable)
     if type(item) == "string" then
@@ -407,7 +407,7 @@ function Self.FromBagSlot(bag, slot, isTradable)
 end
 
 -- Get the currently equipped artifact weapon
----@param unit UnitId?
+---@param unit? UnitId
 function Self.GetEquippedArtifact(unit)
     unit = unit or "player"
     local classId = Unit.ClassId(unit)
@@ -608,7 +608,7 @@ end
 
 -- Get a list of owned items by equipment location
 ---@param loc Item|string
----@param allWeapons boolean?
+---@param allWeapons? boolean
 function Self.GetOwnedForLocation(loc, allWeapons)
     local items = Util.Tbl.New()
     local classId = Unit.ClassId("player")
@@ -716,8 +716,8 @@ function Self:GetSlotCountForLocation(unit, loc)
 end
 
 -- Get the threshold for the item's slot
----@param unit string?
----@param upper boolean?
+---@param unit? string
+---@param upper? boolean
 function Self:GetThresholdForLocation(unit, upper, loc)
     unit = Unit(unit or "player")
     loc = loc or self:GetBasicInfo().equipLoc
@@ -838,7 +838,7 @@ function Self:GetGem(slot)
 end
 
 -- Get artifact relics in the item
----@param relicTypes string|table?
+---@param relicTypes? string|table
 function Self:GetRelics(relicTypes)
     local id = self:GetBasicInfo().id
 
@@ -1159,8 +1159,8 @@ function Self:GetEligible(unit)
 end
 
 -- Get the # of eligible players
----@param checkInterest boolean?
----@param othersOnly boolean?
+---@param checkInterest? boolean
+---@param othersOnly? boolean
 function Self:GetNumEligible(checkInterest, othersOnly)
     local n = 0
     for unit, v in pairs(self:GetEligible() --[[@as table<string, boolean>]]) do
@@ -1176,8 +1176,8 @@ end
 -------------------------------------------------------
 
 -- Check if a looted item should be checked further, only accessing link info
----@param item string?
----@param owner string?
+---@param item? string
+---@param owner? string
 function Self.ShouldBeChecked(item, owner)
     return item and owner
         and (not Addon.db.profile.dontShare or Unit.IsSelf(owner))
@@ -1264,8 +1264,8 @@ end
 -------------------------------------------------------
 
 -- Check if the item (given by self or bag+slot) is tradable
----@param selfOrBag Item|integer?
----@param slot integer?
+---@param selfOrBag? Item|integer
+---@param slot? integer
 ---@return boolean?
 ---@return boolean?
 ---@return boolean?
@@ -1318,7 +1318,7 @@ function Self.IsTradable(selfOrBag, slot)
 end
 
 -- Get the item's position
----@param refresh boolean?
+---@param refresh? boolean
 function Self:GetPosition(refresh)
     if not self.isOwner or not refresh and self.bagOrEquip and self.slot ~= 0 then
         return self.bagOrEquip, self.slot, self.isTradable
@@ -1359,8 +1359,8 @@ function Self:GetPosition(refresh)
 end
 
 -- Set the item's position
----@param bagOrEquip table|integer?
----@param slot integer?
+---@param bagOrEquip? table|integer
+---@param slot? integer
 function Self:SetPosition(bagOrEquip, slot)
     if type(bagOrEquip) == "table" then
         bagOrEquip, slot = unpack(bagOrEquip)
@@ -1384,7 +1384,7 @@ end
 
 -- Get an entry from the player level cache
 ---@param loc string
----@param spec integer?
+---@param spec? integer
 function Self.GetPlayerCache(loc, spec)
     loc = Self.GetCacheLocation(loc)
 
@@ -1394,7 +1394,7 @@ end
 -- Set an entry ont he player level cache
 ---@param loc string
 ---@param specOrCache integer|table
----@param cache table?
+---@param cache? table
 function Self.SetPlayerCache(loc, specOrCache, cache)
     loc = Self.GetCacheLocation(loc)
     local spec = cache and specOrCache
@@ -1608,7 +1608,7 @@ end
 
 -- Check if the visual appearance is known from the item
 ---@param self ItemRef
----@param sourceId integer?
+---@param sourceId? integer
 function Self:IsAppearanceSourceKnown(sourceId)
     sourceId = sourceId or Self.GetInfo(self, "visualSourceId")
     return sourceId and select(5, C_TransmogCollection.GetAppearanceSourceInfo(sourceId))

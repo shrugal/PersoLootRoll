@@ -28,7 +28,7 @@ Self.initialized = false
 
 -- Send a PLH message
 ---@param action string
----@param roll (Roll|string)?
+---@param roll? Roll|string
 ---@param param any
 function Self.Send(action, roll, param)
     if Self:IsEnabled() then

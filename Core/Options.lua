@@ -1289,7 +1289,7 @@ end
 
 -- Read one or all params from a communities' description
 ---@param clubId string
----@param key string?
+---@param key? string
 ---@return any
 function Self.ReadFromClub(clubId, key)
     local t, found = not key and Util.Tbl.New() or nil, false
@@ -1547,12 +1547,12 @@ end
 
 -- Migrate a single option
 ---@param key string
----@param source table?
+---@param source? table
 ---@param dest string
----@param depth integer|boolean?
----@param destKey string?
----@param filter table|string|function?
----@param keep boolean?
+---@param depth? integer|boolean
+---@param destKey? string
+---@param filter? table|string|function
+---@param keep? boolean
 function Self.MigrateOption(key, source, dest, depth, destKey, filter, keep)
     if source then
         depth = type(depth) == "number" and depth or depth and 10 or 0

@@ -185,8 +185,8 @@ end
 -- Fill a tooltip and scan it line by line
 ---@generic A, B, C, V
 ---@param fn fun(i: integer, line: string, lines: integer, ...: V): A?, B?, C?
----@param linkOrBag string | integer
----@param slot integer?
+---@param linkOrBag string|integer
+---@param slot? integer
 ---@vararg V
 ---@return A?, B?, C?
 function Self.ScanTooltip(fn, linkOrBag, slot, ...)

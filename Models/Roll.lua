@@ -189,18 +189,18 @@ end)
 
 -- Get a roll by id or prefixed id
 ---@param id integer
----@return Roll|nil
+---@return Roll?
 function Self.Get(id)
     return id and Addon.rolls[Self.IsPlrId(id) and Self.FromPlrId(id) or id] or nil
 end
 
 -- Find a roll
----@param ownerId integer?
----@param owner (string|true)?
----@param item (Item|string|number)?
----@param itemOwnerId integer?
----@param itemOwner (string|true)?
----@param status integer?
+---@param ownerId? integer
+---@param owner? string|true
+---@param item? Item|string|number
+---@param itemOwnerId? integer
+---@param itemOwner? string|true
+---@param status? integer
 function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner, status)
     owner = Unit.Name(owner == true and "player" or owner) or owner
     itemOwner = Unit.Name(itemOwner == true and "player" or itemOwner) or itemOwner
@@ -251,11 +251,11 @@ end
 
 -- Create and add a roll to the list
 ---@param item Item|string
----@param owner string?
----@param ownerId integer?
----@param itemOwnerId integer?
----@param timeout integer?
----@param disenchant boolean?
+---@param owner? string
+---@param ownerId? integer
+---@param itemOwnerId? integer
+---@param timeout? integer
+---@param disenchant? boolean
 function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
     owner = Unit.Name(owner or "player") --[[@as string]]
     local isOwner = Unit.IsSelf(owner)
@@ -501,8 +501,8 @@ function Self.FromPlrId(id) return -id end
 -------------------------------------------------------
 
 -- Start a roll
----@param startedOrManually integer|boolean?
----@param silent boolean?
+---@param startedOrManually? integer|boolean
+---@param silent? boolean
 function Self:Start(startedOrManually, silent)
     Addon:Verbose(L["ROLL_START"], self.item.link, Comm.GetPlayerLink(self.item.owner))
 
@@ -643,10 +643,10 @@ end
 
 -- Bid on a roll
 ---@param bid number
----@param fromUnit string?
----@param roll integer?
----@param isImport boolean?
----@param silent boolean?
+---@param fromUnit? string
+---@param roll? integer
+---@param isImport? boolean
+---@param silent? boolean
 ---@return Roll
 function Self:Bid(bid, fromUnit, roll, isImport, silent)
     Addon:Debug("Roll.Bid", self.id, bid, fromUnit, roll, isImport)
@@ -700,9 +700,9 @@ function Self:Bid(bid, fromUnit, roll, isImport, silent)
 end
 
 -- Vote for a unit
----@param vote string?
----@param fromUnit string?
----@param isImport boolean?
+---@param vote? string
+---@param fromUnit? string
+---@param isImport? boolean
 ---@return Roll
 function Self:Vote(vote, fromUnit, isImport)
     Addon:Debug("Roll.Vote", self.id, vote, fromUnit, isImport)
@@ -756,9 +756,9 @@ function Self:ShouldEnd()
 end
 
 -- End a roll
----@param winner boolean|string?
----@param cleanup boolean?
----@param force boolean?
+---@param winner? boolean|string
+---@param cleanup? boolean
+---@param force? boolean
 function Self:End(winner, cleanup, force)
     Addon:Debug("Roll.End", self.id, winner, cleanup, force)
 
@@ -854,7 +854,7 @@ function Self:End(winner, cleanup, force)
 end
 
 -- Cancel a roll
----@param silent boolean?
+---@param silent? boolean
 function Self:Cancel(silent)
     if self.status == Self.STATUS_CANCELED then return end
     Addon:Verbose(L["ROLL_CANCEL"], self.item.link, Comm.GetPlayerLink(self.item.owner))
@@ -1029,8 +1029,8 @@ end
 
 -- Validate an incoming vote
 ---@param vote string
----@param fromUnit string?
----@param isImport boolean?
+---@param fromUnit? string
+---@param isImport? boolean
 function Self:ValidateVote(vote, fromUnit, isImport)
     local valid, msg = self:Validate(vote, fromUnit)
     if not valid then
@@ -1225,9 +1225,9 @@ function Self:Advertise(force, noStatus)
 end
 
 -- Send the roll status to others
----@param noCheck boolean?
----@param target string?
----@param full boolean?
+---@param noCheck? boolean
+---@param target? string
+---@param full? boolean
 function Self:SendStatus(noCheck, target, full)
     if (noCheck or self.isOwner) and not self.isTest then
         local data = Util.Tbl.New()
@@ -1270,7 +1270,7 @@ end
 -------------------------------------------------------
 
 -- Get the total runtime for a roll
----@param real boolean?
+---@param real? boolean
 function Self:GetRunTime(real)
     if self.timeout == 0 and (real or Addon.db.profile.chillMode) then
         return 0
@@ -1280,7 +1280,7 @@ function Self:GetRunTime(real)
 end
 
 -- Get the time that is left on a roll
----@param real boolean?
+---@param real? boolean
 function Self:GetTimeLeft(real)
     if self.status ~= Self.STATUS_RUNNING and real or self.timeout == 0 and (real or Addon.db.profile.chillMode) then
         return 0
@@ -1311,7 +1311,7 @@ function Self:ExtendTimeout(to)
 end
 
 -- Extend the remaining time to at least the given # of seconds
----@param to number?
+---@param to? number
 function Self:ExtendTimeLeft(to)
     to = to or Self.TIMEOUT
     local left = self:GetTimeLeft(true)
@@ -1323,7 +1323,7 @@ end
 
 -- Calculate the correct timeout
 ---@param selfOrOwner Roll|string
----@param real boolean?
+---@param real? boolean
 function Self.CalculateTimeout(selfOrOwner, real)
     local owner = type(selfOrOwner) == "table" and selfOrOwner.owner or selfOrOwner ---@cast owner string
     local ml = Session.GetMasterlooter()
@@ -1386,7 +1386,7 @@ end
 -- Check if we can still award the roll to the given unit
 ---@param unit string
 ---@param includeDone boolean
----@param checkInterest boolean?
+---@param checkInterest? boolean
 function Self:CanBeAwardedTo(unit, includeDone, checkInterest)
     return self.isOwner and self:UnitCanWin(unit, includeDone, checkInterest)
 end
@@ -1416,9 +1416,9 @@ function Self:CanBeAwardedRandomly()
 end
 
 -- Check if the given unit can bid on this roll
----@param unit string?
----@param bid integer?
----@param checkInterest boolean?
+---@param unit? string
+---@param bid? integer
+---@param checkInterest? boolean
 function Self:UnitCanBid(unit, bid, checkInterest)
     unit = Unit.Name(unit or "player")
 
@@ -1451,7 +1451,7 @@ function Self:UnitCanBid(unit, bid, checkInterest)
 end
 
 -- Check if the given unit can vote on this roll
----@param unit string?
+---@param unit? string
 function Self:UnitCanVote(unit)
     return self.status > Self.STATUS_CANCELED and not self.winner and Session.IsOnCouncil(unit or "player")
 end
@@ -1548,7 +1548,7 @@ function Self:GetActionTarget()
 end
 
 -- Check if the roll is pending or running
----@param validate boolean?
+---@param validate? boolean
 function Self:IsActive(validate)
     return self.status == Self.STATUS_RUNNING or self.status == Self.STATUS_PENDING and (not validate or self:Validate())
 end

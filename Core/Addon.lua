@@ -406,7 +406,7 @@ end
 Self.OnTrackingChanged = Util.Fn.Debounce(Self.OnTrackingChanged, 0.1, false, true)
 
 -- Check if the given unit is tracking
----@param unit string?
+---@param unit? string
 ---@param inclCompAddons? boolean
 ---@return boolean
 function Self:UnitIsTracking(unit, inclCompAddons)
@@ -488,7 +488,7 @@ function Self:CompareVersion(versionOrUnit)
     return 0
 end
 
----@param unit string?
+---@param unit? string
 ---@param addon string
 ---@param version string|number
 function Self:SetCompAddonUser(unit, addon, version)
@@ -498,8 +498,8 @@ function Self:SetCompAddonUser(unit, addon, version)
     end
 end
 
----@param unit string?
----@param addon string?
+---@param unit? string
+---@param addon? string
 ---@return string
 function Self:GetCompAddonUser(unit, addon)
     unit = Unit.Name(unit)

@@ -35,14 +35,14 @@ end
 
 -- Get link(s) for given unit and slot
 ---@param unit string
----@param slot integer | string
+---@param slot integer|string
 ---@return string?
 function Self.GetLink(unit, slot)
     return Self.cache[unit] and Self.cache[unit].links[slot] or nil
 end
 
 -- Check if an entry exists and isn't out-of-date
----@param unit string?
+---@param unit? string
 function Self.IsValid(unit)
     return unit and Self.cache[unit] and Self.cache[unit].time + Self.REFRESH > GetTime()
 end
@@ -158,7 +158,7 @@ function Self.Update(unit)
 end
 
 -- Clear everything and stop tracking for one or all players
----@param unit string?
+---@param unit? string
 function Self.Clear(unit)
     if unit then
         Util.Tbl.Release(true, Self.cache[unit])
@@ -173,7 +173,7 @@ function Self.Clear(unit)
 end
 
 -- Queue a unit or the entire group for inspection
----@param unit string?
+---@param unit? string
 function Self.Queue(unit)
     unit = Unit.Name(unit)
     if not Addon:IsTracking() then return end

@@ -75,7 +75,7 @@ DifficultyUtil = {
 EncounterJournal = {}
 
 ---@class GroupRollFrame: Frame
----@field rollID integer | string
+---@field rollID integer|string
 ---@field Timer unknown
 
 -- Ace3 modules

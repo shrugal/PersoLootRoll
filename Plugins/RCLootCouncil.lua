@@ -53,7 +53,7 @@ Self.timers = {}
 
 ---@param link string
 ---@param itemOwner string
----@param owner string?
+---@param owner? string
 ---@return Roll
 function Self.FindOrAddRoll(link, itemOwner, owner)
     return Roll.Find(nil, owner, link, nil, itemOwner) or Roll.Add(Item.FromLink(link, itemOwner or owner), owner or itemOwner)
@@ -84,7 +84,7 @@ end
 -- responses       = changedResponses
 -- timeout         = db.timeout
 -- rejectTrade     = db.rejectTrade or nil
----@param mldb table?
+---@param mldb? table
 function Self.SetRules(mldb)
     Self.mldb = mldb or Self.mldb
 
@@ -163,7 +163,7 @@ end
 
 -- Send a RCLC message
 ---@param cmd string
----@param target string?
+---@param target? string
 function Self.Send(cmd, target, ...)
     if not Self:IsEnabled() then return end
     print("RCLC:OUT", cmd, target, ...)
