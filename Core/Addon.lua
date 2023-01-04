@@ -85,7 +85,7 @@ function Self:OnInitialize()
     self:RegisterErrorHandler()
 
     -- Load DB
-    self.db = LibStub("AceDB-3.0"):New(Name .. "DB", Options.DEFAULTS, true)
+    self.db = LibStub("AceDB-3.0"):New(Name .. "DB", Options.DEFAULTS, true) --[[@as AddonOptionsData]]
 
     -- Set enabled state
     self:SetEnabledState(self.db.profile.enabled)
@@ -209,7 +209,7 @@ function Self:HandleChatCommand(msg)
         else
             for _,item in pairs(items) do
                 item = Item.FromLink(item, itemOwner)
-                local roll = Roll.Add(item, ml or "player", nil, nil, timeout)
+                local roll = Roll.Add(item, ml or "player", nil, timeout)
 
                 if roll.isOwner then
                     roll:Start()
@@ -444,7 +444,6 @@ function Self:SetVersion(unit, version)
 end
 
 -- Get major, channel and minor versions for the given version string or unit
--- TODO: Automatically set TOC version to tag or revision starting with in v19
 ---@param versionOrUnit string|number
 function Self:GetVersion(versionOrUnit)
     local version = (not versionOrUnit or Unit.IsSelf(versionOrUnit)) and Self.VERSION
@@ -500,7 +499,7 @@ end
 
 ---@param unit? string
 ---@param addon? string
----@return string
+---@return string?
 function Self:GetCompAddonUser(unit, addon)
     unit = Unit.Name(unit)
     if addon then
@@ -612,37 +611,37 @@ function Self:RegisterErrorHandler()
 end
 
 local function cleanFilePaths(msg)
-    return strtrim(tostring(msg or ""), "\n"):gsub("@?Interface\\AddOns\\", "")
+    return strtrim(tostring(msg or ""), "\n"):gsub("@?Interface/AddOns/", "")
 end
 
 -- Check for PLR errors and log them
 function Self:HandleError(msg, stack)
-    if self:ShouldHandleError() then
-        msg = "\"" .. cleanFilePaths(msg) .. "\""
-        stack = cleanFilePaths(stack)
+    if not self:ShouldHandleError() then return end
 
-        -- Just print the error message if HandleError or LogExport caused it
-        local file = Name .. "\\Core\\Addon.lua[^\n]*"
-        if stack:match(file .. "HandleError") or stack:match(file .. "LogExport") then
-            self.errors = math.huge
-            self:Print("|cffff0000[ERROR]|r " .. msg .. "\n\nThis is an error in the error-handling system itself. Please create a new ticket on Curse, WoWInterface or GitLab, copy & paste the error message in there and add any additional info you might have. Thank you! =)")
-        -- Log error message and stack as well as printing the error message
-        elseif self.errors < Self.LOG_MAX_ERRORS then
-            self.errorRate = max(0, self.errorRate - Self.LOG_MAX_ERROR_RATE * (GetTime() - self.errorPrev)) + 1
-            self.errorPrev = GetTime()
+    msg = "\"" .. cleanFilePaths(msg) .. "\""
+    stack = cleanFilePaths(stack)
 
-            for match in stack:gmatch(Name .. "\\([^\n]+)") do
-                if match and (not Util.Str.StartsWith(match, "Libs") or Util.Str.StartsWith(match, "Libs\\LibUtil")) then
-                    self.errors = self.errors + 1
+    -- Just print the error message if HandleError or LogExport caused it
+    local file = Name .. "/Core/Addon.lua[^\n]*"
+    if stack:match(file .. "HandleError") or stack:match(file .. "LogExport") then
+        self.errors = math.huge
+        self:Print("|cffff0000[ERROR]|r " .. msg .. "\n\nThis is an error in the error-handling system itself. Please create a new ticket on Curse, WoWInterface or GitLab, copy & paste the error message in there and add any additional info you might have. Thank you! :)")
+    -- Log error message and stack as well as printing the error message
+    elseif self.errors < Self.LOG_MAX_ERRORS then
+        self.errorRate = max(0, self.errorRate - Self.LOG_MAX_ERROR_RATE * (GetTime() - self.errorPrev)) + 1
+        self.errorPrev = GetTime()
 
-                    self:Log(Self.ECHO_ERROR, msg .. "\n" .. stack)
+        for match in stack:gmatch(Name .. "/([^\n]+)") do
+            if match and (not Util.Str.StartsWith(match, "Libs") or Util.Str.StartsWith(match, "Libs/LibUtil")) then
+                self.errors = self.errors + 1
 
-                    if self.errors == 1 and (not self.db or self.db.profile.messages.echo >= Self.ECHO_ERROR) then
-                        self:Print("|cffff0000[ERROR]|r " .. msg .. "\n\nPlease type in |cffbbbbbb/plr log|r, create a new ticket on Curse, WoWInterface or GitLab, copy & paste the log in there and add any additional info you might have. Thank you! =)")
-                    end
+                self:Log(Self.ECHO_ERROR, msg .. "\n" .. stack)
 
-                    break
+                if self.errors == 1 and (not self.db or self.db.profile.messages.echo >= Self.ECHO_ERROR) then
+                    self:Print("|cffff0000[ERROR]|r " .. msg .. "\n\nPlease type in |cffbbbbbb/plr log|r, create a new ticket on Curse, WoWInterface or GitLab, copy & paste the log in there and add any additional info you might have. Thank you! :)")
                 end
+
+                break
             end
         end
     end

@@ -35,7 +35,7 @@ end
 
 -- Get link(s) for given unit and slot
 ---@param unit string
----@param slot integer|string
+---@param slot integer | string
 ---@return string?
 function Self.GetLink(unit, slot)
     return Self.cache[unit] and Self.cache[unit].links[slot] or nil

@@ -4,6 +4,7 @@ local Inspect, Unit, Util = Addon.Inspect, Addon.Unit, Addon.Util
 
 ---@class Item
 ---@field id integer
+---@field name? string
 ---@field relicType? string
 ---@field numBonusIds? number
 ---@field itemType? HyperlinkType
@@ -1074,14 +1075,17 @@ function Self:IsCollectibleMissing(unit)
     if not isPet and not isTransmogable then
         return false
     elseif not Unit.IsSelf(unit or "player") then
+        -- In a legacy run and not tracking
         return not Addon:UnitIsTracking(unit) and Util.IsLegacyRun(unit)
     elseif isPet then
+        -- Wants and needs pet
         return (not f.enabled or f.pets) and self:GetBasicInfo().isPetKnown == false
     else
+        -- Wants and needs transmog or transmog item
         return (not f.enabled or f.transmog) and (
             not self:GetFullInfo().isTransmogKnown
-                or f.enabled and f.transmogItem and not self:GetFullInfo().isTransmogSourceKnown
-            )
+            or f.enabled and f.transmogItem and not self:GetFullInfo().isTransmogSourceKnown
+        )
     end
 end
 
@@ -1115,17 +1119,28 @@ function Self:SetEligible(unit, to)
     self.eligible[Unit.Name(unit)] = to == nil and true or to
 end
 
+---@param unit string
+---@param atLeast? boolean
+function Self:UpdateEligible(unit, atLeast)
+    local eligible = atLeast or self:GetEligible(unit, true) or atLeast
+    self:SetEligible(unit, eligible)
+    return eligible
+end
+
 -- Check who in the group could use the item, either for one unit or all units in the group.
--- - nil: A unit can't reasonably use the item (they can' wear it or send it to and alt)
+-- - nil: A unit can't reasonably use the item (they can't wear it or send it to and alt)
 -- - false: They probably don't want it (e.g. ilvl too low)
 -- - true: It might be an upgrade of some sort (e.g. ilvl high enough or collectible)
----@param unit string
+---@param unit? string
+---@param force? boolean
 ---@return boolean?
 ---@overload fun(): table<string, boolean>
-function Self:GetEligible(unit)
-    if not self.eligible then
+function Self:GetEligible(unit, force)
+    if not self.eligible or force then
         if unit then
-            if self:IsCollectibleMissing(unit) then
+            if not self.owner and not force then
+                return nil
+            elseif self:IsCollectibleMissing(unit) then
                 return true
             elseif not self:GetBasicInfo().isEquippable then
                 return false
@@ -1135,11 +1150,12 @@ function Self:GetEligible(unit)
                 return self:IsUpgrade(unit) or false
             end
         else
-            local eligible = Util.Tbl.New()
-            for i = 1, GetNumGroupMembers() do
-                local u = GetRaidRosterInfo(i)
-                if u then
-                    eligible[u] = self:GetEligible(u)
+            local eligible = self.eligible and wipe(self.eligible) or Util.Tbl.New()
+
+            if self.owner or force then
+                for i = 1, GetNumGroupMembers() do
+                    local u = GetRaidRosterInfo(i)
+                    if u then eligible[u] = self:GetEligible(u, force) end
                 end
             end
 
@@ -1612,4 +1628,9 @@ end
 function Self:IsAppearanceSourceKnown(sourceId)
     sourceId = sourceId or Self.GetInfo(self, "visualSourceId")
     return sourceId and select(5, C_TransmogCollection.GetAppearanceSourceInfo(sourceId))
+end
+
+-- Check if the roll is from an addon user
+function Self:GetOwnerAddon(exclCompAddons)
+    return Util.Bool(self.owner) and Addon:UnitIsTracking(self.owner, not exclCompAddons)
 end

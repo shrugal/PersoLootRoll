@@ -116,6 +116,7 @@ function Self.Update()
 
     -- Rolls
 
+    ---@type Roll[]
     local rolls = Util(Addon.rolls):CopyFilter(function (roll)
         return roll:GetActionRequired() and not roll.hidden
     end):SortBy("id")()

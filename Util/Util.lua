@@ -185,7 +185,7 @@ end
 -- Fill a tooltip and scan it line by line
 ---@generic A, B, C, V
 ---@param fn fun(i: integer, line: string, lines: integer, ...: V): A?, B?, C?
----@param linkOrBag string|integer
+---@param linkOrBag string | integer
 ---@param slot? integer
 ---@vararg V
 ---@return A?, B?, C?
@@ -224,5 +224,12 @@ function Self.GetBagPosition(bag, slot)
         return Self.GetBagPosition(bag + 1, slot - numSlots)
     else
         return bag, slot
+    end
+end
+
+---@param rollID integer
+function Self.GetLootHistoryIndex(rollID)
+    for i=1,C_LootHistory.GetNumItems() do
+        if C_LootHistory.GetItem(i) == rollID then return i end
     end
 end

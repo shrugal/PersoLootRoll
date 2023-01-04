@@ -3,6 +3,7 @@ local Name, Addon = ...
 local Version = GetAddOnMetadata("PersoLootRoll", "Version")
 
 ---@class Addon: AceAddon-3.0, AceConsole-3.0, AceComm-3.0, AceSerializer-3.0, AceEvent-3.0, AceTimer-3.0, AceHook-3.0
+---@field db AddonOptionsData
 ---@field Test Tests
 local Self = LibStub("AceAddon-3.0"):NewAddon(Addon, Name, "AceConsole-3.0", "AceComm-3.0", "AceSerializer-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceHook-3.0")
 

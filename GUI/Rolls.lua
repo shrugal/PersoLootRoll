@@ -543,7 +543,7 @@ function Self.UpdateRolls()
                         Self.UpdateDetails(details, roll)
                         self:SetImage("Interface\\Buttons\\UI-MinusButton-Up")
                     end
-                    
+
                     Self.DoLayout(true, true)
                 end)
                 f.image:SetPoint("TOP", 0, 2)
@@ -593,7 +593,7 @@ function Self.UpdateRolls()
 
         -- Owner
         GUI(children[it()])
-            .SetText(Unit.ColoredShortenedName(roll.item.owner))
+            .SetText(Unit.ColoredShortenedName(roll.item.owner) or "")
             .SetUserData("unit", roll.item.owner)
             .Show()
 
@@ -981,7 +981,7 @@ end
 --                      Helpers                      --
 -------------------------------------------------------
 
----@return table<integer, Roll>
+---@return Roll[]
 function Self.GetRolls(filterById)
     return Util(Addon.rolls):CopyFilter(function (roll)
         if filterById and Self.filter.id then
@@ -1048,6 +1048,8 @@ end
 ---@param frame Frame
 function Self.OnStatusUpdate(frame)
     local roll = frame.obj:GetUserData("roll")
+    if not roll then return end
+
     if roll.status == Roll.STATUS_RUNNING then
         local timeLeft = roll:GetTimeLeft(true)
         GUI(frame.obj)

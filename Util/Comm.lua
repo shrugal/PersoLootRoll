@@ -33,13 +33,14 @@ Self.EVENT_ROLL_STATUS = "STATUS"
 Self.EVENT_BID = "BID"
 Self.EVENT_BID_WHISPER = "WHISPER"
 Self.EVENT_VOTE = "VOTE"
-Self.EVENT_INTEREST = "INTEREST"
+Self.EVENT_ELIGIBLE = "ELIGIBLE"
+Self.EVENT_ITEM_OWNER = "ITEM-OWNER"
 Self.EVENT_MASTERLOOT_ASK = "ML-ASK"
 Self.EVENT_MASTERLOOT_OFFER = "ML-OFFER"
 Self.EVENT_MASTERLOOT_ACK = "ML-ACK"
 Self.EVENT_MASTERLOOT_DEC = "ML-DEC"
 Self.EVENT_XREALM = "XREALM"
-Self.EVENTS = {Self.EVENT_CHECK, Self.EVENT_VERSION, Self.EVENT_ENABLE, Self.EVENT_DISABLE, Self.EVENT_SYNC, Self.EVENT_ROLL_STATUS, Self.EVENT_BID, Self.EVENT_BID_WHISPER, Self.EVENT_VOTE, Self.EVENT_INTEREST, Self.EVENT_MASTERLOOT_ASK, Self.EVENT_MASTERLOOT_OFFER, Self.EVENT_MASTERLOOT_ACK, Self.EVENT_MASTERLOOT_DEC, Self.EVENT_XREALM}
+Self.EVENTS = {Self.EVENT_CHECK, Self.EVENT_VERSION, Self.EVENT_ENABLE, Self.EVENT_DISABLE, Self.EVENT_SYNC, Self.EVENT_ROLL_STATUS, Self.EVENT_BID, Self.EVENT_BID_WHISPER, Self.EVENT_VOTE, Self.EVENT_ELIGIBLE, Self.EVENT_ITEM_OWNER, Self.EVENT_MASTERLOOT_ASK, Self.EVENT_MASTERLOOT_OFFER, Self.EVENT_MASTERLOOT_ACK, Self.EVENT_MASTERLOOT_DEC, Self.EVENT_XREALM}
 
 -- Message patterns
 Self.PATTERN_PARTY_JOINED = ERR_JOINED_GROUP_S:gsub("%%s", "(.+)")
@@ -220,25 +221,35 @@ end
 -- Send structured addon data
 function Self.SendData(event, data, target, prio)
     Self.Send(event, Addon:Serialize(data), target, prio)
+    Util.Tbl.ReleaseTmp(data)
 end
 
 -- Listen for an addon message
+---@param event string
+---@param method fun(event: string, msg: string, channel: string, sender: string, unit: string): any
+---@param fromSelf? boolean
+---@param fromAll? boolean
 function Self.Listen(event, method, fromSelf, fromAll)
-    Addon:RegisterComm(Self.GetPrefix(event), function (event, msg, channel, sender)
+    Addon:RegisterComm(Self.GetPrefix(event), function (ev, msg, channel, sender)
         msg = msg ~= "" and msg ~= " " and msg or nil
         local unit = Unit(sender)
         if Addon:IsEnabled() and (fromAll or Unit.InGroup(unit, not fromSelf)) then
-            method(event, msg, channel, sender, unit)
+            method(ev, msg, channel, sender, unit)
         end
     end)
 end
 
 -- Listen for an addon message with data
+---@generic T
+---@param event string
+---@param method fun(event: string, data: T, channel: string, sender: string, unit: string): any
+---@param fromSelf? boolean
+---@param fromAll? boolean
 function Self.ListenData(event, method, fromSelf, fromAll)
-    Self.Listen(event, function (event, data, ...)
-        local success, data = Addon:Deserialize(data)
+    Self.Listen(event, function (ev, msg, ...)
+        local success, data = Addon:Deserialize(msg)
         if success then
-            method(event, data, ...)
+            method(ev, data, ...)
         end
     end, fromSelf, fromAll)
 end
@@ -247,6 +258,7 @@ end
 --                   Chat messages                   --
 -------------------------------------------------------
 
+---@param roll Roll
 function Self.RollAdvertise(roll)
     if not roll.item.isOwner then
         Self.ChatLine("MSG_ROLL_START_MASTERLOOT", Self.TYPE_GROUP, roll.item.link, roll.item.owner, 100 + roll.posted)
@@ -260,57 +272,63 @@ end
 -- BID
 
 -- Messages when bidding on a roll
+---@param roll Roll
+---@param bid number
+---@param fromUnit string
+---@param randomRoll? integer
+---@param isImport? boolean
+---@param silent? boolean
 function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport, silent)
     local L = LibStub("AceLocale-3.0"):GetLocale(Name)
     local fromSelf = Unit.IsSelf(fromUnit)
 
     -- Show a confirmation message
     if fromSelf then
+        local channel = isImport and Addon.ECHO_DEBUG or Addon.ECHO_VERBOSE
+
         if bid == Roll.BID_PASS then
-            Addon:Echo(isImport and Addon.ECHO_DEBUG or Addon.ECHO_VERBOSE, L["BID_PASS"], (roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner))
+            Addon:Echo(channel, L["BID_PASS"], (roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner))
         else
-            Addon:Echo(isImport and Addon.ECHO_DEBUG or Addon.ECHO_VERBOSE, L["BID_START"], roll:GetBidName(bid), (roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner))
+            Addon:Echo(channel, L["BID_START"], roll:GetBidName(bid), (roll.item and roll.item.link) or L["ITEM"], Self.GetPlayerLink(roll.item.owner))
         end
     end
 
-    if not isImport and not roll.isTest then
-        -- Inform others
-        if roll.isOwner then
-            local data = Util.Tbl.Hash("ownerId", roll.ownerId, "bid", bid, "roll", randomRoll, "fromUnit", Unit.FullName(fromUnit))
+    if roll.isTest or isImport then return end
 
-            -- Send to all or the council
-            if Util.Check(Session.GetMasterlooter(), Session.rules.bidPublic, Addon.db.profile.bidPublic) then
-                Self.SendData(Self.EVENT_BID, data)
-            elseif Session.IsMasterlooter() then
-                for target,_ in pairs(Session.rules.council or {}) do
-                    Self.SendData(Self.EVENT_BID, data, target)
-                end
+    -- Inform others
+    if roll.isOwner then
+        local data = Util.Tbl.HashTmp("uid", roll.uid, "bid", bid, "roll", randomRoll, "fromUnit", Unit.FullName(fromUnit))
+
+        -- Send to all or the council
+        if Util.Check(Session.GetMasterlooter(), Session.rules.bidPublic, Addon.db.profile.bidPublic) then
+            Self.SendData(Self.EVENT_BID, data)
+        elseif Session.IsMasterlooter() then
+            for target,_ in pairs(Session.rules.council or {}) do
+                Self.SendData(Self.EVENT_BID, data, target)
             end
+        end
+    -- Send bid to owner
+    elseif fromSelf then
+        if roll.uid then
+            Self.SendData(Self.EVENT_BID, Util.Tbl.HashTmp("uid", roll.uid, "bid", bid), roll.owner)
+        elseif bid ~= Roll.BID_PASS and roll.item.owner and roll.owner and not roll:GetOwnerAddon() then
+            local owner, link = roll.item.owner, roll.item.link
 
-            Util.Tbl.Release(data)
-        -- Send bid to owner
-        elseif fromSelf then
-            if roll.ownerId then
-                Self.SendData(Self.EVENT_BID, Util.Tbl.Hash("ownerId", roll.ownerId, "bid", bid), roll.owner)
-            elseif bid ~= Roll.BID_PASS and not roll:GetOwnerAddon() then
-                local owner, link = roll.item.owner, roll.item.link
+            -- Roll on it in chat
+            if roll.posted then
+                if Addon.db.profile.messages.group.roll and Addon.lastPostedRoll == roll then
+                    RandomRoll("1", floor(bid) == Roll.BID_GREED and "50" or "100")
+                end
+            -- Whisper the owner
+            elseif not silent and Addon.db.profile.messages.whisper.ask then
+                if roll.whispers >= Self.MAX_WHISPERS then
+                    Addon:Info(L["BID_MAX_WHISPERS"], Self.GetPlayerLink(owner), link, Self.MAX_WHISPERS, Self.GetTradeLink(owner))
+                elseif Self.ShouldInitChat(owner, link) then --[[@cast owner string]]
+                    Self.ChatLine("MSG_BID_" .. random(Addon.db.profile.messages.whisper.variants and 5 or 1), owner, link or Self.GetChatLine("MSG_ITEM", owner))
+                    roll.whispers = roll.whispers + 1
 
-                -- Roll on it in chat
-                if roll.posted then
-                    if Addon.db.profile.messages.group.roll and Addon.lastPostedRoll == roll then
-                        RandomRoll("1", floor(bid) == Roll.BID_GREED and "50" or "100")
-                    end
-                -- Whisper the owner
-                elseif not silent and Addon.db.profile.messages.whisper.ask then
-                    if roll.whispers >= Self.MAX_WHISPERS then
-                        Addon:Info(L["BID_MAX_WHISPERS"], Self.GetPlayerLink(owner), link, Self.MAX_WHISPERS, Self.GetTradeLink(owner))
-                    elseif Self.ShouldInitChat(owner, link) then
-                        Self.ChatLine("MSG_BID_" .. random(Addon.db.profile.messages.whisper.variants and 5 or 1), owner, link or Self.GetChatLine("MSG_ITEM", owner))
-                        roll.whispers = roll.whispers + 1
-
-                        Addon:Info(L["BID_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
-                        Self.SendData(Self.EVENT_BID_WHISPER, {owner = Unit.FullName(owner), link = link})
-                    end
+                    Addon:Info(L["BID_CHAT"], Self.GetPlayerLink(owner), link, Self.GetTradeLink(owner))
+                    Self.SendData(Self.EVENT_BID_WHISPER, Util.Tbl.HashTmp("owner", Unit.FullName(owner), "link", link))
                 end
             end
         end
@@ -326,7 +344,7 @@ function Self.RollVote(roll, vote, fromUnit, isImport)
     -- Inform others
     if not isImport and not roll.isTest then
         if roll.isOwner then
-            local data = Util.Tbl.Hash("ownerId", roll.ownerId, "vote", Unit.FullName(vote), "fromUnit", Unit.FullName(fromUnit))
+            local data = Util.Tbl.HashTmp("uid", roll.uid, "vote", Unit.FullName(vote), "fromUnit", Unit.FullName(fromUnit))
 
             -- Send to all or the council
             if Session.rules.votePublic then
@@ -336,11 +354,9 @@ function Self.RollVote(roll, vote, fromUnit, isImport)
                     Self.SendData(Self.EVENT_VOTE, data, target)
                 end
             end
-
-            Util.Tbl.Release(data)
         elseif fromSelf then
             -- Send to owner
-            Self.SendData(Self.EVENT_VOTE, Util.Tbl.Hash("ownerId", roll.ownerId, "vote", Unit.FullName(vote)), Session.GetMasterlooter())
+            Self.SendData(Self.EVENT_VOTE, Util.Tbl.HashTmp("uid", roll.uid, "vote", Unit.FullName(vote)), Session.GetMasterlooter())
         end
     end
 end
@@ -371,37 +387,37 @@ function Self.RollEnd(roll)
             Addon:Info(L["ROLL_WINNER_MASTERLOOT"], Self.GetPlayerLink(roll.winner), roll.item.link, Self.GetPlayerLink(roll.item.owner))
         end
 
-        if roll.isOwner and not roll.isTest then
-            local line = roll.bids[roll.winner] == Roll.BID_DISENCHANT and "DISENCHANT" or "WINNER"
-            local concise = line == "WINNER" and roll:ShouldBeConcise()
-            local toGroup = (roll.posted or -1) > -1 and Self.ShouldInitChat()
+        if roll.isTest or not roll.isOwner then return end
 
-            -- Announce to chat
-            if toGroup then
-                if roll.winner == roll.item.owner then
-                    Self.ChatLine("MSG_ROLL_" .. line .. "_MASTERLOOT_OWN", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link)
-                elseif not roll.item.isOwner then
-                    Self.ChatLine("MSG_ROLL_" .. line .. "_MASTERLOOT", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
-                elseif concise then
-                    Self.ChatLine("MSG_ROLL_WINNER_CONCISE", Self.TYPE_GROUP, Unit.ShortName(roll.winner))
-                else
-                    Self.ChatLine("MSG_ROLL_" .. line, Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link)
-                end
+        local line = roll.bids[roll.winner] == Roll.BID_DISENCHANT and "DISENCHANT" or "WINNER"
+        local concise = line == "WINNER" and roll:ShouldBeConcise()
+        local toGroup = (roll.posted or -1) > -1 and Self.ShouldInitChat()
+
+        -- Announce to chat
+        if toGroup then
+            if roll.winner == roll.item.owner then
+                Self.ChatLine("MSG_ROLL_" .. line .. "_MASTERLOOT_OWN", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link)
+            elseif not roll.item.isOwner then
+                Self.ChatLine("MSG_ROLL_" .. line .. "_MASTERLOOT", Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
+            elseif concise then
+                Self.ChatLine("MSG_ROLL_WINNER_CONCISE", Self.TYPE_GROUP, Unit.ShortName(roll.winner))
+            else
+                Self.ChatLine("MSG_ROLL_" .. line, Self.TYPE_GROUP, Unit.FullName(roll.winner), roll.item.link)
             end
+        end
 
-            -- Announce to target
-            if Addon.db.profile.messages.whisper.answer and not Addon:UnitIsTracking(roll.winner, true) and not (toGroup and concise) then
-                if not Session.IsMasterlooter() and roll.item:GetNumEligible(true) == 1 and line == "WINNER" then
-                    Self.ChatLine("MSG_ROLL_ANSWER_YES", roll.winner)
-                elseif roll.winner == roll.item.owner then
-                    Self.ChatLine("MSG_ROLL_" .. line .. "_WHISPER_MASTERLOOT_OWN", roll.winner, roll.item.link)
-                elseif not roll.item.isOwner then
-                    Self.ChatLine("MSG_ROLL_" .. line .. "_WHISPER_MASTERLOOT", roll.winner, roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
-                elseif concise then
-                    Self.ChatLine("MSG_ROLL_WINNER_WHISPER_CONCISE", roll.winner)
-                else
-                    Self.ChatLine("MSG_ROLL_" .. line .. "_WHISPER", roll.winner, roll.item.link)
-                end
+        -- Announce to target
+        if Addon.db.profile.messages.whisper.answer and not Addon:UnitIsTracking(roll.winner, true) and not (toGroup and concise) then
+            if not Session.IsMasterlooter() and roll.item:GetNumEligible(true) == 1 and line == "WINNER" then
+                Self.ChatLine("MSG_ROLL_ANSWER_YES", roll.winner)
+            elseif roll.winner == roll.item.owner then
+                Self.ChatLine("MSG_ROLL_" .. line .. "_WHISPER_MASTERLOOT_OWN", roll.winner, roll.item.link)
+            elseif not roll.item.isOwner then
+                Self.ChatLine("MSG_ROLL_" .. line .. "_WHISPER_MASTERLOOT", roll.winner, roll.item.link, Unit.FullName(roll.item.owner), Locale.Gender(roll.item.owner, "MSG_HER", "MSG_HIM"))
+            elseif concise then
+                Self.ChatLine("MSG_ROLL_WINNER_WHISPER_CONCISE", roll.winner)
+            else
+                Self.ChatLine("MSG_ROLL_" .. line .. "_WHISPER", roll.winner, roll.item.link)
             end
         end
     end
@@ -412,11 +428,13 @@ end
 -------------------------------------------------------
 
 function Self.GetPlayerLink(unit)
+    if not unit then return "?" end
     local color = Unit.Color(unit)
     return ("|c%s|Hplayer:%s|h<%s>|h|r"):format(color.colorStr, unit, unit)
 end
 
 function Self.GetTradeLink(unit)
+    if not unit then return "?" end
     return ("|cff4D85E6|Hplrtrade:%s|h[%s]|h|r"):format(unit, TRADE)
 end
 

@@ -100,30 +100,31 @@ Self.units = {
 }
 
 Self.items = {
-    item1 = {"item1", "|Hitem:1::::::::" .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item1]|h|r", 4, 100, GetMaxPlayerLevel(), "Armor", "Cloth", 1, "INVTYPE_CLOAK", 2901576, 594645, 4, 1, 1, 7, nil, false},
-    item2 = {"item2", "||Hitem:2::::::::" .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item2]|h|r", 4, 100, GetMaxPlayerLevel(), "Armor", "Cloth", 1, "INVTYPE_WRIST", 2906595, 362722, 4, 1, 1, 7, nil, false},
-    item3 = {"item3", "||Hitem:3::::::::" .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item3]|h|r", 4, 100, GetMaxPlayerLevel(), "Armor", "Leather", 1, "INVTYPE_HAND", 2912998, 368329, 4, 2, 1, 7, nil, false},
-    nil,
-    item5 = {"item5", "||Hitem:5::::::::" .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item5]|h|r", 4, 100, GetMaxPlayerLevel(), "Armor", "Mail", 1, "INVTYPE_WAIST", 2909745, 381146, 4, 3, 1, 7, nil, false},
-    item6 = {"item6", "||Hitem:6::::::::" .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item6]|h|r", 4, 100, GetMaxPlayerLevel(), "Armor", "Plate", 1, "INVTYPE_HAND", 2901582, 374089, 4, 4, 1, 7, nil, false},
-    item7 = {"item7", "||Hitem:7::::::::" .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item7]|h|r", 4, 100, GetMaxPlayerLevel(), "Weapon", "One-Handed Maces", 1, "INVTYPE_WEAPON", 2923736, 1058637, 2, 4, 1, 7, nil, false},
-    item8 = {"item8", "||Hitem:8::::::::" .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item8]|h|r", 4, 100, GetMaxPlayerLevel(), "Armor", "Plate", 1, "INVTYPE_CHEST", 2901581, 0, 4, 4, 1, 7, nil, false}
+    item1  = {"item1",  "||Hitem:1::::::::"  .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item1]|h|r",  4, 100, GetMaxPlayerLevel(), "Armor", "Cloth", 1, "INVTYPE_CLOAK", 2901576, 594645, 4, 1, 1, 7, nil, false},
+    item2  = {"item2",  "||Hitem:2::::::::"  .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item2]|h|r",  4, 100, GetMaxPlayerLevel(), "Armor", "Cloth", 1, "INVTYPE_WRIST", 2906595, 362722, 4, 1, 1, 7, nil, false},
+    item3  = {"item3",  "||Hitem:3::::::::"  .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item3]|h|r",  4, 100, GetMaxPlayerLevel(), "Armor", "Leather", 1, "INVTYPE_HAND", 2912998, 368329, 4, 2, 1, 7, nil, false},
+    item5  = {"item5",  "||Hitem:5::::::::"  .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item5]|h|r",  4, 100, GetMaxPlayerLevel(), "Armor", "Mail", 1, "INVTYPE_WAIST", 2909745, 381146, 4, 3, 1, 7, nil, false},
+    item6  = {"item6",  "||Hitem:6::::::::"  .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item6]|h|r",  4, 100, GetMaxPlayerLevel(), "Armor", "Plate", 1, "INVTYPE_HAND", 2901582, 374089, 4, 4, 1, 7, nil, false},
+    item7  = {"item7",  "||Hitem:7::::::::"  .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item7]|h|r",  4, 100, GetMaxPlayerLevel(), "Weapon", "One-Handed Maces", 1, "INVTYPE_WEAPON", 2923736, 1058637, 2, 4, 1, 7, nil, false},
+    item8  = {"item8",  "||Hitem:8::::::::"  .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item8]|h|r",  4, 100, GetMaxPlayerLevel(), "Armor", "Plate", 1, "INVTYPE_CHEST", 2901581, 0, 4, 4, 1, 7, nil, false},
+    item10 = {"item10", "||Hitem:10::::::::" .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item10]|h|r", 4, 100, GetMaxPlayerLevel(), "Armor", "Plate", 1, "INVTYPE_CHEST", 2901581, 0, 4, 4, 1, 7, nil, false}
 }
 
 ---@type Roll
-Self.roll = {id = 1, ownerId = 1, owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_PENDING, itemOwnerId = 1, timeout = 30, item = {owner = Self.units.player.name, isOwner = true, infoLevel = 0, link = Self.items.item1[2]}}
+Self.roll = {id = 1, uid = "1", owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_PENDING, timeout = 30, item = {owner = Self.units.player.name, isOwner = true, infoLevel = 0, link = Self.items.item1[2]}}
 
 ---@type Roll[]
 Self.rolls = {
-    {id = 1, ownerId = 1, owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_RUNNING, itemOwnerId = 1, timeout = 30, item = {id = 1, owner = Self.units.player.name, infoLevel = 1, link = Self.items.item1[2], isTradable = true}},
-    {id = 2, ownerId = 2, owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_DONE,    itemOwnerId = 2, timeout = 30, item = {id = 2, owner = Self.units.player.name, infoLevel = 1, link = Self.items.item2[2], isTradable = true}},
-    {id = 3, ownerId = 1, owner = Self.units.party1.name, isOwner = false, status = Roll.STATUS_RUNNING, itemOwnerId = 1, timeout = 30, item = {id = 3, owner = Self.units.party1.name, infoLevel = 1, link = Self.items.item3[2], isTradable = true}, disenchant = true},
+    {id = 1,  uid = "1", owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_RUNNING, timeout = 30,  item = {id = 1, owner = Self.units.player.name, infoLevel = 1, link = Self.items.item1[2],  isTradable = true}},
+    {id = 2,  uid = "2", owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_DONE,    timeout = 30,  item = {id = 2, owner = Self.units.player.name, infoLevel = 1, link = Self.items.item2[2],  isTradable = true}},
+    {id = 3,  uid = "3", owner = Self.units.party1.name, isOwner = false, status = Roll.STATUS_RUNNING, timeout = 30,  item = {id = 3, owner = Self.units.party1.name, infoLevel = 1, link = Self.items.item3[2],  isTradable = true}, disenchant = true},
     nil,
-    {id = 5, ownerId = 3, owner = Self.units.party2.name, isOwner = false, status = Roll.STATUS_PENDING, itemOwnerId = 3, timeout = 30, item = {id = 5, owner = Self.units.party2.name, infoLevel = 1, link = Self.items.item5[2], isTradable = true}},
-    {id = 6, ownerId = 4, owner = Self.units.party2.name, isOwner = false, status = Roll.STATUS_DONE,    itemOwnerId = 4, timeout = 30, item = {id = 6, owner = Self.units.party2.name, infoLevel = 1, link = Self.items.item6[2], isTradable = true}},
-    {id = 7, ownerId = 5, owner = Self.units.party3.name, isOwner = false, status = Roll.STATUS_DONE,    itemOwnerId = 7, timeout = 30, item = {id = 7, owner = Self.units.player.name, infoLevel = 1, link = Self.items.item7[2], isTradable = true}, disenchant = true},
-    {id = 8, ownerId = 6, owner = Self.units.party3.name, isOwner = false, status = Roll.STATUS_DONE,    itemOwnerId = 2, timeout = 30, item = {id = 8, owner = Self.units.party1.name, infoLevel = 1, link = Self.items.item8[2], isTradable = true}, disenchant = true},
-    {id = 9, ownerId = 9, owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_PENDING, itemOwnerId = 3, timeout = 30, item = {id = 8, owner = Self.units.party3.name, infoLevel = 1, link = Self.items.item8[2], isTradable = true}}
+    {id = 5,  uid = "5", owner = Self.units.party2.name, isOwner = false, status = Roll.STATUS_PENDING, timeout = 30,  item = {id = 5, owner = Self.units.party2.name, infoLevel = 1, link = Self.items.item5[2],  isTradable = true}},
+    {id = 6,  uid = "6", owner = Self.units.party2.name, isOwner = false, status = Roll.STATUS_DONE,    timeout = 30,  item = {id = 6, owner = Self.units.party2.name, infoLevel = 1, link = Self.items.item6[2],  isTradable = true}},
+    {id = 7,  uid = "7", owner = Self.units.party3.name, isOwner = false, status = Roll.STATUS_DONE,    timeout = 30,  item = {id = 7, owner = Self.units.player.name, infoLevel = 1, link = Self.items.item7[2],  isTradable = true}, disenchant = true},
+    {id = 8,  uid = "8", owner = Self.units.party3.name, isOwner = false, status = Roll.STATUS_DONE,    timeout = 30,  item = {id = 8, owner = Self.units.party1.name, infoLevel = 1, link = Self.items.item8[2],  isTradable = true}, disenchant = true},
+    {id = 9,  uid = "9", owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_PENDING, timeout = 30,  item = {id = 8, owner = Self.units.party3.name, infoLevel = 1, link = Self.items.item8[2],  isTradable = true}},
+    {id = 10, uid = 10,  owner = nil,                    isOwner = false, status = Roll.STATUS_RUNNING, timeout = 240, item = {id = 9, owner = nil,                    infoLevel = 1, link = Self.items.item10[2], isTradable = true}, disenchant = true}
 }
 
 Self.group = Util(Self.units):Copy():Pluck("name")()

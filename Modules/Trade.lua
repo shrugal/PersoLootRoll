@@ -55,7 +55,7 @@ function Self.End()
     if Self.target then
         -- Mark the player's rolls as traded
         for _, link in pairs(Self.items.player) do
-            local roll = Roll.Find(nil, nil, link, nil, true)
+            local roll = Roll.Find(nil, nil, link, true)
             if roll and not roll.traded then
                 roll:OnTraded(Self.target)
             end
@@ -63,7 +63,7 @@ function Self.End()
 
         -- Mark the target's rolls as traded
         for _, link in pairs(Self.items.target) do
-            local roll = Roll.Find(nil, nil, link, nil, Self.target)
+            local roll = Roll.Find(nil, nil, link, Self.target)
             if roll and not roll.traded then
                 roll:OnTraded(Unit.Name("player"))
             end

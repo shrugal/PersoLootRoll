@@ -13,6 +13,7 @@ local GUI, Item, Locale, Session, Roll, Unit, Util = Addon.GUI, Addon.Item, Addo
 local Self = Addon.Options
 
 -- Config
+---@class AddonOptionsData: AceDBObject-3.0
 Self.DEFAULTS = {
     -- VERSION 7
     profile = {
@@ -984,7 +985,10 @@ function Self.RegisterMasterloot()
                         desc = L["OPT_MASTERLOOT_RULES_START_ALL_DESC"] .. "\n",
                         type = "toggle",
                         order = it(),
-                        set = function (_, val) Addon.db.profile.masterloot.rules.startAll = val end,
+                        set = function (_, val)
+                            Addon.db.profile.masterloot.rules.startAll = val
+                            Session.RefreshRules()
+                        end,
                         get = function () return Addon.db.profile.masterloot.rules.startAll end,
                         width = Self.WIDTH_THIRD_SCROLL
                     },
@@ -1441,6 +1445,7 @@ end
 
 -- Migrate options from an older version to the current one
 function Self.Migrate()
+    ---@type any, any, any
     local p, f, c = Addon.db.profile, Addon.db.factionrealm, Addon.db.char
 
     -- Profile

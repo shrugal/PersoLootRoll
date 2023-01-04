@@ -10,17 +10,17 @@ local Self = Addon.Roll
 
 local Meta = { __index = Self }
 
--- Default schedule delay
+-- Default schedule delay (seconds)
 Self.DELAY = 1
--- Clear rolls older than this
-Self.CLEAR = 1200
--- Base timeout
+-- Clear rolls older than this (seconds)
+Self.CLEAR = 20 * 60
+-- Base timeout (seconds)
 Self.TIMEOUT = 20
--- Timeout increase per item
+-- Timeout increase per item (seconds)
 Self.TIMEOUT_PER_ITEM = 5
--- How much longer should rolls be when in chill mode
+-- How much longer should rolls be when in chill mode (factor)
 Self.TIMEOUT_CHILL_MODE = 2
--- Seconds after a roll ended when it's still considered "recently" ended
+-- Seconds after a roll ended when it's still considered "recently" ended (seconds)
 Self.TIMEOUT_RECENT = 120
 -- Max. # of people in a legacy loot group for concise announcements
 Self.CONCISE_LEGACY_SIZE = 10
@@ -33,10 +33,10 @@ Self.STATUS_DONE = 2
 Self.STATUS = { Self.STATUS_CANCELED, Self.STATUS_PENDING, Self.STATUS_RUNNING, Self.STATUS_DONE }
 
 -- Bids
+Self.BID_PASS = 0
 Self.BID_NEED = 1
 Self.BID_GREED = 2
 Self.BID_DISENCHANT = 3
-Self.BID_PASS = 4
 Self.BIDS = { Self.BID_NEED, Self.BID_GREED, Self.BID_DISENCHANT, Self.BID_PASS }
 
 -- Actions
@@ -129,12 +129,27 @@ Self.EVENT_CHAT = "PLR_ROLL_CHAT"
 -- @number prev   The previous status
 Self.EVENT_STATUS = "PLR_ROLL_STATUS"
 
+--- Fires whenever a roll item eligibility changes
+-- @table  roll          The roll
+-- @number player        The player
+-- @number eligible      The new eligibility status
+-- @number prevOwner     The previous eligibility status
+Self.EVENT_ELIGIBLE = "PLR_ROLL_ELIGIBLE"
+
+--- Fires whenever a roll owner or item owner changes
+-- @table  roll          The roll
+-- @number owner         The new owner
+-- @number itemOwner     The new itemOwner
+-- @number prevOwner     The previous owner
+-- @number prevItemOwner The previous itemOwner
+Self.EVENT_OWNER = "PLR_ROLL_OWNER"
+
 --- Catchall event that fires for all events in Self.EVENTS
 -- @string event The original event
 -- @param  ...   The original event parameters
 Self.EVENT_CHANGE = "PLR_ROLL_CHANGE"
 
-Self.EVENTS = { Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_RESTART, Self.EVENT_CANCEL, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_AWARD, Self.EVENT_TRADE, Self.EVENT_TOGGLE, Self.EVENT_CHAT, Self.EVENT_STATUS }
+Self.EVENTS = { Self.EVENT_ADD, Self.EVENT_CLEAR, Self.EVENT_START, Self.EVENT_RESTART, Self.EVENT_CANCEL, Self.EVENT_ADVERTISE, Self.EVENT_BID, Self.EVENT_VOTE, Self.EVENT_END, Self.EVENT_AWARD, Self.EVENT_TRADE, Self.EVENT_TOGGLE, Self.EVENT_CHAT, Self.EVENT_STATUS, Self.EVENT_ELIGIBLE, Self.EVENT_OWNER }
 
 local changeFn = function(...) Addon:SendMessage(Self.EVENT_CHANGE, ...) end
 for _, e in pairs(Self.EVENTS) do Addon:RegisterMessage(e, changeFn) end
@@ -187,29 +202,43 @@ end)
 --                       CRUD                        --
 -------------------------------------------------------
 
+Self.rollUidToId = {}
+
 -- Get a roll by id or prefixed id
----@param id integer
+---@param id? integer
 ---@return Roll?
 function Self.Get(id)
     return id and Addon.rolls[Self.IsPlrId(id) and Self.FromPlrId(id) or id] or nil
 end
 
+---@param roll Roll
+---@param uid? integer|string
+---@param owner? string
+---@param item? Item|integer|string
+---@param itemOwner? string
+---@param status? number
+local Fn = function (roll, uid, owner, item, itemOwner, status)
+    if uid and roll.uid ~= uid then return end
+    if owner and roll.owner ~= owner then return end
+    if itemOwner and roll.item.owner ~= itemOwner then return end
+    if status and roll.status ~= status then return end
+    local t = type(item)
+    if t == "table" and item.link ~= roll.item.link then return end
+    if t == "number" and item ~= roll.item.id then return end
+    if t == "string" and item ~= roll.item.link then return end
+    return true
+end
 -- Find a roll
----@param ownerId? integer
+---@param uid? integer|string
 ---@param owner? string|true
 ---@param item? Item|string|number
----@param itemOwnerId? integer
 ---@param itemOwner? string|true
 ---@param status? integer
-function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner, status)
-    owner = Unit.Name(owner == true and "player" or owner) or owner
-    itemOwner = Unit.Name(itemOwner == true and "player" or itemOwner) or itemOwner
+function Self.Find(uid, owner, item, itemOwner, status)
+    owner = Unit.Name(owner == true and "player" or owner) or owner ---@cast owner string?
+    itemOwner = Unit.Name(itemOwner == true and "player" or itemOwner) or itemOwner ---@cast itemOwner string?
 
-    -- Shortcut for our own items
-    if ownerId and Unit.IsSelf(owner or "player") and not (item or itemOwnerId or itemOwner or status) then
-        return Addon.rolls[ownerId]
-    end
-
+    -- Load item
     local t = type(item)
     if t == "table" then
         if not item.infoLevel then
@@ -220,27 +249,14 @@ function Self.Find(ownerId, owner, item, itemOwnerId, itemOwner, status)
         item = Item.GetInfo(item, "link") or item
     end
 
-    for id, roll in pairs(Addon.rolls) do
-        if (
-            owner and ownerId and owner == roll.owner and ownerId == roll.ownerId and (not itemOwner or not roll.item.owner or itemOwner == roll.item.owner)
-            or itemOwner and itemOwnerId and itemOwner == roll.item.owner and itemOwnerId == roll.itemOwnerId and (not owner or not roll.owner or owner == roll.owner)
-            or (
-                (not owner or roll.owner == owner)
-                and (not ownerId or roll.ownerId == ownerId)
-                and (not itemOwner or roll.item.owner == itemOwner)
-                and (not itemOwnerId or roll.itemOwnerId == itemOwnerId)
-            )
-        )
-        and (not status or roll.status == status)
-        and (
-            not item
-            or t == "table" and item.link == roll.item.link
-            or t == "number" and item == roll.item.id
-            or t == "string" and item == roll.item.link
-        ) then
-            return roll
-        end
+    -- Shortcut if uid is provided
+    if uid then
+        local id = Self.rollUidToId[uid]
+        local roll = id and Addon.rolls[id]
+        return roll and Fn(roll, uid, owner, item, itemOwner, status) and roll
     end
+
+    return Util.Tbl.First(Addon.rolls, Fn, false, false, uid, owner, item, itemOwner, status)
 end
 
 -- Shortcut to search rolls by key-value pairs
@@ -252,28 +268,25 @@ end
 -- Create and add a roll to the list
 ---@param item Item|string
 ---@param owner? string
----@param ownerId? integer
----@param itemOwnerId? integer
+---@param uid? integer|string
 ---@param timeout? integer
 ---@param disenchant? boolean
-function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
-    owner = Unit.Name(owner or "player") --[[@as string]]
-    local isOwner = Unit.IsSelf(owner)
+function Self.Add(item, owner, uid, timeout, disenchant)
+    owner = owner and Unit.Name(owner)
 
-    local id = Addon.rollNum + 1
-    Addon.rollNum = id
+    Addon.rollNum = Addon.rollNum + 1
+    local id = Addon.rollNum
+    local isOwner = Unit.IsSelf(owner)
 
     -- Create the roll entry
     ---@class Roll
     local roll = setmetatable({
         id = id,
-        uid = Util.Str.Random(16),
+        uid = uid or isOwner and Util.Str.Random(16) or nil,
         created = time(),
         isOwner = isOwner,
         item = Item.FromLink(item, owner),
         owner = owner,
-        ownerId = ownerId,
-        itemOwnerId = itemOwnerId,
         timeout = timeout or Self.CalculateTimeout(owner, true),
         disenchant = Util.Default(disenchant, isOwner and Util.Check(Session.GetMasterlooter(), Addon.db.profile.masterloot.rules.allowDisenchant, Addon.db.profile.allowDisenchant)),
         status = Self.STATUS_PENDING,
@@ -294,14 +307,7 @@ function Self.Add(item, owner, ownerId, itemOwnerId, timeout, disenchant)
 
     -- Add it to the list
     Addon.rolls[id] = roll
-
-    -- Set ownerId/itemOwnerId
-    if roll.isOwner then
-        roll.ownerId = id
-    end
-    if roll.item.isOwner then
-        roll.itemOwnerId = id
-    end
+    if roll.uid then Self.rollUidToId[roll.uid] = roll.id end
 
     Addon:Debug("Roll.Add", roll)
 
@@ -313,13 +319,14 @@ end
 -- Process a roll update message
 ---@param data table
 ---@param unit string
+---@return boolean
 function Self.Update(data, unit)
     local ml = Session.GetMasterlooter()
 
     -- Get the roll
     local created = false
-    local roll = Self.Find(data.ownerId, data.owner, data.item, data.itemOwnerId, data.item.owner)
-        or ml and unit == ml and Self.Find(nil, nil, data.item, data.itemOwnerId, data.item.owner)
+    local roll = Self.Find(data.uid, data.owner, data.item, data.item.owner)
+        or ml and unit == ml and Self.Find(nil, nil, data.item, data.item.owner)
 
     Addon:Debug("Roll.Update", unit, data, roll)
 
@@ -335,7 +342,8 @@ function Self.Update(data, unit)
             return false
         end
 
-        roll = Self.Add(Item.FromLink(data.item.link, data.item.owner, nil, nil, Util.Default(data.item.isTradable, true)), data.owner, data.ownerId, data.itemOwnerId, data.timeout, data.disenchant or nil)
+        local item = Item.FromLink(data.item.link, data.item.owner, nil, nil, Util.Default(data.item.isTradable, true))
+        roll = Self.Add(item, data.owner, data.uid, data.timeout, data.disenchant or nil)
         created = true
 
         if roll.isOwner then
@@ -358,9 +366,12 @@ function Self.Update(data, unit)
 
     -- Only the roll owner or ML can send updates
     if Util.In(unit, roll.owner, ml) then
+        -- UID
+        roll.uid = data.uid or roll.uid
+        if roll.uid then Self.rollUidToId[roll.uid] = roll.id end
+
         -- Update basic
         roll.owner = data.owner or roll.owner
-        roll.ownerId = data.ownerId or roll.ownerId
         roll.posted = data.posted
         roll.disenchant = data.disenchant
         roll.item.isTradable = Util.Default(data.item.isTradable, true)
@@ -381,13 +392,14 @@ function Self.Update(data, unit)
                     or not roll.declaredInterest and (roll.item:IsCollectibleMissing() or not roll.item:GetEligible("player"))
                 ) then
                     roll.declaredInterest = true
-                    roll.item:SetEligible("player", roll.item:GetEligible("player") or false)
-                    Comm.SendData(Comm.EVENT_INTEREST, { ownerId = roll.ownerId }, roll.owner)
+                    local eligible = roll.item:UpdateEligible("player", false)
+                    Comm.SendData(Comm.EVENT_ELIGIBLE, Util.Tbl.HashTmp("uid", roll.uid, "eligible", eligible))
                 end
 
                 -- Start (or restart) the roll if the owner has started it
                 if data.status < roll.status or roll.started and data.started ~= roll.started then
-                    roll:Restart(data.started, data.status == Self.STATUS_PENDING)
+                    roll:Restart()
+                    if data.status ~= Self.STATUS_PENDING then roll:Start(data.started) end
                 elseif data.status == Self.STATUS_RUNNING and roll.status < Self.STATUS_RUNNING then
                     roll:Start(data.started)
                 end
@@ -433,7 +445,7 @@ function Self.Update(data, unit)
         end)
     end
 
-    return created, roll
+    return created
 end
 
 -- Clear old rolls
@@ -444,6 +456,7 @@ local clearFn = function(roll)
     end
 
     Addon.rolls[roll.id] = nil
+    if roll.uid then Self.rollUidToId[roll.uid] = nil end
 
     Addon:SendMessage(Self.EVENT_CLEAR, roll)
 end
@@ -496,6 +509,8 @@ function Self.ToPlrId(id) return -id end
 
 function Self.FromPlrId(id) return -id end
 
+function Self.IsPlrUid(uid) return type(uid) == "string" end
+
 -------------------------------------------------------
 --                     Rolling                       --
 -------------------------------------------------------
@@ -515,47 +530,45 @@ function Self:Start(startedOrManually, silent)
 
         -- Check if we can start he roll
         local valid, msg = self:Validate(Self.STATUS_PENDING)
-        if not valid then
-            Addon:Error(msg)
-        else
-            -- Update eligible players if not already done so
-            if self.isOwner or self.item.isOwner then
-                self.item:GetEligible()
-            end
+        if not valid then return Addon:Error(msg) end
 
-            -- Run the roll
-            if not self.isOwner or self:CanBeRun(manually) then
-                self.started = started or time()
-                self:SetStatus(Self.STATUS_RUNNING)
+        -- Update eligible players if not already done so
+        if self.isOwner or self.item.isOwner then
+            self.item:GetEligible()
+        end
 
-                Addon:SendMessage(Self.EVENT_START, self, self.started)
+        -- Run the roll
+        if not self.isOwner or self:CanBeRun(manually) then
+            self.started = started or time()
+            self:SetStatus(Self.STATUS_RUNNING)
 
-                if self.isTest or not (self:ShouldEnd() and self:End()) then
-                    -- Schedule timer to end the roll and/or hide the frame
-                    if self.timeout > 0 then
-                        self.timers.bid = Addon:ScheduleTimer(Self.End, self:GetTimeLeft(), self, nil, true)
-                    elseif not Addon.db.profile.chillMode then
-                        self.timers.bid = Addon:ScheduleTimer(Self.HideRollFrame, self:GetTimeLeft(), self)
-                    end
+            Addon:SendMessage(Self.EVENT_START, self, self.started)
 
-                    -- Let everyone know
-                    self:Advertise(Util.Check(silent, false, nil), true)
+            if self.isTest or not (self:ShouldEnd() and self:End()) then
+                -- Schedule timer to end the roll and/or hide the frame
+                if self.timeout > 0 then
+                    self.timers.bid = Addon:ScheduleTimer(Self.End, self:GetTimeLeft(), self, nil, true)
+                elseif not Addon.db.profile.chillMode then
+                    self.timers.bid = Addon:ScheduleTimer(Self.HideRollFrame, self:GetTimeLeft(), self)
                 end
+
+                -- Let everyone know
+                self:Advertise(Util.Check(silent, false, nil), true)
             end
+        end
 
-            -- Let others know
-            self:SendStatus()
+        -- Let others know
+        self:SendStatus()
 
-            if not self.bid then
-                -- Show some UI
-                if self.item.isOwner or self.item:ShouldBeBidOn() then
-                    if self.item.isOwner or self.status == Self.STATUS_RUNNING then
-                        self:ShowRollFrame()
-                    end
-                    -- Bid disenchant
-                elseif self.disenchant and Addon.db.profile.filter.disenchant and Unit.IsEnchanter() then
-                    self:Bid(Self.BID_DISENCHANT)
+        if not self:IsNeedGreedRoll() and not self.bid then
+            -- Show some UI
+            if self.item.isOwner or self.item:ShouldBeBidOn() then
+                if self.item.isOwner or self.status == Self.STATUS_RUNNING then
+                    self:ShowRollFrame()
                 end
+                -- Bid disenchant
+            elseif self.disenchant and Addon.db.profile.filter.disenchant and Unit.IsEnchanter() then
+                self:Bid(Self.BID_DISENCHANT)
             end
         end
     end)
@@ -576,9 +589,7 @@ function Self:Schedule()
             -- Only if it's still pending
             if self.status == Self.STATUS_PENDING then
                 -- Maybe adopt the roll if ML
-                if Addon.db.profile.masterloot.rules.startAll and Session.IsMasterlooter() and not (self.ownerId or Addon:UnitIsTracking(self.owner)) then
-                    self:Adopt(true)
-                end
+                if self:ShouldAdopt() then self:Adopt(true) end
 
                 -- Start or cancel
                 if self.isOwner and self.item:ShouldBeRolledFor() or not self.isOwner and self:ShouldBeBidOn() then
@@ -596,8 +607,8 @@ function Self:Schedule()
 end
 
 -- Restart a roll
-function Self:Restart(started, pending)
-    Addon:Debug("Roll.Restart", self.id, started, pending)
+function Self:Restart(...)
+    Addon:Debug("Roll.Restart", self.id, ...)
 
     self.started = nil
     self.ended = nil
@@ -609,6 +620,7 @@ function Self:Restart(started, pending)
     self.hidden = nil
     self.posted = nil
     self.traded = nil
+    self.lootRollId = nil
 
     wipe(self.bids)
     wipe(self.rolls)
@@ -626,70 +638,92 @@ function Self:Restart(started, pending)
     self:SetStatus(Self.STATUS_PENDING)
     Addon:SendMessage(Self.EVENT_RESTART, self)
 
-    return pending and self or self:Start(started)
+    if (...) ~= nil then self:Start(...) end
+
+    return self
+end
+
+-- Check if we should adopt a given roll
+function Self:ShouldAdopt()
+    if not Session.IsMasterlooter() then
+        return false
+    elseif self:IsNeedGreedRoll() then
+        return Session.GetNumMasterlooting() == GetNumGroupMembers()
+    else
+        return Session.rules.startAll and not self:GetOwnerAddon()
+    end
 end
 
 -- Adopt a roll
 function Self:Adopt(noStatus)
-    self.owner, self.ownerId, self.isOwner, self.posted = UnitName("player") --[[@as string]], self.id, true, nil
+    self.posted = nil
     self.item.isTradable = true
 
-    if not noStatus then
-        self:SendStatus()
-    end
+    self:SetOwners("player")
+
+    if not noStatus then self:SendStatus() end
 
     return self
+end
+
+---@param owner? string
+---@param itemOwner? string
+function Self:SetOwners(owner, itemOwner)
+    local prevOwner, prevItemOwner = self.owner, self.item.owner
+    owner, itemOwner = Unit.Name(owner) or prevOwner, Unit.Name(itemOwner) or prevItemOwner
+
+    self.owner = owner
+    self.isOwner = Unit.IsSelf(owner)
+    self.item.owner = itemOwner
+    self.item.isOwner = Unit.IsSelf(itemOwner)
+
+    if owner ~= prevOwner or itemOwner ~= prevItemOwner then
+        Addon:SendMessage(Self.EVENT_OWNER, self, owner, itemOwner, prevOwner, prevItemOwner)
+    end
 end
 
 -- Bid on a roll
 ---@param bid number
 ---@param fromUnit? string
----@param roll? integer
+---@param randomRoll? integer
 ---@param isImport? boolean
 ---@param silent? boolean
 ---@return Roll
-function Self:Bid(bid, fromUnit, roll, isImport, silent)
-    Addon:Debug("Roll.Bid", self.id, bid, fromUnit, roll, isImport)
+function Self:Bid(bid, fromUnit, randomRoll, isImport, silent)
+    Addon:Debug("Roll.Bid", self.id, bid, fromUnit, randomRoll, isImport)
 
-    bid = bid or Self.BID_NEED
     fromUnit = Unit.Name(fromUnit or "player")
-    roll = roll or self.isOwner and bid ~= Self.BID_PASS and random(100) or nil
+    bid = self:GetBidValue(bid or Self.BID_NEED, fromUnit, isImport)
+    randomRoll = randomRoll or self.rolls[fromUnit] or self.isOwner and bid ~= Self.BID_PASS and random(100) or nil
+
     local fromSelf = Unit.IsSelf(fromUnit)
 
-    -- Handle custom answers
-    local answer, answers = 10 * bid - 10 * floor(bid), Session.rules["answers" .. floor(bid)] --[=[@as string[]]=]
-    if bid == floor(bid) and answers and Session.IsMasterlooter(self.owner) then
-        local i = Util.Tbl.Find(answers, bid == Self.BID_NEED and Self.ANSWER_NEED or Self.ANSWER_GREED)
-        if i then bid, answer = bid + (i / 10), i end
-    end
-
     -- Hide the roll frame
-    if fromSelf then
-        self:HideRollFrame()
-    end
+    if fromSelf then self:HideRollFrame() end
 
-    if self:ValidateBid(bid, fromUnit, roll, isImport, answer, answers) then
+    -- Nothing changed
+    if bid == self.bids[fromUnit] and randomRoll == self.rolls[fromUnit] then return self end
+
+    if self:ValidateBid(bid, fromUnit, randomRoll, isImport) then
         self.bids[fromUnit] = bid
-        self.rolls[fromUnit] = roll
+        self.rolls[fromUnit] = randomRoll
 
-        if fromSelf then
-            self.bid = bid
-        end
+        if fromSelf then self.bid = bid end
 
-        Addon:SendMessage(Self.EVENT_BID, self, bid, fromUnit, roll, isImport)
+        Addon:SendMessage(Self.EVENT_BID, self, bid, fromUnit, randomRoll, isImport)
 
         -- Let everyone know
-        Comm.RollBid(self, bid, fromUnit, roll, isImport, silent)
+        Comm.RollBid(self, bid, fromUnit, randomRoll, isImport, silent)
 
         -- Check if we should end the roll
         if not (self:ShouldEnd() and self:End()) and self.isOwner then
             -- or start if in chill mode
             if self.status == Self.STATUS_PENDING then
                 self:Start(false, silent)
-                -- or advertise to chat
+            -- or advertise to chat
             elseif self.status == Self.STATUS_RUNNING then
                 self:Advertise(Util.Check(silent, false, nil))
-                -- or if the winner just passed on the item
+            -- or if the winner just passed on the item
             elseif self.winner == fromUnit and bid == Self.BID_PASS and not self.traded then
                 self:End(nil, false, true)
             end
@@ -731,16 +765,19 @@ function Self:ShouldEnd()
     local ml = Session.GetMasterlooter()
     local allowKeep = not ml or Session.rules.allowKeep
 
+    -- needbeforegreed rolls can't be ended
+    if self:IsNeedGreedRoll() then
+        return false
     -- The item owner voted need
-    if self.isOwner and allowKeep and floor(self.bids[self.item.owner] or 0) == Self.BID_NEED then
+    elseif self.isOwner and allowKeep and floor(self.bids[self.item.owner] or 0) == Self.BID_NEED then
         return true
-        -- The item owner hasn't voted yet
+    -- The item owner hasn't voted yet
     elseif self.isOwner and allowKeep and not self.bids[self.item.owner] then
         return false
-        -- The owner doesn't have the addon and we have bid
+    -- The owner doesn't have the addon and we have bid
     elseif not self:GetOwnerAddon() and self.bid then
         return true
-        -- Another owner
+    -- Another owner
     elseif not self.isOwner then
         return false
     end
@@ -873,9 +910,7 @@ function Self:Cancel(silent)
 
     -- Let everyone know
     Addon:SendMessage(Self.EVENT_CANCEL, self)
-    if not silent then
-        self:SendStatus()
-    end
+    if not silent then self:SendStatus() end
 
     return self
 end
@@ -970,9 +1005,9 @@ end
 ---@return boolean
 ---@return string|nil
 function Self:Validate(...)
-    if Addon.DEBUG or self.isTest then return true end
-
-    if not self.item.isTradable then
+    if Addon.DEBUG or self.isTest or self:IsNeedGreedRoll() then
+        return true
+    elseif not self.item.isTradable then
         return false, L["ERROR_ITEM_NOT_TRADABLE"]
     elseif not IsInGroup() then
         return false, L["ERROR_NOT_IN_GROUP"]
@@ -1000,22 +1035,28 @@ function Self:Validate(...)
 end
 
 -- Validate an incoming bid
----@param answer integer
-function Self:ValidateBid(bid, fromUnit, roll, isImport, answer, answers)
+---@param bid number
+---@param fromUnit string
+---@param randomRoll? integer
+---@param isImport? boolean
+function Self:ValidateBid(bid, fromUnit, randomRoll, isImport)
     local valid, msg = self:Validate(fromUnit)
-    if not valid then
-        Addon:Error(msg)
-        -- Don't validate imports any further
-    elseif isImport then
+    if not valid then return Addon:Error(msg) end
+
+    local answer = Self.GetAnswerValue(bid)
+    local answers = Session.rules["answers" .. floor(bid)] --[=[@as string[]]=]
+
+    -- Don't validate imports any further
+    if isImport then
         return true
-        -- Check if it's a valid bid
+    -- Check if it's a valid bid
     elseif not Util.Tbl.Find(Self.BIDS, floor(bid)) or Session.GetMasterlooter(self.owner) and answer > 0 and not (answers and answers[answer]) then
         if Unit.IsSelf(fromUnit) then
             Addon:Error(L["ERROR_ROLL_BID_UNKNOWN_SELF"])
         else
             Addon:Verbose(L["ERROR_ROLL_BID_UNKNOWN_OTHER"], fromUnit, self.item.link)
         end
-        -- Check if the unit can bid
+    -- Check if the unit can bid
     elseif not self:UnitCanBid(fromUnit, bid) then
         if Unit.IsSelf(fromUnit) then
             Addon:Error(L["ERROR_ROLL_BID_IMPOSSIBLE_SELF"])
@@ -1033,12 +1074,12 @@ end
 ---@param isImport? boolean
 function Self:ValidateVote(vote, fromUnit, isImport)
     local valid, msg = self:Validate(vote, fromUnit)
-    if not valid then
-        Addon:Error(msg)
-        -- Don't validate imports any further
-    elseif isImport then
+    if not valid then return Addon:Error(msg) end
+
+    -- Don't validate imports any further
+    if isImport then
         return true
-        -- Check if the unit can bid
+    -- Check if the unit can bid
     elseif not self:UnitCanVote(fromUnit) then
         if Unit.IsSelf(fromUnit) then
             Addon:Error(L["ERROR_ROLL_VOTE_IMPOSSIBLE_SELF"])
@@ -1054,14 +1095,23 @@ end
 --                      GUI                       --
 -------------------------------------------------------
 
+---@param rollId number
+function Self:SetLootRollId(rollId)
+    self.lootRollId = rollId
+end
+
+function Self:GetLootRollId()
+    return self.lootRollId or Self.ToPlrId(self.id)
+end
+
 -- Get the loot frame for a loot id
 ---@return GroupRollFrame?
 ---@return integer?
 function Self:GetRollFrame()
-    local id, frame = self:GetPlrId()
+    local id = self:GetLootRollId()
 
     for i = 1, math.huge do
-        frame = _G["GroupLootFrame" .. i]
+        local frame = _G["GroupLootFrame" .. i]
         if not frame then break end
 
         if frame.rollID == id then
@@ -1072,36 +1122,35 @@ end
 
 -- Show the roll frame
 function Self:ShowRollFrame()
+    if self:IsNeedGreedRoll() then self.shown = true return end
+    if not Addon.db.profile.ui.showRollFrames then self.shown = true return end
+
     local frame = self:GetRollFrame()
-    if not frame or not frame:IsShown() then
-        self.shown = false
+    if frame and frame:IsShown() then self.shown = true return end
 
-        if Addon.db.profile.ui.showRollFrames then
-            GroupLootContainer_OpenNewFrame(self:GetPlrId(), self:GetRunTime())
-            self.shown = self:GetRollFrame() ~= nil
+    GroupLootContainer_OpenNewFrame(self:GetLootRollId(), self:GetRunTime())
 
-            -- TODO: This is required to circumvent a bug in ElvUI
-            if self.shown then
-                Util.Tbl.List(GroupLootContainer.rollFrames)
-                GroupLootContainer_Update(GroupLootContainer)
-            end
-        else
-            self.shown = true
-        end
+    self.shown = self:GetRollFrame() ~= nil
+
+    -- This is required to circumvent a bug in ElvUI
+    if self.shown then
+        Util.Tbl.List(GroupLootContainer.rollFrames)
+        GroupLootContainer_Update(GroupLootContainer)
     end
 end
 
 -- Hide the roll frame
 function Self:HideRollFrame()
-    local frame = self:GetRollFrame()
-    if frame then
-        ---@diagnostic disable-next-line: redundant-parameter
-        GroupLootContainer_RemoveFrame(GroupLootContainer, frame)
+    if self:IsNeedGreedRoll() then return end
 
-        -- TODO: This is required to circumvent a bug in ElvUI
-        Util.Tbl.List(GroupLootContainer.rollFrames)
-        GroupLootContainer_Update(GroupLootContainer)
-    end
+    local frame = self:GetRollFrame()
+    if not frame then return end
+
+    GroupLootContainer_RemoveFrame(GroupLootContainer, frame)
+
+    -- This is required to circumvent a bug in ElvUI
+    Util.Tbl.List(GroupLootContainer.rollFrames)
+    GroupLootContainer_Update(GroupLootContainer)
 end
 
 -- Show the alert frame for winning an item
@@ -1109,10 +1158,7 @@ function Self:ShowAlertFrame()
     if not self.item:GetBasicInfo().isEquippable then return end
 
     local unit = Unit.Name("player")
-
     local rollType = self.bid and floor(self.bid)
-    if rollType == Self.BID_PASS then rollType = LOOT_ROLL_TYPE_PASS end
-
     local roll = self.rolls[unit]
 
     GUI.LootAlertSystem:AddAlert(
@@ -1168,6 +1214,7 @@ end
 -- Check if we should advertise the roll to group chat.
 function Self:ShouldAdvertise(manually)
     return (not self.posted or manually and self.posted == -1)
+        and not self:IsNeedGreedRoll()
         and self:CanBeAwarded()
         and not self:ShouldEnd()
         and (manually or Comm.ShouldInitChat() and (self.bid or Session.GetMasterlooter()))
@@ -1224,45 +1271,56 @@ function Self:Advertise(force, noStatus)
     end
 end
 
+-- Get roll update data
+---@param target? string
+---@param full? boolean
+function Self:GetUpdateData(target, full)
+    local data = Util.Tbl.New()
+    data.uid = self.uid
+    data.owner = Unit.FullName(self.owner)
+    data.status = self.status
+    data.started = self.started
+    data.timeout = self.timeout
+    data.disenchant = self.disenchant or nil
+    data.posted = self.posted
+    data.winner = self.winner and Unit.FullName(self.winner)
+    data.traded = self.traded and Unit.FullName(self.traded)
+    data.item = Util.Tbl.Hash(
+        "link", self.item.link,
+        "owner", Unit.FullName(self.item.owner),
+        "isTradable", Util.Check(self.item.isTradable == false and not Addon.DEBUG, false, nil),
+        "eligible", self.item:GetNumEligible(true, true)
+    )
+
+    -- TODO: For compatibility
+    data.ownerId = data.id
+    data.itemOwnerId = data.id
+
+    if full then
+        if Addon.db.profile.bidPublic or Session.rules.bidPublic or Session.IsOnCouncil(target) then
+            data.bids = Util.Tbl.MapKeys(self.bids, Unit.FullName)
+            data.rolls = Util.Tbl.MapKeys(self.rolls, Unit.FullName)
+        end
+
+        if Session.rules.votePublic or Session.IsOnCouncil(target) then
+            data.votes = Util(self.votes):MapKeys(Unit.FullName):Map(Unit.FullName)()
+        end
+    end
+
+    return data
+end
+
 -- Send the roll status to others
 ---@param noCheck? boolean
 ---@param target? string
 ---@param full? boolean
 function Self:SendStatus(noCheck, target, full)
-    if (noCheck or self.isOwner) and not self.isTest then
-        local data = Util.Tbl.New()
-        data.owner = Unit.FullName(self.owner)
-        data.ownerId = self.ownerId
-        data.itemOwnerId = self.itemOwnerId
-        data.status = self.status
-        data.started = self.started
-        data.timeout = self.timeout
-        data.disenchant = self.disenchant or nil
-        data.posted = self.posted
-        data.winner = self.winner and Unit.FullName(self.winner)
-        data.traded = self.traded and Unit.FullName(self.traded)
-        data.item = Util.Tbl.Hash(
-        "link", self.item.link,
-            "owner", Unit.FullName(self.item.owner),
-            "isTradable", Util.Check(self.item.isTradable == false and not Addon.DEBUG, false, nil),
-            "eligible", self.item:GetNumEligible(true, true)
-        )
+    if self.isTest or not self.uid then return end
+    if not noCheck and not self.isOwner then return end
 
-        if full then
-            if Addon.db.profile.bidPublic or Session.rules.bidPublic or Session.IsOnCouncil(target) then
-                data.bids = Util.Tbl.MapKeys(self.bids, Unit.FullName)
-                data.rolls = Util.Tbl.MapKeys(self.rolls, Unit.FullName)
-            end
-
-            if Session.rules.votePublic or Session.IsOnCouncil(target) then
-                data.votes = Util(self.votes):MapKeys(Unit.FullName):Map(Unit.FullName)()
-            end
-        end
-
-        Comm.SendData(Comm.EVENT_ROLL_STATUS, data, target or Comm.TYPE_GROUP)
-
-        Util.Tbl.Release(true, data)
-    end
+    local data = self:GetUpdateData(target, full)
+    Comm.SendData(Comm.EVENT_ROLL_STATUS, data, target or Comm.TYPE_GROUP)
+    Util.Tbl.Release(true, data)
 end
 
 -------------------------------------------------------
@@ -1322,9 +1380,11 @@ function Self:ExtendTimeLeft(to)
 end
 
 -- Calculate the correct timeout
----@param selfOrOwner Roll|string
+---@param selfOrOwner? Roll|string
 ---@param real? boolean
 function Self.CalculateTimeout(selfOrOwner, real)
+    if not selfOrOwner then return 240 end
+
     local owner = type(selfOrOwner) == "table" and selfOrOwner.owner or selfOrOwner ---@cast owner string
     local ml = Session.GetMasterlooter()
     local chill = Addon.db.profile.chillMode
@@ -1359,10 +1419,12 @@ end
 ---@param checkInterest boolean
 ---@return boolean
 function Self:UnitIsEligible(unit, checkInterest)
+    unit = unit or "player"
+
     if not checkInterest and not self:HasMasterlooter() and Unit.IsUnit(unit, self.owner) then
         return true
     else
-        local val = self.item:GetEligible(unit or "player") --[[@as boolean]]
+        local val = self.item:GetEligible(unit) --[[@as boolean]]
         if checkInterest then return val else return val ~= nil end
     end
 end
@@ -1380,7 +1442,7 @@ end
 
 -- Check if we can still award the roll
 function Self:CanBeAwarded(includeDone)
-    return self.isOwner and self:CanBeWon(includeDone)
+    return self.isOwner and self.item.owner and self:CanBeWon(includeDone)
 end
 
 -- Check if we can still award the roll to the given unit
@@ -1417,37 +1479,49 @@ end
 
 -- Check if the given unit can bid on this roll
 ---@param unit? string
----@param bid? integer
+---@param bid? number
 ---@param checkInterest? boolean
 function Self:UnitCanBid(unit, bid, checkInterest)
     unit = Unit.Name(unit or "player")
 
+    local needGreed = self:IsNeedGreedRoll()
+    local customAnswer = bid and bid ~= floor(bid)
+    local prevBid = self.bids[unit]
+    local sameBidLevel = bid and prevBid and floor(bid) == floor(prevBid)
+    local prevCustomAnwer = prevBid and prevBid ~= floor(prevBid)
+
     -- Obvious stuff
     if self.traded or self.status == Self.STATUS_CANCELED or not Unit.InGroup(unit) then
         return false
-        -- Only need+pass for rolls from non-users
-    elseif not (self:GetOwnerAddon() or Util.In(bid, nil, Self.BID_NEED, Self.BID_PASS)) then
+    -- Only need+pass for rolls from non-users
+    elseif not (needGreed or self:GetOwnerAddon() or Util.In(bid, nil, Self.BID_NEED, Self.BID_PASS)) then
         return false
-        -- Can't bid disenchant if it's not allowed
+    -- Can't bid disenchant if it's not allowed
     elseif bid == Self.BID_DISENCHANT and not self.disenchant then
         return false
-        -- Can't bid if "Don't share" is enabled
+    -- Can't bid if "Don't share" is enabled
     elseif Addon.db.profile.dontShare and Unit.IsSelf(unit) then
         return false
-        -- We can always convert a previous non-pass bid into a pass
-    elseif bid == Self.BID_PASS and not Util.In(self.bids[unit], nil, Self.BID_PASS) then
-        return true
-        -- Hasn't bid but could win
-    elseif not self.bids[unit] and self:UnitCanWin(unit, true, checkInterest) then
+    -- Trying to change a bid
+    elseif bid and prevBid then
+        if needGreed then
+            -- Convert a needbeforegreed roll to a custom answer
+            return sameBidLevel and not prevCustomAnwer and customAnswer
+        else
+            -- We can always convert a bid to a lower priority
+            return Self.CompareBids(bid, self.bids[unit]) == 1
+        end
+    -- Hasn't bid but could win
+    elseif not prevBid and self:UnitCanWin(unit, true, checkInterest) then
         if self.status == Self.STATUS_DONE then
-            -- Only non-pass bids on done rolls, and only if there are no non-pass bids
-            return bid ~= Self.BID_PASS and Util.Tbl.CountExcept(self.rolls, Self.BID_PASS) == 0
+            -- Only non-pass bids on done rolls, and only if there are only pass bids
+            return bid ~= Self.BID_PASS and Util.Tbl.CountExcept(self.bids, Self.BID_PASS) == 0
         else
             return true
         end
-    else
-        return false
     end
+
+    return false
 end
 
 -- Check if the given unit can vote on this roll
@@ -1483,7 +1557,7 @@ function Self:CanBeRun(manually)
     local startManually = ml and Addon.db.profile.masterloot.rules.startManually
     local startLimit = ml and Addon.db.profile.masterloot.rules.startLimit or 0
 
-    if waitForOwner and self.itemOwnerId and not self.bids[self.item.owner] then
+    if waitForOwner and self.item.owner and not self.bids[self.item.owner] then
         return false
     elseif startManually and not (startLimit > 0 and Self.startedManually) then
         return false
@@ -1496,7 +1570,9 @@ end
 
 -- Check if we can restart a roll
 function Self:CanBeRestarted()
-    return self.isOwner and Util.In(self.status, Self.STATUS_CANCELED, Self.STATUS_DONE) and (not self.traded or UnitIsUnit(self.traded, self.item.owner))
+    return self.isOwner and self.item.owner
+        and Util.In(self.status, Self.STATUS_CANCELED, Self.STATUS_DONE)
+        and (not self.traded or UnitIsUnit(self.traded, self.item.owner))
 end
 
 -- Check if the roll is handled by a masterlooter
@@ -1511,7 +1587,7 @@ end
 
 -- Check if the roll is from an addon user
 function Self:GetOwnerAddon(exclCompAddons)
-    return Util.Bool(self.ownerId or self.itemOwnerId) or Addon:UnitIsTracking(self.owner, not exclCompAddons)
+    return self.isOwner or Util.Bool(self.owner) and Addon:UnitIsTracking(self.owner, not exclCompAddons)
 end
 
 -- Check if the player has to take an action to complete the roll (e.g. trade)
@@ -1530,7 +1606,7 @@ function Self:GetActionRequired()
                 end
             end
             if self.item.isOwner or self.bid and self.bid ~= Self.BID_PASS then
-                return self:GetOwnerAddon() and Self.ACTION_WAIT or Self.ACTION_ASK
+                return (self:IsNeedGreedRoll() or self:GetOwnerAddon()) and Self.ACTION_WAIT or Self.ACTION_ASK
             end
         end
     end
@@ -1547,6 +1623,11 @@ function Self:GetActionTarget()
     end
 end
 
+-- Check if the roll is handled by the vanilla needbeforegreed system
+function Self:IsNeedGreedRoll()
+    return not Self.IsPlrUid(self.uid) and not self.item.owner
+end
+
 -- Check if the roll is pending or running
 ---@param validate? boolean
 function Self:IsActive(validate)
@@ -1559,25 +1640,59 @@ function Self:IsRecent(timeout)
     return self.status == Self.STATUS_RUNNING or timeout ~= false and self.status == Self.STATUS_DONE and self.ended + (timeout or Self.TIMEOUT_RECENT) >= time()
 end
 
--- Get the rolls id with PLR prefix
-function Self:GetPlrId()
-    return Self.ToPlrId(self.id)
+-- Get the name for a bid
+---@paran roll Roll
+---@param bidOrUnit? number|string
+function Self.GetBidName(roll, bidOrUnit)
+    local bid = type(bidOrUnit) == "string" and roll.bids[Unit.Name(bidOrUnit)] or bidOrUnit ---@cast bid -string
+    if not bid then return "-" end
+
+    local ml = Session.GetMasterlooter()
+    local answer, answers = Self.GetAnswerValue(bid), Session.rules["answers" .. floor(bid)]
+
+    if not Session.IsMasterlooter(roll.owner or ml) or not answers or not answers[answer] or Util.In(answers[answer], Self.ANSWER_NEED, Self.ANSWER_GREED) then
+        return L["ROLL_BID_" .. floor(bid)]
+    else
+        return answers[answer]
+    end
 end
 
--- Get the name for a bid
-function Self.GetBidName(roll, bid)
-    if type(bid) == "string" then
-        bid = roll.bids[Unit.Name(bid)]
+---@param roll Roll
+---@param bid number
+---@param fromUnit string
+---@return number
+function Self.GetBidValue(roll, bid, fromUnit, isImport)
+    if isImport then return bid end
+
+    local ml = Session.GetMasterlooter()
+    local answers = Session.rules["answers" .. floor(bid)] --[=[@as string[]]=]
+
+    -- Bids from outside our ML group
+    if not Session.SameMasterlooter(fromUnit) then bid = floor(bid) end
+
+    -- Bids to rolls from our ML
+    if bid == floor(bid) and answers and Session.IsMasterlooter(roll.owner or ml) then
+        local i = Util.Tbl.Find(answers, bid == Self.BID_NEED and Self.ANSWER_NEED or Self.ANSWER_GREED)
+        if i then bid = bid + (i / 10) end
     end
 
-    if not bid then
-        return "-"
-    else
-        local bid, i, answers = floor(bid), 10 * bid - 10 * floor(bid), Session.rules["answers" .. floor(bid)]
-        if i == 0 or not Session.IsMasterlooter(roll.owner) or not answers or not answers[i] or Util.In(answers[i], Self.ANSWER_NEED, Self.ANSWER_GREED) then
-            return L["ROLL_BID_" .. bid]
-        else
-            return answers[i]
-        end
+    return bid
+end
+
+function Self.GetAnswerValue(bid)
+    return 10 * bid - 10 * floor(bid)
+end
+
+-- Compare two bids, returns -1 for a < b, 0 for a == b and 1 for a > b, lower meaning higher priority
+function Self.CompareBids(a, b)
+    if a == nil or b == nil or floor(a) == floor(b) then
+        return Util.Compare(a, b)
     end
+
+    a, b = floor(a), floor(b)
+    for _,v in ipairs(Self.BIDS) do
+        if a == v then return -1 elseif b == v then return 1 end
+    end
+
+    return 0
 end

@@ -69,7 +69,7 @@ StaticPopupDialogs[Self.DIALOG_ROLL_RESTART] = {
     button2 = NO,
     OnAccept = function(self, roll)
         Addon:Debug("GUI.Click:RollRestartDialog", roll and roll.id)
-        roll:Restart()
+        roll:Restart():Start()
     end,
     timeout = 0,
     whileDead = true,
@@ -166,7 +166,7 @@ function PLR_LootWonAlertFrame_OnClick(self, ...)
         local roll = Roll.Get(self.rollId)
         Addon:Debug("GUI.Click:LootWonAlert", roll and roll.id)
 
-        if roll and not roll.traded then
+        if roll and roll.item.owner and not roll.traded then
             Trade.Initiate(roll.item.owner)
         end
     end
@@ -340,9 +340,9 @@ function Self.GetPlayerList(roll)
     end, true):List()()
 
     local sortBy = Util.Tbl.New(
-        "bid",   99,  false,
+        "bid",   99,  Roll.CompareBids,
         "votes", 0,   true,
-        "roll",  100, true,
+        "roll",  0,   true,
         "ilvl",  0,   false,
         "unit",  nil, false
     )
@@ -510,9 +510,12 @@ end
 -- Display a regular unit tooltip
 ---@param self AceGUIWidget
 function Self.TooltipUnit(self)
-    GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-    GameTooltip:SetUnit(self:GetUserData("unit"))
-    GameTooltip:Show()
+    local unit = self:GetUserData("unit")
+    if unit then
+        GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
+        GameTooltip:SetUnit(unit)
+        GameTooltip:Show()
+    end
 end
 
 -- Display a tooltip showing only the full name of an x-realm player
@@ -630,7 +633,7 @@ end
 ---@param roll Roll
 ---@param bid number
 function Self.RollBid(roll, bid)
-    if bid < Roll.BID_PASS and not roll:GetOwnerAddon() and not Addon.db.profile.messages.whisper.askPrompted then
+    if bid ~= Roll.BID_PASS and roll.owner and not roll:GetOwnerAddon() and not Addon.db.profile.messages.whisper.askPrompted then
         StaticPopup_Show(Self.DIALOG_ROLL_WHISPER_ASK, nil, nil, Util.Tbl.New(roll, bid))
     elseif roll:UnitCanBid("player", bid) then
         roll:Bid(bid, nil, nil, nil, IsShiftKeyDown())
@@ -648,7 +651,9 @@ function Self.RollBidColor(bid)
     elseif bid == Roll.BID_PASS then
         return .5, .5, .5
     else
-        local bid, i = floor(bid), 10*bid - 10*floor(bid)
+        local i = 10*bid - 10*floor(bid)
+        bid = floor(bid)
+
         if bid == Roll.BID_NEED then
             return 0, max(.2, min(1, 1 - .2 * (i - 5))), max(0, min(1, .2 * i))
         elseif bid == Roll.BID_GREED then
