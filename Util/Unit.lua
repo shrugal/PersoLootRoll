@@ -89,7 +89,7 @@ end
 -------------------------------------------------------
 
 -- Get a unit's name (incl. realm name if from another realm)
----@generic T string|string?
+---@generic T string | string?
 ---@param unit T
 ---@return T
 function Self.Name(unit)
@@ -127,7 +127,7 @@ function Self.FullName(unit)
 end
 
 -- Get a unit's short name with a (*) at the end if the unit is from another realm
----@param unit string
+---@param unit? string
 ---@return string?
 function Self.ShortenedName(unit)
     unit = Self(unit)
@@ -141,13 +141,14 @@ end
 -- Get a unit's name in class color
 ---@param name? string
 ---@param unit? string
----@return string
+---@return string?
 function Self.ColoredName(name, unit)
-    return ("|c%s%s|r"):format(Self.Color(unit or name).colorStr, name)
+    return name and ("|c%s%s|r"):format(Self.Color(unit or name).colorStr, name)
 end
 
 -- It's just such a common usecase
----@param unit string
+---@param unit? string
+---@return string?
 function Self.ColoredShortenedName(unit)
     return unit and Self.ColoredName(Self.ShortenedName(unit), unit)
 end

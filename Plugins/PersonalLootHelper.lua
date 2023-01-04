@@ -37,6 +37,8 @@ function Self.Send(action, roll, param)
             msg = ("%s~ ~%s"):format(action, param)
         elseif type(roll) == "string" then
             msg = ("%s~ ~%s~%s"):format(action, roll, param)
+        elseif not roll.item.owner then
+            return
         elseif param then
             msg = ("%s~%d~%s~%s"):format(action, roll.item.id, Unit.FullName(roll.item.owner), param)
         else
@@ -53,7 +55,7 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
 
     local action, itemId, owner, param = msg:match('^([^~]+)~([^~]+)~([^~]+)~?([^~]*)$')
     itemId = tonumber(itemId)
-    owner = Unit(owner)
+    owner = Unit(owner) or "player"
     local fromOwner = owner == unit
 
     -- Check: Version check
@@ -64,13 +66,13 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
         Addon:SetCompAddonUser(unit, Self.NAME, param)
     else
         local item = Item.IsLink(param) and param or itemId
-        local roll = Roll.Find(nil, nil, item, nil, owner, Roll.STATUS_RUNNING) or Roll.Find(nil, nil, item, nil, owner)
+        local roll = Roll.Find(nil, nil, item, owner, Roll.STATUS_RUNNING) or Roll.Find(nil, nil, item, owner)
 
         -- Trade: The owner offers the item up for requests
         if action == Self.ACTION_TRADE and not roll and fromOwner and Item.IsLink(param) then
             Addon:Debug("PLH.Event.Trade", itemId, owner, param, msg)
             Roll.Add(param, owner):Start()
-        elseif roll and (roll.isOwner or not roll.ownerId) then
+        elseif roll and (roll.isOwner or not roll.uid) then
             -- Keep: The owner wants to keep the item
             if action == Self.ACTION_KEEP and fromOwner then
                 roll:End(owner)
@@ -138,7 +140,7 @@ function Self:ROLL_BID(_, roll, bid, fromUnit, _, isImport)
                 -- Send KEEP message
                 Self.Send(Self.ACTION_KEEP, roll)
             end
-        elseif fromSelf and not roll.ownerId and bid ~= Roll.BID_PASS and Addon:GetCompAddonUser(roll.owner, Self.NAME) then
+        elseif fromSelf and not roll.uid and bid ~= Roll.BID_PASS and Addon:GetCompAddonUser(roll.owner, Self.NAME) then
             -- Send REQUEST message
             local request = Util.Select(bid, Roll.BID_NEED, Self.BID_NEED, Roll.BID_DISENCHANT, Self.BID_DISENCHANT, Self.BID_GREED)
             Self.Send(Self.ACTION_REQUEST, roll, request)

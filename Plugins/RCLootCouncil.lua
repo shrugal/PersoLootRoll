@@ -56,7 +56,7 @@ Self.timers = {}
 ---@param owner? string
 ---@return Roll
 function Self.FindOrAddRoll(link, itemOwner, owner)
-    return Roll.Find(nil, owner, link, nil, itemOwner) or Roll.Add(Item.FromLink(link, itemOwner or owner), owner or itemOwner)
+    return Roll.Find(nil, owner, link, itemOwner) or Roll.Add(Item.FromLink(link, itemOwner or owner), owner or itemOwner or "player")
 end
 
 -------------------------------------------------------

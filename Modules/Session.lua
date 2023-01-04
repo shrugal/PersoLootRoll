@@ -112,6 +112,11 @@ function Self.IsMasterlooter(unit)
     return Self.masterlooter and UnitIsUnit(Self.masterlooter, unit or "player")
 end
 
+function Self.SameMasterlooter(unit, otherUnit)
+    local unitMl = Self.GetMasterlooter(unit)
+    return unitMl and Unit.IsUnit(unitMl, Self.GetMasterlooter(otherUnit or "player"))
+end
+
 -- Set a unit's masterlooting status
 ---@param unit string
 ---@param ml? string
@@ -126,11 +131,18 @@ function Self.SetMasterlooting(unit, ml)
 end
 
 -- Remove everyone from the masterlooting list who has the given unit as their masterlooter
+---@param unit string
 function Self.ClearMasterlooting(unit)
     unit = Unit.Name(unit)
     for i,ml in pairs(Self.masterlooting) do
         if ml == unit then Self.masterlooting[i] = nil end
     end
+end
+
+-- Count how many players have a certain masterlooter
+---@param ml? string
+function Self.GetNumMasterlooting(ml)
+    return Util.Tbl.CountWhere(Self.masterlooting, Unit.Name(ml or "player"))
 end
 
 -------------------------------------------------------
@@ -238,7 +250,8 @@ function Self.SetRules(rules, silent)
             answers2 = c.rules.greedAnswers,
             council = next(council) and council or nil,
             votePublic = c.council.votePublic,
-            allowKeep = c.rules.allowKeep
+            allowKeep = c.rules.allowKeep,
+            startAll = c.rules.startAll
         }
 
         if not silent then
@@ -332,7 +345,7 @@ end
 ---@param silent? boolean
 function Self.SendOffer(target, silent)
     if Self.IsMasterlooter() then
-        Comm.SendData(Comm.EVENT_MASTERLOOT_OFFER, {session = Self.rules, silent = silent}, target)
+        Comm.SendData(Comm.EVENT_MASTERLOOT_OFFER, Util.Tbl.HashTmp("session", Self.rules, "silent", silent), target)
     end
 end
 
