@@ -350,8 +350,6 @@ function Self.CHAT_MSG_LOOT(_, _, msg, _, _, _, sender)
     local item = Item.FromLink(link, unit)
     if isSelf then item:SetPosition(Self.lastLootedBag, 0) end
 
-    if not isSelf and isTracking then return end
-
     item:OnFullyLoaded(function ()
         if isOwner and item:ShouldBeRolledFor() or not isTracking and item:ShouldBeBidOn() then
             Self:Debug("Events.Loot.Start", owner)
@@ -661,42 +659,38 @@ end
 
 -- Check
 function Self.EVENT_CHECK(_, data, channel, sender, unit)
-    if not Self.lastVersionCheck or Self.lastVersionCheck + Self.VERSION_CHECK_DELAY < GetTime() then
+    if channel ~= Comm.TYPE_WHISPER then
+        if Self.lastVersionCheck and Self.lastVersionCheck + Self.VERSION_CHECK_DELAY >= GetTime() then return end
         Self.lastVersionCheck = GetTime()
 
         if Self.timers.versionCheck then
             Self:CancelTimer(Self.timers.versionCheck)
             Self.timers.versionCheck = nil
         end
-
-        local target = channel == Comm.TYPE_WHISPER and sender or channel
-
-        -- Send version
-        Comm.SendData(Comm.EVENT_VERSION, Self.VERSION, target)
-
-        -- Send state
-        Comm.Send(Comm.EVENT_STATE, Self:CheckState(), target)
     end
+
+    local target = channel == Comm.TYPE_WHISPER and sender or channel
+
+    -- Send version
+    Comm.SendData(Comm.EVENT_VERSION, Self.VERSION, target)
+    -- Send state
+    Comm.SendData(Comm.EVENT_STATE, Self:CheckState(), target)
 end
 Comm.ListenData(Comm.EVENT_CHECK, Self.EVENT_CHECK, true)
 
 -- Version
-function Self.EVENT_VERSION(_, version, channel, sender, unit)
-    Self:SetVersion(unit, version)
-end
+function Self.EVENT_VERSION(_, version, _, _, unit) Self:SetVersion(unit, version) end
 Comm.ListenData(Comm.EVENT_VERSION, Self.EVENT_VERSION)
 
 -- State
-function Self.EVENT_STATE(_, msg, _, _, unit) Self.states[unit] = tonumber(msg) end
-Comm.Listen(Comm.EVENT_STATE, Self.EVENT_STATE, true)
+function Self.EVENT_STATE(_, state, _, _, unit) Self.states[unit] = state end
+Comm.ListenData(Comm.EVENT_STATE, Self.EVENT_STATE, true)
 
 -- Sync
 function Self.EVENT_SYNC(_, msg, channel, sender, unit)
     -- Reset all owner ids and bids for the unit's rolls and items, because he/she doesn't know them anymore
     for id, roll in pairs(Self.rolls) do
         if roll.owner == unit then
-            -- TODO: Handle owner's roll ids
-
             if roll.status == Roll.STATUS_RUNNING then
                 roll:Restart(roll.started)
             elseif roll.status < Roll.STATUS_DONE then
@@ -705,24 +699,24 @@ function Self.EVENT_SYNC(_, msg, channel, sender, unit)
         end
     end
 
-    if Self:IsTracking() then
-        -- Send rolls for items that we own
-        for _,roll in pairs(Self.rolls) do
-            if roll.item.isOwner and not roll.traded and roll:UnitIsInvolved(unit) then
-                roll:SendStatus(true, unit, roll.isOwner)
-            end
-        end
+    if not Self:IsTracking() then return end
 
-        -- As masterlooter we send another update a bit later to inform them about bids and votes
-        if Session.IsMasterlooter() then
-            Self:ScheduleTimer(function ()
-                for _,roll in pairs(Self.rolls) do
-                    if roll.isOwner and not roll.item.isOwner and not roll.traded and roll:UnitIsInvolved(unit) then
-                        roll:SendStatus(nil, unit, true)
-                    end
-                end
-            end, Roll.DELAY)
+    -- Send rolls for items that we own
+    for _,roll in pairs(Self.rolls) do
+        if roll.item.isOwner and not roll.traded and roll:UnitIsInvolved(unit) then
+            roll:SendStatus(true, unit, roll.isOwner)
         end
+    end
+
+    -- As masterlooter we send another update a bit later to inform them about bids and votes
+    if Session.IsMasterlooter() then
+        Self:ScheduleTimer(function ()
+            for _,roll in pairs(Self.rolls) do
+                if roll.isOwner and not roll.item.isOwner and not roll.traded and roll:UnitIsInvolved(unit) then
+                    roll:SendStatus(nil, unit, true)
+                end
+            end
+        end, Roll.DELAY)
     end
 end
 Comm.Listen(Comm.EVENT_SYNC, Self.EVENT_SYNC)

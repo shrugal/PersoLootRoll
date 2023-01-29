@@ -354,7 +354,7 @@ function Self:CheckState(refresh)
                 Self:SendMessage("STATE_" .. s .. "_CHANGE", self.state >= i)
             end
 
-            Comm.Send(Comm.EVENT_STATE, "" .. self.state)
+            Comm.SendData(Comm.EVENT_STATE, self.state)
         end
     end
 
