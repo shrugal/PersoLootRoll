@@ -433,7 +433,6 @@ Self.GEAR_TOKENS = {
     [196603] = Self.TYPE_LEGS,
     [196604] = Self.TYPE_SHOULDER,
     [196605] = Self.TYPE_HEAD,
-
 }
 
 -------------------------------------------------------

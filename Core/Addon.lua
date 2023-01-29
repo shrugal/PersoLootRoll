@@ -14,10 +14,10 @@ Self.ECHO_ERROR = 1
 Self.ECHO_INFO = 2
 Self.ECHO_VERBOSE = 3
 Self.ECHO_DEBUG = 4
-Self.ECHO_LEVELS = {"ERROR", "INFO", "VERBOSE", "DEBUG"}
+Self.ECHO_LEVELS = { "ERROR", "INFO", "VERBOSE", "DEBUG" }
 
 -- Max # of log entries before starting to delete old ones
-Self.LOG_MAX_ENTRIES = 500
+Self.LOG_MAX_ENTRIES = 1000
 -- Max # of logged addon error messages
 Self.LOG_MAX_ERRORS = 10
 -- Max # of handled errors per second
@@ -32,19 +32,21 @@ Self.errorRate = 0
 Self.CHANNEL_ALPHA = "alpha"
 Self.CHANNEL_BETA = "beta"
 Self.CHANNEL_STABLE = "stable"
-Self.CHANNELS = {alpha = 1, beta = 2, stable = 3}
+Self.CHANNELS = { alpha = 1, beta = 2, stable = 3 }
 
 Self.versions = {}
 Self.versionNoticeShown = false
-Self.disabled = {}
+---@type table<string, integer>
+Self.states = {}
 Self.compAddonUsers = {}
 
 -- State
 Self.STATE_DISABLED = 0 -- Disabled in settings
 Self.STATE_ENABLED = 1  -- Enabled but not in a group
 Self.STATE_ACTIVE = 2   -- In a group but not tracking loot because of constraints from settings (e.g. "only masterloot" enabled and no masterlooter)
-Self.STATE_TRACKING = 3 -- Actively tracking loot
-Self.STATES = {"ENABLED", "ACTIVE", "TRACKING"}
+Self.STATE_TRACKING = 3 -- Actively tracking loot but not sharing it
+Self.STATE_SHARING = 4 -- Tracking and sharing loot
+Self.STATES = { "ENABLED", "ACTIVE", "TRACKING", "SHARING" }
 
 Self.state = nil
 
@@ -238,7 +240,7 @@ function Self:HandleChatCommand(msg)
 
         bid = bid or Roll.BID_NEED
         owner = Unit.Name(owner or "player") --[[@as string]]
-        
+
         if not Item.IsLink(item) or Item.IsLink(owner) or not tonumber(bid) then
             self:Print(L["USAGE_BID"])
         elseif not UnitExists(owner) then
@@ -249,7 +251,7 @@ function Self:HandleChatCommand(msg)
             if self.db.profile.messages.echo < Self.ECHO_VERBOSE then
                 self:Info(L["BID_START"], roll:GetBidName(bid), item, Comm.GetPlayerLink(owner))
             end
-            
+
             roll:Bid(bid or Roll.BID_NEED)
         end
     -- Trade
@@ -335,8 +337,10 @@ function Self:CheckState(refresh)
             ).Pop()
         then
             self.state = Self.STATE_ACTIVE
-        else
+        elseif self.db.profile.dontShare then
             self.state = Self.STATE_TRACKING
+        else
+            self.state = Self.STATE_SHARING
         end
 
         if self.state ~= state then
@@ -349,6 +353,8 @@ function Self:CheckState(refresh)
                 if fn then fn(self, self.state >= i) end
                 Self:SendMessage("STATE_" .. s .. "_CHANGE", self.state >= i)
             end
+
+            Comm.Send(Comm.EVENT_STATE, "" .. self.state)
         end
     end
 
@@ -368,6 +374,13 @@ function Self:IsTracking(refresh)
     return self:CheckState(refresh) >= Self.STATE_TRACKING
 end
 
+-- Check if the addon is currently tracking loot etc.
+---@param refresh boolean
+---@return boolean
+function Self:IsSharing(refresh)
+    return self:CheckState(refresh) >= Self.STATE_SHARING
+end
+
 -- Active state changed
 ---@param active boolean
 function Self:OnActiveChanged(active)
@@ -382,7 +395,7 @@ function Self:OnActiveChanged(active)
 
         -- Clear versions and disabled
         wipe(self.versions)
-        wipe(self.disabled)
+        wipe(self.states)
         wipe(self.compAddonUsers)
 
         -- Clear lastXYZ stuff
@@ -397,11 +410,7 @@ end
 -- Tracking state changed
 ---@param tracking boolean
 function Self:OnTrackingChanged(tracking)
-    Comm.Send(Comm["EVENT_" .. (tracking and "ENABLE" or "DISABLE")])
-
-    if tracking then
-        Comm.Send(Comm.EVENT_SYNC)
-    end
+    if tracking then Comm.Send(Comm.EVENT_SYNC) end
 end
 Self.OnTrackingChanged = Util.Fn.Debounce(Self.OnTrackingChanged, 0.1, false, true)
 
@@ -410,11 +419,25 @@ Self.OnTrackingChanged = Util.Fn.Debounce(Self.OnTrackingChanged, 0.1, false, tr
 ---@param inclCompAddons? boolean
 ---@return boolean
 function Self:UnitIsTracking(unit, inclCompAddons)
-    if Unit.IsSelf(unit or "player") then
+    unit = Unit.Name(unit or "player")
+
+    if Unit.IsSelf(unit) then
         return self:IsTracking()
     else
-        unit = Unit.Name(unit)
-        return Util.Bool(self.versions[unit] and not self.disabled[unit] or inclCompAddons and self:GetCompAddonUser(unit))
+        return Util.Bool((self.states[unit] or 0) >= Self.STATE_TRACKING or inclCompAddons and self:GetCompAddonUser(unit))
+    end
+end
+
+-- Check if the given unit is sharing
+---@param unit? string
+---@return boolean
+function Self:UnitIsSharing(unit)
+    unit = Unit.Name(unit or "player")
+
+    if Unit.IsSelf(unit) then
+        return self:IsSharing()
+    else
+        return (self.states[unit] or 0) >= Self.STATE_SHARING or not Self:UnitIsTracking(unit)
     end
 end
 
@@ -434,7 +457,7 @@ function Self:SetVersion(unit, version)
     end
 
     if not version then
-        self.disabled[unit] = nil
+        self.states[unit] = nil
     elseif not self.versionNoticeShown then
         if self:CompareVersion(version) == 1 then
             self:Info(L["VERSION_NOTICE"])
@@ -511,15 +534,16 @@ end
 
 -- Get the number of addon users in the group
 function Self:GetNumAddonUsers(inclCompAddons)
-    local n = Util.Tbl.Count(self.versions) - Util.Tbl.Count(self.disabled)
+    local n = 0
+    for _,s in pairs(Self.states) do
+        if s >= Self.STATE_TRACKING then n = n + 1 end
+    end
 
     if inclCompAddons then
         local users = Util.Tbl.New()
         for _,t in pairs(self.compAddonUsers) do
             for unit in pairs(t) do
-                if not self.versions[unit] then
-                    users[unit] = true
-                end
+                if not self.versions[unit] then users[unit] = true end
             end
         end
         n = n + Util.Tbl.Count(users)
@@ -569,7 +593,7 @@ end
 function Self:LogExport(warned)
     if warned then
         local realm = GetRealmName()
-        local _, name, _, _, lang, _, region = RI:GetRealmInfo(realm)    
+        local _, name, _, _, lang, _, region = RI:GetRealmInfo(realm)
         local txt = ("~ PersoLootRoll ~ Version: %s ~ Date: %s ~ Locale: %s ~ Realm: %s-%s (%s) ~"):format(Self.VERSION or "?", date() or "?", GetLocale() or "?", region or "?", name or realm or "?", lang or "?")
         txt = txt .. "\n" .. Util.Tbl.Concat(self.log, "\n")
 

@@ -288,7 +288,10 @@ function Self.RegisterGeneral()
                 desc = L["OPT_DONT_SHARE_DESC"],
                 type = "toggle",
                 order = it(),
-                set = function (_, val) Addon.db.profile.dontShare = val end,
+                set = function (_, val)
+                    Addon.db.profile.dontShare = val
+                    Addon:CheckState(true)
+                end,
                 get = function () return Addon.db.profile.dontShare end,
                 width = Self.WIDTH_HALF
             },
