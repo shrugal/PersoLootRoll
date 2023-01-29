@@ -1,3 +1,6 @@
-- Add alphanumeric roll uid for future id unification
+- New roll sync mechanism using UIDs
+- Handle needbeforegreed rolls, using the loot handle as UID if possible
+- Fix loot alert using corrupted template
+- Fix missing release fn on actions status label (Curse#19)
 - Fix static diagnostic problems
-- Some minor bugfixes and cleanup along the way
+- Some minor bugfixes and cleanup

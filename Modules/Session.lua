@@ -96,9 +96,10 @@ end
 
 -- Check if the unit (or the player) is our masterlooter
 ---@param unit? string
+---@return string?
 function Self.GetMasterlooter(unit)
     unit = Unit.Name(unit or "player")
-    if Unit.IsSelf(unit) then
+    if Unit.IsSelf(unit) or not Addon:UnitIsTracking(unit) and Self.rules.startAll then
         return Self.masterlooter
     else
         return Self.masterlooting[unit]
@@ -113,8 +114,8 @@ function Self.IsMasterlooter(unit)
 end
 
 function Self.SameMasterlooter(unit, otherUnit)
-    local unitMl = Self.GetMasterlooter(unit)
-    return unitMl and Unit.IsUnit(unitMl, Self.GetMasterlooter(otherUnit or "player"))
+    local ml = Self.GetMasterlooter(unit)
+    return ml and Unit.IsUnit(ml, Self.GetMasterlooter(otherUnit or "player"))
 end
 
 -- Set a unit's masterlooting status
@@ -245,7 +246,7 @@ function Self.SetRules(rules, silent)
         Self.rules = {
             timeoutBase = c.rules.timeoutBase or Roll.TIMEOUT,
             timeoutPerItem = c.rules.timeoutPerItem or Roll.TIMEOUT_PER_ITEM,
-            bidPublic = c.rules.bidPublic,
+            bidPublic = Util.GetLootMethod() == "needbeforegreed" or c.rules.bidPublic,
             answers1 = c.rules.needAnswers,
             answers2 = c.rules.greedAnswers,
             council = next(council) and council or nil,

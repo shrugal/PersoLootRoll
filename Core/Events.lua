@@ -238,8 +238,6 @@ end
 ---@param timeout number
 ---@param uid number
 function Self.START_LOOT_ROLL(_, _, rollId, timeout, uid)
-    if not uid then return end
-
     Self:Debug("Events.Loot.Roll", rollId, timeout, uid)
 
     Self.lootRolls[rollId] = Util.Tbl.Hash("uid", uid, "started", time(), "timeout", timeout / 1000)
@@ -248,18 +246,19 @@ end
 ---@param link string
 ---@param uid number
 function Self.LOOT_ITEM_AVAILABLE(_, _, link, uid)
-    local lootRoll = Util.Tbl.FirstWhere(Self.lootRolls, "uid", uid)
+    local rollId, lootRoll = Util.Tbl.FindWhere(Self.lootRolls, "uid", uid)
 
     Self:Debug("Events.Loot.ItemAvailable", link, uid, lootRoll)
 
-    Comm.SendData(Comm.EVENT_ELIGIBLE, Util.Tbl.HashTmp("uid", uid, "link", link, "started", lootRoll.started, "timeout", lootRoll.timeout))
+    local roll = Roll.FromNotice(link, lootRoll.started, lootRoll.timeout, uid):SetLootRollId(rollId):RegisterEligible("player")
+    lootRoll.id = roll.id
 end
 
 ---@param itemIdx number
 ---@param playerIdx number
 function Self.LOOT_HISTORY_ROLL_CHANGED(_, _, itemIdx, playerIdx)
     local name, _, bid, randomRoll, isWinner, isSelf = C_LootHistory.GetPlayerInfo(itemIdx, playerIdx)
-    local rollId, itemLink, numPlayers, isDone, winnerIdx = C_LootHistory.GetItem(itemIdx)
+    local rollId, link, numPlayers, isDone, winnerIdx = C_LootHistory.GetItem(itemIdx)
 
     Self:Debug("Events.Loot.RollChanged", itemIdx, rollId, name, bid, randomRoll, isDone, winnerIdx, isWinner)
 
@@ -269,25 +268,39 @@ function Self.LOOT_HISTORY_ROLL_CHANGED(_, _, itemIdx, playerIdx)
     local roll = Roll.Get(lootRoll.id)
     if not roll then return end
 
-    roll.item:OnFullyLoaded(roll.item.UpdateEligible, roll.item, name, false)
+    -- Register the bid
+    if Unit.InGroup(name) then
+        roll.item:OnFullyLoaded(roll.item.UpdateEligible, roll.item, name, false)
+        roll:Bid(bid, name, randomRoll)
+    end
 
-    roll:Bid(bid, name, randomRoll)
+    -- Check if we have a winner
+    local owner = winnerIdx and C_LootHistory.GetPlayerInfo(itemIdx, winnerIdx)
+    if not roll.item.owner and owner then
+        roll:RegisterItemOwner(owner)
+    end
 
-    local winner = winnerIdx and C_LootHistory.GetPlayerInfo(itemIdx, winnerIdx)
-    roll.item.owner = roll.item.owner or winner
-
-    if isDone then roll:End() end
+    -- End the roll if its done
+    if isDone then roll:End(nil, true) end
 end
 
 function Self.LOOT_HISTORY_FULL_UPDATE(_, event)
     Self:Debug("Events.Loot.FullUpdate", event)
 
     for itemIdx=1,C_LootHistory.GetNumItems() do
-        local rollId, _, numPlayers, isDone, winnerIdx = C_LootHistory.GetItem(itemIdx)
+        ---@type number, string, number, boolean, number?
+        local rollId, link, numPlayers, isDone, winnerIdx = C_LootHistory.GetItem(itemIdx) --[[@as any]]
 
         Self:Debug("Events.Loot.FullUpdate[" .. itemIdx .. "]", rollId, numPlayers, isDone, winnerIdx, Self.lootRolls[rollId])
 
         local lootRoll = Self.lootRolls[rollId]
+
+        -- TODO: Seems to be a bug (https://us.forums.blizzard.com/en/wow/t/wotlk-classic-missing-arg3-in-startlootroll-event/1490911)
+        if lootRoll and not lootRoll.id then
+            local roll = Roll.FromNotice(link, lootRoll.started, lootRoll.timeout):SetLootRollId(rollId):RegisterEligible("player")
+            lootRoll.id = roll.id
+        end
+
         local roll = Roll.Get(lootRoll and lootRoll.id)
 
         if isDone and roll and roll:IsActive() then
@@ -301,9 +314,7 @@ function Self.LOOT_HISTORY_FULL_UPDATE(_, event)
 
             -- Announce winner
             local winner = winnerIdx and C_LootHistory.GetPlayerInfo(itemIdx, winnerIdx)
-            if winner then
-                Comm.SendData(Comm.EVENT_ITEM_OWNER, Util.Tbl.HashTmp("uid", roll.uid, "owner", Unit.FullName(winner)))
-            end
+            if winner then roll:RegisterItemOwner(winner) end
         end
     end
 end
@@ -312,51 +323,49 @@ end
 ---@param sender string
 function Self.CHAT_MSG_LOOT(_, _, msg, _, _, _, sender)
     local unit = Unit(sender)
-    local ml = Session.GetMasterlooter()
 
-    -- Loot without owner is not handled here
-    if Util.Str.IsEmpty(sender) then return end
+    -- Loot without owner or with owner outside our group is not handled here
+    if Util.Str.IsEmpty(sender) or not Unit.InGroup(unit) then return end
+
+    local isSelf = Unit.IsSelf(unit)
+    local isTracking = not Addon:UnitIsTracking(unit, true)
+    local isSharing = Addon:UnitIsSharing(unit)
+    local ml = Session.GetMasterlooter(unit)
+    local owner = isSharing and ml or unit
+    local isOwner = Unit.IsSelf(owner)
+
+    -- Check for tracking status
+    if not Self:IsTracking() or not isSelf and (isTracking or not Unit.IsSelf(ml)) then return end
     -- Check for bonus roll or crafting
     if msg:match(Self.PATTERN_BONUS_LOOT) or msg:match(Self.PATTERN_CRAFTING) or msg:match(Self.PATTERN_CRAFTING_SELF) then return end
-    -- Check for tracking status
-    if not Self:IsTracking() or not Unit.InGroup(unit) or not Unit.IsSelf(unit) and Self:UnitIsTracking(unit, true) then return end
-    -- Check if ML will start rolls for us
-    if ml and not Session.IsMasterlooter() and Session.rules.startAll then return end
 
     local link = Item.GetLink(msg)
-    if Item.ShouldBeChecked(link, unit) then ---@cast link string
-        Self:Debug("Events.Loot", link, unit, Unit.IsSelf(unit), msg)
 
-        local item = Item.FromLink(link, unit)
+    -- Check item link
+    if not Item.ShouldBeChecked(link, unit) then return end
 
-        if item.isOwner then
-            item:SetPosition(Self.lastLootedBag, 0)
+    Self:Debug("Events.Loot", link, unit, isSelf, msg)
 
-            local owner = Session.GetMasterlooter() or unit
-            local isOwner = Unit.IsSelf(owner)
+    -- Create item
+    local item = Item.FromLink(link, unit)
+    if isSelf then item:SetPosition(Self.lastLootedBag, 0) end
 
-            item:OnFullyLoaded(function ()
-                if isOwner and item:ShouldBeRolledFor() then
-                    Self:Debug("Events.Loot.Start", owner)
-                    Roll.Add(item, owner):Start()
-                elseif not Self.db.profile.dontShare and item:GetFullInfo().isTradable then
-                    Self:Debug("Events.Loot.Status", owner, isOwner)
-                    local roll = Roll.Add(item, owner)
-                    -- Schedule, so others can declare interest
-                    if isOwner then roll:Schedule() end
-                    roll:SendStatus(true)
-                else
-                    Self:Debug("Events.Loot.Cancel", Self.db.profile.dontShare, owner, isOwner, unit, item.isOwner, item:HasSufficientQuality(), item:GetBasicInfo().isEquippable, item:GetFullInfo().isTradable, item:GetNumEligible(true))
-                    Roll.Add(item, unit):Cancel()
-                end
-            end)
-        elseif not Roll.Find(nil, nil, item, unit) then
-            Self:Debug("Events.Loot.Schedule")
-            Roll.Add(item, unit):Schedule()
+    if not isSelf and isTracking then return end
+
+    item:OnFullyLoaded(function ()
+        if isOwner and item:ShouldBeRolledFor() or not isTracking and item:ShouldBeBidOn() then
+            Self:Debug("Events.Loot.Start", owner)
+            Roll.Add(item, owner):Start()
+        elseif isSelf and isSharing and item:GetFullInfo().isTradable then
+            Self:Debug("Events.Loot.Status", owner, isOwner)
+            local roll = Roll.Add(item, owner)
+            if isOwner then roll:Schedule() end
+            roll:SendStatus(true)
         else
-            Self:Debug("Events.Loot.Duplicate")
+            Self:Debug("Events.Loot.Cancel", Self.db.profile.dontShare, owner, isOwner, unit, item.isOwner, item:HasSufficientQuality(), item:GetBasicInfo().isEquippable, item:GetFullInfo().isTradable, item:GetNumEligible(true))
+            Roll.Add(item, unit):Cancel()
         end
-    end
+    end)
 end
 
 -- Group/Raid/Instance
@@ -449,7 +458,7 @@ function Self.CHAT_MSG_WHISPER(_, msg, sender, _, _, _, _, _, _, _, _, lineId)
                     if roll.status == Roll.STATUS_CANCELED then roll:Restart() end
                     if roll.status == Roll.STATUS_PENDING then roll:Start() end
                 else
-                    roll = Roll.Add(Item.FromLink(link, unit, nil, nil, true), "player"):Schedule()
+                    roll = Roll.Add(Item.FromLink(link, unit, nil, nil, true), "player"):Start()
                 end
 
                 answer = Comm.GetChatLine("MSG_ROLL_ANSWER_STARTED", unit)
@@ -665,10 +674,8 @@ function Self.EVENT_CHECK(_, data, channel, sender, unit)
         -- Send version
         Comm.SendData(Comm.EVENT_VERSION, Self.VERSION, target)
 
-        -- Send disabled state
-        if not Self.db.profile.enabled then
-            Comm.Send(Comm.EVENT_DISABLE, target)
-        end
+        -- Send state
+        Comm.Send(Comm.EVENT_STATE, Self:CheckState(), target)
     end
 end
 Comm.ListenData(Comm.EVENT_CHECK, Self.EVENT_CHECK, true)
@@ -679,13 +686,9 @@ function Self.EVENT_VERSION(_, version, channel, sender, unit)
 end
 Comm.ListenData(Comm.EVENT_VERSION, Self.EVENT_VERSION)
 
--- Enable
-function Self.EVENT_ENABLE(_, _, _, _, unit) Self.disabled[unit] = nil end
-Comm.Listen(Comm.EVENT_ENABLE, Self.EVENT_ENABLE, true)
-
--- Disable
-function Self.EVENT_DISABLE(_, _, _, _, unit) Self.disabled[unit] = true end
-Comm.Listen(Comm.EVENT_DISABLE, Self.EVENT_DISABLE, true)
+-- State
+function Self.EVENT_STATE(_, msg, _, _, unit) Self.states[unit] = tonumber(msg) end
+Comm.Listen(Comm.EVENT_STATE, Self.EVENT_STATE, true)
 
 -- Sync
 function Self.EVENT_SYNC(_, msg, channel, sender, unit)
@@ -725,7 +728,7 @@ end
 Comm.Listen(Comm.EVENT_SYNC, Self.EVENT_SYNC)
 
 -- Roll status
-function Self.EVENT_ROLL_STATUS(_, data, channel, sender, unit)
+function Self.EVENT_STATUS(_, data, channel, sender, unit)
     if not Self:IsTracking() then return end
 
     data.owner = Unit.Name(data.owner)
@@ -735,7 +738,31 @@ function Self.EVENT_ROLL_STATUS(_, data, channel, sender, unit)
 
     Roll.Update(data, unit)
 end
-Comm.ListenData(Comm.EVENT_ROLL_STATUS, Self.EVENT_ROLL_STATUS)
+Comm.ListenData(Comm.EVENT_STATUS, Self.EVENT_STATUS)
+
+-- Notice about a roll we might not know about
+function Self.EVENT_NOTICE(event, data, channel, sender, unit)
+    local isSelf = Unit.IsSelf(unit)
+    local roll = Roll.Find(data.uid) or data.link and data.owner and Roll.Find(nil, nil, data.link, data.owner)
+
+    if not roll then
+        if not data.link or not data.started or not data.timeout then return end
+        roll = Roll.FromNotice(data.link, data.started, data.timeout, data.uid)
+    end
+
+    if data.eligible ~= nil then
+        roll:RegisterEligible(unit, data.eligible, true)
+    end
+
+    if data.bid then
+        roll:Bid(data.bid, unit)
+    end
+
+    if data.owner and roll:IsNeedGreedRoll() then
+        roll:RegisterItemOwner(data.owner, true)
+    end
+end
+Comm.ListenData(Comm.EVENT_NOTICE, Self.EVENT_NOTICE)
 
 -- Bids
 function Self.EVENT_BID(_, data, channel, sender, unit)
@@ -778,43 +805,6 @@ function Self.EVENT_VOTE(_, data, channel, sender, unit)
     roll:Vote(data.vote, fromUnit, owner ~= nil)
 end
 Comm.ListenData(Comm.EVENT_VOTE, Self.EVENT_VOTE)
-
--- Eligible for roll, mostly for needbeforegreed
-function Self.EVENT_ELIGIBLE(event, data, channel, sender, unit)
-    local roll = Roll.Find(data.uid)
-    if not roll and data.link and data.started and data.timeout then
-        local ml = Session.GetMasterlooter()
-        local item = Item.FromLink(data.link, nil, nil, nil, true)
-        local owner = ml and Session.GetNumMasterlooting(ml) == GetNumGroupMembers() and ml or nil
-
-        roll = Roll.Add(item, nil, data.uid, data.timeout, true):Start(data.started)
-    else
-        return
-    end
-
-    if Unit.IsSelf(unit) and not roll.lootRollId then
-        local rollId, lootRoll = Util.Tbl.FindWhere(Self.lootRolls, "uid", data.uid)
-        roll:SetLootRollId(rollId)
-        lootRoll.id = roll.id
-    end
-
-    roll.item:OnFullyLoaded(roll.item.UpdateEligible, roll.item, unit, data.eligible or false)
-end
-Comm.ListenData(Comm.EVENT_ELIGIBLE, Self.EVENT_ELIGIBLE, true)
-
--- Someone won a needbeforegreed roll
-function Self.EVENT_ITEM_OWNER(event, data, channel, sender, unit)
-    if Roll.IsPlrUid(data.uid) then return end
-
-    local roll = Roll.Find(data.uid)
-    if not roll or not roll:IsNeedGreedRoll() then return end
-
-    local owner = data.owner
-
-    roll:SetOwners(Session.GetMasterlooter(owner) or owner, owner)
-    roll:End(not Self:UnitIsTracking(owner, true) and owner, true)
-end
-Comm.ListenData(Comm.EVENT_ITEM_OWNER, Self.EVENT_ITEM_OWNER, true)
 
 -- XRealm
 function Self.EVENT_XREALM(_, data, channel, sender, unit)

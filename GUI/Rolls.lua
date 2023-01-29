@@ -122,7 +122,8 @@ function Self.Show()
                         for unit,version in pairs(Addon.versions) do
                             local name = Unit.ColoredShortenedName(unit)
                             local versionColor = Util.Select(Addon:CompareVersion(version), -1, "ff0000", 1, "00ff00", "ffffff")
-                            local line = ("%s: |cff%s%s|r"):format(name, versionColor, version) .. (Addon.disabled[unit] and " (" .. OFF .. ")" or "")
+                            local disabled = (Addon.states[unit] or 0) < Addon.STATE_TRACKING
+                            local line = ("%s: |cff%s%s|r"):format(name, versionColor, version) .. (disabled and " (" .. OFF .. ")" or "")
                             GameTooltip:AddLine(line, 1, 1, 1, false)
                         end
                     end

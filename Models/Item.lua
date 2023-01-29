@@ -269,9 +269,14 @@ end
 ---@param attr string
 ---@return any
 function Self.GetInfo(item, attr, ...)
-    local isInstance = type(item) == "table" and item.link and true --[[@as boolean]]
-    local id = isInstance and item.id or tonumber(item)
-    local link = isInstance and item.link or Self.IsLink(item) and item --[[@as string]]
+    local id, link, isInstance
+    if type(item) == "table" and item.link then
+        id, link, isInstance = item.id, item.link, true
+    elseif type(item) == "string" and Self.IsLink(item) then
+        link = item
+    else
+        id = tonumber(item)
+    end
     item = isInstance and item or link or id
 
     if not item then
@@ -730,18 +735,27 @@ function Self:GetThresholdForLocation(unit, upper, loc)
         return -1
     end
 
-    -- Use DB option only for the player and only for the lower threshold
-    local custom = not upper and Unit.IsSelf(unit)
-    local threshold = custom and f.ilvlThreshold or Self.ILVL_THRESHOLD
+    local threshold
+
+    -- Tier tokens have a fixed threshold
+    if not upper and (self:IsArmorToken() or self:IsOmniToken()) then
+        threshold = Self.ILVL_THRESHOLD * 4
+    else
+        -- Use DB option only for the player and only for the lower threshold
+        local custom = not upper and Unit.IsSelf(unit)
+        threshold = custom and f.ilvlThreshold or Self.ILVL_THRESHOLD
+
+        -- Trinkets and rings might have double the normal threshold
+        local thresholdTrinket = f.ilvlThresholdTrinkets or not custom
+        local thresholdRings = f.ilvlThresholdRings and custom
+        if Util.Select(loc, Self.TYPE_TRINKET, thresholdTrinket, Self.TYPE_FINGER, thresholdRings) then
+            threshold = threshold * 2
+        end
+    end
 
     -- Scale threshold for lower level chars
     local level = UnitLevel(unit)
     threshold = ceil(threshold * (level and level > 0 and level / GetMaxPlayerLevel() or 1))
-
-    -- Trinkets and rings might have double the normal threshold
-    if Util.Select(loc, Self.TYPE_TRINKET, f.ilvlThresholdTrinkets or not custom, Self.TYPE_FINGER, f.ilvlThresholdRings and custom) then
-        threshold = threshold * 2
-    end
 
     return threshold
 end
@@ -910,6 +924,11 @@ function Self:CanBeEquipped(unit, ...)
     local class = Self.CLASSES[classId]
     local isSelf = Unit.IsSelf(unit)
 
+    -- TODO: DEBUG
+    if not class then
+        Addon:Debug("Item.CanBeEquipped.NoClass", unit, className, classId, self.id, self.link)
+    end
+
     -- Check if there are class/spec restrictions
     if self.classes and not Util.In(className, self.classes) then
         return false
@@ -1040,7 +1059,7 @@ function Self:IsUseful(unit, ...)
     elseif self:IsWeapon() and ... then
         for i, v in Util.Each(...) do
             local spec = Self.CLASSES[Unit.ClassId(unit)].specs[v]
-            if not spec.weapons or Util.In(self.equipLoc, spec.weapons) then return true end
+            if spec and (not spec.weapons or Util.In(self.equipLoc, spec.weapons)) then return true end
         end
         return false
     else
@@ -1219,7 +1238,7 @@ end
 
 -- Check if the addon should start a roll for an item
 function Self:ShouldBeRolledFor()
-    return not (Addon.db.profile.dontShare and self.isOwner) and self:ShouldBeConsidered() and self:GetNumEligible(true, self.isOwner) > 0
+    return not (self.isOwner and Addon.db.profile.dontShare) and self:ShouldBeConsidered() and self:GetNumEligible(true, self.isOwner) > 0
 end
 
 -------------------------------------------------------

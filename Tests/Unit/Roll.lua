@@ -249,9 +249,15 @@ function Tests.TestTest()
 end
 
 function Tests.PlrIdTest()
-    -- TODO: isPlrId
-    -- TODO: ToPlrId
-    -- TODO: FromPlrId
+    local id = 5
+    AssertFalse(Roll.IsPlrId(id))
+    Assert(Roll.IsPlrId(Roll.ToPlrId(id)))
+    AssertFalse(Roll.IsPlrId(Roll.FromPlrId(Roll.ToPlrId(id))))
+end
+
+function Tests.PlrUidTest()
+    Assert(Roll.IsPlrUid(Roll.CreatePlrUid()))
+    AssertFalse(Roll.IsPlrUid(554354354))
 end
 
 function Tests.StartTest()
