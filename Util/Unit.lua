@@ -42,6 +42,23 @@ Self.SPECS = {
     71, 72, 73          -- Warrior
 }
 
+-- Profession skilllines
+Self.PROFESSIONS = {
+    Blacksmithing = 164,
+    Leatherworking = 165,
+    Alchemy = 171,
+    Herbalism = 182,
+    Cooking = 185,
+    Mining = 186,
+    Tailoring = 197,
+    Engineering = 202,
+    Enchanting = 333,
+    Fishing = 356,
+    Skinning = 393,
+    Jewelcrafting = 755,
+    Inscription = 773,
+    Archeology = 794,}
+
 -- Group ranks
 Self.GROUP_RANK_LEADER = 2
 Self.GROUP_RANK_ASSISTANT = 1
@@ -339,11 +356,16 @@ function Self.IsFollowing(unit)
     return AutoFollowStatus:IsShown() and (not unit or unit == AutoFollowStatusText:GetText():match(Self.PATTERN_FOLLOW))
 end
 
+-- Check if the player has a profession
+function Self.HasProfession(skillLineId)
+    for _,i in Util.Each(GetProfessions()) do
+        if i and select(7, GetProfessionInfo(i)) == skillLineId then return true end
+    end
+end
+
 -- Check if the player is an enchanter
 function Self.IsEnchanter()
-    for _,i in Util.Each(GetProfessions()) do
-        if i and select(7, GetProfessionInfo(i)) == 333 then return true end
-    end
+    return Self.HasProfession(Self.PROFESSIONS.Enchanting)
 end
 
 setmetatable(Self, {

@@ -15,7 +15,6 @@ local Self = Addon.Options
 -- Config
 ---@class AddonOptionsData: AceDBObject-3.0
 Self.DEFAULTS = {
-    -- VERSION 7
     profile = {
         -- General
         enabled = true,
@@ -37,12 +36,13 @@ Self.DEFAULTS = {
         -- Item filter
         filter = {
             enabled = true,
+            needbeforegreed = true,
+            disenchant = false,
             lvlThreshold = Item.LVL_THRESHOLD,
             ilvlThreshold = Item.ILVL_THRESHOLD,
             ilvlThresholdTrinkets = true,
             ilvlThresholdRings = true,
             pawn = false,
-            disenchant = false,
             transmog = false,
             transmogItem = false,
             pets = false
@@ -107,9 +107,7 @@ Self.DEFAULTS = {
 
         plugins = {}
     },
-    -- VERSION 4
     factionrealm = {},
-    -- VERSION 5
     char = {
         specs = {true, true, true, true},
         masterloot = {
