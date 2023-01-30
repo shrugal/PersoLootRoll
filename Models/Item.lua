@@ -18,6 +18,7 @@ local Inspect, Unit, Util = Addon.Inspect, Addon.Unit, Addon.Util
 ---@field subClassId? Enum.ItemArmorSubclass|Enum.ItemWeaponSubclass
 ---@field attributes? table<number, boolean>
 ---@field eligible? table<string, boolean>
+---@field isRecipeKnown? boolean
 local Self = Addon.Item
 
 local Meta = { __index = Self }
@@ -67,6 +68,8 @@ Self.PATTERN_APPEARANCE_KNOWN = TRANSMOGRIFY_TOOLTIP_APPEARANCE_KNOWN
 Self.PATTERN_APPEARANCE_UNKNOWN = TRANSMOGRIFY_TOOLTIP_APPEARANCE_UNKNOWN
 ---@type string
 Self.PATTERN_APPEARANCE_UNKNOWN_ITEM = TRANSMOGRIFY_TOOLTIP_ITEM_UNKNOWN_APPEARANCE_KNOWN
+---@type string
+Self.PATTERN_RECIPE_KNOWN = ITEM_SPELL_KNOWN
 
 -- Item loading status
 Self.INFO_NONE = 0
@@ -125,7 +128,8 @@ Self.INFO = {
         toLevel = true,
         attributes = true,
         isTransmogKnown = true,
-        isTransmogSourceKnown = true
+        isTransmogSourceKnown = true,
+        isRecipeKnown = true
     }
 }
 
@@ -210,24 +214,24 @@ local fullScanFn = function(i, line, lines, attr)
     if attr == "classes" then
         local classes = line:match(Self.PATTERN_CLASSES)
         return classes and Util.Str.Split(classes, ", ") or nil
-        -- spec
+    -- spec
     elseif attr == "spec" then
         local spec = line:match(Self.PATTERN_SPEC)
         return spec and Util.In(spec, Unit.Specs()) and spec or nil
-        -- relicType
+    -- relicType
     elseif attr == "relicType" then
         return line:match(Self.PATTERN_RELIC_TYPE) or nil
-        -- realLevel
+    -- realLevel
     elseif attr == "realLevel" then
         return tonumber(select(2, line:match(Self.PATTERN_ILVL_SCALED)) or line:match(Self.PATTERN_ILVL))
-        -- realMinLevel
+    -- realMinLevel
     elseif attr == "realMinLevel" then
         return tonumber(line:match(Self.PATTERN_MIN_LEVEL))
-        -- fromlevel, toLevel
+    -- fromlevel, toLevel
     elseif Util.In(attr, "fromLevel", "toLevel") then
         local from, to = line:match(Self.PATTERN_HEIRLOOM_LEVEL)
         return from and to and tonumber(attr == "fromLevel" and from or to) or nil
-        -- attributes
+    -- attributes
     elseif attr == "attributes" then
         local match
         for _, a in pairs(Self.ATTRIBUTES) do
@@ -248,19 +252,23 @@ local fullScanFn = function(i, line, lines, attr)
             end
             return attrs
         end
-        -- isTransmogKnown
+    -- isTransmogKnown
     elseif attr == "isTransmogKnown" then
         if line:match(Self.PATTERN_APPEARANCE_KNOWN) or line:match(Self.PATTERN_APPEARANCE_UNKNOWN_ITEM) then
             return true
         elseif line:match(Self.PATTERN_APPEARANCE_UNKNOWN) then
             return false
         end
-        -- isTransmogSourceKnown
+    -- isTransmogSourceKnown
     elseif attr == "isTransmogSourceKnown" then
         if line:match(Self.PATTERN_APPEARANCE_KNOWN .. "$") then
             return true
         elseif line:match(Self.PATTERN_APPEARANCE_UNKNOWN) or line:match(Self.PATTERN_APPEARANCE_UNKNOWN_ITEM) then
             return false
+        end
+    elseif attr == "isRecipeKnown" then
+        if line == Self.PATTERN_RECIPE_KNOWN then
+            return true
         end
     end
 end
@@ -528,7 +536,7 @@ end
 function Self:GetFullInfo()
     self:GetBasicInfo()
 
-    if self.infoLevel == Self.INFO_BASIC and self.isEquippable then
+    if self.infoLevel == Self.INFO_BASIC and self.isEquippable or self:IsRecipe() then
         Util.ScanTooltip(function(i, line, lines)
             self.infoLevel = Self.INFO_FULL
 
@@ -1087,15 +1095,24 @@ end
 -------------------------------------------------------
 
 function Self:IsCollectibleMissing(unit)
+    unit = unit or "player"
+
     local isPet = self:IsPet()
     local isTransmogable = self:IsTransmogable(unit)
+    local isRecipe = self:IsRecipe()
     local f = Addon.db.profile.filter
 
-    if not isPet and not isTransmogable then
+    if not isPet and not isTransmogable and not isRecipe then
+        -- Not a collectible
         return false
-    elseif not Unit.IsSelf(unit or "player") then
+    elseif not Unit.IsSelf(unit) then
         -- In a legacy run and not tracking
         return not Addon:UnitIsTracking(unit) and Util.IsLegacyRun(unit)
+    elseif isRecipe then
+        -- A recipe we can learn
+        local skillLine = Util.Tbl.Find(Enum.ItemRecipeSubclass, self:GetBasicInfo().subClassId)
+        local skillLineId = Unit.PROFESSIONS[skillLine]
+        return (not skillLineId or Unit.HasProfession(skillLineId)) and not self:GetFullInfo().isRecipeKnown
     elseif isPet then
         -- Wants and needs pet
         return (not f.enabled or f.pets) and self:GetBasicInfo().isPetKnown == false
@@ -1222,14 +1239,16 @@ end
 
 -- Check if the item should be handled by the addon
 function Self:ShouldBeConsidered()
-    return self:IsPet() or self:HasSufficientQuality() and self:GetBasicInfo().isEquippable and self:GetFullInfo().isTradable
+    return self:IsPet()
+        or self:IsRecipe()
+        or self:HasSufficientQuality() and self:GetBasicInfo().isEquippable and self:GetFullInfo().isTradable
 end
 
 -- Check if the addon should offer to bid on an item
----@return boolean
+---@return boolean?
 function Self:ShouldBeBidOn()
     if Addon.db.profile.dontShare or not self:ShouldBeConsidered() then
-        return false
+        return
     end
 
     local eligible = self:GetEligible("player") --[[@as boolean]]
@@ -1605,9 +1624,13 @@ end
 function Self:IsPet()
     return Self.GetInfo(self, "itemType") == "battlepet"
         or (
-        Self.GetInfo(self, "classId") == Enum.ItemClass.Miscellaneous
+            Self.GetInfo(self, "classId") == Enum.ItemClass.Miscellaneous
             and Self.GetInfo(self, "subClassId") == Enum.ItemMiscellaneousSubclass.CompanionPet
         )
+end
+
+function Self:IsRecipe()
+    return Self.GetInfo(self, "classId") == Enum.ItemClass.Recipe
 end
 
 ---@param self ItemRef

@@ -1,5 +1,6 @@
 - New roll sync mechanism using UIDs
-- Handle needbeforegreed rolls, using the loot handle as UID if possible
+- Add support for need-before-greed rolls
+- Add support for profession recipes
 - Fix loot alert using corrupted template
 - Fix missing release fn on actions status label (Curse#19)
 - Fix static diagnostic problems

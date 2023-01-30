@@ -335,7 +335,7 @@ function Self.CHAT_MSG_LOOT(_, _, msg, _, _, _, sender)
     local isOwner = Unit.IsSelf(owner)
 
     -- Check for tracking status
-    if not Self:IsTracking() or not isSelf and (isTracking or not Unit.IsSelf(ml)) then return end
+    if not Self:IsTracking() or not isSelf and (isTracking or ml and not Unit.IsSelf(ml)) then return end
     -- Check for bonus roll or crafting
     if msg:match(Self.PATTERN_BONUS_LOOT) or msg:match(Self.PATTERN_CRAFTING) or msg:match(Self.PATTERN_CRAFTING_SELF) then return end
 
@@ -351,11 +351,14 @@ function Self.CHAT_MSG_LOOT(_, _, msg, _, _, _, sender)
     if isSelf then item:SetPosition(Self.lastLootedBag, 0) end
 
     item:OnFullyLoaded(function ()
-        if isOwner and item:ShouldBeRolledFor() or not isTracking and item:ShouldBeBidOn() then
+        if not item:ShouldBeConsidered() then
+            Self:Debug("Events.Loot.Ignore", owner)
+            return
+        elseif isOwner and item:ShouldBeRolledFor() or not isTracking and item:ShouldBeBidOn() then
             Self:Debug("Events.Loot.Start", owner)
             Roll.Add(item, owner):Start()
         elseif isSelf and isSharing and item:GetFullInfo().isTradable then
-            Self:Debug("Events.Loot.Status", owner, isOwner)
+            Self:Debug("Events.Loot.Status", owner)
             local roll = Roll.Add(item, owner)
             if isOwner then roll:Schedule() end
             roll:SendStatus(true)

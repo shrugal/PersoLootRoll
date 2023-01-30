@@ -1446,7 +1446,7 @@ function Self:RegisterEligible(unit, eligible, silent)
     self.item:OnFullyLoaded(function ()
         self.item:UpdateEligible(unit, eligible or false)
 
-        if Unit.IsSelf(unit) and self:IsNeedGreedRoll() and self.lootRollId and not self:ShouldBeBidOn() then
+        if Unit.IsSelf(unit) and self:IsNeedGreedRoll() and self.lootRollId and self.item:ShouldBeBidOn() == false then
             RollOnLoot(self.lootRollId, LOOT_ROLL_TYPE_PASS)
         end
     end)
