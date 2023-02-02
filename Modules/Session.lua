@@ -250,7 +250,7 @@ function Self.SetRules(rules, silent)
             answers1 = c.rules.needAnswers,
             answers2 = c.rules.greedAnswers,
             council = next(council) and council or nil,
-            votePublic = c.council.votePublic,
+            votePublic = c.rules.votePublic,
             allowKeep = c.rules.allowKeep,
             startAll = c.rules.startAll
         }
@@ -271,9 +271,8 @@ end
 
 -- Refresh the session rules
 function Self.RefreshRules()
-    if Self.IsMasterlooter() then
-        Self.SetRules()
-    end
+    if not Self.IsMasterlooter() then return end
+    Self.SetRules()
 end
 Self.RefreshRules = Util.Fn.Debounce(Self.RefreshRules, 0.1, true)
 

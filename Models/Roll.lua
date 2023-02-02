@@ -132,8 +132,6 @@ Self.EVENT_STATUS = "PLR_ROLL_STATUS"
 --- Fires whenever a roll item eligibility changes
 -- @table  roll          The roll
 -- @number player        The player
--- @number eligible      The new eligibility status
--- @number prevOwner     The previous eligibility status
 Self.EVENT_ELIGIBLE = "PLR_ROLL_ELIGIBLE"
 
 --- Fires whenever a roll owner or item owner changes
@@ -211,7 +209,7 @@ function Self.Get(id)
     return id and Addon.rolls[Self.IsPlrId(id) and Self.FromPlrId(id) or id] or nil
 end
 
-local Check = function (a, b) return a == nil or Util.Select(a, true, b, false, not b, b == a) end
+local Check = function (a, b) return a == nil or Util.Select(a, true, b, false, not b, a == b) end
 ---@param roll Roll
 ---@param uid? integer|string|boolean
 ---@param owner? string|boolean
@@ -283,7 +281,6 @@ function Self.Add(item, owner, uid, timeout, disenchant)
     ---@class Roll
     local roll = setmetatable({
         id = id,
-        uid = uid or isOwner and Self.CreatePlrUid() or nil,
         created = time(),
         isOwner = isOwner,
         item = Item.FromLink(item, owner),
@@ -308,7 +305,7 @@ function Self.Add(item, owner, uid, timeout, disenchant)
 
     -- Add it to the list
     Addon.rolls[id] = roll
-    if roll.uid then Self.rollUidToId[roll.uid] = roll.id end
+    roll:SetUid(uid)
 
     Addon:Debug("Roll.Add", roll)
 
@@ -376,10 +373,7 @@ function Self.Update(data, unit)
     -- Only the roll owner or ML can send updates
     if Util.In(unit, roll.owner, ml) then
         -- UID
-        if not roll.uid then
-            roll.uid = data.uid
-            Self.rollUidToId[roll.uid] = roll.id
-        end
+        if not roll.uid then roll:SetUid(data.uid) end
 
         -- Update basic
         roll.owner = data.owner or roll.owner
@@ -522,6 +516,15 @@ function Self.FromPlrId(id) return -id end
 function Self.CreatePlrUid() return Util.Str.Random(16) end
 
 function Self.IsPlrUid(uid) return type(uid) == "string" end
+
+function Self:SetUid(uid)
+    uid = uid or self.uid or self.isOwner and Self.CreatePlrUid() or nil
+
+    if self.uid then Self.rollUidToId[self.uid] = nil end
+    if uid then Self.rollUidToId[uid] = self.id end
+
+    self.uid = uid
+end
 
 -------------------------------------------------------
 --                     Rolling                       --
@@ -700,10 +703,12 @@ function Self:Bid(bid, fromUnit, randomRoll, isImport, silent)
     -- Hide the roll frame
     if fromSelf then self:HideRollFrame() end
 
-    -- Nothing changed
-    if bid == self.bids[fromUnit] and randomRoll == self.rolls[fromUnit] then return self end
-
-    if self:ValidateBid(bid, fromUnit, randomRoll, isImport) then
+    if bid == self.bids[fromUnit] then
+        if not self.rolls[fromUnit] and randomRoll then
+            self.rolls[fromUnit] = randomRoll
+            Addon:SendMessage(Self.EVENT_BID, self, bid, fromUnit, randomRoll, isImport)
+        end
+    elseif self:ValidateBid(bid, fromUnit, randomRoll, isImport) then
         self.bids[fromUnit] = bid
         self.rolls[fromUnit] = randomRoll
 
@@ -740,15 +745,13 @@ end
 function Self:Vote(vote, fromUnit, isImport)
     Addon:Debug("Roll.Vote", self.id, vote, fromUnit, isImport)
 
-    vote = assert(Unit.Name(vote))
+    vote = Unit.Name(vote)
     fromUnit = assert(Unit.Name(fromUnit or "player"))
 
     if self:ValidateVote(vote, fromUnit, isImport) then
         self.votes[fromUnit] = vote
 
-        if Unit.IsSelf(fromUnit) then
-            self.vote = vote
-        end
+        if Unit.IsSelf(fromUnit) then self.vote = vote end
 
         Addon:SendMessage(Self.EVENT_VOTE, self, vote, fromUnit, isImport)
 
@@ -795,9 +798,9 @@ end
 ---@param winner? boolean|string
 ---@param cleanup? boolean
 ---@param force? boolean
----@param silent? boolean
-function Self:End(winner, cleanup, force, silent)
-    Addon:Debug("Roll.End", self.id, winner, cleanup, force)
+---@param fullStatus? boolean
+function Self:End(winner, cleanup, force, fullStatus)
+    Addon:Debug("Roll.End", self.id, winner, cleanup, force, fullStatus)
 
     winner = winner and winner ~= true and Unit.Name(winner) or winner
     local sendStatus = false
@@ -842,13 +845,13 @@ function Self:End(winner, cleanup, force, silent)
     -- Determine a winner
     if not self.winner or force then
         if self.isOwner and (not winner or winner == true) then
-            if (not Session.GetMasterlooter() or Session.rules.allowKeep) and floor(self.bids[self.item.owner] or 0) == Self.BID_NEED then
+            if (not self:HasMasterlooter() or Session.rules.allowKeep) and floor(self.bids[self.item.owner] or 0) == Self.BID_NEED then
                 -- Give it to the item owner
                 winner = self.item.owner
-            elseif winner == true or not (Addon.db.profile.awardSelf or Session.IsMasterlooter()) then
+            elseif winner == true or not (Addon.db.profile.awardSelf or self:IsMasterlooter()) then
                 -- Pick a winner now
                 winner = self:DetermineWinner()
-            elseif Session.IsMasterlooter() and Addon.db.profile.masterloot.rules.autoAward and not self.timers.award then
+            elseif self:IsMasterlooter() and Addon.db.profile.masterloot.rules.autoAward and not self.timers.award then
                 -- Schedule a timer to pick a winner
                 local base = Addon.db.profile.masterloot.rules.autoAwardTimeout or Self.TIMEOUT
                 local perItem = Addon.db.profile.masterloot.rules.autoAwardTimeoutPerItem or Self.TIMEOUT_PER_ITEM
@@ -885,7 +888,9 @@ function Self:End(winner, cleanup, force, silent)
     end
 
     -- Send status if something changed
-    if not silent and sendStatus then self:SendStatus() end
+    if fullStatus or sendStatus then
+        self:SendStatus(nil, nil, fullStatus)
+    end
 
     return self
 end
@@ -1276,7 +1281,8 @@ end
 ---@param target? string
 ---@param full? boolean
 function Self:GetUpdateData(target, full)
-    local data = Util.Tbl.New()
+    local data = Util.Tbl.Tmp()
+
     data.uid = self.uid
     data.owner = Unit.FullName(self.owner)
     data.status = self.status
@@ -1294,7 +1300,7 @@ function Self:GetUpdateData(target, full)
     )
 
     if full then
-        if Addon.db.profile.bidPublic or Session.rules.bidPublic or Session.IsOnCouncil(target) then
+        if Util.Check(self:HasMasterlooter(), Session.rules.bidPublic, Addon.db.profile.bidPublic) or Session.IsOnCouncil(target) then
             data.bids = Util.Tbl.MapKeys(self.bids, Unit.FullName)
             data.rolls = Util.Tbl.MapKeys(self.rolls, Unit.FullName)
         end
@@ -1315,9 +1321,20 @@ function Self:SendStatus(noCheck, target, full)
     if self.isTest or not self.uid then return end
     if not noCheck and not self.isOwner then return end
 
-    local data = self:GetUpdateData(target, full)
-    Comm.SendData(Comm.EVENT_STATUS, data, target or Comm.TYPE_GROUP)
-    Util.Tbl.Release(true, data)
+    target = target or Comm.TYPE_GROUP
+
+    Comm.SendData(Comm.EVENT_STATUS, self:GetUpdateData(target, full), target)
+
+    local council = self:HasMasterlooter() and Session.rules.council
+    local bids = next(self.bids) and not Util.Check(self:HasMasterlooter(), Session.rules.bidPublic, Addon.db.profile.bidPublic)
+    local votes = next(self.votes) and not Session.rules.votePublic
+
+    -- Send bid and vote details to council members
+    if target == Comm.TYPE_GROUP and full and council and (bids or votes) then
+        for fullName,_ in pairs(Session.rules.council) do
+            Comm.SendData(Comm.EVENT_STATUS, self:GetUpdateData(fullName, full), fullName)
+        end
+    end
 end
 
 -- Send a notice about our own involvement in a roll
@@ -1424,11 +1441,15 @@ end
 ---@param timeout number
 ---@param uid? number
 function Self.FromNotice(link, started, timeout, uid)
-    local roll = Self.Find(uid)
+    local roll = uid and Self.Find(uid)
     if roll then return roll end
 
     local item = Item.FromLink(link, nil, nil, nil, true)
-    return Self.Add(item, nil, uid, timeout, true):Start(started)
+
+    roll = Self.Add(item, nil, uid, timeout, true)
+    roll.posted = -1
+
+    return roll:Start(started)
 end
 
 -- Check if the roll is handled by the vanilla needbeforegreed system
@@ -1455,6 +1476,8 @@ function Self:RegisterEligible(unit, eligible, silent)
         self:SendNotice()
     end
 
+    Addon:SendMessage(Self.EVENT_ELIGIBLE, self, unit)
+
     return self
 end
 
@@ -1472,16 +1495,23 @@ function Self:RegisterItemOwner(unit, silent)
 
     self:SetOwners(owner, unit)
 
-    if self.isOwner or isSelf and not self.uid then
-        self.uid = Self.CreatePlrUid()
+    -- Set UID if necessary
+    if not self.uid and (self.isOwner or isSelf) then
+        self:SetUid()
+    end
+
+    -- Make sure we get a random roll result
+    if self.isOwner and self.bid and self.bid ~= Self.BID_PASS then
+        self:Bid(self.bid, "player")
     end
 
     if not silent then self:SendNotice() end
 
+    -- Cancel or end
     if not isSharing then
         self:Cancel()
     else
-        Addon:ScheduleTimer(self.End, 1, self, self.isOwner, true)
+        Addon:ScheduleTimer(self.End, 1, self, nil, true, nil, true)
     end
 
     return self
@@ -1617,7 +1647,9 @@ end
 ---@param unit string
 function Self:UnitIsInvolved(unit)
     unit = Unit.Name(unit or "player")
-    return self.owner == unit or self.winner == unit or self:UnitCanBid(unit) or self:UnitCanVote(unit)
+    return self.owner == unit or self.winner == unit
+        or self:UnitCanVote(unit)
+        or self.item:IsLoaded() and self.item:GetEligible(unit) ~= nil
 end
 
 -- Check if the roll can be started

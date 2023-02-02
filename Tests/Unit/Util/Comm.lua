@@ -121,7 +121,7 @@ function Tests:ShouldInitChatTest()
     Replace("IsInRaid", Test.Const(true))
     AssertGroupType("lfr", RAID_FINDER_PVEFRAME)
     -- Addon users
-    Replace(Addon, "GetNumAddonUsers", Test.Val(4))
+    Replace(Addon, "GetNumAddonUsers", Test.Val(5))
     AssertFalse(GROUP, "BID_NO_CHAT_ADDONS")
     -- Announce
     c.group.announce = false
