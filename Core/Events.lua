@@ -294,14 +294,13 @@ function Self.LOOT_HISTORY_FULL_UPDATE(_, event)
         Self:Debug("Events.Loot.FullUpdate[" .. itemIdx .. "]", rollId, numPlayers, isDone, winnerIdx, Self.lootRolls[rollId])
 
         local lootRoll = Self.lootRolls[rollId]
+        local roll = Roll.Get(lootRoll and lootRoll.id)
 
         -- TODO: Seems to be a bug (https://us.forums.blizzard.com/en/wow/t/wotlk-classic-missing-arg3-in-startlootroll-event/1490911)
         if lootRoll and not lootRoll.id then
-            local roll = Roll.FromNotice(link, lootRoll.started, lootRoll.timeout):SetLootRollId(rollId):RegisterEligible("player")
+            roll = Roll.FromNotice(link, lootRoll.started, lootRoll.timeout):SetLootRollId(rollId):RegisterEligible("player")
             lootRoll.id = roll.id
         end
-
-        local roll = Roll.Get(lootRoll and lootRoll.id)
 
         if isDone and roll and roll:IsActive() then
             -- Set random roll results
@@ -740,11 +739,14 @@ Comm.ListenData(Comm.EVENT_STATUS, Self.EVENT_STATUS)
 -- Notice about a roll we might not know about
 function Self.EVENT_NOTICE(event, data, channel, sender, unit)
     local isSelf = Unit.IsSelf(unit)
-    local roll = Roll.Find(data.uid) or data.link and data.owner and Roll.Find(nil, nil, data.link, data.owner)
+    local roll = data.uid and Roll.Find(data.uid)
+        or data.link and data.owner and Roll.Find(nil, nil, data.link, data.owner)
 
     if not roll then
         if not data.link or not data.started or not data.timeout then return end
         roll = Roll.FromNotice(data.link, data.started, data.timeout, data.uid)
+    elseif data.uid and not roll.uid then
+        roll.uid = data.uid
     end
 
     if data.eligible ~= nil then
@@ -755,7 +757,7 @@ function Self.EVENT_NOTICE(event, data, channel, sender, unit)
         roll:Bid(data.bid, unit)
     end
 
-    if data.owner and roll:IsNeedGreedRoll() then
+    if data.owner and not roll.item.owner then
         roll:RegisterItemOwner(data.owner, true)
     end
 end
@@ -765,7 +767,7 @@ Comm.ListenData(Comm.EVENT_NOTICE, Self.EVENT_NOTICE)
 function Self.EVENT_BID(_, data, channel, sender, unit)
     if not Self:IsTracking() then return end
 
-    local roll = Roll.Find(data.uid)
+    local roll = data.uid and Roll.Find(data.uid)
     if not roll then return end
 
     local isImport = data.fromUnit ~= nil
@@ -796,7 +798,7 @@ function Self.EVENT_VOTE(_, data, channel, sender, unit)
     local owner = data.fromUnit and unit or nil
     local fromUnit = data.fromUnit or unit
 
-    local roll = Roll.Find(data.uid, owner)
+    local roll = data.uid and Roll.Find(data.uid, owner)
     if not roll then return end
 
     roll:Vote(data.vote, fromUnit, owner ~= nil)

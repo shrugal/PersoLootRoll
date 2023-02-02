@@ -132,7 +132,7 @@ function Self.ShouldInitChat(target, item)
         Self.ChatInfo("BID_NO_CHAT_ANNOUNCE", item, target)
         return false
     -- Check group addons
-    elseif Addon:GetNumAddonUsers(true) + 1 == GetNumGroupMembers() then
+    elseif Addon:GetNumAddonUsers(true) == GetNumGroupMembers() then
         Self.ChatInfo("BID_NO_CHAT_ADDONS", item, target)
         return false
     end
@@ -298,7 +298,7 @@ function Self.RollBid(roll, bid, fromUnit, randomRoll, isImport, silent)
         local data = Util.Tbl.HashTmp("uid", roll.uid, "bid", bid, "roll", randomRoll, "fromUnit", Unit.FullName(fromUnit))
 
         -- Send to all or the council
-        if Util.Check(Session.GetMasterlooter(), Session.rules.bidPublic, Addon.db.profile.bidPublic) then
+        if Util.Check(roll:HasMasterlooter(), Session.rules.bidPublic, Addon.db.profile.bidPublic) then
             Self.SendData(Self.EVENT_BID, data)
         elseif Session.IsMasterlooter() then
             for target,_ in pairs(Session.rules.council or {}) do

@@ -993,13 +993,14 @@ function Self.GetRolls(filterById)
     end):SortBy("id")()
 end
 
+---@param roll Roll
 function Self.TestRoll(roll)
     local ml = Session.GetMasterlooter()
     local startManually = ml and Addon.db.profile.masterloot.rules.startManually
     local startLimit = ml and Addon.db.profile.masterloot.rules.startLimit or 0
 
     return  roll
-        and (Self.filter.all or roll.isOwner or roll.item.isOwner or roll.item:IsLoaded() and roll.item:GetEligible("player"))
+        and (Self.filter.all or roll:UnitIsInvolved())
         and (Self.filter.done or (roll.status ~= Roll.STATUS_DONE))
         and (Self.filter.awarded or not roll.winner)
         and (Self.filter.traded or not roll.traded)
