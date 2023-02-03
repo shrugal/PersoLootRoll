@@ -1190,9 +1190,6 @@ function Self.CompareEligible(a, b)
 end
 
 -- Check who in the group could use the item, either for one unit or all units in the group.
--- - nil: A unit can't reasonably use the item (they can't wear it or send it to and alt)
--- - false: They probably don't want it (e.g. ilvl too low)
--- - true: It might be an upgrade of some sort (e.g. ilvl high enough or collectible)
 ---@param unit? string
 ---@param force? boolean
 ---@return Eligible?
@@ -1280,7 +1277,7 @@ function Self:ShouldBeBidOn()
     end
 
     local eligible = self:GetEligible("player") --[[@as Eligible]]
-    return Util.Check(Addon.db.profile.filter.enabled, eligible == Self.ELIGIBLE_UPGRADE, eligible >= Self.ELIGIBLE_USABLE)
+    return Util.Check(Addon.db.profile.filter.enabled, eligible == Self.ELIGIBLE_UPGRADE, (eligible or 0) >= Self.ELIGIBLE_USABLE)
 end
 
 -- Check if the addon should start a roll for an item
