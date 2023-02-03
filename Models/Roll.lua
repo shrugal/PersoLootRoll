@@ -394,10 +394,10 @@ function Self.Update(data, unit)
                 -- Declare our interest if the roll is pending and our interest might have been missed
                 if Self.IsActive(data) and roll:ShouldBeBidOn() and (
                     (data.item.eligible or 0) == 0
-                    or not roll.declaredInterest and (roll.item:IsCollectibleMissing() or not roll.item:GetEligible("player"))
+                    or not roll.declaredInterest and (roll.item:IsCollectibleMissing() or roll.item:GetEligible("player") ~= Item.ELIGIBLE_UPGRADE)
                 ) then
                     roll.declaredInterest = true
-                    roll:RegisterEligible("player")
+                    roll:RegisterEligible("player", Item.ELIGIBLE_UPGRADE)
                 end
 
                 -- Start (or restart) the roll if the owner has started it
@@ -785,8 +785,8 @@ function Self:ShouldEnd()
     end
 
     -- Check if all eligible players have bid
-    for unit, interest in pairs(self.item:GetEligible() --[[@as table<string, boolean>]]) do
-        if not self.bids[unit] and (interest or ml or Addon.db.profile.awardSelf) then
+    for unit, eligible in pairs(self.item:GetEligible() --[[@as table<string, Eligible>]]) do
+        if not self.bids[unit] and (eligible == Item.ELIGIBLE_UPGRADE or ml or Addon.db.profile.awardSelf) then
             return false
         end
     end
@@ -1469,7 +1469,7 @@ function Self:RegisterEligible(unit, eligible, silent)
     if self.item.eligible and self.item.eligible[unit] ~= nil then return self end
 
     self.item:OnFullyLoaded(function ()
-        self.item:UpdateEligible(unit, eligible or false)
+        self.item:UpdateEligible(unit, eligible or Item.ELIGIBLE)
 
         if Unit.IsSelf(unit) and self:IsNeedGreedRoll() and self.lootRollId and self.item:ShouldBeBidOn() == false then
             RollOnLoot(self.lootRollId, LOOT_ROLL_TYPE_PASS)
@@ -1538,11 +1538,11 @@ end
 function Self:UnitIsEligible(unit, checkInterest)
     unit = unit or "player"
 
-    if not checkInterest and not self:HasMasterlooter() and Unit.IsUnit(unit, self.owner) then
+    if not checkInterest and Unit.IsUnit(unit, self.item.owner) then
         return true
     else
-        local val = self.item:GetEligible(unit) --[[@as boolean]]
-        if checkInterest then return val else return val ~= nil end
+        local eligible = self.item:GetEligible(unit) --[[@as Eligible]]
+        return Util.Check(checkInterest, eligible == Item.ELIGIBLE_UPGRADE, eligible ~= nil)
     end
 end
 
@@ -1654,7 +1654,7 @@ function Self:UnitIsInvolved(unit)
     return self.owner == unit or self.item.owner == unit or self.winner == unit
         or self.bid and self.bid ~= Self.BID_PASS
         or self:UnitCanVote(unit)
-        or self.item:IsLoaded() and self.item:GetEligible(unit) ~= nil
+        or self.item:IsLoaded() and self.item:GetEligible(unit)
 end
 
 -- Check if the roll can be started

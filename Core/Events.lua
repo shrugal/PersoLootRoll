@@ -270,7 +270,7 @@ function Self.LOOT_HISTORY_ROLL_CHANGED(_, _, itemIdx, playerIdx)
 
     -- Register the bid
     if Unit.InGroup(name) then
-        roll.item:OnFullyLoaded(roll.item.UpdateEligible, roll.item, name, false)
+        roll.item:OnFullyLoaded(roll.item.UpdateEligible, roll.item, name, Item.ELIGIBLE)
         roll:Bid(bid, name, randomRoll)
     end
 
@@ -539,7 +539,7 @@ function Self.CHAT_MSG_WHISPER(_, msg, sender, _, _, _, _, _, _, _, _, lineId)
             elseif roll.winner and roll.winner ~= unit or roll.traded and roll.traded ~= unit then
                 answer = Comm.GetChatLine("MSG_ROLL_ANSWER_NO_OTHER", unit)
             -- Unit isn't eligible
-            elseif roll.item:GetEligible(unit) == nil then
+            elseif not roll.item:GetEligible(unit) then
                 answer = Comm.GetChatLine("MSG_ROLL_ANSWER_NOT_ELIGIBLE", unit)
             -- Probably too late
             else

@@ -17,13 +17,14 @@ local Inspect, Unit, Util = Addon.Inspect, Addon.Unit, Addon.Util
 ---@field classId? Enum.ItemClass
 ---@field subClassId? Enum.ItemArmorSubclass|Enum.ItemWeaponSubclass
 ---@field attributes? table<number, boolean>
----@field eligible? table<string, boolean>
+---@field eligible? table<string, Eligible>
 ---@field isRecipeKnown? boolean
 local Self = Addon.Item
 
 local Meta = { __index = Self }
 
 ---@alias ItemRef Item|string|integer
+---@alias Eligible false|1|2
 
 -------------------------------------------------------
 --                     Constants                     --
@@ -70,6 +71,13 @@ Self.PATTERN_APPEARANCE_UNKNOWN = TRANSMOGRIFY_TOOLTIP_APPEARANCE_UNKNOWN
 Self.PATTERN_APPEARANCE_UNKNOWN_ITEM = TRANSMOGRIFY_TOOLTIP_ITEM_UNKNOWN_APPEARANCE_KNOWN
 ---@type string
 Self.PATTERN_RECIPE_KNOWN = ITEM_SPELL_KNOWN
+
+-- Unit can get the item but has no use for it
+Self.ELIGIBLE = false
+-- Unit can get and use the item
+Self.ELIGIBLE_USABLE = 1
+-- Unit can get and probably wants the item
+Self.ELIGIBLE_UPGRADE = 2
 
 -- Item loading status
 Self.INFO_NONE = 0
@@ -1150,17 +1158,35 @@ function Self:IsUpgrade(unit)
 end
 
 -- Register an eligible unit's interest
+---@param unit string
+---@param to? Eligible
 function Self:SetEligible(unit, to)
+    if to == nil then to = Self.ELIGIBLE_UPGRADE end
+
     self:GetEligible()
-    self.eligible[Unit.Name(unit)] = to == nil and true or to
+    self.eligible[Unit.Name(unit)] = to
 end
 
 ---@param unit string
----@param atLeast? boolean
+---@param atLeast? Eligible
 function Self:UpdateEligible(unit, atLeast)
-    local eligible = atLeast or self:GetEligible(unit, true) or atLeast
+    local eligible = atLeast
+
+    if atLeast ~= Self.ELIGIBLE_UPGRADE then
+        eligible = self:GetEligible(unit, true)
+        if Self.CompareEligible(eligible, atLeast) == -1 then eligible = atLeast end
+    end
+
     self:SetEligible(unit, eligible)
+
     return eligible
+end
+
+function Self.CompareEligible(a, b)
+    return a == b and 0
+        or a == false and (b == nil and 1 or -1)
+        or b == false and (a == nil and -1 or 1)
+        or Util.Compare(a, b)
 end
 
 -- Check who in the group could use the item, either for one unit or all units in the group.
@@ -1169,21 +1195,23 @@ end
 -- - true: It might be an upgrade of some sort (e.g. ilvl high enough or collectible)
 ---@param unit? string
 ---@param force? boolean
----@return boolean?
----@overload fun(): table<string, boolean>
+---@return Eligible?
+---@overload fun(): table<string, Eligible>
 function Self:GetEligible(unit, force)
     if not self.eligible or force then
         if unit then
             if not self.owner and not force then
                 return nil
             elseif self:IsCollectibleMissing(unit) then
-                return true
+                return Self.ELIGIBLE_UPGRADE
             elseif not self:GetBasicInfo().isEquippable then
-                return false
+                return Self.ELIGIBLE_USABLE
             elseif self.isSoulbound and not self:CanBeEquipped(unit) then
-                return nil
+                return Self.ELIGIBLE
+            elseif self:IsUpgrade(unit) then
+                return Self.ELIGIBLE_UPGRADE
             else
-                return self:IsUpgrade(unit) or false
+                return Self.ELIGIBLE_USABLE
             end
         else
             local eligible = self.eligible and wipe(self.eligible) or Util.Tbl.New()
@@ -1215,8 +1243,8 @@ end
 ---@param othersOnly? boolean
 function Self:GetNumEligible(checkInterest, othersOnly)
     local n = 0
-    for unit, v in pairs(self:GetEligible() --[[@as table<string, boolean>]]) do
-        if (not checkInterest or v) and not (othersOnly and Unit.IsSelf(unit)) then
+    for unit, v in pairs(self:GetEligible() --[[@as table<string, Eligible>]]) do
+        if (not checkInterest or v == Self.ELIGIBLE_UPGRADE) and not (othersOnly and Unit.IsSelf(unit)) then
             n = n + 1
         end
     end
@@ -1251,8 +1279,8 @@ function Self:ShouldBeBidOn()
         return
     end
 
-    local eligible = self:GetEligible("player") --[[@as boolean]]
-    return eligible or not Addon.db.profile.filter.enabled and eligible ~= nil
+    local eligible = self:GetEligible("player") --[[@as Eligible]]
+    return Util.Check(Addon.db.profile.filter.enabled, eligible == Self.ELIGIBLE_UPGRADE, eligible >= Self.ELIGIBLE_USABLE)
 end
 
 -- Check if the addon should start a roll for an item
