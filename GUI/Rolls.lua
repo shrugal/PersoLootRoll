@@ -1005,7 +1005,9 @@ function Self.TestRoll(roll)
         and (Self.filter.awarded or not roll.winner)
         and (Self.filter.traded or not roll.traded)
         and (Self.filter.hidden or not roll.hidden and (
-            roll.status >= Roll.STATUS_RUNNING and (roll.isWinner or roll.isOwner or roll.item.isOwner or roll.bid ~= Roll.BID_PASS)
+            roll.status >= Roll.STATUS_RUNNING and (
+                roll.isWinner or roll.isOwner or roll.item.isOwner or roll.bid ~= Roll.BID_PASS
+            )
             or (startManually or startLimit > 0) and roll:CanBeStarted()
         ))
 end

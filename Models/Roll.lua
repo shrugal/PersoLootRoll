@@ -844,17 +844,21 @@ function Self:End(winner, cleanup, force, fullStatus)
 
     -- Determine a winner
     if not self.winner or force then
-        if self.isOwner and (not winner or winner == true) then
-            if (not self:HasMasterlooter() or Session.rules.allowKeep) and floor(self.bids[self.item.owner] or 0) == Self.BID_NEED then
+        if (self.isOwner or not self:GetOwnerAddon()) and (not winner or winner == true) then
+            local p = Addon.db.profile
+            local r = Session.rules
+            local ownerBid = self.bids[self.item.owner]
+
+            if not self:GetOwnerAddon() and ownerBid or (not self:HasMasterlooter() or r.allowKeep) and floor(ownerBid or 0) == Self.BID_NEED then
                 -- Give it to the item owner
                 winner = self.item.owner
-            elseif winner == true or not (Addon.db.profile.awardSelf or self:IsMasterlooter()) then
+            elseif winner == true or not (p.awardSelf or self:IsMasterlooter()) then
                 -- Pick a winner now
                 winner = self:DetermineWinner()
-            elseif self:IsMasterlooter() and Addon.db.profile.masterloot.rules.autoAward and not self.timers.award then
+            elseif self:IsMasterlooter() and p.masterloot.rules.autoAward and not self.timers.award then
                 -- Schedule a timer to pick a winner
-                local base = Addon.db.profile.masterloot.rules.autoAwardTimeout or Self.TIMEOUT
-                local perItem = Addon.db.profile.masterloot.rules.autoAwardTimeoutPerItem or Self.TIMEOUT_PER_ITEM
+                local base = p.masterloot.rules.autoAwardTimeout or Self.TIMEOUT
+                local perItem = p.masterloot.rules.autoAwardTimeoutPerItem or Self.TIMEOUT_PER_ITEM
                 self.timers.award = Addon:ScheduleTimer(Self.End, base + Util.GetNumDroppedItems() * perItem, self, true)
             end
         end
@@ -1647,7 +1651,8 @@ end
 ---@param unit string
 function Self:UnitIsInvolved(unit)
     unit = Unit.Name(unit or "player")
-    return self.owner == unit or self.winner == unit
+    return self.owner == unit or self.item.owner == unit or self.winner == unit
+        or self.bid and self.bid ~= Self.BID_PASS
         or self:UnitCanVote(unit)
         or self.item:IsLoaded() and self.item:GetEligible(unit) ~= nil
 end
