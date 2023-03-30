@@ -1074,7 +1074,10 @@ function Self.RegisterMasterloot()
                         desc = L["OPT_MASTERLOOT_RULES_ALLOW_DISENCHANT_DESC"],
                         type = "toggle",
                         order = it(),
-                        set = function (_, val) Addon.db.profile.masterloot.rules.allowDisenchant = val end,
+                        set = function (_, val)
+                            Addon.db.profile.masterloot.rules.allowDisenchant = val
+                            Session.RefreshRules()
+                        end,
                         get = function () return Addon.db.profile.masterloot.rules.allowDisenchant end,
                         width = Self.WIDTH_FULL
                     },

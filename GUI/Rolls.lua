@@ -454,7 +454,7 @@ function Self.UpdateRolls()
                 local needGreedClick = function (self, _, button)
                     local roll, bid = self:GetUserData("roll"), self:GetUserData("bid")
                     if button == "LeftButton" then
-                        GUI.RollBid(roll, bid)
+                        roll:RollOnLoot(bid)
                     elseif button == "RightButton" and roll.owner == Session.GetMasterlooter() then
                         local answers = Session.rules["answers" .. bid] --[[@as table]]
                         if answers and #answers > 0 then
@@ -475,12 +475,12 @@ function Self.UpdateRolls()
 
                 -- Disenchant
                 f = GUI.CreateIconButton("UI-GroupLoot-DE", actions, function (self)
-                    GUI.RollBid(self:GetUserData("roll"), Roll.BID_DISENCHANT)
+                    self:GetUserData("roll"):RollOnLoot(Roll.BID_DISENCHANT)
                 end, ROLL_DISENCHANT, 14, 14)
 
                 -- Pass
                 GUI.CreateIconButton("UI-GroupLoot-Pass", actions, function (self)
-                    GUI.RollBid(self:GetUserData("roll"), Roll.BID_PASS)
+                    self:GetUserData("roll"):RollOnLoot(Roll.BID_PASS)
                 end, PASS, 13, 13)
 
                 -- Start
@@ -1000,14 +1000,12 @@ function Self.TestRoll(roll)
     local startLimit = ml and Addon.db.profile.masterloot.rules.startLimit or 0
 
     return  roll
-        and (Self.filter.all or roll:UnitIsInvolved())
+        and (Self.filter.all or roll:UnitIsInvolved("player", Item.ELIGIBLE_USABLE))
         and (Self.filter.done or (roll.status ~= Roll.STATUS_DONE))
         and (Self.filter.awarded or not roll.winner)
         and (Self.filter.traded or not roll.traded)
         and (Self.filter.hidden or not roll.hidden and (
-            roll.status >= Roll.STATUS_RUNNING and (
-                roll.isWinner or roll.isOwner or roll.item.isOwner or roll.bid ~= Roll.BID_PASS or not roll.item:GetEligible("player")
-            )
+            roll.status >= Roll.STATUS_RUNNING and (roll.isOwner or roll.isWinner or roll.item.isOwner or roll.bid ~= Roll.BID_PASS or roll:UnitCanVote())
             or (startManually or startLimit > 0) and roll:CanBeStarted()
         ))
 end
@@ -1055,7 +1053,7 @@ function Self.OnStatusUpdate(frame)
     if not roll then return end
 
     if roll.status == Roll.STATUS_RUNNING then
-        local timeLeft = roll:GetTimeLeft(true)
+        local timeLeft = roll:GetTimeLeft()
         GUI(frame.obj)
             .SetColor(1, 1, 0)
             .SetText(L["ROLL_STATUS_" .. Roll.STATUS_RUNNING] .. (timeLeft > 0 and " (" .. L["SECONDS"]:format(timeLeft) .. ")" or ""))

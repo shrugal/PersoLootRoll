@@ -230,7 +230,7 @@ function Self.ToggleAnswersDropdown(roll, bid, answers, ...)
                 .SetText(Util.In(v, Roll.ANSWER_NEED, Roll.ANSWER_GREED) and L["ROLL_BID_" .. bid] or v)
                 .SetCallback("OnClick", function ()
                     Addon:Debug("GUI.Click:AnswersDropdown.Bid", roll and roll.id, bid, i)
-                    roll:Bid(bid + i/10)
+                    roll:RollOnLoot(bid + i/10)
                 end)
                 .AddTo(dropdown)
         end
@@ -329,15 +329,19 @@ end
 ---@param roll Roll The roll in question
 -- @return table    A sorted list of eligible players
 function Self.GetPlayerList(roll)
-    local list = Util(roll.item:GetEligible()):Copy():Merge(roll.bids):Map(function (val, unit)
-        return Util.Tbl.Hash(
-            "unit", unit,
-            "ilvl", roll.item:GetLevelForLocation(unit),
-            "bid", type(val) == "number" and val or nil,
-            "votes", Util.Tbl.CountOnly(roll.votes, unit),
-            "roll", roll.rolls[unit]
-        )
-    end, true):List()()
+    local list = Util(roll.item:GetEligible())
+        :Copy(Util.Fn.True)
+        :Merge(roll.bids)
+        :Map(function (val, unit)
+            return Util.Tbl.Hash(
+                "unit", unit,
+                "ilvl", roll.item:GetLevelForLocation(unit),
+                "bid", type(val) == "number" and val or nil,
+                "votes", Util.Tbl.CountOnly(roll.votes, unit),
+                "roll", roll.rolls[unit]
+            )
+        end, true)
+        :List()()
 
     local sortBy = Util.Tbl.New(
         "bid",   99,  Roll.CompareBids,

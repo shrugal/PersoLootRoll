@@ -249,6 +249,7 @@ function Self.SetRules(rules, silent)
             bidPublic = Util.GetLootMethod() == "needbeforegreed" or c.rules.bidPublic,
             answers1 = c.rules.needAnswers,
             answers2 = c.rules.greedAnswers,
+            allowDisenchant = c.rules.allowDisenchant,
             council = next(council) and council or nil,
             votePublic = c.rules.votePublic,
             allowKeep = c.rules.allowKeep,
