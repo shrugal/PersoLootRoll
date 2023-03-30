@@ -269,7 +269,7 @@ function Self.OnStatusUpdate(frame)
     local roll = frame.obj:GetUserData("roll")
     if not roll then return end
 
-    local timeLeft = roll:GetTimeLeft(true)
+    local timeLeft = roll:GetTimeLeft()
     GUI(frame.obj).SetText(L["WAIT"] .. (timeLeft > 0 and " (" .. L["SECONDS"]:format(timeLeft) .. ")" or ""))
 end
 

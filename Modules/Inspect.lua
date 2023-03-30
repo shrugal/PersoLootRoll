@@ -283,7 +283,7 @@ function Self:INSPECT_READY(_, guid)
 
     -- Extend a running loop timer
     if Addon:TimerIsRunning(Self.timer) then
-        Self.timer = Addon:ExtendTimerTo(Self.timer, Self.INSPECT_DELAY)
+        Self.timer = Addon:SetTimerTo(Self.timer, Self.INSPECT_DELAY)
     end
 end
 

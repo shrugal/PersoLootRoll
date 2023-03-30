@@ -188,7 +188,7 @@ function Self:HandleChatCommand(msg)
         Util.Tbl.Release(subs)
     -- Roll
     elseif cmd == "roll" then
-        local ml, isML, items, itemOwner, timeout = Session.GetMasterlooter(), Session.IsMasterlooter(), Util.Tbl.New(), "player"
+        local ml, isML, items, itemOwner, timeout = Session.GetMasterlooter(), Session.IsMasterlooter(), Util.Tbl.New(), "player", nil
 
         for _,v in pairs(args) do
             if tonumber(v) then
@@ -252,7 +252,7 @@ function Self:HandleChatCommand(msg)
                 self:Info(L["BID_START"], roll:GetBidName(bid), item, Comm.GetPlayerLink(owner))
             end
 
-            roll:Bid(bid or Roll.BID_NEED)
+            roll:RollOnLoot(bid or Roll.BID_NEED)
         end
     -- Trade
     elseif cmd == "trade" then
@@ -677,29 +677,32 @@ end
 
 ---@param timer table
 ---@param to number
----@return table
----@return boolean
-function Self:ExtendTimerTo(timer, to, ...)
-    if not timer.canceled and (select("#", ...) > 0 or timer.ends - GetTime() < to) then
-        self:CancelTimer(timer)
-        local fn = timer.looping and Self.ScheduleRepeatingTimer or Self.ScheduleTimer
+---@return table?
+function Self:SetTimerTo(timer, to, ...)
+    if not timer.looping and to < 0 then to = 0 end
 
-        if select("#", ...) > 0 then
-            timer = fn(self, timer.func, to, ...)
-        else
-            timer = fn(self, timer.func, to, unpack(timer, 1, timer.argsCount))
-        end
+    local changeArgs = select("#", ...) > 0
+    local left = timer.ends - GetTime()
 
-        return timer, true
+    if timer.canceled or not changeArgs and left == to then return timer end
+
+    self:CancelTimer(timer)
+
+    local fn = timer.looping and Self.ScheduleRepeatingTimer or Self.ScheduleTimer
+
+    if changeArgs then
+        return fn(self, timer.func, to, ...)
     else
-        return timer, false
+        return fn(self, timer.func, to, unpack(timer, 1, timer.argsCount))
     end
 end
 
 ---@param timer table
 ---@param by number
-function Self:ExtendTimerBy(timer, by, ...)
-    return self:ExtendTimerTo(timer, (timer.ends - GetTime()) + by, ...)
+function Self:ChangeTimerBy(timer, by, ...)
+    local left = timer.ends - GetTime()
+
+    return self:SetTimerTo(timer, left + by, ...)
 end
 
 ---@param timer table

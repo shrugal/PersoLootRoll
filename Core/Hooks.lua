@@ -27,38 +27,45 @@ function Self.EnableGroupLootRollHook()
     -- GetLootRollTimeLeft
     if not Self:IsHooked("GetLootRollTimeLeft") then
         Self:RawHook("GetLootRollTimeLeft", function (id)
-            if not Roll.IsPlrId(id) then return Self.hooks.GetLootRollTimeLeft(id) end
+            local roll = Roll.GetByLootRollId(id)
+            if not roll or not roll.owner then return Self.hooks.GetLootRollTimeLeft(id) end
 
-            local roll = Roll.Get(id)
-            if not roll then return end
-            
-            return roll:GetTimeLeft()
+            return roll:GetLootRollTimeLeft()
         end, true)
     end
 
     -- GetLootRollItemInfo
     if not Self:IsHooked("GetLootRollItemInfo") then
         Self:RawHook("GetLootRollItemInfo", function (id)
-            if not Roll.IsPlrId(id) then return Self.hooks.GetLootRollItemInfo(id) end
-
-            local roll = Roll.Get(id)
-            if not roll then return end
+            local roll = Roll.GetByLootRollId(id)
+            if not roll then return Self.hooks.GetLootRollItemInfo(id) end
 
             local item = roll.item
-            local disReason = not roll:GetOwnerAddon() and "PLR_NO_ADDON"
-                or not roll.disenchant and "PLR_NO_DISENCHANT"
-                or not Unit.IsEnchanter() and "PLR_NOT_ENCHANTER"
-                or nil
+            local texture, name, count, quality, bop, canNeed, canGreed, canDis, needReason, greedReason, disReason, disSkill =
+                item.texture, item.name, 1, item.quality, item.bindType == LE_ITEM_BIND_ON_ACQUIRE, true, nil, nil, 5, "PLR_NO_ADDON", nil, 1
 
-            return item.texture, item.name, 1, item.quality, item.bindType == LE_ITEM_BIND_ON_ACQUIRE,
-                true,                   -- Can need
-                roll:GetOwnerAddon(),   -- Can greed
-                not disReason,          -- Can disenchant
-                5,                      -- Reason need
-                "PLR_NO_ADDON",         -- Reason greed
-                disReason,              -- Reason disenchant
-                1,                      -- Disenchant skill required
-                false                   -- Can transmog TODO
+            if Roll.IsPlrId(id) then
+                canGreed = roll:GetOwnerAddon()
+                disReason = not roll:GetOwnerAddon() and "PLR_NO_ADDON"
+                    or not roll.disenchant and "PLR_NO_DISENCHANT"
+                    or not Unit.IsEnchanter() and "PLR_NOT_ENCHANTER"
+                    or nil
+                canDis = not disReason
+            else
+                texture, name, count, quality, bop, _, _, canDis, _, _, disReason, disSkill = Self.hooks.GetLootRollItemInfo(id)
+
+                if canDis and not roll.disenchant then
+                    canDis, disReason = false, "PLR_NO_DISENCHANT"
+                end
+
+                local ids = Roll.GetNeedGreedByLink(roll.item.link, true)
+                if ids then count = #ids end
+            end
+
+            -- TODO
+            local canTransmog = false
+
+            return texture, name, count, quality, bop, canNeed, canGreed, canDis, needReason, greedReason, disReason, disSkill, canTransmog
         end, true)
     end
 
@@ -67,7 +74,7 @@ function Self.EnableGroupLootRollHook()
         Self:RawHook("GetLootRollItemLink", function (id)
             if not Roll.IsPlrId(id) then return Self.hooks.GetLootRollItemLink(id) end
 
-            local roll = Roll.Get(id)
+            local roll = Roll.GetByLootRollId(id)
             if not roll then return end
 
             return roll.item.link
@@ -77,44 +84,51 @@ function Self.EnableGroupLootRollHook()
     -- RollOnLoot
     if not Self:IsHooked("RollOnLoot") then
         Self:RawHook("RollOnLoot", function (id, bid)
-            if not Roll.IsPlrId(id) then return Self.hooks.RollOnLoot(id, bid) end
+            if not Roll.IsPlrId(id) then
+                local canNeed, canGreed = select(6, Self.hooks.GetLootRollItemInfo(id))
 
-            local roll = Roll.Get(id)
-            if not roll then return end
+                bid = floor(bid)
+                if bid == LOOT_ROLL_TYPE_NEED and not canNeed then bid = LOOT_ROLL_TYPE_GREED end
+                if bid == LOOT_ROLL_TYPE_GREED and not canGreed then bid = canNeed and LOOT_ROLL_TYPE_NEED or LOOT_ROLL_TYPE_PASS end
 
-            Self:Debug("GUI.Click:Hooks.RollOnLoot", roll.id, bid)
+                Self.hooks.RollOnLoot(id, bid)
+            end
 
-            GUI.RollBid(roll, bid)
+            local roll = Roll.GetByLootRollId(id)
+
+            Self:Debug("GUI.Click:Hooks.RollOnLoot", roll and roll.id, bid)
+
+            if roll then GUI.RollBid(roll, bid) end
         end, true)
     end
 
     -- GroupLootFrame
     local onShow = function (self)
-        if not Roll.IsPlrId(self.rollID) then return end
-
-        local roll = Roll.Get(self.rollID)
+        local roll = Roll.GetByLootRollId(self.rollID)
         if not roll then return end
 
+        -- Owner name
         local owner = roll.item.owner
-        local color = Unit.Color(owner)
+        if owner then
+            local color = Unit.Color(owner)
 
-        -- Player name
-        self.Name:SetMaxLines(1)
-        self.Name:SetHeight(15)
+            self.Name:SetMaxLines(1)
+            self.Name:SetHeight(15)
 
-        if not self.Player then
-            local f = self:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-            f:SetSize(125, 15)
-            f:SetPoint("TOPLEFT", self.Name, "BOTTOMLEFT")
-            f:SetJustifyH("LEFT")
-            f:SetJustifyV("MIDDLE")
-            f:SetMaxLines(1)
-            self.Player = f
+            if not self.Owner then
+                local f = self:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+                f:SetSize(125, 15)
+                f:SetPoint("TOPLEFT", self.Name, "BOTTOMLEFT")
+                f:SetJustifyH("LEFT")
+                f:SetJustifyV("MIDDLE")
+                f:SetMaxLines(1)
+                self.Owner = f
+            end
+
+            self.Owner:SetText(owner)
+            self.Owner:SetTextColor(color.r, color.g, color.b)
+            self.Owner:Show()
         end
-
-        self.Player:SetText(owner)
-        self.Player:SetTextColor(color.r, color.g, color.b)
-        self.Player:Show()
 
         -- Buttons
         if roll.item.isOwner and Util.Check(Session.GetMasterlooter(), Session.rules.allowKeep, roll.isOwner) then
@@ -146,12 +160,13 @@ function Self.EnableGroupLootRollHook()
     end
 
     local onHide = function (self)
-        if not Roll.IsPlrId(self.rollID) then return end
+        local roll = Roll.GetByLootRollId(self.rollID)
+        if not roll then return end
 
-        -- Player name
+        -- Owner name
         self.Name:SetMaxLines(0)
         self.Name:SetHeight(30)
-        self.Player:Hide()
+        if self.Owner then self.Owner:Hide() end
 
         -- Buttons
         self.NeedButton:SetNormalTexture("Interface\\Buttons\\UI-GroupLoot-Dice-Up")
@@ -164,20 +179,22 @@ function Self.EnableGroupLootRollHook()
         self.PassButton.tooltipText = PASS
 
         -- Highlight
-        self.Highlight:Hide()
+        if self.Highlight then self.Highlight:Hide() end
     end
 
     local onButtonClick = function (self, button)
         if button ~= "RightButton" then Self.hooks[self].OnClick(self, button) end
 
         local rollId, bid = self:GetParent().rollID, self:GetID()
-        local roll = Roll.IsPlrId(rollId) and Roll.Get(rollId)
-        if roll and roll.owner == Session.GetMasterlooter() then
-            local answers = Session.rules["answers" .. bid] --[[@as table]]
-            if answers and #answers > 0 then
-                GUI.ToggleAnswersDropdown(roll, bid, answers, "TOPLEFT", self, "CENTER")
-            end
-        end
+
+        local roll = Roll.GetByLootRollId(rollId)
+        local ml = Session.GetMasterlooter()
+        if not roll or not ml or roll.owner and roll.owner ~= ml then return end
+
+        local answers = Session.rules["answers" .. bid] --[[@as table]]
+        if not answers or #answers == 0 then return end
+
+        GUI.ToggleAnswersDropdown(roll, bid, answers, "TOPLEFT", self, "CENTER")
     end
 
     for i=1, math.huge do
@@ -210,6 +227,23 @@ function Self.EnableGroupLootRollHook()
         end
     end
 
+    -- GroupLootContainer_OpenNewFrame
+    if not Self:IsHooked("GroupLootContainer_OpenNewFrame") then
+        Self:SecureHook("GroupLootContainer_OpenNewFrame", function (id, timeout)
+            local roll = Roll.GetByLootRollId(id)
+            if not roll or roll.shown then return end
+
+            local frame = roll:GetRollFrame()
+            if not frame or not frame:IsShown() then return end
+
+            if roll.shown == false then
+                roll.shown = true
+            elseif not Addon.db.profile.ui.showRollFrames or roll.owner then
+                roll:HideRollFrame()
+            end
+        end)
+    end
+
     --GroupLootContainer:RemoveFrame
     if not Self:IsHooked("GroupLootContainer_RemoveFrame") then
         Self:SecureHook("GroupLootContainer_RemoveFrame", function (self, frame)
@@ -227,9 +261,9 @@ function Self.EnableGroupLootRollHook()
         Self:RawHook(GameTooltip, "SetLootRollItem", function (self, id)
             if not Roll.IsPlrId(id) then return Self.hooks[self].SetLootRollItem(self, id) end
 
-            local roll = Roll.Get(id)
+            local roll = Roll.GetByLootRollId(id)
             if not roll then return end
-            
+
             if Item.GetInfo(roll.item, "itemType") == "battlepet" then
                 BattlePetToolTip_ShowLink(roll.item.link)
             else
@@ -255,7 +289,7 @@ function Self.DisableGroupLootRoll()
         Self:Unhook(frame.GreedButton, "OnClick")
         Self:Unhook(frame.IconFrame, "OnLeave")
     end
-
+    Self:Unhook("GroupLootContainer_OpenNewFrame")
     Self:Unhook("GroupLootContainer_RemoveFrame")
     Self:Unhook(GameTooltip, "SetLootRollItem")
 end

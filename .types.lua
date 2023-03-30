@@ -1,10 +1,26 @@
 ---@diagnostic disable: duplicate-set-field
 ---@meta
 
----
--- This class contains EmmyLua annotations to help
--- IDEs work with some external classes and types
----
+---@alias ItemRef Item|string|integer
+---@alias ItemEligible false|1|2
+---@alias RollStatus -1|0|1|2
+
+---@class RollUpdateData
+---@field uid? string
+---@field num? number
+---@field owner? string
+---@field status RollStatus
+---@field started number
+---@field timeout number
+---@field disenchant? boolean
+---@field posted? number
+---@field winner? string
+---@field traded? string
+---@field item { link: string, owner?: string, isTradable?: boolean, eligible?: ItemEligible, numEligible?: number }
+---@field bids? table<string, number>
+---@field rolls? table<string, number>
+---@field votes? table<string, string>
+---@field bid? number
 
 -- WoW methods
 

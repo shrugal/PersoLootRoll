@@ -17,14 +17,11 @@ local Inspect, Unit, Util = Addon.Inspect, Addon.Unit, Addon.Util
 ---@field classId? Enum.ItemClass
 ---@field subClassId? Enum.ItemArmorSubclass|Enum.ItemWeaponSubclass
 ---@field attributes? table<number, boolean>
----@field eligible? table<string, Eligible>
+---@field eligible? table<string, ItemEligible>
 ---@field isRecipeKnown? boolean
 local Self = Addon.Item
 
 local Meta = { __index = Self }
-
----@alias ItemRef Item|string|integer
----@alias Eligible false|1|2
 
 -------------------------------------------------------
 --                     Constants                     --
@@ -1159,7 +1156,7 @@ end
 
 -- Register an eligible unit's interest
 ---@param unit string
----@param to? Eligible
+---@param to? ItemEligible
 function Self:SetEligible(unit, to)
     if to == nil then to = Self.ELIGIBLE_UPGRADE end
 
@@ -1168,7 +1165,7 @@ function Self:SetEligible(unit, to)
 end
 
 ---@param unit string
----@param atLeast? Eligible
+---@param atLeast? ItemEligible
 function Self:UpdateEligible(unit, atLeast)
     local eligible = atLeast
 
@@ -1182,6 +1179,7 @@ function Self:UpdateEligible(unit, atLeast)
     return eligible
 end
 
+-- Compare two eligibility values, returns -1 for a < b, 0 for a == b and 1 for a > b
 function Self.CompareEligible(a, b)
     return a == b and 0
         or a == false and (b == nil and 1 or -1)
@@ -1190,10 +1188,10 @@ function Self.CompareEligible(a, b)
 end
 
 -- Check who in the group could use the item, either for one unit or all units in the group.
----@param unit? string
+---@param unit string
 ---@param force? boolean
----@return Eligible?
----@overload fun(): table<string, Eligible>
+---@return ItemEligible?
+---@overload fun(): table<string, ItemEligible>
 function Self:GetEligible(unit, force)
     if not self.eligible or force then
         if unit then
@@ -1240,7 +1238,7 @@ end
 ---@param othersOnly? boolean
 function Self:GetNumEligible(checkInterest, othersOnly)
     local n = 0
-    for unit, v in pairs(self:GetEligible() --[[@as table<string, Eligible>]]) do
+    for unit, v in pairs(self:GetEligible() --[[@as table<string, ItemEligible>]]) do
         if (not checkInterest or v == Self.ELIGIBLE_UPGRADE) and not (othersOnly and Unit.IsSelf(unit)) then
             n = n + 1
         end
@@ -1276,7 +1274,7 @@ function Self:ShouldBeBidOn()
         return
     end
 
-    local eligible = self:GetEligible("player") --[[@as Eligible]]
+    local eligible = self:GetEligible("player") --[[@as ItemEligible]]
     return Util.Check(Addon.db.profile.filter.enabled, eligible == Self.ELIGIBLE_UPGRADE, (eligible or 0) >= Self.ELIGIBLE_USABLE)
 end
 
