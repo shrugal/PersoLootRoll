@@ -114,9 +114,22 @@ function Self.GetInstanceExpansion()
     if Self.IsMythicPlus() then return GetMaximumExpansionLevel() end
 
     local mapID = C_Map.GetBestMapForUnit("player")
-    
+ 
     return mapID and Self.INSTANCES[EJ_GetInstanceForMap(mapID)] or 0
 end
+
+function Self.GetLootMethod()
+    local lootMethod = GetLootMethod()
+
+    -- Need-before-greed is reported as personal loot in raids
+    -- TODO: Might be different for legacy runs
+    if lootMethod == "personalloot" and select(2, GetInstanceInfo()) == "raid" then
+        return "needbeforegreed"
+    end
+
+    return lootMethod
+end
+
 
 -- Check if the current session is below the player's current expansion
 function Self.IsLegacyRun(unit)

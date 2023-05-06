@@ -564,11 +564,16 @@ function Self.IsSameLocation(locA, locB, allWeapons)
     locA = (type(locA) == "table" or Self.IsLink(locA)) and Self.GetInfo(locA, "equipLoc") or locA
     locB = (type(locB) == "table" or Self.IsLink(locB)) and Self.GetInfo(locB, "equipLoc") or locB
 
+    -- Omni tokens
+    local aIsTbl, bIsTbl = type(locA) == "table", type(locB) == "table"
+    if aIsTbl or bIsTbl then
+        return aIsTbl and bIsTbl and Util.Tbl.Equals(locA, locB)
+    end
+
     -- Artifact relics (and maybe other things without equipLoc)
-    if Util.Str.IsEmpty(locA) then
-        return Util.Str.IsEmpty(locB)
-    elseif Util.Str.IsEmpty(locB) then
-        return false
+    local aIsEmpty, bIsEmpty = Util.Str.IsEmpty(locA), Util.Str.IsEmpty(locB)
+    if aIsEmpty or bIsEmpty then
+        return aIsEmpty and bIsEmpty
     end
 
     local aIsWeapon = Util.In(locA, Self.TYPES_WEAPON)
@@ -599,8 +604,16 @@ function Self.GetOwnedForLocation(loc, allWeapons)
 
     local isRelic
     if type(loc) == "table" then
-        isRelic = loc:IsRelic()
-        loc = isRelic and loc:GetFullInfo().relicType or loc.equipLoc
+        isRelic, loc = loc:IsRelic(), loc:GetLocation()
+
+        if type(loc) == "table" then
+            for _,l in pairs(loc) do
+                local locItems = Self.GetOwnedForLocation(l, allWeapons)
+                Util.Tbl.Merge(items, locItems)
+                Util.Tbl.Release(locItems)
+            end
+            return items
+        end
     else
         isRelic = loc:sub(1, 7) ~= "INVTYPE"
     end
@@ -657,25 +670,26 @@ function Self.GetOwnedForLocation(loc, allWeapons)
 end
 
 -- Get number of slots for a given equipment location
-function Self:GetSlotCountForLocation(unit)
+function Self:GetSlotCountForLocation(unit, loc)
     if not self:GetBasicInfo().isEquippable or not select(2, self:GetBasicInfo()) then
         return 0
     end
 
+    loc = loc or self:GetLocation()
+
     local class = Self.CLASSES[Unit.ClassId(unit or "player")]
 
     if self:IsRelic() then
-        self:GetFullInfo()
         local n = 0
         for i, spec in pairs(class.specs) do
             if Addon.db.char.specs[i] then
-                n = n + Util.Tbl.CountOnly(spec.artifact.relics, self.relicType)
+                n = n + Util.Tbl.CountOnly(spec.artifact.relics, loc)
             end
         end
         return n
     elseif self:IsWeaponToken() then
         return 2
-    elseif self.equipLoc == Self.TYPE_WEAPON then
+    elseif loc == Self.TYPE_WEAPON then
         for i, spec in pairs(class.specs) do
             if Addon.db.char.specs[i] and spec.dualWield then
                 return 2
@@ -684,7 +698,7 @@ function Self:GetSlotCountForLocation(unit)
 
         return class.dualWield and 2 or 1
     elseif self.isEquippable then
-        return #Self.SLOTS[self.equipLoc]
+        return #Self.SLOTS[loc]
     else
         return 0
     end
@@ -693,8 +707,10 @@ end
 -- Get the threshold for the item's slot
 ---@param unit string?
 ---@param upper boolean?
-function Self:GetThresholdForLocation(unit, upper)
+function Self:GetThresholdForLocation(unit, upper, loc)
     unit = Unit(unit or "player")
+    loc = loc or self:GetBasicInfo().equipLoc
+
     local f = Addon.db.profile.filter
 
     -- Lower threshold of -1 for relics and legacy runs, so items have to be higher in ilvl to be worth considering
@@ -711,7 +727,7 @@ function Self:GetThresholdForLocation(unit, upper)
     threshold = ceil(threshold * (level and level > 0 and level / MAX_PLAYER_LEVEL or 1))
 
     -- Trinkets and rings might have double the normal threshold
-    if Util.Select(self:GetBasicInfo().equipLoc, Self.TYPE_TRINKET, f.ilvlThresholdTrinkets or not custom, Self.TYPE_FINGER, f.ilvlThresholdRings and custom) then
+    if Util.Select(loc, Self.TYPE_TRINKET, f.ilvlThresholdTrinkets or not custom, Self.TYPE_FINGER, f.ilvlThresholdRings and custom) then
         threshold = threshold * 2
     end
 
@@ -720,11 +736,19 @@ end
 
 -- Get the reference level for equipment location
 ---@param unit string
-function Self:GetLevelForLocation(unit)
+function Self:GetLevelForLocation(unit, loc)
     if not self:GetBasicInfo().isEquippable then return 0 end
 
     unit = Unit(unit or "player")
-    local loc = self:GetLocation()
+    loc = loc or self:GetLocation()
+
+    if type(loc) == "table" then
+        local lvl = math.huge
+        for _,l in pairs(loc) do
+            lvl = math.min(lvl, self:GetLevelForLocation(unit, l) or lvl)
+        end
+        return lvl
+    end
 
     if Unit.IsSelf(unit) then
         -- For the player
@@ -746,11 +770,11 @@ function Self:GetLevelForLocation(unit)
             -- Everything else
             local cache = Self.GetPlayerCache(loc) or Util.Tbl.New()
             if not Self.IsPlayerCacheValid(cache) then
-                local owned = self:GetOwnedForLocation()
+                local owned = Self.GetOwnedForLocation(loc)
                 cache.time = GetTime()
                 cache.ilvl = owned and Util(owned)
                     :Map(Self.GetInfo, nil, nil, "maxLevel")
-                    :Sort(true)(self:GetSlotCountForLocation(unit)) or 0
+                    :Sort(true)(self:GetSlotCountForLocation(unit, loc)) or 0
                 Self.SetPlayerCache(loc, cache)
             end
 
@@ -764,15 +788,27 @@ end
 
 -- Get equipped item links for the location
 ---@param unit string
-function Self:GetEquippedForLocation(unit)
+function Self:GetEquippedForLocation(unit, loc)
     unit = Unit(unit or "player")
+    loc = loc or self:GetLocation()
+
     local isSelf = Unit.IsSelf(unit)
 
     if self:IsRelic() then
-        return Inspect.GetLink(unit, self:GetFullInfo().relicType)
+        return Inspect.GetLink(unit, loc)
+    elseif type(loc) == "table" then
+        local lvl, links = math.huge
+        for i, loc in pairs(self:GetLocation()) do
+            local locLvl = self:GetLevelForLocation(unit, loc)
+            if locLvl < lvl then
+                Util.Tbl.Release(links)
+                lvl, links = locLvl, self:GetEquippedForLocation(unit, loc)
+            end
+        end
+        return links
     elseif self.isEquippable then
         local links = Util.Tbl.New()
-        for i, slot in pairs(Self.SLOTS[self.equipLoc]) do
+        for i, slot in pairs(Self.SLOTS[loc]) do
             tinsert(links, isSelf and GetInventoryItemLink(unit, slot) or Inspect.GetLink(unit, slot) or nil)
         end
         return links
@@ -879,10 +915,10 @@ function Self:CanBeEquipped(unit, ...)
     if Util.In(self.classId, Enum.ItemClass.Armor, Enum.ItemClass.Weapon) then
         return self.equipLoc == Self.TYPE_CLOAK
             or Util.In(self.subClassId, class[self.classId == Enum.ItemClass.Armor and "armor" or "weapons"])
-        -- Everyone can use weapon tokens for their class
+    -- Everyone can use weapon tokens for their class
     elseif self:IsGearToken() then
         return true
-        -- Check relic type
+    -- Check relic type
     elseif self:IsRelic() then
         for i, spec in pairs(class.specs) do
             if (not isSelf or Addon.db.char.specs[i]) and Util.In(self.relicType, spec.artifact.relics) then
@@ -935,9 +971,19 @@ function Self:HasMatchingAttributes(unit, ...)
 end
 
 -- Check against equipped ilvl
-function Self:HasSufficientLevel(unit)
+function Self:HasSufficientLevel(unit, loc)
     unit = unit or "player"
-    return (self:GetInfo("realLevel") or 1) + self:GetThresholdForLocation(unit) >= self:GetLevelForLocation(unit)
+    loc = loc or Self:GetLocation()
+
+    if type(loc) == "table" then
+        for _,l in pairs(loc) do
+            if self:HasSufficientLevel(unit, l) then return true end
+        end
+        return false
+    end
+
+    local realLevel = self:GetInfo("realLevel") or 1
+    return realLevel + self:GetThresholdForLocation(unit, nil, loc) >= self:GetLevelForLocation(unit, loc)
 end
 
 -- Check against current character level
@@ -1287,12 +1333,13 @@ function Self:GetPosition(refresh)
         return self.bagOrEquip, self.slot, self.isTradable
     end
 
+    local isLoaded = select(2, self:GetBasicInfo())
+    if not isLoaded or self:IsRelic() or self:IsGearToken() then return end
+
     -- Check equipment
-    if select(2, self:GetBasicInfo()) and not self:IsRelic() then
-        for _, equipSlot in pairs(Self.SLOTS[self.equipLoc]) do
-            if self.link == GetInventoryItemLink(self.owner, equipSlot) then
-                return equipSlot, nil, false
-            end
+    for _, equipSlot in pairs(Self.SLOTS[self.equipLoc]) do
+        if self.link == GetInventoryItemLink(self.owner, equipSlot) then
+            return equipSlot, nil, false
         end
     end
 end
@@ -1479,8 +1526,13 @@ function Self:IsWeaponToken()
 end
 
 ---@param self ItemRef
+function Self:IsOmniToken()
+    return Self.GetOmniTokenEquipLoc(self) ~= nil
+end
+
+---@param self ItemRef
 function Self:IsGearToken()
-    return Self.IsArmorToken(self) or Self.IsWeaponToken(self)
+    return Self.IsArmorToken(self) or Self.IsWeaponToken(self) or Self.IsOmniToken(self)
 end
 
 ---@param self ItemRef
@@ -1489,8 +1541,13 @@ function Self:GetArmorTokenEquipLoc()
 end
 
 ---@param self ItemRef
+function Self:GetOmniTokenEquipLoc()
+    return Self.OMNI_TOKENS[Self.GetInfo(self, "id")]
+end
+
+---@param self ItemRef
 function Self:GetGearTokenEquipLoc()
-    return Self.GetArmorTokenEquipLoc(self) or Self.IsWeaponToken(self) and Self.TYPE_WEAPON
+    return Self.GetOmniTokenEquipLoc(self) or Self.GetArmorTokenEquipLoc(self) or Self.IsWeaponToken(self) and Self.TYPE_WEAPON
 end
 
 -- Check if the item is a battlepet

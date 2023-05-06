@@ -308,7 +308,7 @@ function Self:CheckState(refresh)
     if self.state == nil or refresh then
         local state = self.state or Self.STATE_DISABLED
         local group, p = self.db.profile.activeGroups, Util.Push
-        local lootMethod = GetLootMethod()
+        local lootMethod = Util.GetLootMethod()
 
         if not self.db.profile.enabled then                                                         -- Disabled
             self.state = Self.STATE_DISABLED

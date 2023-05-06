@@ -431,7 +431,32 @@ Self.GEAR_TOKENS = {
     [196603] = Self.TYPE_LEGS,
     [196604] = Self.TYPE_SHOULDER,
     [196605] = Self.TYPE_HEAD,
+    -- T29: Aberrus, the Shadowed Crucible
+    [202621] = Self.TYPE_SHOULDER,
+    [202622] = Self.TYPE_SHOULDER,
+    [202623] = Self.TYPE_SHOULDER,
+    [202624] = Self.TYPE_HAND,
+    [202625] = Self.TYPE_HAND,
+    [202626] = Self.TYPE_HAND,
+    [202627] = Self.TYPE_HEAD,
+    [202628] = Self.TYPE_HEAD,
+    [202629] = Self.TYPE_HEAD,
+    [202630] = Self.TYPE_HEAD,
+    [202631] = Self.TYPE_CHEST,
+    [202632] = Self.TYPE_CHEST,
+    [202633] = Self.TYPE_CHEST,
+    [202634] = Self.TYPE_LEGS,
+    [202635] = Self.TYPE_LEGS,
+    [202636] = Self.TYPE_LEGS,
+    [202637] = Self.TYPE_SHOULDER,
+    [202638] = Self.TYPE_HAND,
+    [202639] = Self.TYPE_CHEST,
+    [202640] = Self.TYPE_LEGS
+}
 
+Self.OMNI_TOKENS = {
+  -- T29: Aberrus, the Shadowed Crucible
+  [206046] = { Self.TYPE_SHOULDER, Self.TYPE_HAND, Self.TYPE_HEAD, Self.TYPE_CHEST, Self.TYPE_LEGS },
 }
 
 -------------------------------------------------------
