@@ -1,4 +1,1 @@
-- Update ToC version for patch 10.1
-- Add support for omni tokens
-- Add Aberrus tier set tokens
-- Fix loot method detection for raids
+- Updated instance and trinket lists

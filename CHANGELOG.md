@@ -1,3 +1,10 @@
+Version 24.04
+
+- Update ToC version for patch 10.1
+- Add support for omni tokens
+- Add Aberrus tier set tokens
+- Fix loot method detection for raids
+
 Version 24.03
 
 - Added Vault of the Incarnates tier set tokens

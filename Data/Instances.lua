@@ -208,4 +208,5 @@ Self.INSTANCES = {
     [1203] = 10, -- The Azure Vault
     [1204] = 10, -- Halls of Infusion
     [1205] = 10, -- Dragon Isles
+    [1208] = 10, -- Aberrus, the Shadowed Crucible
 }
