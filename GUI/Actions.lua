@@ -135,6 +135,7 @@ function Self.Update()
 
             -- Status
             f = GUI("Label").SetFontObject(GameFontNormal).AddTo(parent)()
+            f.OnRelease = GUI.ResetLabel
 
             -- Target
             GUI.CreateUnitLabel(parent)
@@ -265,9 +266,11 @@ function Self.Update()
 end
 
 function Self.OnStatusUpdate(frame)
-    local timeLeft = frame.obj:GetUserData("roll"):GetTimeLeft(true)
-    GUI(frame.obj)
-        .SetText(L["WAIT"] .. (timeLeft > 0 and " (" .. L["SECONDS"]:format(timeLeft) .. ")" or ""))
+    local roll = frame.obj:GetUserData("roll")
+    if not roll then return end
+
+    local timeLeft = roll:GetTimeLeft(true)
+    GUI(frame.obj).SetText(L["WAIT"] .. (timeLeft > 0 and " (" .. L["SECONDS"]:format(timeLeft) .. ")" or ""))
 end
 
 -------------------------------------------------------

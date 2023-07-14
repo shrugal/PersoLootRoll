@@ -1,3 +1,4 @@
 - Update for patch 10.1.5
 - Update instance and trinket lists
 - Fix loot alert using corrupted template
+- Fix missing release fn on actions status label (Curse#19)
