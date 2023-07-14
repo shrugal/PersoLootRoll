@@ -1098,10 +1098,32 @@ end
 
 -- Show the alert frame for winning an item
 function Self:ShowAlertFrame()
-    if self.item:GetBasicInfo().isEquippable then
-        -- itemLink, quantity, rollType, roll, specID, isCurrency, showFactionBG, lootSource, lessAwesome, isUpgraded, wonRoll, showRatedBG, plrId
-        GUI.LootAlertSystem:AddAlert(self.item.link, 1, nil, nil, nil, false, false, nil, false, false, true, false, self.id)
-    end
+    if not self.item:GetBasicInfo().isEquippable then return end
+
+    local unit = Unit.Name("player")
+
+    local rollType = self.bid and floor(self.bid)
+    if rollType == Self.BID_PASS then rollType = LOOT_ROLL_TYPE_PASS end
+
+    local roll = self.rolls[unit]
+
+    GUI.LootAlertSystem:AddAlert(
+        self.id,        -- rollId
+        self.item.link, -- itemLink
+        1,              -- originalQuantity
+        rollType,       -- rollType
+        roll,           -- roll
+        nil,            -- specID
+        false,          -- isCurrency
+        false,          -- showFactionBG
+        nil,            -- lootSource
+        false,          -- lessAwesome
+        false,          -- isUpgraded
+        false,          -- isCorrupted
+        false,          -- wonRoll
+        false,          -- showRatedBG
+        false           -- isSecondaryResult
+    )
 end
 
 -- Toggle the rolls visiblity in GUIs

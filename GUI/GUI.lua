@@ -153,10 +153,9 @@ StaticPopupDialogs[Self.DIALOG_OPT_MASTERLOOT_SAVE] = {
 -------------------------------------------------------
 
 -- Setup
-local function PLR_LootWonAlertFrame_SetUp(self, itemLink, quantity, rollType, roll, specID, isCurrency, showFactionBG, lootSource, lessAwesome, isUpgraded, wonRoll, showRatedBG, rollId)
+local function PLR_LootWonAlertFrame_SetUp(self, rollId, ...)
     self.rollId = rollId
-
-    LootWonAlertFrame_SetUp(self, itemLink, quantity, rollType, roll, specID, isCurrency, showFactionBG, lootSource, lessAwesome, isUpgraded, wonRoll, showRatedBG)
+    LootWonAlertFrame_SetUp(self, ...)
 end
 
 -- OnClick
