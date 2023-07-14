@@ -1,3 +1,7 @@
+Version 24.05
+
+- Updated instance and trinket lists
+
 Version 24.04
 
 - Update ToC version for patch 10.1

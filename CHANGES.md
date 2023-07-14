@@ -1,1 +1,2 @@
-- Updated instance and trinket lists
+- Update for patch 10.1.5
+- Update instance and trinket lists

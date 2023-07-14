@@ -1052,8 +1052,10 @@ end
 function Self:GetRollFrame()
     local id, frame = self:GetPlrId()
 
-    for i = 1, NUM_GROUP_LOOT_FRAMES do
+    for i = 1, math.huge do
         frame = _G["GroupLootFrame" .. i]
+        if not frame then break end
+
         if frame.rollID == id then
             return frame, i
         end
@@ -1067,7 +1069,7 @@ function Self:ShowRollFrame()
         self.shown = false
 
         if Addon.db.profile.ui.showRollFrames then
-            GroupLootFrame_OpenNewFrame(self:GetPlrId(), self:GetRunTime())
+            GroupLootContainer_OpenNewFrame(self:GetPlrId(), self:GetRunTime())
             self.shown = self:GetRollFrame() ~= nil
 
             -- TODO: This is required to circumvent a bug in ElvUI

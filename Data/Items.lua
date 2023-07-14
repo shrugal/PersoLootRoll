@@ -1491,4 +1491,8 @@ Self.TRINKETS = {
   [204201] = 229, -- Neltharion's Call to Chaos
   [204202] = 130, -- Neltharion's Call to Dominance
   [204211] = 86,  -- Neltharion's Call to Suffering
+  [207528] = 32,  -- Prophetic Stonescales
+  [207552] = 20,  -- Echoing Tyrstone
+  [207566] = 67,  -- Accelerating Sandglass
+  [207579] = 132, -- Time-Thief's Gambit
 }

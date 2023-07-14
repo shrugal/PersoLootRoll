@@ -57,7 +57,8 @@ function Self.EnableGroupLootRollHook()
                         5,                      -- Reason need
                         "PLR_NO_ADDON",         -- Reason greed
                         disReason,              -- Reason disenchant
-                        1                       -- Disenchant skill required
+                        1,                      -- Disenchant skill required
+                        false                   -- Can transmog TODO
                 end
             else
                 return Self.hooks.GetLootRollItemInfo(id)
@@ -189,8 +190,9 @@ function Self.EnableGroupLootRollHook()
         end
     end
 
-    for i=1, NUM_GROUP_LOOT_FRAMES do
+    for i=1, math.huge do
         local frame = _G["GroupLootFrame" .. i]
+        if not frame then break end
 
         -- OnShow
         if not Self:IsHooked(frame, "OnShow") then
@@ -254,13 +256,18 @@ function Self.DisableGroupLootRoll()
     Self:Unhook("GetLootRollItemInfo")
     Self:Unhook("GetLootRollItemLink")
     Self:Unhook("RollOnLoot")
-    for i=1, NUM_GROUP_LOOT_FRAMES do
-        Self:Unhook(_G["GroupLootFrame" .. i], "OnShow")
-        Self:Unhook(_G["GroupLootFrame" .. i], "OnHide")
-        Self:Unhook(_G["GroupLootFrame" .. i].NeedButton, "OnClick")
-        Self:Unhook(_G["GroupLootFrame" .. i].GreedButton, "OnClick")
-        Self:Unhook(_G["GroupLootFrame" .. i].IconFrame, "OnLeave")
+
+    for i=1, math.huge do
+        local frame = _G["GroupLootFrame" .. i]
+        if not frame then break end
+
+        Self:Unhook(frame, "OnShow")
+        Self:Unhook(frame, "OnHide")
+        Self:Unhook(frame.NeedButton, "OnClick")
+        Self:Unhook(frame.GreedButton, "OnClick")
+        Self:Unhook(frame.IconFrame, "OnLeave")
     end
+
     Self:Unhook("GroupLootContainer_RemoveFrame")
     Self:Unhook(GameTooltip, "SetLootRollItem")
 end

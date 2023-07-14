@@ -209,4 +209,5 @@ Self.INSTANCES = {
     [1204] = 10, -- Halls of Infusion
     [1205] = 10, -- Dragon Isles
     [1208] = 10, -- Aberrus, the Shadowed Crucible
+    [1209] = 10, -- Dawn of the Infinite
 }
