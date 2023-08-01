@@ -28,7 +28,7 @@ Self.SPECS = {
     250, 251, 252,      -- Death Knight
     577, 581,           -- Demon Hunter
     102, 103, 104, 105, -- Druid
-    1467, 1468,         -- Evoker
+    1467, 1468, 1473,   -- Evoker
     253, 254, 255,      -- Hunter
     62, 63, 64,         -- Mage
     268, 270, 269,      -- Monk
