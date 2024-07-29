@@ -176,6 +176,11 @@ Self.CLASSES = {
               attribute = LE_UNIT_STAT_INTELLECT,
               artifact = { id = 0, relics = {} }
             },
+            { -- Augmentation
+              role = Self.ROLE_RANGED,
+              attribute = LE_UNIT_STAT_INTELLECT,
+              artifact = { id = 0, relics = {} }
+            },
         }
     },
     [Unit.HUNTER] = {
