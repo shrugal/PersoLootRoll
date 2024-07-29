@@ -1,3 +1,7 @@
+Version 24.07
+
+- Added Augmentation Evoker spec info
+
 Version 24.06
 
 - Update for patch 10.1.5
