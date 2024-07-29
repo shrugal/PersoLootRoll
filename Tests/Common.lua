@@ -102,14 +102,14 @@ Self.units = {
 }
 
 Self.items = {
-    item1 = {"item1", "|Hitem:1::::::::" .. MAX_PLAYER_LEVEL .. ":66::3:1:3524:::|h[item1]|h|r", 4, 100, MAX_PLAYER_LEVEL, "Armor", "Cloth", 1, "INVTYPE_CLOAK", 2901576, 594645, 4, 1, 1, 7, nil, false},
-    item2 = {"item2", "||Hitem:2::::::::" .. MAX_PLAYER_LEVEL .. ":66::3:1:3524:::|h[item2]|h|r", 4, 100, MAX_PLAYER_LEVEL, "Armor", "Cloth", 1, "INVTYPE_WRIST", 2906595, 362722, 4, 1, 1, 7, nil, false},
-    item3 = {"item3", "||Hitem:3::::::::" .. MAX_PLAYER_LEVEL .. ":66::3:1:3524:::|h[item3]|h|r", 4, 100, MAX_PLAYER_LEVEL, "Armor", "Leather", 1, "INVTYPE_HAND", 2912998, 368329, 4, 2, 1, 7, nil, false},
+    item1 = {"item1", "|Hitem:1::::::::" .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item1]|h|r", 4, 100, GetMaxPlayerLevel(), "Armor", "Cloth", 1, "INVTYPE_CLOAK", 2901576, 594645, 4, 1, 1, 7, nil, false},
+    item2 = {"item2", "||Hitem:2::::::::" .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item2]|h|r", 4, 100, GetMaxPlayerLevel(), "Armor", "Cloth", 1, "INVTYPE_WRIST", 2906595, 362722, 4, 1, 1, 7, nil, false},
+    item3 = {"item3", "||Hitem:3::::::::" .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item3]|h|r", 4, 100, GetMaxPlayerLevel(), "Armor", "Leather", 1, "INVTYPE_HAND", 2912998, 368329, 4, 2, 1, 7, nil, false},
     nil,
-    item5 = {"item5", "||Hitem:5::::::::" .. MAX_PLAYER_LEVEL .. ":66::3:1:3524:::|h[item5]|h|r", 4, 100, MAX_PLAYER_LEVEL, "Armor", "Mail", 1, "INVTYPE_WAIST", 2909745, 381146, 4, 3, 1, 7, nil, false},
-    item6 = {"item6", "||Hitem:6::::::::" .. MAX_PLAYER_LEVEL .. ":66::3:1:3524:::|h[item6]|h|r", 4, 100, MAX_PLAYER_LEVEL, "Armor", "Plate", 1, "INVTYPE_HAND", 2901582, 374089, 4, 4, 1, 7, nil, false},
-    item7 = {"item7", "||Hitem:7::::::::" .. MAX_PLAYER_LEVEL .. ":66::3:1:3524:::|h[item7]|h|r", 4, 100, MAX_PLAYER_LEVEL, "Weapon", "One-Handed Maces", 1, "INVTYPE_WEAPON", 2923736, 1058637, 2, 4, 1, 7, nil, false},
-    item8 = {"item8", "||Hitem:8::::::::" .. MAX_PLAYER_LEVEL .. ":66::3:1:3524:::|h[item8]|h|r", 4, 100, MAX_PLAYER_LEVEL, "Armor", "Plate", 1, "INVTYPE_CHEST", 2901581, 0, 4, 4, 1, 7, nil, false}
+    item5 = {"item5", "||Hitem:5::::::::" .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item5]|h|r", 4, 100, GetMaxPlayerLevel(), "Armor", "Mail", 1, "INVTYPE_WAIST", 2909745, 381146, 4, 3, 1, 7, nil, false},
+    item6 = {"item6", "||Hitem:6::::::::" .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item6]|h|r", 4, 100, GetMaxPlayerLevel(), "Armor", "Plate", 1, "INVTYPE_HAND", 2901582, 374089, 4, 4, 1, 7, nil, false},
+    item7 = {"item7", "||Hitem:7::::::::" .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item7]|h|r", 4, 100, GetMaxPlayerLevel(), "Weapon", "One-Handed Maces", 1, "INVTYPE_WEAPON", 2923736, 1058637, 2, 4, 1, 7, nil, false},
+    item8 = {"item8", "||Hitem:8::::::::" .. GetMaxPlayerLevel() .. ":66::3:1:3524:::|h[item8]|h|r", 4, 100, GetMaxPlayerLevel(), "Armor", "Plate", 1, "INVTYPE_CHEST", 2901581, 0, 4, 4, 1, 7, nil, false}
 }
 
 Self.roll = {id = 1, ownerId = 1, owner = Self.units.player.name, isOwner = true,  status = Roll.STATUS_PENDING, itemOwnerId = 1, timeout = 30, item = {owner = Self.units.player.name, isOwner = true, infoLevel = 0, link = Self.items.item1[2]}}

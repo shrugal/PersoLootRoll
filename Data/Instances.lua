@@ -208,6 +208,17 @@ Self.INSTANCES = {
     [1203] = 10, -- The Azure Vault
     [1204] = 10, -- Halls of Infusion
     [1205] = 10, -- Dragon Isles
+    [1207] = 10, -- Amirdrassil, the Dream's Hope
     [1208] = 10, -- Aberrus, the Shadowed Crucible
     [1209] = 10, -- Dawn of the Infinite
+    [1210] = 11, -- Darkflame Cleft
+    [1267] = 11, -- Priory of the Sacred Flame
+    [1268] = 11, -- The Rookery
+    [1269] = 11, -- The Stonevault
+    [1270] = 11, -- The Dawnbreaker
+    [1271] = 11, -- Ara-Kara, City of Echoes
+    [1272] = 11, -- Cinderbrew Meadery
+    [1273] = 11, -- Nerub-ar Palace
+    [1274] = 11, -- City of Threads
+    [1278] = 11, -- Khaz Algar
 }

@@ -214,6 +214,7 @@ end
 UIParent = CreateFrame()
 DEFAULT_CHAT_FRAME = CreateFrame()
 AlertFrame = CreateFrame()
+Minimap = CreateFrame()
 StaticPopupDialogs = {}
 SlashCmdList = {}
 
@@ -272,6 +273,7 @@ GetLootRollItemInfo = Fn
 GetLootRollItemLink = Fn
 GetLootMethod = Const("personalloot")
 GetExpansionLevel = Const(EXPANSION)
+GetMaxPlayerLevel = Const(MAX_LEVEL)
 GetMaximumExpansionLevel = Const(EXPANSION + (PREPATCH and 1 or 0))
 RollOnLoot = Fn
 GroupLootContainer_RemoveFrame = Fn
@@ -303,7 +305,6 @@ IsShiftKeyDown = Const(false)
 EJ_GetInstanceForMap = Val(INSTANCE)
 
 -- Constants
-MAX_PLAYER_LEVEL = MAX_LEVEL
 TRADE = "Trade"
 PARTY = "Party"
 RAID = "Raid"

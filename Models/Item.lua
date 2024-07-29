@@ -144,7 +144,7 @@ function Self.GetLinkForLevel(link, level)
     return link:gsub(":[^:]*", function(s)
         i = i + 1
         if i == Self.INFO.link.linkLevel then
-            return ":" .. (level or MAX_PLAYER_LEVEL)
+            return ":" .. (level or GetMaxPlayerLevel())
         end
     end)
 end
@@ -159,7 +159,7 @@ function Self.GetLinkScaled(link, level)
         if i == Self.INFO.link.numBonusIds then
             numBonusIds = tonumber(s) or 0
         elseif i == Self.INFO.link.upgradeLevel - 1 + numBonusIds then
-            return ":" .. (level or MAX_PLAYER_LEVEL)
+            return ":" .. (level or GetMaxPlayerLevel())
         end
     end)
 end
@@ -724,7 +724,7 @@ function Self:GetThresholdForLocation(unit, upper, loc)
 
     -- Scale threshold for lower level chars
     local level = UnitLevel(unit)
-    threshold = ceil(threshold * (level and level > 0 and level / MAX_PLAYER_LEVEL or 1))
+    threshold = ceil(threshold * (level and level > 0 and level / GetMaxPlayerLevel() or 1))
 
     -- Trinkets and rings might have double the normal threshold
     if Util.Select(loc, Self.TYPE_TRINKET, f.ilvlThresholdTrinkets or not custom, Self.TYPE_FINGER, f.ilvlThresholdRings and custom) then
@@ -1017,7 +1017,7 @@ function Self:IsUseful(unit, ...)
         end
     elseif not self:CanBeEquipped(unit, ...) then
         return false
-    elseif self:IsRelic() and UnitLevel(unit) > MAX_PLAYER_LEVEL - 10 then
+    elseif self:IsRelic() and UnitLevel(unit) > GetMaxPlayerLevel() - 10 then
         return false
     elseif self:IsGearToken() then
         return true

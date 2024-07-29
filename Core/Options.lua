@@ -194,12 +194,12 @@ function Self.Register()
 end
 
 -- Show the options panel
+--- @param name string
 function Self.Show(name)
-    local panel = Self.frames[name or "General"]
+    if not name then name = "PersoLootRoll" end
+    if not name:match("^PersoLootRoll") then name = "PersoLootRoll " .. name end
 
-    -- Have to call it twice because of a blizzard UI bug
-    InterfaceOptionsFrame_OpenToCategory(panel)
-    InterfaceOptionsFrame_OpenToCategory(panel)
+    Settings.OpenToCategory(name)
 end
 
 -------------------------------------------------------
@@ -411,7 +411,7 @@ function Self.RegisterGeneral()
                 type = "range",
                 order = it(),
                 min = -1,
-                max = MAX_PLAYER_LEVEL,
+                max = GetMaxPlayerLevel(),
                 softMin = -1,
                 softMax = 30,
                 step = 1,
@@ -419,7 +419,7 @@ function Self.RegisterGeneral()
                 get = function () return Addon.db.profile.filter.lvlThreshold end,
                 disabled = function ()
                     return not Addon.db.profile.filter.enabled
-                        or (UnitLevel("player") >= MAX_PLAYER_LEVEL and GetExpansionLevel() == GetMaximumExpansionLevel())
+                        or (UnitLevel("player") >= GetMaxPlayerLevel() and GetExpansionLevel() == GetMaximumExpansionLevel())
                 end,
                 width = Self.WIDTH_THIRD
             },

@@ -118,7 +118,7 @@ function Self.EnableGroupLootRollHook()
                 f:SetMaxLines(1)
                 self.Player = f
             end
-            
+
             self.Player:SetText(owner)
             self.Player:SetTextColor(color.r, color.g, color.b)
             self.Player:Show()
@@ -338,6 +338,9 @@ end
 -------------------------------------------------------
 
 function Self.EnableUnitMenusHook()
+    -- TODO
+    do return end
+
     local menus = {"SELF", "PLAYER", "FRIEND", "PARTY", "RAID_PLAYER", "RAID"}
 
     local button = GUI(CreateFrame("Button", "PLR_AwardLootButton", UIParent, "UIDropDownMenuButtonTemplate"))
@@ -353,35 +356,35 @@ function Self.EnableUnitMenusHook()
 
     if not Self:IsHooked("UnitPopup_ShowMenu") then
         Self:SecureHook("UnitPopup_ShowMenu", function (dropdown, menu, unit)
+            if UIDROPDOWNMENU_MENU_LEVEL ~= 1 then return end
+
             unit = unit or dropdown.unit or dropdown.chatTarget
 
-            if UIDROPDOWNMENU_MENU_LEVEL == 1 then
-                button:Hide()
+            button:Hide()
 
-                if Util.In(menu, menus) and Util.Tbl.First(Self.rolls, "CanBeAwardedTo", nil, nil, unit, true) then
-                    local parent = _G["DropDownList1"]
-                    local placed = false
-                    
-                    for i=1,UIDROPDOWNMENU_MAXBUTTONS do
-                        local f = _G["DropDownList1Button" .. i]
+            if not Util.In(menu, menus) or not Util.Tbl.First(Self.rolls, "CanBeAwardedTo", nil, nil, unit, true) then return end
 
-                        if placed then
-                            local x, y = select(4, f:GetPoint(1))
-                            f:SetPoint("TOPLEFT", x or 0, (y or 0) - UIDROPDOWNMENU_BUTTON_HEIGHT)
-                        elseif Util.In(f.value, "LOOT_SUBSECTION_TITLE", "INTERACT_SUBSECTION_TITLE") then
-                            local x, y = select(4, f:GetPoint(1))
-                            GUI(button).SetParent(parent).ClearAllPoints()
-                                .SetPoint("TOPLEFT", x or 0, (y or 0) - UIDROPDOWNMENU_BUTTON_HEIGHT)
-                                .SetWidth(parent.maxWidth)
-                                .Show()
-                            button.unit = unit
-                            placed = true
-                        end
-                    end
+            local parent = _G["DropDownList1"]
+            local placed = false
 
-                    parent:SetHeight(parent:GetHeight() + UIDROPDOWNMENU_BUTTON_HEIGHT)
+            for i=1,UIDROPDOWNMENU_MAXBUTTONS do
+                local f = _G["DropDownList1Button" .. i]
+
+                if placed then
+                    local x, y = select(4, f:GetPoint(1))
+                    f:SetPoint("TOPLEFT", x or 0, (y or 0) - UIDROPDOWNMENU_BUTTON_HEIGHT)
+                elseif Util.In(f.value, "LOOT_SUBSECTION_TITLE", "INTERACT_SUBSECTION_TITLE") then
+                    local x, y = select(4, f:GetPoint(1))
+                    GUI(button).SetParent(parent).ClearAllPoints()
+                        .SetPoint("TOPLEFT", x or 0, (y or 0) - UIDROPDOWNMENU_BUTTON_HEIGHT)
+                        .SetWidth(parent.maxWidth)
+                        .Show()
+                    button.unit = unit
+                    placed = true
                 end
             end
+
+            parent:SetHeight(parent:GetHeight() + UIDROPDOWNMENU_BUTTON_HEIGHT)
         end)
     end
 end

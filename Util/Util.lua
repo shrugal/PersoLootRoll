@@ -136,7 +136,7 @@ function Self.IsLegacyRun(unit)
     local unitLvl = UnitLevel(unit or "player")
     local instanceExp, currExp, maxExp = Self.GetInstanceExpansion(), GetExpansionLevel(), GetMaximumExpansionLevel()
 
-    local isCurrExpPlayer = unitLvl > MAX_PLAYER_LEVEL - 10 or currExp < maxExp and unitLvl == MAX_PLAYER_LEVEL - 10
+    local isCurrExpPlayer = unitLvl > GetMaxPlayerLevel() - 10 or currExp < maxExp and unitLvl == GetMaxPlayerLevel() - 10
     local isCurrExpInstance = instanceExp == 0 or instanceExp == currExp + 1
 
     return isCurrExpPlayer and not isCurrExpInstance
