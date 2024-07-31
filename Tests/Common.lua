@@ -69,6 +69,16 @@ function Self.ReplaceFunction(obj, key, mock)
     return test
 end
 
+function Self.MockSendMessage()
+    local events = {}
+    local test = Self.ReplaceFunction(Addon, "SendMessage", function (_, e) tinsert(events, e) end)
+    return function (arg)
+        test(type(arg) == "table" and #arg or arg)
+        if type(arg) == "table" then AssertEqual(arg, events) end
+        wipe(events)
+    end
+end
+
 function Self.ReplaceLocale(mock)
     Replace(LibStub("AceLocale-3.0").apps, Name, mock or setmetatable({}, {
         __index = function (_, key) return key end
@@ -128,6 +138,7 @@ Self.rolls = {
 }
 
 Self.group = Util(Self.units):Copy():Pluck("name")()
+Self.groupList = Util.Tbl.Values(Self.group)
 
 function Self.GetRealmName()
     return "Mal'Ganis"
@@ -190,7 +201,7 @@ function Self.UnitInParty(v)
 end
 
 function Self.GetRaidRosterInfo(i)
-    local unit = Self.Unit(Self.group[i])
+    local unit = Self.Unit(Self.groupList[i])
     if unit then
         local class = {Self.UnitClass(unit.name)}
         return unit.name, i == 1 and 2 or 0, ceil(i / 5), 120, class[1], class[2], "Zone", true, false, Util.Select(i, 3, "TANK", 4, "HEALER", "DAMAGE"), nil

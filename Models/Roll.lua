@@ -928,10 +928,11 @@ function Self:End(winner, cleanup, force, fullStatus)
 
     -- Determine a winner
     if not self.winner or force then
-        if (self.isOwner or not self:GetOwnerAddon()) and (not winner or winner == true) then
+        local ownerBid = self.bids[self.item.owner]
+
+        if (self.isOwner or not self:GetOwnerAddon() and ownerBid) and (not winner or winner == true) then
             local p = Addon.db.profile
             local r = Session.rules
-            local ownerBid = self.bids[self.item.owner]
 
             if not self:GetOwnerAddon() and ownerBid or (not self:HasMasterlooter() or r.allowKeep) and floor(ownerBid or 0) == Self.BID_NEED then
                 -- Give it to the item owner
@@ -1445,7 +1446,7 @@ function Self.Update(data, unit)
     local ml = Session.GetMasterlooter()
     local created = false
 
-    local link, itemOwner = data.item.owner, data.item.link
+    local link, itemOwner = data.item.link, data.item.owner
 
     -- Get the roll
     local roll = Self.GetByUid(data.uid)
@@ -1471,6 +1472,8 @@ function Self.Update(data, unit)
         else
             roll = Self.FromNotice(link, data.started, data.timeout, data.uid)
         end
+
+        created = true
     end
 
     -- The roll owner or ML can send detailed updates

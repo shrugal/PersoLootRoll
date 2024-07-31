@@ -254,6 +254,7 @@ format = string.format
 tinsert = table.insert
 tremove = table.remove
 unpack = unpack or table.unpack
+FindInTableIf = function (tbl, pred) for k,v in pairs(tbl) do if pred(v) then return k, v end end end
 time = function(...) return math.floor(os.time(...)) end
 max = math.max
 min = math.min
@@ -347,6 +348,10 @@ CREATED_ITEM = "%s creates: %s."
 LOOT_ITEM_CREATED_SELF = "You create: %s."
 RANDOM_ROLL_RESULT = "%s rolls %d (%d-%d)"
 NUM_BAG_SLOTS = 0
+LOOT_ROLL_TYPE_PASS = 0
+LOOT_ROLL_TYPE_NEED = 1
+LOOT_ROLL_TYPE_GREED = 2
+LOOT_ROLL_TYPE_DISENCHANT = 3
 
 RAID_CLASS_COLORS = setmetatable({}, { __index = function() return { colorStr = "ffffffff", r = 1, g = 1, b = 1 } end })
 DifficultyUtil = {

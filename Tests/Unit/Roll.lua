@@ -37,6 +37,10 @@ local AssertRoll = function (roll, id, uid, started)
     local item = Item.FromLink(roll.item.link, roll.item.owner, nil, nil, roll.item.isTradable)
     local running = roll.status >= Roll.STATUS_RUNNING or nil
 
+    if check.item.infoLevel > 0 then item:GetFullInfo() end
+
+    item.eligible = check.item.eligible
+
     AssertEqual({
         id = id,
         uid = uid or roll.uid,
@@ -45,9 +49,10 @@ local AssertRoll = function (roll, id, uid, started)
         status = roll.status,
         timeout = roll.timeout,
         disenchant = roll.disenchant,
-        item = check.item.infoLevel > 0 and item:GetFullInfo() or item,
+        item = item,
         created = check.created,
         started = started or check.started,
+        startedBids = started or check.started,
         timers = {bid = running or nil},
         votes = {},
         rolls = {},
@@ -67,7 +72,7 @@ end
 function Tests:FindTest()
     Test.ReplaceDefault()
     Replace(Addon, "rolls", Test.rolls)
-    Replace(Roll, "rollUidToId", Util(Addon.rolls):Copy():MapKeys(function(k,v) return v.uid end, true):Pluck("id")())
+    Replace(Roll, "uidIndex", Util(Addon.rolls):Copy():MapKeys(function(k,v) return v.uid end, true):Pluck("id")())
     Replace(Addon, "rollNum", 10)
 
     --- Find by uid
@@ -125,7 +130,7 @@ end
 
 function Tests:FindWhereTest()
     Replace(Addon, "rolls", Test.rolls)
-    Replace(Roll, "rollUidToId", Util(Addon.rolls):Copy():MapKeys(function(k,v) return v.uid end, true):Pluck("id")())
+    Replace(Roll, "uidIndex", Util(Addon.rolls):Copy():MapKeys(function(k,v) return v.uid end, true):Pluck("id")())
     Replace(Addon, "rollNum", 10)
 
     for _,roll in pairs(Test.rolls) do
@@ -147,7 +152,7 @@ function Tests:AddTest()
     Test.ReplaceDefault()
     Replace(Addon, "rolls", {})
     Replace(Addon, "rollNum", 0)
-    Replace(Addon, "rollUidToId", {})
+    Replace(Addon, "uidIndex", {})
     Replace(Roll, "CalculateTimeout", function () return 30 end)
 
     local AssertEvents = Test.ReplaceFunction(Addon, "SendMessage", false)
@@ -184,54 +189,57 @@ function Tests.UpdateTest()
     Test.ReplaceDefault()
     Replace(Addon, "rolls", {})
     Replace(Addon, "rollNum", 0)
-    Replace(Addon, "rollUidToId", {})
+    Replace(Addon, "uidIndex", {})
     Replace(Addon, "ScheduleTimer", function () return true end)
 
     local ml = nil
     Replace(Session, "GetMasterlooter", function () return ml end)
 
-    local AssertEvents = Test.ReplaceFunction(Addon, "SendMessage", false)
+    local AssertEvents = Test.MockSendMessage()
 
     ---@type Roll
-    local roll
+    local roll, data
 
     -- Send roll
     roll = Test.rolls[3]
-    Assert(Roll.Update(GetUpdateData(roll), roll.owner))
+    data = GetUpdateData(roll)
+    Assert(Roll.Update(data, roll.owner))
     AssertEqual(1, Addon.rollNum)
     AssertRoll(roll, 1)
-    AssertEvents(3)
+    AssertEvents({ Roll.EVENT_ADD, Roll.EVENT_STATUS, Roll.EVENT_START })
 
     -- Send again
-    AssertFalse(Roll.Update(GetUpdateData(roll), roll.owner))
+    AssertFalse(Roll.Update(data, roll.owner))
     AssertEqual(1, Addon.rollNum)
     AssertRoll(roll, 1)
     AssertEvents(0)
 
     -- Send again with different owner
-    AssertFalse(Roll.Update(GetUpdateData(roll), Test.units.party2.name))
+    AssertFalse(Roll.Update(data, Test.units.party2.name))
     AssertEqual(1, Addon.rollNum)
     AssertEvents(0)
 
     -- Send roll with unit different from item owner
     roll = Test.rolls[5]
-    AssertFalse(Roll.Update(GetUpdateData(roll), Test.units.party1.name))
+    data = GetUpdateData(roll)
+    AssertFalse(Roll.Update(data, Test.units.party1.name))
     AssertEqual(1, Addon.rollNum)
     AssertEvents(0)
 
     -- Send again with correct owner
-    Assert(Roll.Update(GetUpdateData(roll), roll.owner))
+    Assert(Roll.Update(data, roll.owner))
     AssertEqual(2, Addon.rollNum)
     AssertRoll(roll, 2)
-    AssertEvents(1)
+    AssertEvents({ Roll.EVENT_ADD, Roll.EVENT_ELIGIBLE })
 
     -- Send roll with owner different from item owner
     roll = Util.Tbl.CopyDeep(Test.rolls[8])
     roll.status = Roll.STATUS_PENDING
-    Assert(Roll.Update(GetUpdateData(roll), roll.item.owner))
+    data = GetUpdateData(roll)
+    Assert(Roll.Update(data, roll.item.owner))
     AssertEqual(3, Addon.rollNum)
     AssertRoll(roll, 3)
-    AssertEvents(1)
+    AssertEvents({ Roll.EVENT_ADD, Roll.EVENT_ELIGIBLE })
 
     -- TODO: Send roll from ML
     -- TODO: Send update from ML

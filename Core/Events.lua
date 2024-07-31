@@ -72,9 +72,8 @@ function Self.RegisterEvents()
     -- Loot
     Self:RegisterEvent("START_LOOT_ROLL")
     -- Self:RegisterEvent("LOOT_ITEM_AVAILABLE")
-    Self:RegisterEvent("LOOT_HISTORY_ROLL_CHANGED")
-    Self:RegisterEvent("LOOT_HISTORY_FULL_UPDATE")
-    Self:RegisterEvent("LOOT_HISTORY_ROLL_COMPLETE", Self.LOOT_HISTORY_FULL_UPDATE)
+    Self:RegisterEvent("LOOT_HISTORY_UPDATE_DROP")
+    Self:RegisterEvent("LOOT_HISTORY_UPDATE_ENCOUNTER")
 end
 
 function Self.UnregisterEvents()
@@ -106,9 +105,8 @@ function Self.UnregisterEvents()
     -- Loot
     Self:UnregisterEvent("START_LOOT_ROLL")
     -- Self:UnregisterEvent("LOOT_ITEM_AVAILABLE")
-    Self:UnregisterEvent("LOOT_HISTORY_ROLL_CHANGED")
-    Self:UnregisterEvent("LOOT_HISTORY_FULL_UPDATE")
-    Self:UnregisterEvent("LOOT_HISTORY_ROLL_COMPLETE")
+    Self:UnregisterEvent("LOOT_HISTORY_UPDATE_DROP")
+    Self:UnregisterEvent("LOOT_HISTORY_UPDATE_ENCOUNTER")
 end
 
 -------------------------------------------------------
@@ -246,69 +244,71 @@ end
 
 ---@param itemIdx number
 ---@param playerIdx number
-function Self.LOOT_HISTORY_ROLL_CHANGED(_, _, itemIdx, playerIdx)
-    local name, _, bid, randomRoll, isWinner, isSelf = C_LootHistory.GetPlayerInfo(itemIdx, playerIdx)
-    local rollId, link, numPlayers, isDone, winnerIdx = C_LootHistory.GetItem(itemIdx)
+function Self.LOOT_HISTORY_UPDATE_DROP(_, _, encounterId, lootListId)
+    local drop = C_LootHistory.GetSortedInfoForDrop(encounterId, lootListId)
 
-    Self:Debug("Events.Loot.RollChanged", itemIdx, rollId, name, bid, randomRoll, isDone, winnerIdx, isWinner)
+    Self:Debug("Events.Loot.UpdateDrop", encounterId, lootListId, drop and drop.itemHyperlink, drop and drop.currentLeader, drop and drop.winner)
 
-    if not bid then return end
-    local roll = Roll.GetByLootRollId(rollId)
-    if not roll then return end
+    -- if not bid then return end
+    -- local roll = Roll.GetByLootRollId(rollId)
+    -- if not roll then return end
 
-    -- Register the bid
-    if Unit.InGroup(name, true) then
-        roll.item:OnFullyLoaded(roll.item.UpdateEligible, roll.item, name, Item.ELIGIBLE)
+    -- -- Register the bid
+    -- if Unit.InGroup(name, true) then
+    --     roll.item:OnFullyLoaded(roll.item.UpdateEligible, roll.item, name, Item.ELIGIBLE)
 
-        -- Ignore need/greed bids on owned rolls close to the end of the needgreed timeout
-        local timer = roll.timers.needgreed
-        local ignore = roll.owner
-            and Addon.UnitIsTracking(name)
-            and Util.In(bid, LOOT_ROLL_TYPE_NEED, LOOT_ROLL_TYPE_GREED)
-            and timer and Util.Num.In(GetTime(), timer.ends - 2 * Roll.DELAY, timer.ends)
+    --     -- Ignore need/greed bids on owned rolls close to the end of the needgreed timeout
+    --     local timer = roll.timers.needgreed
+    --     local ignore = roll.owner
+    --         and Addon.UnitIsTracking(name)
+    --         and Util.In(bid, LOOT_ROLL_TYPE_NEED, LOOT_ROLL_TYPE_GREED)
+    --         and timer and Util.Num.In(GetTime(), timer.ends - 2 * Roll.DELAY, timer.ends)
 
-        if not ignore then roll:Bid(bid, name, randomRoll) end
-    end
+    --     if not ignore then roll:Bid(bid, name, randomRoll) end
+    -- end
 
-    -- Check if we have a winner
-    if not roll.item.owner and winnerIdx then
-        local winner = C_LootHistory.GetPlayerInfo(itemIdx, winnerIdx)
-        if winner then roll:SetOwners(true, winner) end
-    end
+    -- -- Check if we have a winner
+    -- if not roll.item.owner and winnerIdx then
+    --     local winner = C_LootHistory.GetPlayerInfo(itemIdx, winnerIdx)
+    --     if winner then roll:SetOwners(true, winner) end
+    -- end
 
-    -- End the roll if its done
-    if isDone then roll:End(nil, true) end
+    -- -- End the roll if its done
+    -- if isDone then roll:End(nil, true) end
 end
 
-function Self.LOOT_HISTORY_FULL_UPDATE(_, event)
-    Self:Debug("Events.Loot.FullUpdate", event)
+function Self.LOOT_HISTORY_UPDATE_ENCOUNTER(_, _, encounterId)
+    local info = C_LootHistory.GetInfoForEncounter(encounterId)
+    local drops = C_LootHistory.GetSortedDropsForEncounter(encounterId)
 
-    for itemIdx=1,C_LootHistory.GetNumItems() do
-        ---@type number, string, number, boolean, number?
-        local rollId, link, numPlayers, isDone, winnerIdx = C_LootHistory.GetItem(itemIdx) --[[@as any]]
+    Self:Debug("Events.Loot.UpdateEncounter", encounterId, info and info.encounterName, drops and #drops)
 
-        Self:Debug("Events.Loot.FullUpdate[" .. itemIdx .. "]", rollId, numPlayers, isDone, winnerIdx)
+    -- for itemIdx=1,C_LootHistory.GetNumItems() do
+    --     ---@type number, string, number, boolean, number?
+    --     local rollId, link, numPlayers, isDone, winnerIdx = C_LootHistory.GetItem(itemIdx) --[[@as any]]
 
-        if isDone then
-            local roll = Roll.GetByLootRollId(rollId)
+    --     Self:Debug("Events.Loot.FullUpdate[" .. itemIdx .. "]", rollId, numPlayers, isDone, winnerIdx)
 
-            if roll and not roll.item.owner then
-                -- Set random roll results
-                for playerIdx=1,numPlayers do
-                    local name, _, bid, randomRoll = C_LootHistory.GetPlayerInfo(itemIdx, playerIdx)
-                    if name and randomRoll then
-                        roll.rolls[name] = randomRoll
-                    end
-                end
+    --     if isDone then
+    --         local roll = Roll.GetByLootRollId(rollId)
 
-                -- Set item owner
-                if winnerIdx then
-                    local winner = C_LootHistory.GetPlayerInfo(itemIdx, winnerIdx)
-                    if winner then roll:SetOwners(true, winner) end
-                end
-            end
-        end
-    end
+    --         if roll and not roll.item.owner then
+    --             -- Set random roll results
+    --             for playerIdx=1,numPlayers do
+    --                 local name, _, bid, randomRoll = C_LootHistory.GetPlayerInfo(itemIdx, playerIdx)
+    --                 if name and randomRoll then
+    --                     roll.rolls[name] = randomRoll
+    --                 end
+    --             end
+
+    --             -- Set item owner
+    --             if winnerIdx then
+    --                 local winner = C_LootHistory.GetPlayerInfo(itemIdx, winnerIdx)
+    --                 if winner then roll:SetOwners(true, winner) end
+    --             end
+    --         end
+    --     end
+    -- end
 end
 
 ---@param msg string

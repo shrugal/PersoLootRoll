@@ -42,12 +42,6 @@ function SetGuildInfoText(text) end
 ---@return boolean
 function IsGuildMember(unit) end
 
----@class C_LootHistory
----@field GetNumItems fun(): integer
----@field GetItem fun(itemIdx: integer): integer, string, integer, boolean, integer, boolean
----@field GetPlayerInfo fun(itemIdx: integer, playerIdx: integer): string, string, integer, integer, boolean, boolean
-C_LootHistory = {}
-
 -- WoW constants
 
 RELIC_SLOT_TYPE_ARCANE = "Arcane"
