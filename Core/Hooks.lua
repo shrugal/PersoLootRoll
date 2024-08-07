@@ -50,7 +50,7 @@ function Self.EnableGroupLootRollHook()
                         or not Unit.IsEnchanter() and "PLR_NOT_ENCHANTER"
                         or nil
 
-                    return item.texture, item.name, 1, item.quality, item.bindType == LE_ITEM_BIND_ON_ACQUIRE,
+                    return item.texture, item.name, 1, item.quality, item.bindType == Enum.ItemBind.OnAcquire,
                         true,                   -- Can need
                         roll:GetOwnerAddon(),   -- Can greed
                         not disReason,          -- Can disenchant

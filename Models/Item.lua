@@ -489,7 +489,7 @@ function Self:GetBasicInfo()
                 self.baseLevel = baseLevel or self.level
                 self.isEquippable = IsEquippableItem(self.link) or self:IsGearToken() or Self.IsRelic(self)
                 self.equipLoc = Util.Str.IsEmpty(self.equipLoc) and self:GetGearTokenEquipLoc() or self.equipLoc
-                self.isSoulbound = self.bindType == LE_ITEM_BIND_ON_ACQUIRE or self.isEquipped and self.bindType == LE_ITEM_BIND_ON_EQUIP
+                self.isSoulbound = self.bindType == Enum.ItemBind.OnAcquire or self.isEquipped and self.bindType == Enum.ItemBind.OnEquip
                 self.isTradable = Util.Default(self.isTradable, not self.isSoulbound or nil)
                 self.visualId, self.visualSourceId = C_TransmogCollection.GetItemInfo(self.link)
 

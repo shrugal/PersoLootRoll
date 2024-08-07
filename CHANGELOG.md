@@ -1,3 +1,10 @@
+Version 24.08
+
+- Updated for patch 11.0
+- Updated instance, trinket and gear token lists
+- Updated libs
+- Removed unit dropdown menu option for now
+
 Version 24.07
 
 - Added Augmentation Evoker spec info

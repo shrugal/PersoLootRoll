@@ -254,6 +254,7 @@ format = string.format
 tinsert = table.insert
 tremove = table.remove
 unpack = unpack or table.unpack
+FindInTableIf = function (tbl, pred) for k,v in pairs(tbl) do if pred(v) then return k, v end end end
 time = function(...) return math.floor(os.time(...)) end
 max = math.max
 min = math.min
@@ -413,7 +414,8 @@ Enum = {
     ItemClass = { Weapon = 2, Armor = 4, Miscellaneous = 15 },
     ItemArmorSubclass = { Idol = 8, Cosmetic = 5, Totem = 9, Shield = 6, Leather = 2, Libram = 7, Relic = 11, Mail = 3, Cloth = 1, Plate = 4, Generic = 0, Sigil = 10 },
     ItemWeaponSubclass = { Mace2H = 5, Thrown = 16, Bearclaw = 11, Catclaw = 12, Mace1H = 4, Polearm = 6, Sword1H = 7, Axe2H = 1, Unarmed = 13, Wand = 19, Bows = 2, Crossbow = 18, Staff = 10, Fishingpole = 20, Generic = 14, Guns = 3, Dagger = 15, Warglaive = 9, Obsolete3 = 17, Axe1H = 0, Sword2H = 8 },
-    ItemMiscellaneousSubclass = { CompanionPet = 2, Reagent = 1, MountEquipment = 6, Mount = 5, Other = 4, Holiday = 3, Junk = 0 }
+    ItemMiscellaneousSubclass = { CompanionPet = 2, Reagent = 1, MountEquipment = 6, Mount = 5, Other = 4, Holiday = 3, Junk = 0 },
+    ItemBind = { None = 0, OnAcquire = 1, OnEquip = 2, OnUse = 3, Quest = 4, Unused1 = 5, Unused2 = 6, ToWoWAccount = 7, ToBnetAccount = 8, ToBnetAccountUntilEquipped = 9 }
 }
 
 -- PLR specific
