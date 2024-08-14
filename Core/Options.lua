@@ -10,6 +10,7 @@ local CR = LibStub("AceConfigRegistry-3.0")
 local LDB = LibStub("LibDataBroker-1.1")
 local LDBIcon = LibStub("LibDBIcon-1.0")
 local GUI, Item, Locale, Session, Roll, Unit, Util = Addon.GUI, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
+
 ---@class Options
 local Self = Addon.Options
 
@@ -494,7 +495,7 @@ function Self.RegisterGeneral()
                 order = it(),
                 set = function (_, val) Addon.db.profile.filter.pawn = val end,
                 get = function () return Addon.db.profile.filter.pawn end,
-                disabled = function () return not Addon.db.profile.filter.enabled or not IsAddOnLoaded("Pawn") end,
+                disabled = function () return not Addon.db.profile.filter.enabled or not C_AddOns.IsAddOnLoaded("Pawn") end,
                 width = Self.WIDTH_HALF
             },
             transmogItem = {

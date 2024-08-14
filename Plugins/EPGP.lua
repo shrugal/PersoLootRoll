@@ -180,7 +180,7 @@ function Self.RegisterOptions()
             type = "group",
             args = {
                 desc = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_DESC"] .. "\n"},
-                warningNoAddon = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_WARNING_NO_ADDON"] .. "\n", hidden = function () return IsAddOnLoaded("EPGP") end},
+                warningNoAddon = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_WARNING_NO_ADDON"] .. "\n", hidden = function () return C_AddOns.IsAddOnLoaded("EPGP") end},
                 warningNoOfficer = {type = "description", fontSize = "medium", order = it(), name = L["EPGP_OPT_WARNING_NO_OFFICER"] .. "\n", hidden = CanEditOfficerNote},
                 enable = {
                     name = L["OPT_ENABLE"],
@@ -262,7 +262,7 @@ end
 -------------------------------------------------------
 
 function Self:ShouldBeEnabled()
-    return IsAddOnLoaded(Self.NAME)
+    return C_AddOns.IsAddOnLoaded(Self.NAME)
         and Self.db.profile.enabled
         and IsInRaid()
         and Addon:IsTracking()

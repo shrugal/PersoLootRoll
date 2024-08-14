@@ -3,7 +3,11 @@ local Name = ...
 ---@type Addon
 local Addon = select(2, ...)
 local Inspect, Unit, Util = Addon.Inspect, Addon.Unit, Addon.Util
+
 ---@class Item
+---@field link string
+---@field owner? string
+---@field isOwner boolean
 local Self = Addon.Item
 
 local Meta = { __index = Self }
@@ -262,35 +266,35 @@ function Self.GetInfo(item, attr, ...)
 
     if not item then
         return
-        -- Already known
+    -- Already known
     elseif isInstance and item[attr] ~= nil then
         return item[attr]
-        -- id
+    -- id
     elseif attr == "id" and id then
         return id
-        -- link
+    -- link
     elseif attr == "link" and link then
         return link
-        -- level, baseLevel, realLevel
+    -- level, baseLevel, realLevel
     elseif Util.In(attr, "level", "baseLevel") or attr == "realLevel" and not Self.IsScaled(item) then
-        return (select(attr == "baseLevel" and 3 or 1, GetDetailedItemLevelInfo(link or id)))
-        -- realMinLevel
+        return (select(attr == "baseLevel" and 3 or 1, C_Item.GetDetailedItemLevelInfo(link or id)))
+    -- realMinLevel
     elseif attr == "realMinLevel" and not Self.IsScaled(item) then
-        return (select(Self.INFO.basic.minLevel, GetItemInfo(link or id)))
-        -- maxLevel
+        return (select(Self.INFO.basic.minLevel, C_Item.GetItemInfo(link or id)))
+    -- maxLevel
     elseif attr == "maxLevel" then
         if Self.GetInfo(item, "quality") == Enum.ItemQuality.Heirloom then
             return Self.GetInfo(Self.GetLinkForLevel(link, Self.GetInfo(item, "toLevel")), "level", ...)
         else
             return Self.GetInfo(item, "realLevel", ...)
         end
-        -- isEquippable
+    -- isEquippable
     elseif attr == "isEquippable" then
         return IsEquippableItem(link or id) or Self.IsGearToken(item) or Self.IsRelic(item)
-        -- visualId, visualSourceId
+    -- visualId, visualSourceId
     elseif link and (attr == "visualId" or attr == "visualSourceId") then
         return (select(attr == "visualId" and 1 or 2, C_TransmogCollection.GetItemInfo(link)))
-        -- From link
+    -- From link
     elseif Self.INFO.link[attr] then
         if isInstance then
             return item:GetLinkInfo()[attr]
@@ -316,7 +320,7 @@ function Self.GetInfo(item, attr, ...)
                 end
             end
         end
-        -- From GetItemInfo()
+    -- From GetItemInfo()
     elseif Self.INFO.basic[attr] then
         if isInstance then
             return item:GetBasicInfo()[attr]
@@ -329,9 +333,9 @@ function Self.GetInfo(item, attr, ...)
         elseif attr == "equipLoc" and Self.IsGearToken(item) then
             return Self.GetGearTokenEquipLoc(item)
         else
-            return (select(Self.INFO.basic[attr], GetItemInfo(item)))
+            return (select(Self.INFO.basic[attr], C_Item.GetItemInfo(item)))
         end
-        -- From ScanTooltip()
+    -- From ScanTooltip()
     elseif Self.INFO.full[attr] then
         if isInstance then
             return item:GetFullInfo()[attr]
@@ -474,10 +478,10 @@ function Self:GetBasicInfo()
                 self.infoLevel = Self.INFO_BASIC
             end
         else
-            data = Util.Tbl.New(GetItemInfo(self.link))
+            data = Util.Tbl.New(C_Item.GetItemInfo(self.link))
             if next(data) then
                 -- Get correct level
-                local level, _, baseLevel = GetDetailedItemLevelInfo(self.link)
+                local level, _, baseLevel = C_Item.GetDetailedItemLevelInfo(self.link)
 
                 -- Set data
                 for attr, pos in pairs(Self.INFO.basic) do
@@ -653,7 +657,7 @@ function Self.GetOwnedForLocation(loc, allWeapons)
                             if id == spec.artifact.id and Addon.db.char.specs[i] then
                                 for slot, relicType in pairs(spec.artifact.relics) do
                                     if relicType == loc then
-                                        tinsert(items, (select(2, GetItemGem(link, slot))))
+                                        tinsert(items, (select(2, C_Item.GetItemGem(link, slot))))
                                     end
                                 end
                             end
@@ -821,7 +825,7 @@ end
 
 -- Get gems in the item
 function Self:GetGem(slot)
-    return (select(2, GetItemGem(self.link, slot)))
+    return (select(2, C_Item.GetItemGem(self.link, slot)))
 end
 
 -- Get artifact relics in the item
@@ -1036,7 +1040,7 @@ end
 
 -- Check if the item is an upgrade according to Pawn
 function Self:IsPawnUpgrade(unit, ...)
-    if unit and Unit.IsSelf(unit) and IsAddOnLoaded("Pawn") and PawnGetItemData and PawnIsItemAnUpgrade and PawnCommon and PawnCommon.Scales then
+    if unit and Unit.IsSelf(unit) and C_AddOns.IsAddOnLoaded("Pawn") and PawnGetItemData and PawnIsItemAnUpgrade and PawnCommon and PawnCommon.Scales then
         local data = PawnGetItemData(self.link)
         if data then
             for i, scale in pairs(PawnIsItemAnUpgrade(data) or Util.Tbl.EMPTY) do

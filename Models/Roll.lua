@@ -6,8 +6,26 @@ local Addon = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local CB = LibStub("CallbackHandler-1.0")
 local Comm, GUI, Item, Session, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Item, Addon.Session, Addon.Trade, Addon.Unit, Addon.Util
+
 ---@class Roll
+---@field created number
+---@field isOwner boolean
 ---@field item Item
+---@field owner? string
+---@field ownerId? number
+---@field itemOwnerId? number
+---@field timeout number
+---@field disenchant boolean
+---@field status number
+---@field bids table<string, number>
+---@field rolls table<string, number>
+---@field votes table<string, string>
+---@field timers table<"bid" | "schedule" | "award", AceTimerObj?>
+---@field whispers number
+---@field shown? boolean
+---@field hidden? boolean
+---@field posted? boolean
+---@field traded? boolean
 local Self = Addon.Roll
 
 local Meta = { __index = Self }
@@ -1545,7 +1563,7 @@ function Self:IsActive(validate)
 end
 
 -- Check if the roll is running or recently ended
----@param timeout number
+---@param timeout? number|false
 function Self:IsRecent(timeout)
     return self.status == Self.STATUS_RUNNING or timeout ~= false and self.status == Self.STATUS_DONE and self.ended + (timeout or Self.TIMEOUT_RECENT) >= time()
 end

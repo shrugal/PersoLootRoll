@@ -1,3 +1,8 @@
+Version 24.09
+
+- Update LibRealmInfo and WoWUnit
+- Fix item bind type detection
+
 Version 24.08
 
 - Updated for patch 11.0

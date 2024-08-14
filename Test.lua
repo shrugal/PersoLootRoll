@@ -212,7 +212,7 @@ CreateFrame = function(frameType, name, parent, template, id)
 end
 
 UIParent = CreateFrame()
-DEFAULT_CHAT_FRAME = CreateFrame()
+DEFAULT_CHAT_FRAME = CreateFrame() --[[@as ChatFrame]]
 AlertFrame = CreateFrame()
 Minimap = CreateFrame()
 StaticPopupDialogs = {}
@@ -266,7 +266,6 @@ GetRealmName = Const(REALM)
 GetAutoCompleteRealms = Const(REALM_CONNECTED)
 GetCurrentRegion = Const(REGION)
 GetBuildInfo = Consts(unpack(BUILD))
-GetAddOnMetadata = Val(VERSION) --[[@as fun(name: string, field: string?): string]]
 GetTime = function(...) return math.floor(os.clock(...)) end
 GetInstanceInfo = Fn
 GetLootRollTimeLeft = Val(0)
@@ -293,7 +292,6 @@ UnitInParty = Val(false)
 UnitInRaid = Val(false)
 UnitIsDND = Val(false)
 IsInInstance = Const(true)
-IsAddOnLoaded = function(n) return n == "WoWUnit" or n == Name end
 InterfaceOptions_AddCategory = Fn
 IsLoggedIn = Const(false)
 GetNumGroupMembers = Const(0)
@@ -371,6 +369,10 @@ DifficultyUtil = {
     }
 }
 
+C_AddOns = {
+    IsAddOnLoaded = function(n) return n == "WoWUnit" or n == Name end,
+    GetAddOnMetadata = Val(VERSION) --[[@as fun(name: string, field: string?): string]]
+}
 C_ChallengeMode = Obj
 C_Club = {
     GetSubscribedClubs = Const({})
@@ -401,6 +403,7 @@ C_ChatInfo = {
     RegisterAddonMessagePrefix = Fn
 }
 C_Item = {
+    GetItemInfo = Val(),
     IsDressableItemByID = Val(true)
 }
 C_Container = {

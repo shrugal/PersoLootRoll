@@ -340,7 +340,7 @@ end)
 -------------------------------------------------------
 
 function Self:ShouldBeEnabled()
-    return not IsAddOnLoaded(Self.NAME)
+    return not C_AddOns.IsAddOnLoaded(Self.NAME)
         and Addon:IsActive()
         and false -- TODO
 end

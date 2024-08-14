@@ -27,7 +27,9 @@ Self.PlayerColumns = Util.Registrar.New("GUI_PLAYER_COLUMN", "name", function (n
 end)
 
 -- Windows
+---@class GUIRolls: AceModule, AceEvent-3.0, AceTimer-3.0
 Self.Rolls = Self:NewModule("Rolls", nil, "AceEvent-3.0", "AceTimer-3.0")
+---@class GUIActions: AceModule, AceEvent-3.0
 Self.Actions = Self:NewModule("Actions", nil, "AceEvent-3.0")
 
 -- Row highlight frame

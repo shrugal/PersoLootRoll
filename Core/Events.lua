@@ -6,6 +6,8 @@ local AceComm = LibStub("AceComm-3.0")
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Comm, Item, Locale, Session, Roll, Unit, Util = Addon.Comm, Addon.Item, Addon.Locale, Addon.Session, Addon.Roll, Addon.Unit, Addon.Util
+
+---@class Addon
 local Self = Addon
 
 -- Version check
@@ -164,7 +166,7 @@ function Self.CHAT_MSG_SYSTEM(_, _, msg)
             end
 
             -- Find the roll
-            local i, roll = to % 50
+            local i, roll = to % 50, nil
             if i == 0 then
                 roll = Self.lastPostedRoll
             else
@@ -276,7 +278,7 @@ function Self.CHAT_MSG_GROUP(_, _, msg, sender)
 
     local link = Item.GetLink(msg)
     if link then
-        link = select(2, GetItemInfo(link)) or link
+        link = select(2, C_Item.GetItemInfo(link)) or link
         Self.lastPostedRoll = nil
 
         local roll = Roll.Find(nil, unit, link, nil, nil, Roll.STATUS_RUNNING) or Roll.Find(nil, unit, link)

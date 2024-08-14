@@ -1,2 +1,2 @@
-- Update LibRealmInfo and WoWUnit
-- Fix item bind type detection
+- Updated for patch 11.0.2
+- Updated libraries

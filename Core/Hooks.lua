@@ -5,6 +5,8 @@ local Addon = select(2, ...)
 ---@type L
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local Comm, GUI, Item, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Item, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+
+---@class Addon
 local Self = Addon
 
 function Self.EnableHooks()

@@ -6,6 +6,8 @@ local Addon = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local RI = LibStub("LibRealmInfo")
 local Comm, GUI, Item, Options, Session, Roll, Trade, Unit, Util = Addon.Comm, Addon.GUI, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
+
+---@class Addon
 local Self = Addon
 
 -- Logging
@@ -128,7 +130,7 @@ function Self:OnDisable()
     self:CheckState(true)
 end
 
----@param debug boolean
+---@param debug? boolean
 function Self:ToggleDebug(debug)
     if debug ~= nil then
         self.DEBUG = debug
@@ -176,7 +178,7 @@ function Self:HandleChatCommand(msg)
         if Util.Str.IsEmpty(args[1]) then
             for _,v in pairs(subs) do
                 name = Util.Str.UcFirst(v)
-                local getter = LibStub("AceConfigRegistry-3.0"):GetOptionsTable(Name .. " " .. name)
+                local getter = LibStub("AceConfigRegistry-3.0"):GetOptionsTable(Name .. " " .. name) ---@cast getter -?
                 print("  |cffffff78" .. v .. "|r - " .. (getter("cmd", "AceConfigCmd-3.0").name or name))
             end
         end
@@ -184,7 +186,7 @@ function Self:HandleChatCommand(msg)
         Util.Tbl.Release(subs)
     -- Roll
     elseif cmd == "roll" then
-        local ml, isML, items, itemOwner, timeout = Session.GetMasterlooter(), Session.IsMasterlooter(), Util.Tbl.New(), "player"
+        local ml, isML, items, itemOwner, timeout = Session.GetMasterlooter(), Session.IsMasterlooter(), Util.Tbl.New(), "player", nil
 
         for _,v in pairs(args) do
             if tonumber(v) then
@@ -337,7 +339,7 @@ function Self:CheckState(refresh)
         end
 
         if self.state ~= state then
-            self:SendMessage(Self.STATE_CHANGE, self.state, state)
+            self:SendMessage(Self.EVENT_STATE_CHANGE, self.state, state)
 
             local cmp = Util.Compare(self.state, state)
 
@@ -355,13 +357,13 @@ function Self:CheckState(refresh)
 end
 
 -- Check if the addon is currently active
----@param refresh boolean
+---@param refresh? boolean
 function Self:IsActive(refresh)
     return self:CheckState(refresh) >= Self.STATE_ACTIVE
 end
 
 -- Check if the addon is currently tracking loot etc.
----@param refresh boolean
+---@param refresh? boolean
 ---@return boolean
 function Self:IsTracking(refresh)
     return self:CheckState(refresh) >= Self.STATE_TRACKING
@@ -420,7 +422,7 @@ end
 
 -- Set a unit's version string
 ---@param unit string
----@param version string|number
+---@param version? string|number
 function Self:SetVersion(unit, version)
     version = tonumber(version) or version
 
@@ -441,7 +443,7 @@ end
 
 -- Get major, channel and minor versions for the given version string or unit
 -- TODO: Automatically set TOC version to tag or revision starting with in v19
----@param versionOrUnit string|number
+---@param versionOrUnit? string|number
 function Self:GetVersion(versionOrUnit)
     local version = (not versionOrUnit or Unit.IsSelf(versionOrUnit)) and Self.VERSION
         or type(versionOrUnit) == "string" and self.versions[Unit.Name(versionOrUnit)]
@@ -495,7 +497,7 @@ function Self:SetCompAddonUser(unit, addon, version)
 end
 
 ---@param unit string
----@param addon string
+---@param addon? string
 ---@return string
 function Self:GetCompAddonUser(unit, addon)
     unit = Unit.Name(unit)
@@ -602,6 +604,7 @@ function Self:RegisterErrorHandler()
                 self:HandleError(msg, stack, locals)
             end
 
+            ---@diagnostic disable-next-line: redundant-return-value
             return r
         end)
     end
@@ -612,7 +615,7 @@ local function cleanFilePaths(msg)
 end
 
 -- Check for PLR errors and log them
-function Self:HandleError(msg, stack)
+function Self:HandleError(msg, stack, locals)
     if self:ShouldHandleError() then
         msg = "\"" .. cleanFilePaths(msg) .. "\""
         stack = cleanFilePaths(stack)

@@ -144,7 +144,8 @@ end
 -- It's just such a common usecase
 ---@param unit string
 function Self.ColoredShortenedName(unit)
-    return unit and Self.ColoredName(Self.ShortenedName(unit), unit)
+    local shortened = Self.ShortenedName(unit)
+    return shortened and Self.ColoredName(shortened, unit)
 end
 
 -------------------------------------------------------
@@ -161,7 +162,7 @@ end
 
 -- The the unit's rank in our guild
 ---@param unit string
----@return integer
+---@return integer?
 function Self.GuildRank(unit)
     if not unit then return end
 
@@ -179,7 +180,7 @@ end
 
 -- Check if given unit or rank has officer privileges
 ---@param unitOrRank string|integer
----@return boolean
+---@return boolean?
 function Self.IsGuildOfficer(unitOrRank)
     local rank = type(unitOrRank) == "number" and unitOrRank or IsGuildMember(unitOrRank) and C_GuildInfo.GetGuildRankOrder(UnitGUID(unitOrRank))
     local info = rank and C_GuildInfo.GuildControlGetRankFlags(rank)
@@ -243,9 +244,7 @@ function Self.ClubMemberInfo(unit, clubId)
     unit = Self.Name(unit)
     for _,memberId in pairs(C_Club.GetClubMembers(clubId)) do
         local info = C_Club.GetMemberInfo(clubId, memberId)
-        if info.name == unit then
-            return info
-        end
+        if info and info.name == unit then return info end
     end
 end
 
@@ -261,7 +260,7 @@ function Self.InGroup(unit, onlyOthers)
 end
 
 -- Get a unit's group rank
----@return integer
+---@return integer?
 function Self.GroupRank(unit)
     for i=1,GetNumGroupMembers() do
         local grpUnit, rank = GetRaidRosterInfo(i)
@@ -272,7 +271,7 @@ function Self.GroupRank(unit)
 end
 
 -- Get the current group leader
----@return string
+---@return string?
 function Self.GroupLeader()
     for i=1,GetNumGroupMembers() do
         local unit, rank = GetRaidRosterInfo(i)

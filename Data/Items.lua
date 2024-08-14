@@ -1,7 +1,8 @@
 ---@type Addon
 local Addon = select(2, ...)
 local GUI, Unit, Util = Addon.GUI, Addon.Unit, Addon.Util
----@type Item
+
+---@class Item
 local Self = Addon.Item
 
 local Armor = Enum.ItemArmorSubclass
@@ -671,9 +672,7 @@ end
 ---@param loaded boolean?
 function Self.ExportTrinkets(loaded)
     if not loaded and next(Self.TRINKETS) then
-        for id in pairs(Self.TRINKETS) do
-            GetItemInfo(id)
-        end
+        for id in pairs(Self.TRINKETS) do C_Item.GetItemInfo(id) end
         Addon:ScheduleTimer(Self.ExportTrinkets, 1, true)
     else
         local keys = Util(Self.TRINKETS):Keys():Sort()()
@@ -683,7 +682,7 @@ function Self.ExportTrinkets(loaded)
             local cat = Self.TRINKETS[id]
             local pad = ("0"):rep(6 - strlen(tostring(id)))
             local space = (" "):rep(3 - strlen(cat))
-            txt = txt .. ("\n    [%s%d] = %d, %s-- %s"):format(pad, id, cat, space, GetItemInfo(id) or "?")
+            txt = txt .. ("\n    [%s%d] = %d, %s-- %s"):format(pad, id, cat, space, C_Item.GetItemInfo(id) or "?")
         end
 
         GUI.ShowExportWindow("Export trinkets", "Self.TRINKETS = {" .. txt .. "\n}")
@@ -1597,7 +1596,7 @@ Self.TRINKETS = {
   [219298] = 195, -- Ravenous Honey Buzzer
   [219299] = 148, -- Synergistic Brewterializer
   [219300] = 97,  -- Skarmorak Shard
-  [219301] = 67,  -- Overclocked Gear-A-Rang Launcher
+  [219301] = 67,  -- Overclocked Gear-a-Rang Launcher
   [219302] = 20,  -- Scrapsinger's Symphony
   [219303] = 148, -- High Speaker's Accretion
   [219304] = 194, -- Conductor's Wax Whistle

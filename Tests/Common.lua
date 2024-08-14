@@ -2,14 +2,14 @@ if not WoWUnit then return end
 
 ---@type string
 local Name = ...
----@type Addon
+---@class Addon
 local Addon = select(2, ...)
 local AssertEqual, Replace = WoWUnit.AreEqual, WoWUnit.Replace
 local Roll, Unit, Util = Addon.Roll, Addon.Unit, Addon.Util
 
 ---@class Tests
-Addon.Test = {}
-local Self = Addon.Test
+local Self = {}
+Addon.Test = Self
 
 Self.Fn = function () end
 Self.Id = function (v) return v end
@@ -81,11 +81,16 @@ end
 function Self.ReplaceDefault()
     for _,fn in pairs({
         "GetRealmName", "UnitName", "UnitFullName", "UnitIsUnit", "UnitClass", "UnitExists",
-        "GetItemInfo", "GetDetailedItemLevelInfo",
         "GetNumGroupMembers", "IsInGroup", "IsInRaid", "GetRaidRosterInfo",
         "UnitInParty", "UnitInRaid"
     }) do
         Replace(fn, Self[fn])
+    end
+
+    for _,fn in pairs({
+        "GetItemInfo", "GetDetailedItemLevelInfo",
+    }) do
+        Replace(C_Item, fn, Self[fn])
     end
 end
 

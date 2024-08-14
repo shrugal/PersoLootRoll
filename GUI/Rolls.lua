@@ -6,7 +6,8 @@ local Addon = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale(Name)
 local AceGUI = LibStub("AceGUI-3.0")
 local GUI, Inspect, Item, Options, Session, Roll, Trade, Unit, Util = Addon.GUI, Addon.Inspect, Addon.Item, Addon.Options, Addon.Session, Addon.Roll, Addon.Trade, Addon.Unit, Addon.Util
----@class Rolls : Module
+
+---@class GUIRolls
 local Self = GUI.Rolls
 
 ---@type table<Widget>
