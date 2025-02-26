@@ -503,6 +503,7 @@ Self.GEAR_TOKENS = {
     -- T30: Nerub-ar Palace
     [225614] = Self.TYPE_CHEST,
     [225615] = Self.TYPE_CHEST,
+    [225616] = Self.TYPE_CHEST,
     [225617] = Self.TYPE_CHEST,
     [225618] = Self.TYPE_HAND,
     [225619] = Self.TYPE_HAND,
@@ -519,7 +520,28 @@ Self.GEAR_TOKENS = {
     [225630] = Self.TYPE_SHOULDER,
     [225631] = Self.TYPE_SHOULDER,
     [225632] = Self.TYPE_SHOULDER,
-    [225633] = Self.TYPE_SHOULDER
+    [225633] = Self.TYPE_SHOULDER,
+    -- T31: Liberation of Undermine
+    [228799] = Self.TYPE_CHEST,
+    [228800] = Self.TYPE_CHEST,
+    [228801] = Self.TYPE_CHEST,
+    [228802] = Self.TYPE_CHEST,
+    [228803] = Self.TYPE_HAND,
+    [228804] = Self.TYPE_HAND,
+    [228805] = Self.TYPE_HAND,
+    [228806] = Self.TYPE_HAND,
+    [228807] = Self.TYPE_HEAD,
+    [228808] = Self.TYPE_HEAD,
+    [228809] = Self.TYPE_HEAD,
+    [228810] = Self.TYPE_HEAD,
+    [228811] = Self.TYPE_LEGS,
+    [228812] = Self.TYPE_LEGS,
+    [228813] = Self.TYPE_LEGS,
+    [228814] = Self.TYPE_LEGS,
+    [228815] = Self.TYPE_SHOULDER,
+    [228816] = Self.TYPE_SHOULDER,
+    [228817] = Self.TYPE_SHOULDER,
+    [228818] = Self.TYPE_SHOULDER,
 }
 
 Self.OMNI_TOKENS = {
@@ -530,7 +552,9 @@ Self.OMNI_TOKENS = {
   -- Dragonflight Awakened
   [217408] = { Self.TYPE_SHOULDER, Self.TYPE_HAND, Self.TYPE_HEAD, Self.TYPE_CHEST, Self.TYPE_LEGS },
   -- T30: Nerub-ar Palace
-  [225634] = { Self.TYPE_SHOULDER, Self.TYPE_HAND, Self.TYPE_HEAD, Self.TYPE_CHEST, Self.TYPE_LEGS }
+  [225634] = { Self.TYPE_SHOULDER, Self.TYPE_HAND, Self.TYPE_HEAD, Self.TYPE_CHEST, Self.TYPE_LEGS },
+  -- T31: Liberation of Undermine
+  [228819] = { Self.TYPE_SHOULDER, Self.TYPE_HAND, Self.TYPE_HEAD, Self.TYPE_CHEST, Self.TYPE_LEGS },
 }
 
 -------------------------------------------------------
@@ -1582,7 +1606,8 @@ Self.TRINKETS = {
   [212450] = 32,  -- Swarmlord's Authority
   [212451] = 132, -- Aberrant Spellforge
   [212452] = 20,  -- Gruesome Syringe
-  [212453] = 97,  -- Skyterror's Corrosive Organ
+  [212453] = 65,  -- Skyterror's Corrosive Organ
+  [212454] = 192, -- Mad Queen's Mandate
   [212456] = 194, -- Void Reaper's Contract
   [212682] = 20,  -- Water's Beating Heart
   [212683] = 194, -- Globe of Jagged Ice
@@ -1616,5 +1641,21 @@ Self.TRINKETS = {
   [219321] = 148, -- Cirral Concoctory
   [219915] = 32,  -- Foul Behemoth's Chelicera
   [219917] = 20,  -- Creeping Coagulum
-  [220202] = 132, -- Spymaster's Web
+  [220202] = 148, -- Spymaster's Web
+  [230019] = 32,  -- Vexie's Pit Whistle
+  [230026] = 32,  -- Scrapfield 9001
+  [230029] = 32,  -- Chromebustible Bomb Suit
+  [230186] = 20,  -- Mister Pick-Me-Up
+  [230188] = 20,  -- Gallagio Bottle Service
+  [230189] = 194, -- Junkmaestro's Mega Magnet
+  [230190] = 65,  -- Torq's Big Red Button
+  [230191] = 132, -- Flarendo's Pilot Light
+  [230192] = 148, -- Mug's Moxie Jug
+  [230193] = 192, -- Mister Lock-N-Stalk
+  [230197] = 192, -- Geargrinder's Spare Keys
+  [230199] = 67,  -- Zee's Thug Hotline
+  [232541] = 227, -- Improvised Seaforium Pacemaker
+  [232542] = 20,  -- Darkfuse Medichopper
+  [232543] = 32,  -- Ringing Ritual Mud
+  [232545] = 132, -- Gigazap's Zap-Cap
 }

@@ -1,4 +1,4 @@
-## Interface: 110002
+## Interface: 110100
 ## Title: PersoLootRoll
 ## Notes: A loot roll addon for personal loot.
 ## Notes-deDE: Ein Beute Vergabe Addon für Persönlichen Loot.
