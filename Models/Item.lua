@@ -57,6 +57,14 @@ Self.PATTERN_APPEARANCE_KNOWN = TRANSMOGRIFY_TOOLTIP_APPEARANCE_KNOWN
 Self.PATTERN_APPEARANCE_UNKNOWN = TRANSMOGRIFY_TOOLTIP_APPEARANCE_UNKNOWN
 ---@type string
 Self.PATTERN_APPEARANCE_UNKNOWN_ITEM = TRANSMOGRIFY_TOOLTIP_ITEM_UNKNOWN_APPEARANCE_KNOWN
+---@type string[]
+Self.PATTERNS_ACCOUNTBOUND = {
+    ITEM_ACCOUNTBOUND,
+    ITEM_ACCOUNTBOUND_UNTIL_EQUIP,
+    ITEM_BIND_TO_ACCOUNT,
+    ITEM_BIND_TO_ACCOUNT_UNTIL_EQUIP,
+    ITEM_BIND_TO_BNETACCOUNT,
+}
 
 -- Item loading status
 Self.INFO_NONE = 0
@@ -115,7 +123,8 @@ Self.INFO = {
         toLevel = true,
         attributes = true,
         isTransmogKnown = true,
-        isTransmogSourceKnown = true
+        isTransmogSourceKnown = true,
+        isAccountbound = true,
     }
 }
 
@@ -200,24 +209,24 @@ local fullScanFn = function(i, line, lines, attr)
     if attr == "classes" then
         local classes = line:match(Self.PATTERN_CLASSES)
         return classes and Util.Str.Split(classes, ", ") or nil
-        -- spec
+    -- spec
     elseif attr == "spec" then
         local spec = line:match(Self.PATTERN_SPEC)
         return spec and Util.In(spec, Unit.Specs()) and spec or nil
-        -- relicType
+    -- relicType
     elseif attr == "relicType" then
         return line:match(Self.PATTERN_RELIC_TYPE) or nil
-        -- realLevel
+    -- realLevel
     elseif attr == "realLevel" then
         return tonumber(select(2, line:match(Self.PATTERN_ILVL_SCALED)) or line:match(Self.PATTERN_ILVL))
-        -- realMinLevel
+    -- realMinLevel
     elseif attr == "realMinLevel" then
         return tonumber(line:match(Self.PATTERN_MIN_LEVEL))
-        -- fromlevel, toLevel
+    -- fromlevel, toLevel
     elseif Util.In(attr, "fromLevel", "toLevel") then
         local from, to = line:match(Self.PATTERN_HEIRLOOM_LEVEL)
         return from and to and tonumber(attr == "fromLevel" and from or to) or nil
-        -- attributes
+    -- attributes
     elseif attr == "attributes" then
         local match
         for _, a in pairs(Self.ATTRIBUTES) do
@@ -238,19 +247,23 @@ local fullScanFn = function(i, line, lines, attr)
             end
             return attrs
         end
-        -- isTransmogKnown
+    -- isTransmogKnown
     elseif attr == "isTransmogKnown" then
         if line:match(Self.PATTERN_APPEARANCE_KNOWN) or line:match(Self.PATTERN_APPEARANCE_UNKNOWN_ITEM) then
             return true
         elseif line:match(Self.PATTERN_APPEARANCE_UNKNOWN) then
             return false
         end
-        -- isTransmogSourceKnown
+    -- isTransmogSourceKnown
     elseif attr == "isTransmogSourceKnown" then
         if line:match(Self.PATTERN_APPEARANCE_KNOWN .. "$") then
             return true
         elseif line:match(Self.PATTERN_APPEARANCE_UNKNOWN) or line:match(Self.PATTERN_APPEARANCE_UNKNOWN_ITEM) then
             return false
+        end
+    elseif attr == "isAccountbound" then
+        for _,p in pairs(Self.PATTERNS_ACCOUNTBOUND) do
+            if line:match("^" .. p .. "$") then return true end
         end
     end
 end
@@ -493,9 +506,11 @@ function Self:GetBasicInfo()
                 self.baseLevel = baseLevel or self.level
                 self.isEquippable = IsEquippableItem(self.link) or self:IsGearToken() or Self.IsRelic(self)
                 self.equipLoc = Util.Str.IsEmpty(self.equipLoc) and self:GetGearTokenEquipLoc() or self.equipLoc
-                self.isSoulbound = self.bindType == Enum.ItemBind.OnAcquire or self.isEquipped and self.bindType == Enum.ItemBind.OnEquip
-                self.isTradable = Util.Default(self.isTradable, not self.isSoulbound or nil)
                 self.visualId, self.visualSourceId = C_TransmogCollection.GetItemInfo(self.link)
+
+                self.isSoulbound = self.bindType == Enum.ItemBind.OnAcquire or self.isEquipped and self.bindType == Enum.ItemBind.OnEquip
+                self.isAccountbound = Util.In(self.bindType, Enum.ItemBind.ToWoWAccount, Enum.ItemBind.ToBnetAccount, Enum.ItemBind.ToBnetAccountUntilEquipped) or nil
+                self.isTradable = Util.Default(self.isTradable, Util.Check(self.isAccountbound, false, nil))
 
                 if self.subType == "Companion Pets" then
                     local tradable, _, _, _, speciesId = select(9, C_PetJournal.GetPetInfoByItemID(self.id))
@@ -1256,9 +1271,9 @@ end
 -- Check if the item (given by self or bag+slot) is tradable
 ---@param selfOrBag Item|integer?
 ---@param slot integer?
----@return boolean?
----@return boolean
----@return boolean
+---@return boolean? isTradable
+---@return boolean? isSoulbound
+---@return boolean? bindTimeout
 function Self.IsTradable(selfOrBag, slot)
     local bag, isSoulbound, bindTimeout
 
@@ -1270,6 +1285,8 @@ function Self.IsTradable(selfOrBag, slot)
             return self.isTradable, self.isSoulbound, self.bindTimeout
         elseif self.isEquipped then
             return false, true, false
+        elseif self.isAccountbound then
+            return false, false, false
         elseif not self.owner then
             return true, false, false
         elseif not self.isOwner then

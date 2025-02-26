@@ -130,6 +130,15 @@ function Self.GetLootMethod()
     return lootMethod
 end
 
+-- Check if currently in a delve
+function Self.IsDelve()
+    return C_DelvesUI.HasActiveDelve(select(4, UnitPosition("player")))
+end
+
+-- Check if currently in a Horrific Vision
+function Self.IsHorrificVision()
+    return Self.In(C_Map.GetBestMapForUnit("player"), 1469, 1470)
+end
 
 -- Check if the current session is below the player's current expansion
 function Self.IsLegacyRun(unit)

@@ -1,3 +1,8 @@
+Version 24.10
+
+- Updated for patch 11.0.2
+- Updated libraries
+
 Version 24.09
 
 - Update LibRealmInfo and WoWUnit

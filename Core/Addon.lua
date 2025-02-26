@@ -315,7 +315,7 @@ function Self:CheckState(refresh)
         if not self.db.profile.enabled then                                                         -- Disabled
             self.state = Self.STATE_DISABLED
         elseif not IsInGroup()                                                                      -- Not in a group
-            or Util.In(C_Map.GetBestMapForUnit("player"), 1469, 1470)                               -- Horrific visions
+            or Util.IsDelve() or Util.IsHorrificVision()                                            -- Delve/Vision
             or not (
                 lootMethod == "needbeforegreed" and Session.GetMasterlooter()                       -- TODO: Handle NBG with ML like PL for now
                 or Util.In(lootMethod, "freeforall", "roundrobin", "personalloot", "group")         -- Can't trade items
