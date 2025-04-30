@@ -1653,9 +1653,10 @@ Self.TRINKETS = {
   [230192] = 148, -- Mug's Moxie Jug
   [230193] = 192, -- Mister Lock-N-Stalk
   [230197] = 192, -- Geargrinder's Spare Keys
-  [230199] = 67,  -- Zee's Thug Hotline
+  [230199] = 195, -- Zee's Thug Hotline
   [232541] = 227, -- Improvised Seaforium Pacemaker
   [232542] = 20,  -- Darkfuse Medichopper
   [232543] = 32,  -- Ringing Ritual Mud
   [232545] = 132, -- Gigazap's Zap-Cap
+  [232546] = 227, -- K.U.-J.0.'s Flame Vents
 }

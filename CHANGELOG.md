@@ -1,3 +1,10 @@
+Version 24.11
+
+- Updated ToC version for patch 11.1
+- Updated instance, trinket and gear token lists
+- Disable in delves
+- Detect warbound items
+
 Version 24.10
 
 - Updated for patch 11.0.2
