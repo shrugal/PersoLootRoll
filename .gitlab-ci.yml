@@ -46,7 +46,7 @@ curseforge:
     name: CurseForge
     url: https://wow.curseforge.com/projects/persolootroll
   script:
-    - release.sh -ocelzWHG
+    - release.sh -ocelzWAHG
 
 wowinterface:
   stage: deploy
@@ -55,7 +55,16 @@ wowinterface:
     name: WoWInterface
     url: https://www.wowinterface.com/downloads/info24667-PersoLootRoll.html
   script:
-    - release.sh -ocelzLHG
+    - release.sh -ocelzLAHG
+
+wago:
+  stage: deploy
+  only: *releases
+  environment:
+    name: Wago
+    url: https://addons.wago.io/addons/persolootroll
+  script:
+    - release.sh -ocelzLWHG
 
 github:
   stage: deploy
@@ -64,7 +73,7 @@ github:
     name: GitHub
     url: https://github.com/shrugal/PersoLootRoll/releases
   script:
-    - release.sh -ocelzLWG
+    - release.sh -ocelzLAWG
 
 gitlab:
   stage: deploy
@@ -73,4 +82,4 @@ gitlab:
     name: GitLab
     url: https://gitlab.com/shrugal/PersoLootRoll/releases
   script:
-    - release.sh -ocelzLWH
+    - release.sh -ocelzLAWH
