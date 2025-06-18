@@ -1,3 +1,1 @@
-- Updated ToC version for patch 11.1.5
-- Updated trinket list
-- Improve delve detection
+- Updated ToC version for patch 11.1.7

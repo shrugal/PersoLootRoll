@@ -1,3 +1,9 @@
+Version 24.12
+
+- Updated ToC version for patch 11.1.5
+- Updated trinket list
+- Improve delve detection
+
 Version 24.11
 
 - Updated ToC version for patch 11.1
