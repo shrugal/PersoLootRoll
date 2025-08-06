@@ -227,4 +227,6 @@ Self.INSTANCES = {
     [1296] = 11, -- Liberation of Undermine
     [1298] = 11, -- Operation: Floodgate
     [1301] = 1,  -- Blackrock Depths
+    [1302] = 11, -- Manaforge Omega
+    [1303] = 11, -- Eco-Dome Al'dani
 }

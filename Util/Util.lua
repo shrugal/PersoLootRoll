@@ -119,7 +119,7 @@ function Self.GetInstanceExpansion()
 end
 
 function Self.GetLootMethod()
-    local lootMethod = GetLootMethod()
+    local lootMethod = C_PartyInfo.GetLootMethod()
 
     -- Need-before-greed is reported as personal loot in raids
     -- TODO: Might be different for legacy runs

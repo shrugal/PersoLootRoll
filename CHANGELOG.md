@@ -1,3 +1,7 @@
+Version 24.13
+
+- Updated ToC version for patch 11.1.7
+
 Version 24.12
 
 - Updated ToC version for patch 11.1.5

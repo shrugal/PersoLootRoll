@@ -307,7 +307,7 @@ end
 function Self.Specs(unit)
     if unit then
         local classId, specs = Self.ClassId(unit), Util.Tbl.New()
-        for i=1,GetNumSpecializationsForClassID(classId) do
+        for i=1,C_SpecializationInfo.GetNumSpecializationsForClassID(classId) do
             specs[i] = select(2, GetSpecializationInfoForClassID(classId, i))
         end
         return specs

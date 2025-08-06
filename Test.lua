@@ -410,6 +410,9 @@ C_Container = {
     GetContainerNumSlots = Const(0),
     GetContainerItemLink = Val("|Hitem:1::::::::")
 }
+C_PartyInfo = {
+    GetLootMethod = Const("personalloot"),
+}
 
 Enum = {
     ClubType = { BattleNet = 0, Character = 1, Guild = 2, Other = 3 },

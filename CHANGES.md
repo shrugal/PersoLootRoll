@@ -1,1 +1,3 @@
-- Updated ToC version for patch 11.1.7
+- Updated ToC version for patch 11.2
+- Fixed patch bugs
+- Updated instance, trinket and gear token lists

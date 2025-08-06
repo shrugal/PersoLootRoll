@@ -208,7 +208,7 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
 
     -- PLAYER_INFO_REQ
     elseif cmd == Self.CMD_PLAYER_INFO_REQ then
-        local class, role, rank, ilvl, spec = select(2, UnitClass("player")), UnitGroupRolesAssigned("player"), select(2, GetGuildInfo("player")), select(2, GetAverageItemLevel()), GetSpecializationInfo(GetSpecialization())
+        local class, role, rank, ilvl, spec = select(2, UnitClass("player")), UnitGroupRolesAssigned("player"), select(2, GetGuildInfo("player")), select(2, GetAverageItemLevel()), C_SpecializationInfo.GetSpecializationInfo(C_SpecializationInfo.GetSpecialization())
         Self.Send(Self.CMD_PLAYER_INFO, unit, Unit.FullName("player"), class, role, rank, Unit.IsEnchanter(), 150, ilvl, spec)
 
     -- TRADABLE
@@ -280,7 +280,7 @@ Comm.Listen(Self.PREFIX, function (event, msg, channel, _, unit)
             end
 
             if Util.Tbl.Count(ack.diff) > 0 then
-                local spec, ilvl = GetSpecializationInfo(GetSpecialization()), select(2, GetAverageItemLevel())
+                local spec, ilvl = C_SpecializationInfo.GetSpecializationInfo(C_SpecializationInfo.GetSpecialization()), select(2, GetAverageItemLevel())
                 Self.Send(Self.CMD_SESSION_ACK, Comm.TYPE_GROUP, Unit.FullName("player"), spec, ilvl, ack)
             end
 

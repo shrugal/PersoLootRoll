@@ -921,7 +921,7 @@ function Self:CanBeEquipped(unit, ...)
     elseif ... then
         local found = false
         for i, spec in Util.Each(...) do
-            if not (self.spec and self.spec ~= select(2, GetSpecializationInfo(spec))) and
+            if not (self.spec and self.spec ~= select(2, C_SpecializationInfo.GetSpecializationInfo(spec))) and
                 not (self:IsArtifact() and self.id ~= class.specs[spec].artifact.id) then
                 found = true
                 break

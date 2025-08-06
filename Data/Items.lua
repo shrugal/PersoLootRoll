@@ -542,6 +542,27 @@ Self.GEAR_TOKENS = {
     [228816] = Self.TYPE_SHOULDER,
     [228817] = Self.TYPE_SHOULDER,
     [228818] = Self.TYPE_SHOULDER,
+    -- T32: Manaforge Omega
+    [237581] = Self.TYPE_CHEST,
+    [237582] = Self.TYPE_CHEST,
+    [237583] = Self.TYPE_CHEST,
+    [237584] = Self.TYPE_CHEST,
+    [237585] = Self.TYPE_HAND,
+    [237586] = Self.TYPE_HAND,
+    [237587] = Self.TYPE_HAND,
+    [237588] = Self.TYPE_HAND,
+    [237589] = Self.TYPE_HEAD,
+    [237590] = Self.TYPE_HEAD,
+    [237591] = Self.TYPE_HEAD,
+    [237592] = Self.TYPE_HEAD,
+    [237593] = Self.TYPE_LEGS,
+    [237594] = Self.TYPE_LEGS,
+    [237595] = Self.TYPE_LEGS,
+    [237596] = Self.TYPE_LEGS,
+    [237597] = Self.TYPE_SHOULDER,
+    [237598] = Self.TYPE_SHOULDER,
+    [237599] = Self.TYPE_SHOULDER,
+    [237600] = Self.TYPE_SHOULDER,
 }
 
 Self.OMNI_TOKENS = {
@@ -555,6 +576,8 @@ Self.OMNI_TOKENS = {
   [225634] = { Self.TYPE_SHOULDER, Self.TYPE_HAND, Self.TYPE_HEAD, Self.TYPE_CHEST, Self.TYPE_LEGS },
   -- T31: Liberation of Undermine
   [228819] = { Self.TYPE_SHOULDER, Self.TYPE_HAND, Self.TYPE_HEAD, Self.TYPE_CHEST, Self.TYPE_LEGS },
+  -- T32: Manaforge Omega
+  [237602] = { Self.TYPE_SHOULDER, Self.TYPE_HAND, Self.TYPE_HEAD, Self.TYPE_CHEST, Self.TYPE_LEGS },
 }
 
 -------------------------------------------------------
@@ -1659,4 +1682,20 @@ Self.TRINKETS = {
     [232543] = 32,  -- Ringing Ritual Mud
     [232545] = 132, -- Gigazap's Zap-Cap
     [232546] = 227, -- K.U.-J.0.'s Flame Vents
+    [242391] = 32,  -- Soulbinder's Embrace
+    [242392] = 148, -- Diamantine Voidcore
+    [242393] = 20,  -- Loom'ithar's Living Silk
+    [242394] = 65,  -- Eradicating Arcanocore
+    [242396] = 195, -- Unyielding Netherprism
+    [242397] = 194, -- Sigil of the Cosmic Hunt
+    [242398] = 132, -- Naazindhri's Mystic Lash
+    [242399] = 192, -- Screams of a Forgotten Sky
+    [242400] = 20,  -- Nexus-King's Command
+    [242401] = 32,  -- Brand of Ceaseless Ire
+    [242403] = 192, -- Perfidious Projector
+    [242404] = 32,  -- All-Devouring Nucleus
+    [242494] = 214, -- Lily of the Eternal Weave
+    [242495] = 227, -- Incorporeal Warpclaw
+    [242497] = 148, -- Azhiccaran Parapodia
+    [246344] = 67,  -- Cursed Stone Idol
 }

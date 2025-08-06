@@ -185,7 +185,7 @@ function Self.Chat(msg, target, concise)
         Self.lastWhispered = msg
     end
 
-    SendChatMessage(msg, channel, nil, player)
+    C_ChatInfo.SendChatMessage(msg, channel, nil, player)
 end
 
 function Self.GetChatLine(line, target, ...)
