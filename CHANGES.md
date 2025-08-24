@@ -1,3 +1,1 @@
-- Updated ToC version for patch 11.2
-- Fixed patch bugs
-- Updated instance, trinket and gear token lists
+- Fix loot method handling (expecting old GetLootMethod return values)

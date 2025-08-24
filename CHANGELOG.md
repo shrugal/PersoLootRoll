@@ -1,3 +1,9 @@
+Version 24.14
+
+- Updated ToC version for patch 11.2
+- Fixed patch bugs
+- Updated instance, trinket and gear token lists
+
 Version 24.13
 
 - Updated ToC version for patch 11.1.7

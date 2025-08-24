@@ -123,8 +123,8 @@ function Self.GetLootMethod()
 
     -- Need-before-greed is reported as personal loot in raids
     -- TODO: Might be different for legacy runs
-    if lootMethod == "personalloot" and select(2, GetInstanceInfo()) == "raid" then
-        return "needbeforegreed"
+    if lootMethod == Enum.LootMethod.Personal and select(2, GetInstanceInfo()) == "raid" then
+        return Enum.LootMethod.Needbeforegreed
     end
 
     return lootMethod

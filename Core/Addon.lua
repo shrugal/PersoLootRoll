@@ -311,14 +311,15 @@ function Self:CheckState(refresh)
         local state = self.state or Self.STATE_DISABLED
         local group, p = self.db.profile.activeGroups, Util.Push
         local lootMethod = Util.GetLootMethod()
+        local LM = Enum.LootMethod
 
         if not self.db.profile.enabled then                                                         -- Disabled
             self.state = Self.STATE_DISABLED
         elseif not IsInGroup()                                                                      -- Not in a group
             or Util.IsDelve() or Util.IsHorrificVision()                                            -- Delve/Vision
             or not (
-                lootMethod == "needbeforegreed" and Session.GetMasterlooter()                       -- TODO: Handle NBG with ML like PL for now
-                or Util.In(lootMethod, "freeforall", "roundrobin", "personalloot", "group")         -- Can't trade items
+                lootMethod == LM.Needbeforegreed and Session.GetMasterlooter()                      -- TODO: Handle NBG with ML like PL for now
+                or Util.In(lootMethod, LM.Freeforall, LM.Roundrobin, LM.Personal, LM.Group)         -- Can't trade items
             )
         then
             self.state = Self.STATE_ENABLED
