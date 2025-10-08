@@ -1,3 +1,7 @@
+Version 24.15
+
+- Fix loot method handling (expecting old GetLootMethod return values)
+
 Version 24.14
 
 - Updated ToC version for patch 11.2

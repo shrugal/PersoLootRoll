@@ -1,1 +1,1 @@
-- Fix loot method handling (expecting old GetLootMethod return values)
+- Updated ToC version for patch 11.2.5
