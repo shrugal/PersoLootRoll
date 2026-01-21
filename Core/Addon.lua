@@ -93,7 +93,7 @@ function Self:OnInitialize()
     -- Migrate and register options
     Options.Migrate()
     Options.Register()
-    Options.RegisterMinimapIcon()
+    Options.RegisterAddonIcons()
 
     -- Register chat commands
     self:RegisterChatCommand(Name, "HandleChatCommand")

@@ -168,6 +168,7 @@ end)
 Self.it = Util.Iter()
 Self.registered = false
 Self.frames = {}
+Self.categories = {}
 
 -------------------------------------------------------
 --                Register and Show                  --
@@ -179,28 +180,27 @@ function Self.Register()
 
     -- General
     C:RegisterOptionsTable(Name, Self.RegisterGeneral)
-    Self.frames.General = CD:AddToBlizOptions(Name)
+    Self.frames.General, Self.categories.General = CD:AddToBlizOptions(Name)
 
     -- Messages
     C:RegisterOptionsTable(Name .. " Messages", Self.RegisterMessages)
-    Self.frames.Messages = CD:AddToBlizOptions(Name .. " Messages", L["OPT_MESSAGES"], Name)
-
+    Self.frames.Messages, Self.categories.Messages = CD:AddToBlizOptions(Name .. " Messages", L["OPT_MESSAGES"], Name)
     -- Masterloot
     C:RegisterOptionsTable(Name .. " Masterloot", Self.RegisterMasterloot)
-    Self.frames.Masterloot = CD:AddToBlizOptions(Name .. " Masterloot", L["OPT_MASTERLOOT"], Name)
+    Self.frames.Masterloot, Self.categories.Masterloot = CD:AddToBlizOptions(Name .. " Masterloot", L["OPT_MASTERLOOT"], Name)
 
     -- Profiles
     C:RegisterOptionsTable(Name .. " Profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(Addon.db))
-    Self.frames.Profiles = CD:AddToBlizOptions(Name .. " Profiles", "Profiles", Name)
+    Self.frames.Profiles, Self.categories.Profiles = CD:AddToBlizOptions(Name .. " Profiles", "Profiles", Name)
 end
 
 -- Show the options panel
 --- @param name string
 function Self.Show(name)
-    if not name then name = "PersoLootRoll" end
-    if not name:match("^PersoLootRoll") then name = "PersoLootRoll " .. name end
+    if not name or name == Name then name = "General" end
+    if not Self.categories[name] then return end
 
-    Settings.OpenToCategory(name)
+    Settings.OpenToCategory(Self.categories[name])
 end
 
 -------------------------------------------------------
@@ -1572,18 +1572,11 @@ function Self.MigrateOption(key, source, dest, depth, destKey, filter, keep)
 end
 
 -------------------------------------------------------
---                   Minimap Icon                    --
+--             Minimap/Compartment Icon              --
 -------------------------------------------------------
 
-function Self.RegisterMinimapIcon()
-    local plugin = LDB:NewDataObject(Name, {
-        type = "data source",
-        text = Name,
-        icon = "Interface\\Buttons\\UI-GroupLoot-Dice-Up"
-    })
-
-    -- OnClick
-    plugin.OnClick = function (_, btn)
+function Self.RegisterAddonIcons()
+    local OnClick = function (_, btn)
         if btn == "RightButton" then
             Self.Show()
         else
@@ -1591,15 +1584,33 @@ function Self.RegisterMinimapIcon()
         end
     end
 
-    -- OnTooltip
-    plugin.OnTooltipShow = function (ToolTip)
+    local OnTooltipShow = function (ToolTip)
         ToolTip:AddLine(Name)
         ToolTip:AddLine(L["TIP_MINIMAP_ICON"], 1, 1, 1)
     end
 
-    -- Icon
+    -- Minimap icon
     if not PersoLootRollIconDB then PersoLootRollIconDB = {} end
-    LDBIcon:Register(Name, plugin, PersoLootRollIconDB)
+    LDBIcon:Register(Name, LDB:NewDataObject(Name, {
+        type = "data source",
+        text = Name,
+        icon = "Interface\\Buttons\\UI-GroupLoot-Dice-Up",
+        OnClick = OnClick,
+        OnTooltipShow = OnTooltipShow
+    }), PersoLootRollIconDB)
+
+    -- Compartment icon
+    AddonCompartmentFrame:RegisterAddon({
+        text = Name,
+        icon = "Interface\\Buttons\\UI-GroupLoot-Dice-Up",
+        func = function(_, menuInputData)
+            OnClick(nil, menuInputData.buttonName)
+        end,
+        funcOnEnter = function(button)
+            MenuUtil.ShowTooltip(button, OnTooltipShow)
+        end,
+        funcOnLeave = MenuUtil.HideTooltip,
+    })
 end
 
 -------------------------------------------------------

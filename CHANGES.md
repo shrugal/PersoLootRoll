@@ -1,1 +1,3 @@
-- Updated ToC version for patch 11.2.5
+- Updated ToC version for patch 12.0
+- Fix options menu opening
+- Add addon compartment icon
