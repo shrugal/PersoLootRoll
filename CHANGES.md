@@ -1,3 +1,1 @@
-- Updated ToC version for patch 12.0
-- Fix options menu opening
-- Add addon compartment icon
+- Detect and handle secret event values

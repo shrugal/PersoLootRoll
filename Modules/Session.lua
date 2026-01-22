@@ -432,6 +432,8 @@ end
 
 ---@param msg string
 function Self:CHAT_MSG_SYSTEM(_, msg)
+    if not canaccessvalue(msg) then return end
+
     -- Check if a player left the group/raid
     for _,pattern in pairs(Comm.PATTERNS_LEFT) do
         local unit = msg:match(pattern)

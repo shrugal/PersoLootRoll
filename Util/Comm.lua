@@ -226,6 +226,7 @@ end
 -- Listen for an addon message
 function Self.Listen(event, method, fromSelf, fromAll)
     Addon:RegisterComm(Self.GetPrefix(event), function (event, msg, channel, sender)
+        if not canaccessallvalues(event, msg, channel, sender) then return end
         msg = msg ~= "" and msg ~= " " and msg or nil
         local unit = Unit(sender)
         if Addon:IsEnabled() and (fromAll or Unit.InGroup(unit, not fromSelf)) then

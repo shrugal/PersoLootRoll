@@ -131,7 +131,7 @@ end
 
 ---@param msg string
 function Self.CHAT_MSG_SYSTEM(_, _, msg)
-    if not Self:IsTracking() then return end
+    if not Self:IsTracking() or not canaccessvalue(msg) then return end
 
     -- Check if a player rolled
     do
@@ -225,8 +225,11 @@ end
 ---@param msg string
 ---@param sender string
 function Self.CHAT_MSG_LOOT(_, _, msg, _, _, _, sender)
+    if not Self:IsTracking() or not canaccessallvalues(msg, sender) then return end
+
     local unit = Unit(sender)
-    if not Self:IsTracking() or not Unit.InGroup(unit) or not Unit.IsSelf(unit) and Self:UnitIsTracking(unit, true) then return end
+
+    if not Unit.InGroup(unit) or not Unit.IsSelf(unit) and Self:UnitIsTracking(unit, true) then return end
 
     -- Check for bonus roll or crafting
     if msg:match(Self.PATTERN_BONUS_LOOT) or msg:match(Self.PATTERN_CRAFTING) or msg:match(Self.PATTERN_CRAFTING_SELF) then
@@ -275,10 +278,11 @@ end
 ---@param msg string
 ---@param sender string
 function Self.CHAT_MSG_GROUP(_, _, msg, sender)
-    local unit = Unit(sender)
-    if not Self:IsTracking() then return end
+    if not Self:IsTracking() or not canaccessallvalues(msg, sender) then return end
 
+    local unit = Unit(sender)
     local link = Item.GetLink(msg)
+
     if link then
         link = select(2, C_Item.GetItemInfo(link)) or link
         Self.lastPostedRoll = nil
@@ -326,8 +330,11 @@ end
 ---@param sender string
 ---@param lineId integer
 function Self.CHAT_MSG_WHISPER(_, msg, sender, _, _, _, _, _, _, _, _, lineId)
+    if not Self:IsTracking() or not canaccessallvalues(msg, sender, lineId) then return end
+
     local unit = Unit(sender)
-    if not Self:IsTracking() or not Unit.InGroup(unit) then return end
+
+    if not Unit.InGroup(unit) then return end
 
     -- Log the conversation
     for i,roll in pairs(Self.rolls) do
@@ -482,8 +489,11 @@ end
 ---@param receiver string
 ---@param lineId integer
 function Self.CHAT_MSG_WHISPER_INFORM(_, msg, receiver, _, _, _, _, _, _, _, _, lineId)
+    if not Self:IsTracking() or not canaccessallvalues(msg, receiver, lineId) then return end
+
     local unit = Unit(receiver)
-    if not Self:IsTracking() or not Unit.InGroup(unit) then return end
+
+    if not Unit.InGroup(unit) then return end
 
     -- Log the conversation
     for i,roll in pairs(Self.rolls) do
@@ -569,23 +579,23 @@ end
 
 -- Check
 function Self.EVENT_CHECK(_, data, channel, sender, unit)
-    if not Self.lastVersionCheck or Self.lastVersionCheck + Self.VERSION_CHECK_DELAY < GetTime() then
-        Self.lastVersionCheck = GetTime()
+    if Self.lastVersionCheck and Self.lastVersionCheck + Self.VERSION_CHECK_DELAY >= GetTime() then return end
 
-        if Self.timers.versionCheck then
-            Self:CancelTimer(Self.timers.versionCheck)
-            Self.timers.versionCheck = nil
-        end
+    Self.lastVersionCheck = GetTime()
 
-        local target = channel == Comm.TYPE_WHISPER and sender or channel
+    if Self.timers.versionCheck then
+        Self:CancelTimer(Self.timers.versionCheck)
+        Self.timers.versionCheck = nil
+    end
 
-        -- Send version
-        Comm.SendData(Comm.EVENT_VERSION, Self.VERSION, target)
+    local target = channel == Comm.TYPE_WHISPER and sender or channel
 
-        -- Send disabled state
-        if not Self.db.profile.enabled then
-            Comm.Send(Comm.EVENT_DISABLE, target)
-        end
+    -- Send version
+    Comm.SendData(Comm.EVENT_VERSION, Self.VERSION, target)
+
+    -- Send disabled state
+    if not Self.db.profile.enabled then
+        Comm.Send(Comm.EVENT_DISABLE, target)
     end
 end
 Comm.ListenData(Comm.EVENT_CHECK, Self.EVENT_CHECK, true)
