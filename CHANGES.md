@@ -1,2 +1,3 @@
 - Update ToC version for patch 12.0.5
 - Fix num dropped item calculation for M+
+- Update instance and trinket lists
