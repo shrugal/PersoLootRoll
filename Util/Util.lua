@@ -167,8 +167,8 @@ function Self.GetNumDroppedItems()
 
     if difficulty == DifficultyUtil.ID.DungeonChallenge then
         -- In M+ we get 2 items at the end of the dungeon, +1 if in time, +0.4 per keystone level above 15
-        local _, level, _, onTime = C_ChallengeMode.GetCompletionInfo();
-        return 2 + (onTime and 1 or 0) + (level > 15 and math.ceil(0.4 * (level - 15)) or 0)
+        local info = C_ChallengeMode.GetChallengeCompletionInfo()
+        return 2 + (info.onTime and 1 or 0) + (info.level > 15 and math.ceil(0.4 * (info.level - 15)) or 0)
     else
         -- Normally we get about 1 item per 5 players in the group
         local players = GetNumGroupMembers()
