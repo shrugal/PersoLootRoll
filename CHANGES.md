@@ -1,1 +1,2 @@
-- Detect and handle secret event values
+- Update ToC version for patch 12.0.5
+- Fix num dropped item calculation for M+

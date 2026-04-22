@@ -1,3 +1,7 @@
+Version 25.01
+
+- Detect and handle secret event values
+
 Version 25.00
 
 - Updated ToC version for patch 12.0
