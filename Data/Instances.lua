@@ -232,6 +232,7 @@ Self.INSTANCES = {
     [1302] = 11, -- Manaforge Omega
     [1303] = 11, -- Eco-Dome Al'dani
     [1304] = 12, -- Murder Row
+    [1305] = 12, -- Sporefall
     [1307] = 12, -- The Voidspire
     [1308] = 12, -- March on Quel'Danas
     [1309] = 12, -- The Blinding Vale
@@ -241,4 +242,7 @@ Self.INSTANCES = {
     [1314] = 12, -- The Dreamrift
     [1315] = 12, -- Maisara Caverns
     [1316] = 12, -- Nexus-Point Xenas
+    [1317] = 12, -- The Tidebound Grotto
+    [1320] = 12, -- The Venomous Abyss
+    [1322] = 12, -- Altar of Fangs
 }
