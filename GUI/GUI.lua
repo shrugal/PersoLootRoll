@@ -692,7 +692,7 @@ function Self.TableRowHighlight(parent, skip)
     parent.frame:SetScript("OnEnter", function (self)
         if not isOver then
             self:SetScript("OnUpdate", function (self)
-                if not MouseIsOver(self) then
+                if not self:IsMouseOver() then
                     isOver = false
                     self:SetScript("OnUpdate", nil)
 

@@ -1,3 +1,9 @@
+Version 25.02
+
+- Update ToC version for patch 12.0.5
+- Update instance and trinket lists
+- Fix num dropped item calculation for M+
+
 Version 25.01
 
 - Detect and handle secret event values

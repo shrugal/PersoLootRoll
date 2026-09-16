@@ -1,3 +1,2 @@
-- Update ToC version for patch 12.0.5
-- Fix num dropped item calculation for M+
-- Update instance and trinket lists
+- Update ToC version for patch 12.1
+- Fix error when hovering over rows in the actions window or roll details
