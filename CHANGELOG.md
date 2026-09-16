@@ -1,3 +1,10 @@
+Version 25.03
+
+- Add class set tokens for The Voidspire and The Venomous Abyss
+- Update ToC version for patch 12.1
+- Update instance and trinket lists
+- Fix error when hovering over rows in the actions window or roll details
+
 Version 25.02
 
 - Update ToC version for patch 12.0.5
