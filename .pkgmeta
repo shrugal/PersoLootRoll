@@ -10,6 +10,8 @@ ignore:
   - Tests
   - Test.lua
   - _config.yml
+  - AGENTS.md
+  - CLAUDE.md
 
 externals:
   Libs/LibUtil:

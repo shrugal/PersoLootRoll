@@ -2,3 +2,4 @@
 .release/*
 !.release/release.sh
 !.release/.env.example
+.claude/settings.local.json

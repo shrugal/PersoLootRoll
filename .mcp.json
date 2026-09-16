@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "mechanic": {
+      "type": "stdio",
+      "command": "mech",
+      "args": ["mcp"],
+      "env": {
+        "PYTHONUTF8": "1"
+      }
+    }
+  }
+}
