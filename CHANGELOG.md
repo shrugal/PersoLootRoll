@@ -1,3 +1,8 @@
+Version 25.04
+
+- Update ToC version for patch 12.1.5
+- Fix error when starting a roll or checking whether an item can be equipped
+
 Version 25.03
 
 - Add class set tokens for The Voidspire and The Venomous Abyss

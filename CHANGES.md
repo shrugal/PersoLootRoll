@@ -1,2 +1,0 @@
-- Update ToC version for patch 12.1.5
-- Fix error when starting a roll or checking whether an item can be equipped
