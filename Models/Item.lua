@@ -303,7 +303,7 @@ function Self.GetInfo(item, attr, ...)
         end
     -- isEquippable
     elseif attr == "isEquippable" then
-        return IsEquippableItem(link or id) or Self.IsGearToken(item) or Self.IsRelic(item)
+        return C_Item.IsEquippableItem(link or id) or Self.IsGearToken(item) or Self.IsRelic(item)
     -- visualId, visualSourceId
     elseif link and (attr == "visualId" or attr == "visualSourceId") then
         return (select(attr == "visualId" and 1 or 2, C_TransmogCollection.GetItemInfo(link)))
@@ -504,7 +504,7 @@ function Self:GetBasicInfo()
                 -- Some extra data
                 self.level = level or self.level
                 self.baseLevel = baseLevel or self.level
-                self.isEquippable = IsEquippableItem(self.link) or self:IsGearToken() or Self.IsRelic(self)
+                self.isEquippable = C_Item.IsEquippableItem(self.link) or self:IsGearToken() or Self.IsRelic(self)
                 self.equipLoc = Util.Str.IsEmpty(self.equipLoc) and self:GetGearTokenEquipLoc() or self.equipLoc
                 self.visualId, self.visualSourceId = C_TransmogCollection.GetItemInfo(self.link)
 
@@ -956,7 +956,7 @@ function Self:HasSufficientQuality(isLootEvent)
 
     if not quality or quality >= Enum.ItemQuality.Legendary then
         return false
-    elseif not IsEquippableItem(self.link or self) then
+    elseif not C_Item.IsEquippableItem(self.link or self) then
         return quality >= Enum.ItemQuality.Uncommon
     elseif isLootEvent or Addon.db.profile.filter.transmog or Util.IsLegacyRun() then
         return quality >= Enum.ItemQuality.Common

@@ -296,7 +296,6 @@ IsLoggedIn = Const(false)
 GetNumGroupMembers = Const(0)
 IsInGroup = Const(false) --[[@as fun(category: integer?): boolean]]
 IsInRaid = Const(false) --[[@as fun(category: integer?): boolean]]
-IsEquippableItem = Val(true)
 ChatFrame_AddMessageEventFilter = Fn --[[@as fun(event: string, filterFunc: function): table]]
 GetGuildInfo = Fn --[[@as fun(unit: string): table]]
 IsShiftKeyDown = Const(false)
@@ -403,7 +402,8 @@ C_ChatInfo = {
 }
 C_Item = {
     GetItemInfo = Val(),
-    IsDressableItemByID = Val(true)
+    IsDressableItemByID = Val(true),
+    IsEquippableItem = Val(true)
 }
 C_Container = {
     GetContainerNumSlots = Const(0),
